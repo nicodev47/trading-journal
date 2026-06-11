@@ -5,6 +5,7 @@ import type { Trade, JournalState, WeeklyPlan } from '@/lib/types/trade';
 
 const STORAGE_KEY_PREFIX = 'eclipse-trading-journal-data';
 const MIGRATION_KEY_PREFIX = 'eclipse-trading-journal-migration-v3';
+const TRADES_RESET_KEY_PREFIX = 'eclipse-trading-journal-trades-reset-v1';
 
 export type JournalWorkspace = 'personal' | 'student';
 
@@ -22,6 +23,7 @@ const initialState: JournalState = {
 export function useTrades(workspace: JournalWorkspace = 'personal') {
   const storageKey = `${STORAGE_KEY_PREFIX}-${workspace}`;
   const migrationKey = `${MIGRATION_KEY_PREFIX}-${workspace}`;
+  const tradesResetKey = `${TRADES_RESET_KEY_PREFIX}-${workspace}`;
 
   const [state, setState] = useState<JournalState>(initialState);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -33,6 +35,7 @@ export function useTrades(workspace: JournalWorkspace = 'personal') {
     try {
       const stored = localStorage.getItem(storageKey);
       const hasMigrated = localStorage.getItem(migrationKey);
+      const hasResetTrades = localStorage.getItem(tradesResetKey);
       
       if (stored) {
         const parsed = JSON.parse(stored) as JournalState;
@@ -43,10 +46,16 @@ export function useTrades(workspace: JournalWorkspace = 'personal') {
           strategies = [];
           localStorage.setItem(migrationKey, 'true');
         }
+
+        const trades = hasResetTrades ? parsed.trades || [] : [];
+        if (!hasResetTrades) {
+          localStorage.setItem(tradesResetKey, 'true');
+        }
         
         setState({
           ...initialState,
           ...parsed,
+          trades,
           tags: parsed.tags || [],
           strategies: strategies,
           weeklyPlans: parsed.weeklyPlans || [],
@@ -56,12 +65,15 @@ export function useTrades(workspace: JournalWorkspace = 'personal') {
         if (!hasMigrated) {
           localStorage.setItem(migrationKey, 'true');
         }
+        if (!hasResetTrades) {
+          localStorage.setItem(tradesResetKey, 'true');
+        }
       }
     } catch (error) {
       console.error('Failed to load trades from localStorage:', error);
     }
     setIsLoaded(true);
-  }, [storageKey, migrationKey]);
+  }, [storageKey, migrationKey, tradesResetKey]);
 
   // Save to localStorage whenever state changes
   useEffect(() => {
