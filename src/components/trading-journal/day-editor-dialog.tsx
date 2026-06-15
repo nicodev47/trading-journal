@@ -20,10 +20,24 @@ import {
   SelectValue,
   SelectGroup,
 } from '@/components/ui/select';
-import { X, Plus, Trash2, ExternalLink } from 'lucide-react';
+import {
+  Check,
+  ExternalLink,
+  Pencil,
+  Plus,
+  Star,
+  Trash2,
+  X,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { type Trade, type ScreenshotData } from '@/lib/types/trade';
+import {
+  CUSTOM_MISTAKE_PREFIX,
+  TRADE_MISTAKES,
+  type Trade,
+  type ScreenshotData,
+} from '@/lib/types/trade';
 import { generateId } from '@/lib/calculations';
+import { useStreamerMode } from '@/contexts/streamer-mode-context';
 
 interface TradeRow {
   id: string;
@@ -32,6 +46,8 @@ interface TradeRow {
   direction: 'long' | 'short' | '';
   time: string;
   setup: string;
+  mistakes: string[];
+  isFavorite: boolean;
   screenshots: ScreenshotData[];
   notes: string;
 }
@@ -44,8 +60,11 @@ interface DayEditorDialogProps {
   onSave: (trades: Trade[]) => void;
   onDeleteDay: () => void;
   strategies: string[];
+  customMistakes: string[];
   onAddStrategy: (strategy: string) => void;
   onRemoveStrategy: (strategy: string) => void;
+  onAddCustomMistake: (mistake: string) => void;
+  onRemoveCustomMistake: (mistake: string) => void;
 }
 
 export function DayEditorDialog({
@@ -56,13 +75,24 @@ export function DayEditorDialog({
   onSave,
   onDeleteDay,
   strategies = [],
+  customMistakes = [],
   onAddStrategy,
   onRemoveStrategy,
+  onAddCustomMistake,
+  onRemoveCustomMistake,
 }: DayEditorDialogProps) {
+  const { streamerMode } = useStreamerMode();
   const [tradeRows, setTradeRows] = useState<TradeRow[]>([]);
   const [activeSetupDropdown, setActiveSetupDropdown] = useState<string | null>(null);
   const [screenshotInputs, setScreenshotInputs] = useState<Record<string, { url: string; name: string }>>({});
+  const [customMistakeInputs, setCustomMistakeInputs] = useState<Record<string, string>>({});
   const [pendingNewStrategies, setPendingNewStrategies] = useState<string[]>([]);
+  const [isManagingMistakes, setIsManagingMistakes] = useState(false);
+  const [editingScreenshot, setEditingScreenshot] = useState<{
+    tradeId: string;
+    index: number;
+    name: string;
+  } | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -75,6 +105,8 @@ export function DayEditorDialog({
             direction: t.direction,
             time: (t.exitDate?.split('T')[1] || t.entryDate?.split('T')[1] || '').slice(0, 5),
             setup: t.strategy,
+            mistakes: t.mistakes || [],
+            isFavorite: t.isFavorite ?? false,
             screenshots: (t.screenshots || []).map(s => {
               if (typeof s === 'object' && s !== null && 'url' in s) {
                 return s as ScreenshotData;
@@ -103,7 +135,10 @@ export function DayEditorDialog({
       }
 
       setScreenshotInputs({});
+      setCustomMistakeInputs({});
       setPendingNewStrategies([]);
+      setIsManagingMistakes(false);
+      setEditingScreenshot(null);
     }
   }, [isOpen, existingTrades]);
 
@@ -114,6 +149,8 @@ export function DayEditorDialog({
     direction: '',
     time: '00:00',
     setup: '',
+    mistakes: [],
+    isFavorite: false,
     screenshots: [],
     notes: '',
   });
@@ -131,7 +168,7 @@ export function DayEditorDialog({
   const updateTradeRow = (
     id: string,
     field: keyof TradeRow,
-    value: string | ScreenshotData[]
+    value: string | boolean | string[] | ScreenshotData[]
   ) => {
     setTradeRows(prev =>
       prev.map(row => (row.id === id ? { ...row, [field]: value } : row))
@@ -168,6 +205,26 @@ export function DayEditorDialog({
     }
   };
 
+  const saveScreenshotName = () => {
+    if (!editingScreenshot) return;
+
+    const trade = tradeRows.find(row => row.id === editingScreenshot.tradeId);
+    const screenshot = trade?.screenshots[editingScreenshot.index];
+    if (!trade || !screenshot) {
+      setEditingScreenshot(null);
+      return;
+    }
+
+    const nextName =
+      editingScreenshot.name.trim() || screenshot.name?.trim() || 'Link';
+    const screenshots = trade.screenshots.map((item, index) =>
+      index === editingScreenshot.index ? { ...item, name: nextName } : item
+    );
+
+    updateTradeRow(trade.id, 'screenshots', screenshots);
+    setEditingScreenshot(null);
+  };
+
   const getFilteredStrategies = (search: string) => {
     const allStrategies = [...strategies, ...pendingNewStrategies];
     if (!search) return allStrategies;
@@ -201,35 +258,55 @@ export function DayEditorDialog({
     pendingNewStrategies.forEach(strategy => {
       onAddStrategy(strategy);
     });
+    Object.values(customMistakeInputs).forEach((input) => {
+      const label = input.trim();
+
+      if (label) {
+        onAddCustomMistake(`${CUSTOM_MISTAKE_PREFIX}${label}`);
+      }
+    });
 
     const now = new Date().toISOString();
 
     const trades: Trade[] = tradeRows
       .filter(row => row.pnl !== '' || row.symbol)
-      .map(row => ({
-        id: row.id,
-        pair: row.symbol || '',
-        direction: row.direction || 'long',
-        entryPrice: 0,
-        exitPrice: 0,
-        lotSize: 0.01,
-        stopLoss: 0,
-        takeProfit: 0,
-        entryDate: `${date}T${row.time || '00:00'}`,
-        exitDate: `${date}T${row.time || '00:00'}`,
-        pips: 0,
-        pnl: parseFloat(row.pnl) || 0,
-        commission: 0,
-        riskReward: 0,
-        screenshots: row.screenshots,
-        tags: [],
-        strategy: row.setup,
-        notes: row.notes,
-        emotionalState: 'neutral' as const,
-        setupRating: 3,
-        createdAt: now,
-        updatedAt: now,
-      }));
+      .map(row => {
+        const customMistake = customMistakeInputs[row.id]?.trim();
+        const pendingCustomMistake = customMistake
+          ? `${CUSTOM_MISTAKE_PREFIX}${customMistake}`
+          : null;
+        const mistakes =
+          pendingCustomMistake && !row.mistakes.includes(pendingCustomMistake)
+            ? [...row.mistakes, pendingCustomMistake]
+            : row.mistakes;
+
+        return {
+          id: row.id,
+          pair: row.symbol || '',
+          direction: row.direction || 'long',
+          entryPrice: 0,
+          exitPrice: 0,
+          lotSize: 0.01,
+          stopLoss: 0,
+          takeProfit: 0,
+          entryDate: `${date}T${row.time || '00:00'}`,
+          exitDate: `${date}T${row.time || '00:00'}`,
+          pips: 0,
+          pnl: parseFloat(row.pnl) || 0,
+          commission: 0,
+          riskReward: 0,
+          screenshots: row.screenshots,
+          tags: [],
+          mistakes,
+          isFavorite: row.isFavorite,
+          strategy: row.setup,
+          notes: row.notes,
+          emotionalState: 'neutral' as const,
+          setupRating: 3,
+          createdAt: now,
+          updatedAt: now,
+        };
+      });
 
     onSave(trades);
     onClose();
@@ -268,34 +345,66 @@ export function DayEditorDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex max-h-[calc(86vh-120px)] flex-col gap-3 overflow-y-auto p-4">
-          <p className="text-sm text-muted-foreground">
-            Il P&L viene conteggiato nelle statistiche. Simbolo / Direzione / Orario / Setup sono opzionali.
-          </p>
-
+        <div className="flex max-h-[calc(86vh-120px)] flex-col gap-4 overflow-y-auto p-4">
           <div className="flex flex-col gap-4">
             {tradeRows.map((row, rowIndex) => (
               <div
                 key={row.id}
-                className="flex flex-col gap-3 rounded-lg border border-border bg-secondary/20 p-3.5"
+                className="flex flex-col gap-3.5 rounded-[14px] border border-border bg-secondary/15 p-4"
               >
                 <div className="flex items-center justify-between">
                   <span className="font-mono text-xs font-medium text-muted-foreground">
                     Trade {rowIndex + 1}
                   </span>
 
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="size-7 text-muted-foreground hover:text-destructive"
-                    onClick={() => removeTradeRow(row.id)}
-                    disabled={tradeRows.length === 1}
-                  >
-                    <Trash2 className="size-4" />
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className={cn(
+                        'size-7 rounded-lg text-muted-foreground hover:bg-secondary/70 hover:text-foreground focus-visible:ring-1 focus-visible:ring-yellow-400/70',
+                        row.isFavorite &&
+                          'text-yellow-400 hover:text-yellow-300'
+                      )}
+                      onClick={() =>
+                        updateTradeRow(row.id, 'isFavorite', !row.isFavorite)
+                      }
+                      aria-label={
+                        row.isFavorite
+                          ? 'Rimuovi dai trade preferiti'
+                          : 'Segna come trade preferito'
+                      }
+                      aria-pressed={row.isFavorite}
+                    >
+                      <Star
+                        className={cn(
+                          'size-[19px]',
+                          row.isFavorite && 'fill-current'
+                        )}
+                      />
+                    </Button>
+
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="size-7 text-muted-foreground hover:text-destructive"
+                      onClick={() => removeTradeRow(row.id)}
+                      disabled={tradeRows.length === 1}
+                      aria-label={`Elimina trade ${rowIndex + 1}`}
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-2.5 md:grid-cols-[130px_95px_105px_115px_1fr]">
+                <div className="rounded-xl border border-border/70 bg-background/30 p-3.5">
+                  <p className="mb-3 font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                    Dettagli trade
+                  </p>
+
+                  <div className="grid grid-cols-1 gap-2.5 md:grid-cols-[130px_95px_105px_115px_1fr]">
                   <div className="flex flex-col gap-1.5">
                     <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                       P&L
@@ -305,7 +414,8 @@ export function DayEditorDialog({
                       <Input
                         type="text"
                         inputMode="decimal"
-                        value={row.pnl}
+                        value={streamerMode ? '******' : row.pnl}
+                        readOnly={streamerMode}
                         onChange={e => {
                           const val = e.target.value;
                           if (val === '' || val === '-' || /^-?\d*\.?\d*$/.test(val)) {
@@ -320,9 +430,11 @@ export function DayEditorDialog({
                         )}
                       />
 
-                      <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
-                        <span className="text-xs text-muted-foreground">$</span>
-                      </div>
+                      {!streamerMode && (
+                        <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+                          <span className="text-xs text-muted-foreground">$</span>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -488,33 +600,112 @@ export function DayEditorDialog({
                     )}
                   </div>
                 </div>
-
-                <div className="flex flex-col gap-2">
-                  <p className="text-xs text-muted-foreground">
-                    Link TradingView o immagini locali
+                </div>
+                <div className="flex flex-col gap-3 rounded-xl border border-border/70 bg-background/30 p-3.5">
+                  <p className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                    Link TradingView / Google Drive
                   </p>
 
                   {row.screenshots.length > 0 && (
                     <div className="flex flex-col gap-3">
                       {row.screenshots.map((screenshot, index) => {
                         const imageUrl = getTradingViewImageUrl(screenshot.url);
+                        const isEditingName =
+                          editingScreenshot?.tradeId === row.id &&
+                          editingScreenshot.index === index;
 
                         return (
                           <div
                             key={index}
-                            className="flex flex-col gap-2 rounded-md border border-border bg-background p-3"
+                            className="flex flex-col gap-2 rounded-lg border border-border/80 bg-card/60 p-3"
                           >
                             <div className="flex items-center justify-between gap-2">
-                              <span className="font-mono text-xs font-medium text-foreground">
-                                {screenshot.name || `Screenshot ${index + 1}`}
-                              </span>
+                              {isEditingName ? (
+                                <Input
+                                  autoFocus
+                                  value={editingScreenshot.name}
+                                  onChange={(event) =>
+                                    setEditingScreenshot(current =>
+                                      current
+                                        ? {
+                                            ...current,
+                                            name: event.target.value,
+                                          }
+                                        : current
+                                    )
+                                  }
+                                  onKeyDown={(event) => {
+                                    if (event.key === 'Enter') {
+                                      event.preventDefault();
+                                      saveScreenshotName();
+                                    }
+                                    if (event.key === 'Escape') {
+                                      event.preventDefault();
+                                      setEditingScreenshot(null);
+                                    }
+                                  }}
+                                  aria-label="Modifica nome link"
+                                  className="h-8 min-w-0 flex-1 border-border bg-background font-mono text-xs"
+                                />
+                              ) : (
+                                <span className="min-w-0 truncate font-mono text-xs font-medium text-foreground">
+                                  {screenshot.name || 'Link'}
+                                </span>
+                              )}
 
-                              <button
-                                onClick={() => removeScreenshotFromTrade(row.id, index)}
-                                className="shrink-0 text-muted-foreground hover:text-destructive"
-                              >
-                                <Trash2 className="size-4" />
-                              </button>
+                              <div className="flex shrink-0 items-center gap-1">
+                                {isEditingName ? (
+                                  <>
+                                    <button
+                                      type="button"
+                                      onClick={saveScreenshotName}
+                                      aria-label="Salva nome link"
+                                      className="inline-flex h-8 items-center gap-1 rounded-md border border-profit/20 bg-profit/5 px-2 font-mono text-[10px] text-muted-foreground transition-colors hover:border-profit/40 hover:bg-profit/10 hover:text-profit"
+                                    >
+                                      <Check className="size-3" />
+                                      Salva
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setEditingScreenshot(null)}
+                                      aria-label="Annulla modifica nome link"
+                                      className="inline-flex h-8 items-center gap-1 rounded-md border border-border bg-background/70 px-2 font-mono text-[10px] text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                                    >
+                                      <X className="size-3" />
+                                      Annulla
+                                    </button>
+                                  </>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setEditingScreenshot({
+                                        tradeId: row.id,
+                                        index,
+                                        name: screenshot.name || 'Link',
+                                      })
+                                    }
+                                    aria-label="Modifica nome link"
+                                    className="rounded-md border border-transparent p-1.5 text-muted-foreground transition-colors hover:border-profit/30 hover:bg-profit/10 hover:text-profit"
+                                  >
+                                    <Pencil className="size-3.5" />
+                                  </button>
+                                )}
+
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    removeScreenshotFromTrade(row.id, index);
+                                    if (isEditingName) {
+                                      setEditingScreenshot(null);
+                                    }
+                                  }}
+                                  aria-label="Elimina link"
+                                  className="rounded-md border border-transparent p-1.5 text-muted-foreground transition-colors hover:border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
+                                >
+                                  <Trash2 className="size-3.5" />
+                                </button>
+                              </div>
                             </div>
 
                             {!screenshot.url.startsWith('data:image/') && (
@@ -585,7 +776,7 @@ export function DayEditorDialog({
                             },
                           }))
                         }
-                        placeholder="inserisci il Link di TradingView / Link di Google Drive..."
+                        placeholder="Inserisci il link di TradingView/Google Drive"
                         className="h-8 border-border bg-background text-sm"
                         onKeyDown={e => e.key === 'Enter' && addScreenshotToTrade(row.id)}
                       />
@@ -633,8 +824,181 @@ export function DayEditorDialog({
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-2">
-                  <Label className="text-xs text-muted-foreground">
+                <div className="flex flex-col gap-2.5 rounded-xl border border-border/70 bg-background/30 p-3.5">
+                  <Label className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                    Errori
+                  </Label>
+
+                  <div className="flex flex-wrap gap-2">
+                    {TRADE_MISTAKES.map((mistake) => {
+                      const isSelected = row.mistakes.includes(mistake.value);
+
+                      return (
+                        <button
+                          key={mistake.value}
+                          type="button"
+                          onClick={() => {
+                            const nextMistakes = isSelected
+                              ? row.mistakes.filter((m) => m !== mistake.value)
+                              : [...row.mistakes, mistake.value];
+
+                            updateTradeRow(row.id, 'mistakes', nextMistakes);
+                          }}
+                          className={cn(
+                            'rounded-md border px-2.5 py-1.5 text-left font-mono text-[13px] leading-4 transition-colors',
+                            isSelected
+                              ? 'border-loss/50 bg-loss/10 text-loss'
+                              : 'border-border bg-background/80 text-muted-foreground hover:bg-secondary hover:text-foreground'
+                          )}
+                        >
+                          <span className="mr-2" aria-hidden="true">
+                            {mistake.emoji}
+                          </span>
+                          {mistake.label}
+                        </button>
+                      );
+                    })}
+
+                    {customMistakes.map((mistake) => {
+                      const isSelected = row.mistakes.includes(mistake);
+
+                      return (
+                        <div key={mistake} className="relative">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const nextMistakes = isSelected
+                                ? row.mistakes.filter((value) => value !== mistake)
+                                : [...row.mistakes, mistake];
+
+                              updateTradeRow(row.id, 'mistakes', nextMistakes);
+                            }}
+                            className={cn(
+                              'w-full rounded-md border px-2.5 py-1.5 text-left font-mono text-[13px] leading-4 transition-colors',
+                              isSelected
+                                ? 'border-loss/50 bg-loss/10 text-loss'
+                                : 'border-border bg-background/80 text-muted-foreground hover:bg-secondary hover:text-foreground'
+                            )}
+                          >
+                            {mistake.slice(CUSTOM_MISTAKE_PREFIX.length)}
+                          </button>
+
+                          {isManagingMistakes && (
+                            <button
+                              type="button"
+                              aria-label={`Elimina ${mistake.slice(CUSTOM_MISTAKE_PREFIX.length)}`}
+                              className="absolute -right-2 -top-2 flex size-5 items-center justify-center rounded-full border border-loss bg-background text-loss shadow-md transition-colors hover:bg-loss hover:text-white"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                const label = mistake.slice(CUSTOM_MISTAKE_PREFIX.length);
+                                const confirmed = window.confirm(
+                                  `Vuoi eliminare l'errore personalizzato "${label}"? Verrà rimosso anche dai trade salvati.`
+                                );
+
+                                if (!confirmed) {
+                                  return;
+                                }
+
+                                onRemoveCustomMistake(mistake);
+                                setTradeRows(previous =>
+                                  previous.map(tradeRow => ({
+                                    ...tradeRow,
+                                    mistakes: tradeRow.mistakes.filter(
+                                      value => value !== mistake
+                                    ),
+                                  }))
+                                );
+                              }}
+                            >
+                              <X className="size-3" />
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2 rounded-lg border border-border/70 bg-background/35 p-2">
+                    <Input
+                      value={customMistakeInputs[row.id] ?? ''}
+                      onChange={(event) =>
+                        setCustomMistakeInputs((previous) => ({
+                          ...previous,
+                          [row.id]: event.target.value,
+                        }))
+                      }
+                      onKeyDown={(event) => {
+                        if (event.key !== 'Enter') {
+                          return;
+                        }
+
+                        event.preventDefault();
+                        const label = customMistakeInputs[row.id]?.trim();
+
+                        if (!label) {
+                          return;
+                        }
+
+                        const value = `${CUSTOM_MISTAKE_PREFIX}${label}`;
+
+                        onAddCustomMistake(value);
+
+                        if (!row.mistakes.includes(value)) {
+                          updateTradeRow(row.id, 'mistakes', [...row.mistakes, value]);
+                        }
+
+                        setCustomMistakeInputs((previous) => ({
+                          ...previous,
+                          [row.id]: '',
+                        }));
+                      }}
+                      placeholder="✏️ Crea un errore personalizzato"
+                      className="h-8 min-w-0 border-border/70 bg-background/60 font-mono text-[13px] placeholder:text-muted-foreground/60"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-8 px-3 font-mono text-xs"
+                      disabled={!customMistakeInputs[row.id]?.trim()}
+                      onClick={() => {
+                        const label = customMistakeInputs[row.id]?.trim();
+
+                        if (!label) {
+                          return;
+                        }
+
+                        const value = `${CUSTOM_MISTAKE_PREFIX}${label}`;
+
+                        onAddCustomMistake(value);
+
+                        if (!row.mistakes.includes(value)) {
+                          updateTradeRow(row.id, 'mistakes', [...row.mistakes, value]);
+                        }
+
+                        setCustomMistakeInputs((previous) => ({
+                          ...previous,
+                          [row.id]: '',
+                        }));
+                      }}
+                    >
+                      Aggiungi
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={isManagingMistakes ? 'default' : 'outline'}
+                      size="sm"
+                      className="h-8 px-3 font-mono text-xs"
+                      disabled={customMistakes.length === 0}
+                      onClick={() => setIsManagingMistakes(previous => !previous)}
+                    >
+                      Gestisci
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2 rounded-xl border border-border/70 bg-background/30 p-3.5">
+                  <Label className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
                     Note trade {rowIndex + 1}
                   </Label>
 
@@ -649,7 +1013,7 @@ export function DayEditorDialog({
             ))}
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-4 rounded-xl border border-border/70 bg-background/30 px-4 py-3">
             <Button
               variant="outline"
               size="sm"
@@ -663,7 +1027,7 @@ export function DayEditorDialog({
             <span className="font-mono text-sm text-muted-foreground">
               Trade: {tradeRows.length} | Totale giorno:{' '}
               <span className={cn(dayTotal > 0 && 'text-profit', dayTotal < 0 && 'text-loss')}>
-                {dayTotal.toFixed(2)} USD
+                {streamerMode ? '******' : `${dayTotal.toFixed(2)} USD`}
               </span>
             </span>
           </div>

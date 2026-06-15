@@ -4,12 +4,14 @@ import { useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { calculateStatistics } from '@/lib/calculations';
 import type { Trade } from '@/lib/types/trade';
+import { useStreamerMode } from '@/contexts/streamer-mode-context';
 
 interface StatsGridProps {
   trades: Trade[];
 }
 
 export function StatsGrid({ trades }: StatsGridProps) {
+  const { streamerMode } = useStreamerMode();
   const stats = useMemo(() => calculateStatistics(trades), [trades]);
 
   const formatCurrency = (value: number) => {
@@ -25,12 +27,6 @@ export function StatsGrid({ trades }: StatsGridProps) {
   };
 
   const hasNoTrades = trades.length === 0;
-
-  const winRate = hasNoTrades ? 0 : stats.winRate;
-  const circleRadius = 18;
-  const circleCircumference = 2 * Math.PI * circleRadius;
-  const circleOffset =
-    circleCircumference - (winRate / 100) * circleCircumference;
 
   const profitFactor =
     hasNoTrades || !isFinite(stats.profitFactor) || isNaN(stats.profitFactor)
@@ -56,7 +52,7 @@ export function StatsGrid({ trades }: StatsGridProps) {
 
           <div className="flex items-center gap-3">
             <span className="font-mono text-xl font-semibold tracking-tight text-profit">
-              {formatCurrency(stats.totalPnl)}
+              {streamerMode ? '******' : formatCurrency(stats.totalPnl)}
             </span>
 
             <div className="rounded-full border border-border bg-background/70 px-3 py-1 font-mono text-[11px] font-medium text-white">
@@ -76,7 +72,7 @@ export function StatsGrid({ trades }: StatsGridProps) {
       Win rate
     </span>
 
-    <div className="flex items-start justify-between gap-3">
+    <div className="flex items-start gap-3">
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2">
           <span className="font-mono text-xl font-semibold tracking-tight text-foreground">
@@ -96,35 +92,6 @@ export function StatsGrid({ trades }: StatsGridProps) {
           Percentuale trade vincenti
         </span>
       </div>
-
-      <svg
-        className="size-14 shrink-0 -translate-y-2 -rotate-90"
-        viewBox="0 0 44 44"
-        aria-label={`Win rate ${winRate.toFixed(0)}%`}
-      >
-        <circle
-          cx="22"
-          cy="22"
-          r={circleRadius}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="4"
-          className="text-secondary"
-        />
-
-        <circle
-          cx="22"
-          cy="22"
-          r={circleRadius}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="4"
-          strokeLinecap="round"
-          strokeDasharray={circleCircumference}
-          strokeDashoffset={circleOffset}
-          className="text-profit transition-all"
-        />
-      </svg>
     </div>
   </CardContent>
 </Card>

@@ -2,14 +2,29 @@
 
 import { useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { Button } from '@/components/ui/button';
+import { EquityCurve } from '@/components/trading-journal/equity-curve';
+import { AdvancedStatsGrid } from '@/components/trading-journal/advanced-stats-grid';
+import { AnalysisDiagnostics } from '@/components/trading-journal/analysis-diagnostics';
 import { cn } from '@/lib/utils';
-import type { Trade } from '@/lib/types/trade';
+import { CUSTOM_MISTAKE_PREFIX, type Trade } from '@/lib/types/trade';
+import { useStreamerMode } from '@/contexts/streamer-mode-context';
 
 interface MonthlyAnalysisProps {
   trades: Trade[];
 }
+
+const ANALYSIS_MISTAKES = [
+  { value: 'early_entry', emoji: '⏳', label: 'Entrata in Anticipo' },
+  { value: 'late_entry', emoji: '🥶', label: 'Entrata in Ritardo' },
+] as const;
+
+type MistakeCount = {
+  value: string;
+  emoji: string;
+  label: string;
+  count: number;
+};
 
 const MONTHS = [
   'Gennaio',
@@ -42,6 +57,7 @@ function formatPercent(value: number) {
 }
 
 export function MonthlyAnalysis({ trades }: MonthlyAnalysisProps) {
+  const { streamerMode } = useStreamerMode();
   const availableYears = useMemo(() => {
     const years = Array.from(
       new Set(trades.map((trade) => new Date(trade.exitDate).getFullYear()))
@@ -50,6 +66,13 @@ export function MonthlyAnalysis({ trades }: MonthlyAnalysisProps) {
   }, [trades]);
 
   const [selectedYear, setSelectedYear] = useState(availableYears[0]);
+
+  const yearFilteredTrades = useMemo(() => {
+    return trades.filter((trade) => {
+      const tradeDate = new Date(trade.exitDate);
+      return tradeDate.getFullYear() === selectedYear;
+    });
+  }, [selectedYear, trades]);
 
   const months = useMemo(() => {
     return MONTHS.map((monthName, monthIndex) => {
@@ -102,6 +125,7 @@ export function MonthlyAnalysis({ trades }: MonthlyAnalysisProps) {
   const grossLosses = Math.abs(months.reduce((sum, month) => sum + Math.min(month.totalPnl, 0), 0));
   const profitFactor = grossLosses > 0 ? grossWins / grossLosses : grossWins > 0 ? Infinity : 0;
   const maxAbsPnl = Math.max(...months.map((month) => Math.abs(month.totalPnl)), 1);
+  const maxMonthlyTrades = Math.max(...months.map((month) => month.trades), 1);
 
   const selectedYearIndex = availableYears.indexOf(selectedYear);
   const goPreviousYear = () => {
@@ -113,19 +137,117 @@ export function MonthlyAnalysis({ trades }: MonthlyAnalysisProps) {
     setSelectedYear(availableYears[nextIndex] || selectedYear + 1);
   };
 
-  let cumulative = 0;
-  const equityData = months.map((month) => {
-    cumulative += month.totalPnl;
-    return {
-      month: month.monthName.slice(0, 3),
-      equity: cumulative,
-    };
-  });
-  const yearIsPositive = equityData.length === 0 || equityData[equityData.length - 1].equity >= 0;
-  const equityStrokeColor = yearIsPositive ? '#22c55e' : '#ff4d70';
-  const equityFillStart = yearIsPositive ? 'rgba(34, 197, 94, 0.30)' : 'rgba(255, 77, 112, 0.30)';
-  const equityFillEnd = yearIsPositive ? 'rgba(34, 197, 94, 0.05)' : 'rgba(255, 77, 112, 0.05)';
+  const mistakeStats = useMemo(() => {
+    const mistakesMap = new Map<string, MistakeCount>(
+      ANALYSIS_MISTAKES.map(
+        (mistake): [string, MistakeCount] => [
+          mistake.value,
+          { ...mistake, count: 0 },
+        ]
+      )
+    );
 
+    yearFilteredTrades.forEach((trade) => {
+      const mistakes = trade.mistakes ?? [];
+
+      mistakes
+        .filter((mistake) => mistake.startsWith(CUSTOM_MISTAKE_PREFIX))
+        .forEach((mistake) => {
+          if (!mistakesMap.has(mistake)) {
+            mistakesMap.set(mistake, {
+              value: mistake,
+              emoji: '',
+              label: mistake.slice(CUSTOM_MISTAKE_PREFIX.length),
+              count: 0,
+            });
+          }
+        });
+    });
+
+    yearFilteredTrades.forEach((trade) => {
+      const mistakes = trade.mistakes ?? [];
+
+      mistakes.forEach((mistakeValue) => {
+        const current = mistakesMap.get(mistakeValue);
+
+        if (current) {
+          current.count += 1;
+        }
+      });
+    });
+
+    const totalYearTrades = yearFilteredTrades.length;
+    const mistakeTrades = yearFilteredTrades.filter(
+      (trade) => (trade.mistakes ?? []).length > 0
+    );
+    const tradesWithMistakes = mistakeTrades.length;
+    const cleanTrades = totalYearTrades - tradesWithMistakes;
+    const disciplineScore =
+      totalYearTrades > 0
+        ? Math.round((cleanTrades / totalYearTrades) * 100)
+        : 100;
+
+    const mistakes = Array.from(mistakesMap.values())
+      .filter((mistake) => mistake.count > 0)
+      .sort((a, b) => b.count - a.count)
+      .map((mistake) => {
+        const percent =
+          totalYearTrades > 0
+            ? (mistake.count / totalYearTrades) * 100
+            : 0;
+        const heatColor =
+          percent >= 80
+            ? 'from-[#ff4d6d] to-[#ff2d55]'
+            : percent >= 60
+              ? 'from-[#ff4d6d]/95 to-[#ff2d55]/80'
+              : percent >= 40
+                ? 'from-[#ff4d6d]/85 to-[#ff2d55]/70'
+                : percent >= 25
+                  ? 'from-[#ff4d6d]/75 to-[#ff2d55]/60'
+                  : percent >= 10
+                    ? 'from-[#ff4d6d]/65 to-[#ff2d55]/50'
+                    : 'from-[#ff4d6d]/55 to-[#ff2d55]/40';
+
+        return {
+          ...mistake,
+          percent,
+          heatColor,
+        };
+      });
+
+    const disciplineColor =
+      disciplineScore >= 65
+        ? 'bg-profit'
+        : disciplineScore >= 50
+          ? 'bg-profit/50'
+          : disciplineScore >= 25
+            ? 'bg-loss/60'
+            : 'bg-loss';
+    const topMistake = mistakes[0];
+    const tradesWithTopMistake = topMistake
+      ? yearFilteredTrades.filter((trade) =>
+          (trade.mistakes ?? []).includes(topMistake.value)
+        )
+      : [];
+    const winningTradesWithTopMistake = tradesWithTopMistake.filter(
+      (trade) => netPnl(trade) > 0
+    ).length;
+    const topMistakeWinRate =
+      tradesWithTopMistake.length > 0
+        ? (winningTradesWithTopMistake / tradesWithTopMistake.length) * 100
+        : null;
+
+    return {
+      mistakes,
+      tradesWithMistakes,
+      cleanTrades,
+      disciplineScore,
+      disciplineColor,
+      topMistake,
+      topMistakeTradeCount: tradesWithTopMistake.length,
+      topMistakeWinRate,
+    };
+  }, [yearFilteredTrades]);
   return (
     <section className="pb-8">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -152,42 +274,141 @@ export function MonthlyAnalysis({ trades }: MonthlyAnalysisProps) {
       </div>
 
       <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <SummaryBox title="P&L annuale" value={formatCurrency(yearTotal)} color={yearTotal > 0 ? 'profit' : yearTotal < 0 ? 'loss' : 'neutral'} />
+        <SummaryBox title="P&L annuale" value={streamerMode ? '******' : formatCurrency(yearTotal)} color={yearTotal > 0 ? 'profit' : yearTotal < 0 ? 'loss' : 'neutral'} />
         <SummaryBox title="Winrate" value={formatPercent(yearWinRate)} subtitle={`${yearWins} win / ${yearLosses} loss`} />
         <SummaryBox title="Trade totali" value={yearTrades.toString()} />
         <SummaryBox title="Profit factor" value={!isFinite(profitFactor) ? '∞' : profitFactor.toFixed(2)} />
       </div>
 
+      <div className="mb-4">
+        <EquityCurve key={selectedYear} trades={yearFilteredTrades} />
+      </div>
+
       <div className="mb-4 rounded-2xl border border-border bg-card/95 p-4 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
         <div className="mb-4 font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-          P&L mensile — {selectedYear}
+          P&L mensile
         </div>
         <div className="w-full overflow-x-auto">
-          <div className="flex h-52 min-w-[680px] items-end gap-3 border-b border-border/70 px-2 pb-4 sm:min-w-0">
-          {months.map((month) => {
-            const height = Math.max((Math.abs(month.totalPnl) / maxAbsPnl) * 150, month.totalPnl !== 0 ? 12 : 2);
-            return (
-              <div key={month.monthName} className="flex flex-1 flex-col items-center gap-2">
-                <div className="flex h-[160px] w-full items-end justify-center">
-                  {month.totalPnl !== 0 && (
-                    <div
-                      className={cn(
-                        'w-8 rounded-t-md',
-                        month.totalPnl > 0 ? 'bg-profit' : 'bg-loss'
-                      )}
-                      style={{ height }}
-                      title={`${month.monthName}: ${formatCurrency(month.totalPnl)}`}
-                    />
-                  )}
+          <div className="flex h-60 min-w-[760px] items-end gap-2 border-b border-border/70 px-2 pb-4 sm:min-w-0">
+            {months.map((month) => {
+              const height = Math.max(
+                (Math.abs(month.totalPnl) / maxAbsPnl) * 172,
+                month.totalPnl !== 0 ? 14 : 2
+              );
+
+              return (
+                <div
+                  key={month.monthName}
+                  className="flex min-w-0 flex-1 flex-col items-center gap-2"
+                >
+                  <div className="group relative flex h-[180px] w-full items-end justify-center">
+                    {month.totalPnl !== 0 && (
+                      <>
+                        <div
+                          className={cn(
+                            'pointer-events-none absolute top-1 z-10 whitespace-nowrap rounded-xl border border-teal-300/20 bg-[#20242d]/98 px-2.5 py-1.5 font-mono text-[10px] text-slate-200 opacity-0 shadow-[0_10px_30px_rgba(0,0,0,0.45),0_0_18px_rgba(45,212,191,0.08)] transition-all duration-200 group-hover:translate-y-1 group-hover:opacity-100',
+                            month.monthIndex === 0
+                              ? 'left-0'
+                              : month.monthIndex === 11
+                                ? 'right-0'
+                                : 'left-1/2 -translate-x-1/2'
+                          )}
+                        >
+                          <span className="mr-1 text-foreground">
+                            {month.monthName}:
+                          </span>
+                          <span className="font-semibold text-teal-200">
+                            {streamerMode
+                              ? '******'
+                              : formatCurrency(month.totalPnl)}
+                          </span>
+                        </div>
+                        <div
+                          className="w-11 rounded-t-lg bg-gradient-to-t from-emerald-950 via-teal-600 to-profit shadow-[0_0_12px_rgba(0,240,168,0.14)] transition-all duration-200 group-hover:scale-x-105 group-hover:brightness-110 group-hover:shadow-[0_0_22px_rgba(0,240,168,0.32)] sm:w-12"
+                          style={{ height }}
+                        />
+                      </>
+                    )}
+                  </div>
+                  <span className="font-mono text-[10px] text-muted-foreground">
+                    {month.monthName.slice(0, 3)}
+                  </span>
                 </div>
-                <span className="font-mono text-[10px] text-muted-foreground">
-                  {month.monthName.slice(0, 3)}
-                </span>
-              </div>
-            );
-          })}
+              );
+            })}
           </div>
         </div>
+      </div>
+
+      <div className="mb-4 rounded-2xl border border-border bg-card/95 p-4 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
+        <div className="mb-4 font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+          Distribuzione operazioni
+        </div>
+
+        {yearTrades === 0 ? (
+          <div className="flex h-52 items-center justify-center rounded-xl border border-border/70 bg-background/30">
+            <p className="font-mono text-xs text-muted-foreground">
+              Nessuna operazione inserita.
+            </p>
+          </div>
+        ) : (
+          <div className="w-full overflow-x-auto">
+            <div className="flex min-w-[760px] gap-3 sm:min-w-0">
+              <div className="flex h-60 w-7 shrink-0 flex-col justify-between pb-7 pt-1 text-right font-mono text-[9px] text-muted-foreground">
+                <span>{maxMonthlyTrades}</span>
+                <span>{Math.round(maxMonthlyTrades / 2)}</span>
+                <span>0</span>
+              </div>
+
+              <div className="flex h-60 flex-1 items-end gap-2 border-b border-border/70 px-2 pb-4">
+                {months.map((month) => {
+                  const height =
+                    month.trades > 0
+                      ? Math.max((month.trades / maxMonthlyTrades) * 172, 14)
+                      : 0;
+
+                  return (
+                    <div
+                      key={month.monthName}
+                      className="flex min-w-0 flex-1 flex-col items-center gap-2"
+                    >
+                      <div className="group relative flex h-[180px] w-full items-end justify-center">
+                        {month.trades > 0 && (
+                          <>
+                            <div
+                              className={cn(
+                                'pointer-events-none absolute top-1 z-10 whitespace-nowrap rounded-xl border border-teal-300/20 bg-[#20242d]/98 px-2.5 py-1.5 font-mono text-[10px] text-slate-200 opacity-0 shadow-[0_10px_30px_rgba(0,0,0,0.45),0_0_18px_rgba(45,212,191,0.08)] transition-all duration-200 group-hover:translate-y-1 group-hover:opacity-100',
+                                month.monthIndex === 0
+                                  ? 'left-0'
+                                  : month.monthIndex === 11
+                                    ? 'right-0'
+                                    : 'left-1/2 -translate-x-1/2'
+                              )}
+                            >
+                              <span className="mr-1 text-foreground">
+                                {month.monthName}:
+                              </span>
+                              <span className="font-semibold text-teal-200">
+                                {month.trades} trade
+                              </span>
+                            </div>
+                            <div
+                              className="w-11 rounded-t-lg bg-gradient-to-t from-emerald-950 via-teal-700 to-teal-300 shadow-[0_0_12px_rgba(45,212,191,0.12)] transition-all duration-200 group-hover:scale-x-105 group-hover:brightness-110 group-hover:shadow-[0_0_22px_rgba(45,212,191,0.28)] sm:w-12"
+                              style={{ height }}
+                            />
+                          </>
+                        )}
+                      </div>
+                      <span className="font-mono text-[10px] text-muted-foreground">
+                        {month.monthName.slice(0, 3)}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="mb-4 overflow-hidden rounded-2xl border border-border bg-card/95 shadow-[0_16px_36px_rgba(0,0,0,0.22)]">
@@ -207,70 +428,143 @@ export function MonthlyAnalysis({ trades }: MonthlyAnalysisProps) {
           <div key={month.monthName} className="grid grid-cols-[1.2fr_1fr_0.8fr_0.8fr_0.9fr_0.9fr_1fr_1fr] border-b border-border/70 px-4 py-3 font-mono text-xs last:border-b-0">
             <span className="text-foreground">{month.monthName}</span>
             <span className={cn(month.totalPnl > 0 && 'text-profit', month.totalPnl < 0 && 'text-loss', month.totalPnl === 0 && 'text-muted-foreground')}>
-              {month.trades ? formatCurrency(month.totalPnl) : '—'}
+              {month.trades
+                ? streamerMode
+                  ? '******'
+                  : formatCurrency(month.totalPnl)
+                : '—'}
             </span>
             <span>{month.trades || '—'}</span>
             <span>{month.trades ? formatPercent(month.winRate) : '—'}</span>
             <span>{month.trades ? formatPercent(month.dayWinRate) : '—'}</span>
             <span>{month.trades ? (!isFinite(month.profitFactor) ? '∞' : month.profitFactor.toFixed(2)) : '—'}</span>
-            <span className={month.bestDay > 0 ? 'text-profit' : 'text-muted-foreground'}>{month.trades ? formatCurrency(month.bestDay) : '—'}</span>
-            <span className={month.worstDay < 0 ? 'text-loss' : 'text-muted-foreground'}>{month.trades ? formatCurrency(month.worstDay) : '—'}</span>
+            <span className={month.bestDay > 0 ? 'text-profit' : 'text-muted-foreground'}>{month.trades ? streamerMode ? '******' : formatCurrency(month.bestDay) : '—'}</span>
+            <span className={month.worstDay < 0 ? 'text-loss' : 'text-muted-foreground'}>{month.trades ? streamerMode ? '******' : formatCurrency(month.worstDay) : '—'}</span>
           </div>
         ))}
           </div>
         </div>
       </div>
 
-      <div className="rounded-2xl border border-border bg-card/95 p-4 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
-        <div className="mb-4 font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-          Equity cumulativa — {selectedYear}
-        </div>
-        <div className="h-[180px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={equityData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-              <defs>
-                <linearGradient id="monthlyEquityGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={equityFillStart} />
-                  <stop offset="95%" stopColor={equityFillEnd} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" vertical={false} />
-              <XAxis
-                dataKey="month"
-                tick={{ fontSize: 10, fill: '#e5e5e5' }}
-                tickLine={false}
-                axisLine={false}
-              />
-              <YAxis
-                tick={{ fontSize: 10, fill: '#e5e5e5' }}
-                tickLine={false}
-                axisLine={false}
-                tickFormatter={(value) => `$${value}`}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: 'hsl(var(--popover))',
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: '6px',
-                  fontSize: '12px',
-                }}
-                labelStyle={{ color: 'hsl(var(--foreground))' }}
-                formatter={(value: number) => [`$${value.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 'Equity']}
-                cursor={{ stroke: 'rgba(255,255,255,0.2)', strokeWidth: 1 }}
-              />
-              <Area
-                type="monotone"
-                dataKey="equity"
-                stroke={equityStrokeColor}
-                strokeWidth={2}
-                fill="url(#monthlyEquityGradient)"
-                activeDot={{ r: 6, fill: equityStrokeColor, stroke: '#fff', strokeWidth: 2 }}
-                dot={false}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
+      <div className="mb-4">
+        <AnalysisDiagnostics trades={yearFilteredTrades} />
+      </div>
+
+      <div className="mb-4">
+        <div className="rounded-2xl border border-border bg-card/95 p-4 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
+          <div className="mb-4">
+            <div className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+              Mistake Tracking
+            </div>
+            <p className="mt-1 font-mono text-xs text-muted-foreground">
+              Errori più frequenti registrati nei trade.
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            {mistakeStats.mistakes.length > 0 ? (
+              mistakeStats.mistakes.map((mistake) => (
+                <div
+                  key={mistake.value}
+                  className="grid grid-cols-[140px_1fr_32px] items-center gap-4"
+                >
+                  <span className="font-mono text-xs text-foreground">
+                    {mistake.emoji && (
+                      <span className="mr-2" aria-hidden="true">
+                        {mistake.emoji}
+                      </span>
+                    )}
+                    {mistake.label}
+                  </span>
+                  <div className="h-2 overflow-hidden rounded-full bg-secondary">
+                    <div
+                      className={`h-full rounded-full bg-gradient-to-r transition-all duration-200 hover:brightness-110 hover:drop-shadow-[0_0_6px_rgba(255,77,109,0.45)] ${mistake.heatColor}`}
+                      style={{ width: `${mistake.percent}%` }}
+                    />
+                  </div>
+                  <span className="min-w-6 text-right font-mono text-xs text-muted-foreground">
+                    {mistake.count}
+                  </span>
+                </div>
+              ))
+            ) : (
+              <div className="rounded-xl border border-border bg-background/50 p-4 font-mono text-xs text-muted-foreground">
+                Nessun errore registrato.
+              </div>
+            )}
+          </div>
         </div>
       </div>
+
+      <div className="mb-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="rounded-2xl border border-border bg-card/95 p-3.5 font-mono shadow-[0_12px_28px_rgba(0,0,0,0.18)] sm:p-4">
+          <div className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+            Discipline Score
+          </div>
+
+          <div className="mt-2.5 text-2xl font-semibold text-foreground">
+            {mistakeStats.disciplineScore} / 100
+          </div>
+          <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
+            <span>{mistakeStats.cleanTrades} trade corretti</span>
+            <span>{mistakeStats.tradesWithMistakes} trade con errori</span>
+          </div>
+
+          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-secondary">
+            <div
+              className={`h-full rounded-full transition-all ${mistakeStats.disciplineColor}`}
+              style={{ width: `${mistakeStats.disciplineScore}%` }}
+            />
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-border bg-card/95 p-3.5 font-mono shadow-[0_12px_28px_rgba(0,0,0,0.18)] sm:p-4">
+          <div className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+            Errore più commesso
+          </div>
+
+          <div className="mt-2.5 text-xl font-semibold text-foreground">
+            {mistakeStats.topMistake ? (
+              <>
+                <span className="mr-2" aria-hidden="true">
+                  {mistakeStats.topMistake.emoji}
+                </span>
+                {mistakeStats.topMistake.label}
+              </>
+            ) : (
+              'Errore più commesso: —'
+            )}
+          </div>
+          <div className="mt-1.5 text-[11px] text-muted-foreground">
+            {mistakeStats.topMistakeTradeCount}{' '}
+            {mistakeStats.topMistakeTradeCount === 1
+              ? 'volta commesso'
+              : 'volte commesso'}
+          </div>
+          <div className="mt-3 flex items-baseline gap-2 text-[11px] text-muted-foreground">
+            <p>Winrate:</p>
+            <p
+              className={cn(
+                'text-base font-semibold',
+                mistakeStats.topMistakeWinRate === null
+                  ? 'text-muted-foreground'
+                  : mistakeStats.topMistakeWinRate >= 50
+                    ? 'text-profit'
+                    : 'text-loss'
+              )}
+            >
+              {mistakeStats.topMistakeWinRate === null
+                ? '—'
+                : formatPercent(mistakeStats.topMistakeWinRate)}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="mb-4">
+        <AdvancedStatsGrid trades={yearFilteredTrades} extended />
+      </div>
+
     </section>
   );
 }

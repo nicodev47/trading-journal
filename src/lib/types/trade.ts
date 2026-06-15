@@ -20,6 +20,8 @@ export interface Trade {
   riskReward: number; // calculated
   screenshots: (string | ScreenshotData)[]; // base64, URLs, or ScreenshotData objects
   tags: string[];
+  mistakes: string[];
+  isFavorite: boolean;
   strategy: string;
   notes: string;
   emotionalState: 'confident' | 'nervous' | 'neutral' | 'fomo' | 'revenge' | 'disciplined';
@@ -56,6 +58,7 @@ export interface JournalState {
   trades: Trade[];
   tags: string[];
   strategies: string[];
+  customMistakes: string[];
   weeklyPlans: WeeklyPlan[];
   settings: {
     currency: string;
@@ -96,6 +99,13 @@ export interface Statistics {
 
 // Journal symbols
 export const FOREX_PAIRS = ['MNQ', 'NQ'] as const;
+
+export const TRADE_MISTAKES = [
+  { value: 'early_entry', emoji: '⏳', label: 'Entrata in Anticipo' },
+  { value: 'late_entry', emoji: '🥶', label: 'Entrata in Ritardo' },
+] as const;
+
+export const CUSTOM_MISTAKE_PREFIX = 'custom:';
 
 export const EMOTIONAL_STATES = [
   { value: 'confident', label: 'Confident' },

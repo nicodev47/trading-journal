@@ -2,13 +2,31 @@
 
 import { useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
+import { getBestOperatingWindow } from '@/lib/operating-windows';
 import type { Trade } from '@/lib/types/trade';
+import { useStreamerMode } from '@/contexts/streamer-mode-context';
+import { cn } from '@/lib/utils';
 
 interface AdvancedStatsGridProps {
   trades: Trade[];
+  extended?: boolean;
 }
 
-export function AdvancedStatsGrid({ trades }: AdvancedStatsGridProps) {
+const WEEKDAY_NAMES = [
+  'Domenica',
+  'Lunedì',
+  'Martedì',
+  'Mercoledì',
+  'Giovedì',
+  'Venerdì',
+  'Sabato',
+] as const;
+
+export function AdvancedStatsGrid({
+  trades,
+  extended = false,
+}: AdvancedStatsGridProps) {
+  const { streamerMode } = useStreamerMode();
   const data = useMemo(() => {
     const winningTrades = trades.filter((trade) => trade.pnl > 0);
     const losingTrades = trades.filter((trade) => trade.pnl < 0);
@@ -17,15 +35,30 @@ export function AdvancedStatsGrid({ trades }: AdvancedStatsGridProps) {
     const pnlByDay = new Map<string, number>();
     const tradesByDay = new Map<string, number>();
     const setupStats = new Map<string, { trades: number; wins: number }>();
-    let sessionStartPnl = 0;
-    let sessionEndPnl = 0;
-    let sessionStartTrades = 0;
-    let sessionEndTrades = 0;
+    const weekdayStats = new Map<
+      number,
+      { trades: number; wins: number; pnl: number }
+    >();
 
     trades.forEach((trade) => {
       const date = trade.exitDate.split('T')[0];
+      const netPnl = trade.pnl - trade.commission;
       pnlByDay.set(date, (pnlByDay.get(date) ?? 0) + trade.pnl);
       tradesByDay.set(date, (tradesByDay.get(date) ?? 0) + 1);
+      const tradeDate = new Date(trade.exitDate);
+
+      if (!Number.isNaN(tradeDate.getTime())) {
+        const weekday = tradeDate.getDay();
+        const stats = weekdayStats.get(weekday) ?? {
+          trades: 0,
+          wins: 0,
+          pnl: 0,
+        };
+        stats.trades += 1;
+        stats.pnl += netPnl;
+        if (netPnl > 0) stats.wins += 1;
+        weekdayStats.set(weekday, stats);
+      }
 
       const setup = trade.strategy.trim();
       if (setup) {
@@ -35,23 +68,6 @@ export function AdvancedStatsGrid({ trades }: AdvancedStatsGridProps) {
         setupStats.set(setup, stats);
       }
 
-      const time = trade.entryDate.split('T')[1]?.slice(0, 5);
-
-      if (time) {
-        const [hours, minutes] = time.split(':').map(Number);
-        const timeInMinutes = hours * 60 + minutes;
-
-        if (timeInMinutes >= 15 * 60 + 30 && timeInMinutes < 15 * 60 + 50) {
-          sessionStartPnl += trade.pnl;
-          sessionStartTrades += 1;
-        } else if (
-          timeInMinutes >= 15 * 60 + 50 &&
-          timeInMinutes <= 16 * 60 + 10
-        ) {
-          sessionEndPnl += trade.pnl;
-          sessionEndTrades += 1;
-        }
-      }
     });
 
     const grossWins = winningTrades.reduce((sum, trade) => sum + trade.pnl, 0);
@@ -64,15 +80,7 @@ export function AdvancedStatsGrid({ trades }: AdvancedStatsGridProps) {
     let positiveStreak = 0;
     let longestPositiveStreak = 0;
     const tradingDays = tradesByDay.size;
-    const newYorkSessionTrades = sessionStartTrades + sessionEndTrades;
-    const bestNewYorkWindow =
-      newYorkSessionTrades === 0
-        ? null
-        : sessionStartPnl === sessionEndPnl
-          ? 'Pari'
-          : sessionStartPnl > sessionEndPnl
-            ? 'Inizio sessione'
-            : 'Fine sessione';
+    const bestOperatingWindow = getBestOperatingWindow(trades);
     const bestSetup = Array.from(setupStats.entries()).reduce<{
       name: string | null;
       trades: number;
@@ -95,6 +103,26 @@ export function AdvancedStatsGrid({ trades }: AdvancedStatsGridProps) {
     const sortedDailyPnl = Array.from(pnlByDay.entries()).sort(
       ([dateA], [dateB]) => dateA.localeCompare(dateB)
     );
+    const longTradeList = trades.filter(
+      (trade) => trade.direction === 'long'
+    );
+    const shortTradeList = trades.filter(
+      (trade) => trade.direction === 'short'
+    );
+    const weekdayPerformance = Array.from(weekdayStats.entries()).map(
+      ([weekday, stats]) => ({
+        name: WEEKDAY_NAMES[weekday],
+        trades: stats.trades,
+        winRate: (stats.wins / stats.trades) * 100,
+        pnl: stats.pnl,
+      })
+    );
+    const bestWeekday = [...weekdayPerformance].sort(
+      (a, b) =>
+        b.winRate - a.winRate ||
+        b.trades - a.trades ||
+        b.pnl - a.pnl
+    )[0];
 
     for (const [, pnl] of sortedDailyPnl) {
       if (pnl > 0) {
@@ -130,11 +158,24 @@ export function AdvancedStatsGrid({ trades }: AdvancedStatsGridProps) {
       longTrades,
       shortTrades,
       tradingDays,
-      bestNewYorkWindow,
+      bestOperatingWindow,
       bestSetup,
       currentStreak,
       currentStreakType,
       longestPositiveStreak,
+      longWinRate: longTradeList.length
+        ? (longTradeList.filter((trade) => trade.pnl - trade.commission > 0)
+            .length /
+            longTradeList.length) *
+          100
+        : 0,
+      shortWinRate: shortTradeList.length
+        ? (shortTradeList.filter((trade) => trade.pnl - trade.commission > 0)
+            .length /
+            shortTradeList.length) *
+          100
+        : 0,
+      bestWeekday,
     };
   }, [trades]);
 
@@ -145,7 +186,12 @@ export function AdvancedStatsGrid({ trades }: AdvancedStatsGridProps) {
     })} USD`;
 
   return (
-    <div className="grid grid-cols-1 items-start gap-4 py-4 md:grid-cols-2 xl:grid-cols-3">
+    <div
+      className={cn(
+        'grid grid-cols-1 items-start gap-4 py-4 md:grid-cols-2 xl:grid-cols-3',
+        extended && '[&_[data-slot=card-content]]:!min-h-[124px]'
+      )}
+    >
       <Card className="self-start rounded-2xl border border-border bg-card/95 py-0 shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
         <CardContent className="flex min-h-[148px] flex-col justify-center p-4">
           <p className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
@@ -201,13 +247,13 @@ export function AdvancedStatsGrid({ trades }: AdvancedStatsGridProps) {
 
           <div className="mt-3 flex flex-wrap items-baseline gap-x-2 gap-y-1 font-mono font-bold tracking-tight">
             <span className="text-[clamp(1.15rem,1.8vw,1.5rem)] text-profit">
-              {formatCurrency(data.avgWin)}
+              {streamerMode ? '******' : formatCurrency(data.avgWin)}
             </span>
             <span className="text-[clamp(1.15rem,1.8vw,1.5rem)] text-foreground">
               /
             </span>
             <span className="text-[clamp(1.15rem,1.8vw,1.5rem)] text-loss">
-              {formatCurrency(data.avgLoss)}
+              {streamerMode ? '******' : formatCurrency(data.avgLoss)}
             </span>
           </div>
 
@@ -247,18 +293,17 @@ export function AdvancedStatsGrid({ trades }: AdvancedStatsGridProps) {
           </p>
 
           <p className="mt-3 font-mono text-2xl font-bold tracking-tight text-profit">
-            {data.bestNewYorkWindow ?? '—'}
+            {data.bestOperatingWindow?.name ?? '—'}
           </p>
 
           <p className="mt-1 font-mono text-[11px] text-muted-foreground">
-            {data.bestNewYorkWindow
-              ? 'Sessione New York 15:30–16:10'
-              : 'Nessun dato nella sessione New York'}
+            {data.bestOperatingWindow?.description ?? 'Nessun trade registrato'}
           </p>
 
           <div className="mt-4 flex h-1.5 w-full overflow-hidden rounded-full bg-secondary">
-            <div className="h-full w-1/2 bg-profit/80" />
-            <div className="h-full w-1/2 bg-profit/35" />
+            {data.bestOperatingWindow && (
+              <div className="h-full w-full rounded-full bg-profit/80" />
+            )}
           </div>
         </CardContent>
       </Card>
@@ -335,6 +380,74 @@ export function AdvancedStatsGrid({ trades }: AdvancedStatsGridProps) {
         </CardContent>
       </Card>
 
+      {extended && (
+        <>
+          <CompactAnalysisCard
+            title="Winrate Long"
+            value={data.longTrades ? `${data.longWinRate.toFixed(0)}%` : '—'}
+            subtitle={`${data.longTrades} trade long`}
+            tone="profit"
+          />
+
+          <CompactAnalysisCard
+            title="Winrate Short"
+            value={data.shortTrades ? `${data.shortWinRate.toFixed(0)}%` : '—'}
+            subtitle={`${data.shortTrades} trade short`}
+            tone={data.shortWinRate >= 50 ? 'profit' : 'loss'}
+          />
+
+          <CompactAnalysisCard
+            title="Giorno più performante"
+            value={data.bestWeekday?.name ?? '—'}
+            subtitle={
+              data.bestWeekday
+                ? `${data.bestWeekday.winRate.toFixed(0)}% WR · ${
+                    data.bestWeekday.trades
+                  } trade`
+                : 'Nessun trade registrato'
+            }
+            tone="profit"
+          />
+        </>
+      )}
+
     </div>
+  );
+}
+
+function CompactAnalysisCard({
+  title,
+  value,
+  subtitle,
+  tone,
+}: {
+  title: string;
+  value: string;
+  subtitle: string;
+  tone: 'profit' | 'loss';
+}) {
+  return (
+    <Card className="self-start rounded-2xl border border-border bg-card/95 py-0 shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
+      <CardContent className="flex min-h-[124px] flex-col justify-center p-4">
+        <p className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+          {title}
+        </p>
+        <p
+          className={`mt-3 truncate font-mono text-xl font-bold tracking-tight ${
+            tone === 'profit' ? 'text-profit' : 'text-loss'
+          }`}
+        >
+          {value}
+        </p>
+        <p className="mt-1 font-mono text-[11px] text-muted-foreground">
+          {subtitle}
+        </p>
+        <div
+          className={`mt-3 h-1.5 w-full rounded-full ${
+            tone === 'profit' ? 'bg-profit/80' : 'bg-loss/80'
+          }`}
+        />
+      </CardContent>
+    </Card>
   );
 }

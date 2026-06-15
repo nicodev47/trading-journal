@@ -13,6 +13,7 @@ import { Plus, TrendingUp, TrendingDown, Star, Image } from 'lucide-react';
 import { formatDateTime } from '@/lib/date-utils';
 import { cn } from '@/lib/utils';
 import type { Trade } from '@/lib/types/trade';
+import { useStreamerMode } from '@/contexts/streamer-mode-context';
 
 interface TradeListProps {
   isOpen: boolean;
@@ -31,6 +32,7 @@ export function TradeList({
   onAddNew,
   onEditTrade,
 }: TradeListProps) {
+  const { streamerMode } = useStreamerMode();
   const totalPnl = trades.reduce((sum, t) => sum + t.pnl - t.commission, 0);
   const totalPips = trades.reduce((sum, t) => sum + t.pips, 0);
 
@@ -57,7 +59,9 @@ export function TradeList({
               totalPnl < 0 && 'text-loss',
               totalPnl === 0 && 'text-muted-foreground'
             )}>
-              ${totalPnl >= 0 ? '+' : ''}{totalPnl.toFixed(2)}
+              {streamerMode
+                ? '******'
+                : `$${totalPnl >= 0 ? '+' : ''}${totalPnl.toFixed(2)}`}
             </p>
           </div>
           <div className="text-right">
@@ -68,7 +72,9 @@ export function TradeList({
               totalPips < 0 && 'text-loss',
               totalPips === 0 && 'text-muted-foreground'
             )}>
-              {totalPips >= 0 ? '+' : ''}{totalPips.toFixed(1)}
+              {streamerMode
+                ? '******'
+                : `${totalPips >= 0 ? '+' : ''}${totalPips.toFixed(1)}`}
             </p>
           </div>
           <div className="text-right">
@@ -127,15 +133,22 @@ export function TradeList({
                         (trade.pnl - trade.commission) > 0 && 'text-profit',
                         (trade.pnl - trade.commission) < 0 && 'text-loss'
                       )}>
-                        ${(trade.pnl - trade.commission) >= 0 ? '+' : ''}
-                        {(trade.pnl - trade.commission).toFixed(2)}
+                        {streamerMode
+                          ? '******'
+                          : `$${(trade.pnl - trade.commission) >= 0 ? '+' : ''}${(
+                              trade.pnl - trade.commission
+                            ).toFixed(2)}`}
                       </p>
                       <p className={cn(
                         'font-mono text-xs',
                         trade.pips > 0 && 'text-profit/70',
                         trade.pips < 0 && 'text-loss/70'
                       )}>
-                        {trade.pips >= 0 ? '+' : ''}{trade.pips.toFixed(1)} pips
+                        {streamerMode
+                          ? '******'
+                          : `${trade.pips >= 0 ? '+' : ''}${trade.pips.toFixed(
+                              1
+                            )} pips`}
                       </p>
                     </div>
                   </div>

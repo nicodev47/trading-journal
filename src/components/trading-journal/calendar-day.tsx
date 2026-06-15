@@ -2,6 +2,7 @@
 
 import { cn } from '@/lib/utils';
 import type { DayData } from '@/lib/types/trade';
+import { useStreamerMode } from '@/contexts/streamer-mode-context';
 
 interface CalendarDayProps {
   date: Date;
@@ -22,9 +23,12 @@ export function CalendarDay({
   minPnl,
   onClick,
 }: CalendarDayProps) {
+  const { streamerMode } = useStreamerMode();
   const hasTrades = dayData && dayData.tradeCount > 0;
   const pnl = dayData?.totalPnl ?? 0;
   const tradeCount = dayData?.tradeCount ?? 0;
+  const hasFavoriteTrade =
+    dayData?.trades.some(trade => trade.isFavorite ?? false) ?? false;
 
   const getIntensity = () => {
     if (!hasTrades) return 0;
@@ -93,7 +97,8 @@ export function CalendarDay({
     <button
       onClick={onClick}
       className={cn(
-'group relative flex h-[66px] w-full min-w-0 flex-col bg-background p-1.5 text-left transition-colors hover:bg-secondary/30 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-profit/80 sm:h-[82px] sm:p-2 md:h-[100px] md:p-2.5',        !isCurrentMonth &&
+        'group relative flex h-[66px] w-full min-w-0 flex-col bg-background p-1.5 text-left transition-colors hover:bg-secondary/30 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-profit/80 sm:h-[82px] sm:p-2 md:h-[100px] md:p-2.5',
+        !isCurrentMonth &&
           '!bg-background text-muted-foreground/20 hover:!bg-background',
         isToday && 'ring-1 ring-inset ring-profit/80'
       )}
@@ -120,8 +125,14 @@ export function CalendarDay({
               pnl === 0 && 'text-muted-foreground'
             )}
           >
-            <span className="sm:hidden">{compactPnl}</span>
-            <span className="hidden sm:inline">{fullPnl}</span>
+            {streamerMode ? (
+              '******'
+            ) : (
+              <>
+                <span className="sm:hidden">{compactPnl}</span>
+                <span className="hidden sm:inline">{fullPnl}</span>
+              </>
+            )}
           </span>
         )}
       </div>
@@ -129,6 +140,18 @@ export function CalendarDay({
       {hasTrades && (
         <span className="absolute bottom-1.5 left-1.5 font-mono text-[9px] text-muted-foreground sm:bottom-2 sm:left-2 sm:text-[10px] md:bottom-2.5 md:left-2.5 md:text-xs">
           {tradeCount}
+        </span>
+      )}
+
+      {hasFavoriteTrade && (
+        <span
+          aria-label="Trade preferito"
+          className={cn(
+            'pointer-events-none absolute right-1.5 top-1.5 text-[16px] leading-none sm:right-2 sm:top-2 sm:text-[18px]',
+            !isCurrentMonth && 'opacity-30'
+          )}
+        >
+          ⭐️
         </span>
       )}
     </button>

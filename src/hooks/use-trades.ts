@@ -1,11 +1,14 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import type { Trade, JournalState, WeeklyPlan } from '@/lib/types/trade';
+import {
+  CUSTOM_MISTAKE_PREFIX,
+  type Trade,
+  type JournalState,
+  type WeeklyPlan,
+} from '@/lib/types/trade';
 
 const STORAGE_KEY_PREFIX = 'eclipse-trading-journal-data';
-const MIGRATION_KEY_PREFIX = 'eclipse-trading-journal-migration-v3';
-const TRADES_RESET_KEY_PREFIX = 'eclipse-trading-journal-trades-reset-v1';
 
 export type JournalWorkspace = 'personal' | 'student';
 
@@ -13,6 +16,7 @@ const initialState: JournalState = {
   trades: [],
   tags: [],
   strategies: [],
+  customMistakes: [],
   weeklyPlans: [],
   settings: {
     currency: 'USD',
@@ -20,10 +24,50 @@ const initialState: JournalState = {
   },
 };
 
+const parseImportedJournal = (jsonString: string): JournalState | null => {
+  try {
+    const data = JSON.parse(jsonString) as Partial<JournalState>;
+
+    if (!Array.isArray(data.trades)) {
+      return null;
+    }
+
+    const trades = data.trades.map(trade => ({
+      ...trade,
+      mistakes: trade.mistakes || [],
+      isFavorite: trade.isFavorite ?? false,
+    }));
+    const customMistakes = Array.from(
+      new Set([
+        ...(data.customMistakes || []),
+        ...trades.flatMap(trade =>
+          (trade.mistakes || []).filter(mistake =>
+            mistake.startsWith(CUSTOM_MISTAKE_PREFIX)
+          )
+        ),
+      ])
+    );
+
+    return {
+      ...initialState,
+      ...data,
+      trades,
+      tags: data.tags || [],
+      strategies: data.strategies || [],
+      customMistakes,
+      weeklyPlans: data.weeklyPlans || [],
+      settings: {
+        ...initialState.settings,
+        ...(data.settings || {}),
+      },
+    };
+  } catch {
+    return null;
+  }
+};
+
 export function useTrades(workspace: JournalWorkspace = 'personal') {
   const storageKey = `${STORAGE_KEY_PREFIX}-${workspace}`;
-  const migrationKey = `${MIGRATION_KEY_PREFIX}-${workspace}`;
-  const tradesResetKey = `${TRADES_RESET_KEY_PREFIX}-${workspace}`;
 
   const [state, setState] = useState<JournalState>(initialState);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -34,46 +78,17 @@ export function useTrades(workspace: JournalWorkspace = 'personal') {
 
     try {
       const stored = localStorage.getItem(storageKey);
-      const hasMigrated = localStorage.getItem(migrationKey);
-      const hasResetTrades = localStorage.getItem(tradesResetKey);
       
       if (stored) {
-        const parsed = JSON.parse(stored) as JournalState;
-        
-        // Clear all strategies on migration v3 (force empty start)
-        let strategies = parsed.strategies || [];
-        if (!hasMigrated) {
-          strategies = [];
-          localStorage.setItem(migrationKey, 'true');
-        }
-
-        const trades = hasResetTrades ? parsed.trades || [] : [];
-        if (!hasResetTrades) {
-          localStorage.setItem(tradesResetKey, 'true');
-        }
-        
-        setState({
-          ...initialState,
-          ...parsed,
-          trades,
-          tags: parsed.tags || [],
-          strategies: strategies,
-          weeklyPlans: parsed.weeklyPlans || [],
-        });
+        setState(parseImportedJournal(stored) || initialState);
       } else {
         setState(initialState);
-        if (!hasMigrated) {
-          localStorage.setItem(migrationKey, 'true');
-        }
-        if (!hasResetTrades) {
-          localStorage.setItem(tradesResetKey, 'true');
-        }
       }
     } catch (error) {
       console.error('Failed to load trades from localStorage:', error);
     }
     setIsLoaded(true);
-  }, [storageKey, migrationKey, tradesResetKey]);
+  }, [storageKey]);
 
   // Save to localStorage whenever state changes
   useEffect(() => {
@@ -89,7 +104,10 @@ export function useTrades(workspace: JournalWorkspace = 'personal') {
   const addTrade = useCallback((trade: Trade) => {
     setState(prev => ({
       ...prev,
-      trades: [...prev.trades, trade],
+      trades: [
+        ...prev.trades,
+        { ...trade, isFavorite: trade.isFavorite ?? false },
+      ],
     }));
   }, []);
 
@@ -141,6 +159,26 @@ export function useTrades(workspace: JournalWorkspace = 'personal') {
     }));
   }, []);
 
+  const addCustomMistake = useCallback((mistake: string) => {
+    setState(prev => ({
+      ...prev,
+      customMistakes: prev.customMistakes.includes(mistake)
+        ? prev.customMistakes
+        : [...prev.customMistakes, mistake],
+    }));
+  }, []);
+
+  const removeCustomMistake = useCallback((mistake: string) => {
+    setState(prev => ({
+      ...prev,
+      customMistakes: prev.customMistakes.filter(value => value !== mistake),
+      trades: prev.trades.map(trade => ({
+        ...trade,
+        mistakes: (trade.mistakes || []).filter(value => value !== mistake),
+      })),
+    }));
+  }, []);
+
   const updateSettings = useCallback((settings: Partial<JournalState['settings']>) => {
     setState(prev => ({
       ...prev,
@@ -168,29 +206,56 @@ export function useTrades(workspace: JournalWorkspace = 'personal') {
     return JSON.stringify(state, null, 2);
   }, [state]);
 
-  const importData = useCallback((jsonString: string): boolean => {
-    try {
-      const data = JSON.parse(jsonString) as JournalState;
-      if (data.trades && Array.isArray(data.trades)) {
-        setState({
-          ...initialState,
-          ...data,
-          tags: data.tags || [],
-          strategies: data.strategies || [],
-          weeklyPlans: data.weeklyPlans || [],
-        });
-        return true;
-      }
-      return false;
-    } catch {
+  const importData = useCallback((
+    jsonString: string,
+    targetWorkspace: JournalWorkspace = workspace
+  ): boolean => {
+    const importedState = parseImportedJournal(jsonString);
+
+    if (!importedState) {
       return false;
     }
-  }, []);
+
+    const targetStorageKey = `${STORAGE_KEY_PREFIX}-${targetWorkspace}`;
+
+    try {
+      localStorage.setItem(targetStorageKey, JSON.stringify(importedState));
+
+      if (targetWorkspace === workspace) {
+        setState(importedState);
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Failed to import journal data:', error);
+      return false;
+    }
+  }, [workspace]);
 
   const clearAllData = useCallback(() => {
     setState(initialState);
     localStorage.removeItem(storageKey);
   }, [storageKey]);
+
+  const getWorkspaceData = useCallback((targetWorkspace: JournalWorkspace) => {
+    if (targetWorkspace === workspace) {
+      return state;
+    }
+
+    const stored = localStorage.getItem(
+      `${STORAGE_KEY_PREFIX}-${targetWorkspace}`
+    );
+
+    return stored ? parseImportedJournal(stored) || initialState : initialState;
+  }, [state, workspace]);
+
+  const clearWorkspaceData = useCallback((targetWorkspace: JournalWorkspace) => {
+    localStorage.removeItem(`${STORAGE_KEY_PREFIX}-${targetWorkspace}`);
+
+    if (targetWorkspace === workspace) {
+      setState(initialState);
+    }
+  }, [workspace]);
 
   const getTradesByDate = useCallback((dateKey: string): Trade[] => {
     return state.trades.filter(trade => trade.exitDate.startsWith(dateKey));
@@ -204,6 +269,7 @@ export function useTrades(workspace: JournalWorkspace = 'personal') {
     trades: state.trades,
     tags: state.tags,
     strategies: state.strategies,
+    customMistakes: state.customMistakes,
     weeklyPlans: state.weeklyPlans,
     settings: state.settings,
     isLoaded,
@@ -214,12 +280,16 @@ export function useTrades(workspace: JournalWorkspace = 'personal') {
     removeTag,
     addStrategy,
     removeStrategy,
+    addCustomMistake,
+    removeCustomMistake,
     updateSettings,
     saveWeeklyPlan,
     getWeeklyPlan,
     exportData,
     importData,
     clearAllData,
+    getWorkspaceData,
+    clearWorkspaceData,
     getTradesByDate,
     getTradeById,
   };

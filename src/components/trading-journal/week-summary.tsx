@@ -1,6 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
+import { useStreamerMode } from '@/contexts/streamer-mode-context';
 
 interface WeekSummaryProps {
   totalPnl: number;
@@ -8,6 +9,7 @@ interface WeekSummaryProps {
 }
 
 export function WeekSummary({ totalPnl, tradeCount }: WeekSummaryProps) {
+  const { streamerMode } = useStreamerMode();
   const fullPnl = `${totalPnl.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`;
   const compactPnl = (() => {
     const abs = Math.abs(totalPnl);
@@ -33,8 +35,14 @@ export function WeekSummary({ totalPnl, tradeCount }: WeekSummaryProps) {
             totalPnl === 0 && 'text-muted-foreground'
           )}
         >
-          <span className="sm:hidden">{compactPnl}</span>
-          <span className="hidden sm:inline">{fullPnl}</span>
+          {streamerMode ? (
+            '******'
+          ) : (
+            <>
+              <span className="sm:hidden">{compactPnl}</span>
+              <span className="hidden sm:inline">{fullPnl}</span>
+            </>
+          )}
         </span>
         <span className="font-mono text-[9px] text-muted-foreground sm:text-[10px] md:text-sm">
           {tradeCount}
