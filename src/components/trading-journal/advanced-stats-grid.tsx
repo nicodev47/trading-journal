@@ -208,7 +208,12 @@ export function AdvancedStatsGrid({
             {trades.length} {trades.length === 1 ? 'trade eseguito' : 'trade eseguiti'}
           </p>
 
-          <div className="mt-4 h-1.5 w-full rounded-full bg-profit/80" />
+          <div className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-secondary">
+            <div
+              className="h-full rounded-full bg-profit/80 transition-all"
+              style={{ width: data.tradingDays > 0 ? '100%' : '0%' }}
+            />
+          </div>
         </CardContent>
       </Card>
 
@@ -232,11 +237,16 @@ export function AdvancedStatsGrid({
             Migliore: {data.longestPositiveStreak} win
           </p>
 
-          <div
-            className={`mt-4 h-1.5 w-full rounded-full ${
-              data.currentStreakType === 'loss' ? 'bg-loss/80' : 'bg-profit/80'
-            }`}
-          />
+          <div className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-secondary">
+            <div
+              className={`h-full rounded-full transition-all ${
+                data.currentStreakType === 'loss'
+                  ? 'bg-loss/80'
+                  : 'bg-profit/80'
+              }`}
+              style={{ width: data.currentStreak > 0 ? '100%' : '0%' }}
+            />
+          </div>
         </CardContent>
       </Card>
 
