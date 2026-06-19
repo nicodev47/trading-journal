@@ -20,12 +20,27 @@ export interface Trade {
   riskReward: number; // calculated
   screenshots: (string | ScreenshotData)[]; // base64, URLs, or ScreenshotData objects
   tags: string[];
-  mistakes: string[];
   isFavorite: boolean;
   strategy: string;
   notes: string;
   emotionalState: 'confident' | 'nervous' | 'neutral' | 'fomo' | 'revenge' | 'disciplined';
   setupRating: number; // 1-5
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MissedTrade {
+  id: string;
+  date: string;
+  potentialPnl: number;
+  asset: string;
+  direction: 'long' | 'short' | '';
+  time: string;
+  setup: string;
+  reason: string;
+  screenshots: ScreenshotData[];
+  notes: string;
+  tags: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -56,9 +71,10 @@ export interface WeeklyPlan {
 
 export interface JournalState {
   trades: Trade[];
+  missedTrades: MissedTrade[];
   tags: string[];
   strategies: string[];
-  customMistakes: string[];
+  customTags: string[];
   weeklyPlans: WeeklyPlan[];
   settings: {
     currency: string;
@@ -100,12 +116,32 @@ export interface Statistics {
 // Journal symbols
 export const FOREX_PAIRS = ['MNQ', 'NQ'] as const;
 
-export const TRADE_MISTAKES = [
+export const TRADE_TAGS = [
   { value: 'early_entry', emoji: '⏳', label: 'Entrata in Anticipo' },
   { value: 'late_entry', emoji: '🥶', label: 'Entrata in Ritardo' },
 ] as const;
 
-export const CUSTOM_MISTAKE_PREFIX = 'custom:';
+export const CUSTOM_TAG_PREFIX = 'custom:';
+
+export const VALID_TRADE_SETUPS = [
+  'Continuation',
+  'Reversal Sequence',
+  'Reversal Sequence Failed',
+] as const;
+
+export type TradeSetup = typeof VALID_TRADE_SETUPS[number];
+
+export function isValidTradeSetup(
+  value?: string | null
+): value is TradeSetup {
+  return VALID_TRADE_SETUPS.includes(value as TradeSetup);
+}
+
+export function getEditableSetupValue(
+  value?: string | null
+): TradeSetup | '' {
+  return isValidTradeSetup(value) ? value : '';
+}
 
 export const EMOTIONAL_STATES = [
   { value: 'confident', label: 'Confident' },
@@ -119,6 +155,8 @@ export const EMOTIONAL_STATES = [
 export const DEFAULT_STRATEGIES: string[] = [];
 
 export const DEFAULT_TAGS = [
+  '⏳ Entrata in Anticipo',
+  '🥶 Entrata in Ritardo',
   'A+ Setup',
   'B Setup',
   'C Setup',

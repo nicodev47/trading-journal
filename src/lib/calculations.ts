@@ -285,7 +285,16 @@ export function calculateStatistics(trades: Trade[]): Statistics {
   };
 }
 
-export function getEquityCurveData(trades: Trade[]): { date: string; equity: number; pnl: number }[] {
+export function getEquityCurveData(
+  trades: Trade[]
+): {
+  date: string;
+  displayDate?: string;
+  equity: number;
+  pnl: number;
+  tradeIds?: string[];
+  isStart?: boolean;
+}[] {
   if (trades.length === 0) return [];
 
   const sortedTrades = [...trades].sort(
@@ -293,11 +302,28 @@ export function getEquityCurveData(trades: Trade[]): { date: string; equity: num
   );
 
   let runningEquity = 0;
-  const data: { date: string; equity: number; pnl: number }[] = [];
+  const data: {
+    date: string;
+    displayDate?: string;
+    equity: number;
+    pnl: number;
+    tradeIds?: string[];
+    isStart?: boolean;
+  }[] = [];
 
   // Group by day
   const tradesByDay = groupTradesByDate(sortedTrades);
   const sortedDays = Array.from(tradesByDay.keys()).sort();
+
+  if (sortedDays.length > 0) {
+    data.push({
+      date: `${sortedDays[0]}-start`,
+      displayDate: 'Start',
+      equity: 0,
+      pnl: 0,
+      isStart: true,
+    });
+  }
 
   sortedDays.forEach(date => {
     const dayTrades = tradesByDay.get(date) || [];
@@ -307,6 +333,7 @@ export function getEquityCurveData(trades: Trade[]): { date: string; equity: num
       date,
       equity: runningEquity,
       pnl: dayPnl,
+      tradeIds: dayTrades.map((trade) => trade.id),
     });
   });
 

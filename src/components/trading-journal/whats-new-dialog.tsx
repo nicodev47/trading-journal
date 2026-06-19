@@ -14,58 +14,52 @@ interface WhatsNewDialogProps {
 
 const updates = [
   {
-    icon: "🙈",
-    title: "Modalità Streamer",
+    icon: "📤",
+    title: "Share trade sui social",
     description:
-      "Nasconde i valori economici con ****** durante live, video e screenshot senza cancellare i dati reali.",
+      "Genera una Trade Recap Card del singolo trade e condividila come immagine.",
   },
   {
-    icon: "👤",
-    title: "Profilo trader",
+    icon: "📸",
+    title: "Trade Recap Card",
     description:
-      "Statistiche, discipline score, punti di forza e PNG condivisibile del tuo profilo.",
+      "Nuova card esportabile con P&L, asset, direzione, orario, setup e data del trade.",
   },
   {
-    icon: "⭐",
-    title: "Trade preferiti",
+    icon: "🧪",
+    title: "Backtest nel calendario",
     description:
-      "Contrassegna le operazioni più importanti e ritrovale rapidamente nel journal.",
+      "Testa strategie in una sezione separata senza modificare i dati reali.",
   },
   {
     icon: "📊",
-    title: "Analisi avanzata",
+    title: "Analisi ridisegnata",
     description:
-      "Equity, performance mensile, setup, direzione, giorni della settimana e statistiche operative.",
+      "UI più pulita, coerente con il tema dell’app e con grafici più leggibili.",
   },
   {
-    icon: "🧠",
-    title: "Errori personalizzati",
+    icon: "🖱️",
+    title: "Grafici cliccabili",
     description:
-      "Crea errori su misura per riconoscere pattern ricorrenti e migliorare la disciplina.",
+      "Navigazione più chiara e un’esperienza più interattiva nella sezione Analisi.",
   },
   {
-    icon: "🔗",
-    title: "Link nei trade",
+    icon: "🗺️",
+    title: "Execution Map",
     description:
-      "Aggiungi e rinomina link TradingView o Google Drive mantenendo ogni riferimento ordinato.",
+      "Leggi meglio distribuzione, comportamento e qualità operativa.",
   },
   {
-    icon: "📥📤",
-    title: "Import ed export",
+    icon: "🎯",
+    title: "Eclipse Score",
     description:
-      "Crea backup JSON e ripristina il journal conservando la struttura dei dati.",
+      "Valuta winrate, profit factor, frequenza operativa e timing con un indice sintetico.",
   },
   {
-    icon: "🧾",
-    title: "Trade log e dettaglio",
+    icon: "🛡️",
+    title: "Messaggi di sicurezza",
     description:
-      "Consulta un registro compatto e apri ogni trade per visualizzarne tutte le informazioni.",
-  },
-  {
-    icon: "🎨",
-    title: "Interfaccia aggiornata",
-    description:
-      "Nuove card, tooltip più leggibili e una UI dark più coerente e responsive.",
+      "Conferme prima di azioni delicate come cancellare un trade o importare dati.",
   },
 ];
 
@@ -80,10 +74,10 @@ export function WhatsNewDialog({ open, onOpenChange }: WhatsNewDialogProps) {
           <div className="flex items-start justify-between gap-4">
             <div>
               <DialogTitle className="text-xl text-foreground">
-                Novità EclipseJournal v0.1
+                Novità di questa versione
               </DialogTitle>
               <DialogDescription className="mt-1 text-sm text-muted-foreground">
-                Una panoramica delle nuove funzioni e dei miglioramenti disponibili.
+                Share, Backtest e nuovi strumenti di Analisi per un journaling più completo e sicuro.
               </DialogDescription>
             </div>
             <button
@@ -114,6 +108,12 @@ export function WhatsNewDialog({ open, onOpenChange }: WhatsNewDialogProps) {
               </p>
             </article>
           ))}
+        </div>
+
+        <div className="border-t border-border/70 px-5 pb-5 pt-4">
+          <p className="font-sans text-xs leading-relaxed text-muted-foreground">
+            Una nuova versione importante di EclipseJournal, pensata per condividere, testare e analizzare meglio ogni operazione.
+          </p>
         </div>
       </DialogContent>
     </Dialog>

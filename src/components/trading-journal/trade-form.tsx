@@ -26,8 +26,8 @@ import { TagInput } from './tag-input';
 import {
   FOREX_PAIRS,
   EMOTIONAL_STATES,
-  TRADE_MISTAKES,
-  CUSTOM_MISTAKE_PREFIX,
+  TRADE_TAGS,
+  CUSTOM_TAG_PREFIX,
   type Trade,
 } from '@/lib/types/trade';
 import {
@@ -49,11 +49,13 @@ interface TradeFormProps {
   existingTrade?: Trade;
   availableTags: string[];
   availableStrategies: string[];
-  customMistakes?: string[];
+  customTags?: string[];
   onAddTag: (tag: string) => void;
   onAddStrategy: (strategy: string) => void;
-  onAddCustomMistake?: (mistake: string) => void;
+  onAddCustomTag?: (tag: string) => void;
 }
+
+type LegacyTrade = Trade & { mistakes?: string[] };
 
 const defaultTrade: Omit<Trade, 'id' | 'createdAt' | 'updatedAt'> = {
   pair: 'EUR/USD',
@@ -71,7 +73,6 @@ const defaultTrade: Omit<Trade, 'id' | 'createdAt' | 'updatedAt'> = {
   riskReward: 0,
   screenshots: [],
   tags: [],
-  mistakes: [],
   isFavorite: false,
   strategy: '',
   notes: '',
@@ -88,25 +89,27 @@ export function TradeForm({
   existingTrade,
   availableTags,
   availableStrategies,
-  customMistakes = [],
+  customTags = [],
   onAddTag,
   onAddStrategy,
-  onAddCustomMistake,
+  onAddCustomTag,
 }: TradeFormProps) {
   const { streamerMode } = useStreamerMode();
   const [trade, setTrade] = useState(defaultTrade);
   const [activeTab, setActiveTab] = useState('details');
-  const [customMistakeInput, setCustomMistakeInput] = useState('');
+  const [customTagInput, setCustomTagInput] = useState('');
 
   useEffect(() => {
-    setCustomMistakeInput('');
+    setCustomTagInput('');
 
     if (existingTrade) {
+      const legacyTrade = existingTrade as LegacyTrade;
+
       setTrade({
-  ...existingTrade,
-  mistakes: existingTrade.mistakes || [],
-  isFavorite: existingTrade.isFavorite ?? false,
-});
+        ...existingTrade,
+        tags: existingTrade.tags?.length ? existingTrade.tags : legacyTrade.mistakes ?? [],
+        isFavorite: existingTrade.isFavorite ?? false,
+      });
     } else if (initialDate) {
       const now = new Date();
       const time = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
@@ -141,20 +144,20 @@ export function TradeForm({
 
   const handleSave = () => {
     const now = new Date().toISOString();
-    const customMistake = customMistakeInput.trim();
-    const pendingCustomMistake = customMistake
-      ? `${CUSTOM_MISTAKE_PREFIX}${customMistake}`
+    const customTag = customTagInput.trim();
+    const pendingCustomTag = customTag
+      ? `${CUSTOM_TAG_PREFIX}${customTag}`
       : null;
-    if (pendingCustomMistake) {
-      onAddCustomMistake?.(pendingCustomMistake);
+    if (pendingCustomTag) {
+      onAddCustomTag?.(pendingCustomTag);
     }
-    const mistakes =
-      pendingCustomMistake && !trade.mistakes.includes(pendingCustomMistake)
-        ? [...trade.mistakes, pendingCustomMistake]
-        : trade.mistakes;
+    const tags =
+      pendingCustomTag && !trade.tags.includes(pendingCustomTag)
+        ? [...trade.tags, pendingCustomTag]
+        : trade.tags;
     const savedTrade: Trade = {
       ...trade,
-      mistakes,
+      tags,
       id: existingTrade?.id || generateId(),
       createdAt: existingTrade?.createdAt || now,
       updatedAt: now,
@@ -162,7 +165,7 @@ export function TradeForm({
     onSave(savedTrade);
     onClose();
     setTrade(defaultTrade);
-    setCustomMistakeInput('');
+    setCustomTagInput('');
     setActiveTab('details');
   };
 
@@ -415,22 +418,22 @@ export function TradeForm({
             </div>
 
             <div className="space-y-2">
-              <Label>Errori</Label>
+              <Label>Tags</Label>
 
               <div className="grid grid-cols-2 gap-2">
-                {TRADE_MISTAKES.map((mistake) => {
-                  const isSelected = trade.mistakes.includes(mistake.value);
+                {TRADE_TAGS.map((tag) => {
+                  const isSelected = trade.tags.includes(tag.value);
 
                   return (
                     <button
-                      key={mistake.value}
+                      key={tag.value}
                       type="button"
                       onClick={() => {
-                        const nextMistakes = isSelected
-                          ? trade.mistakes.filter((m) => m !== mistake.value)
-                          : [...trade.mistakes, mistake.value];
+                        const nextTags = isSelected
+                          ? trade.tags.filter((value) => value !== tag.value)
+                          : [...trade.tags, tag.value];
 
-                        updateField('mistakes', nextMistakes);
+                        updateField('tags', nextTags);
                       }}
                       className={cn(
                         'rounded-lg border px-3 py-2 text-left font-mono text-[11px] transition-colors',
@@ -440,33 +443,33 @@ export function TradeForm({
                       )}
                     >
                       <span className="mr-2" aria-hidden="true">
-                        {mistake.emoji}
+                        {tag.emoji}
                       </span>
-                      {mistake.label}
+                      {tag.label}
                     </button>
                   );
                 })}
 
                 {Array.from(
                   new Set([
-                    ...customMistakes,
-                    ...trade.mistakes.filter((mistake) =>
-                      mistake.startsWith(CUSTOM_MISTAKE_PREFIX)
+                    ...customTags,
+                    ...trade.tags.filter((tag) =>
+                      tag.startsWith(CUSTOM_TAG_PREFIX)
                     ),
                   ])
-                ).map((mistake) => {
-                  const isSelected = trade.mistakes.includes(mistake);
+                ).map((tag) => {
+                  const isSelected = trade.tags.includes(tag);
 
                   return (
                     <button
-                      key={mistake}
+                      key={tag}
                       type="button"
                       onClick={() => {
-                        const nextMistakes = isSelected
-                          ? trade.mistakes.filter((value) => value !== mistake)
-                          : [...trade.mistakes, mistake];
+                        const nextTags = isSelected
+                          ? trade.tags.filter((value) => value !== tag)
+                          : [...trade.tags, tag];
 
-                        updateField('mistakes', nextMistakes);
+                        updateField('tags', nextTags);
                       }}
                       className={cn(
                         'rounded-lg border px-3 py-2 text-left font-mono text-[11px] transition-colors',
@@ -475,7 +478,7 @@ export function TradeForm({
                           : 'border-border bg-background text-muted-foreground hover:bg-secondary'
                     )}
                   >
-                      {mistake.slice(CUSTOM_MISTAKE_PREFIX.length)}
+                      {tag.slice(CUSTOM_TAG_PREFIX.length)}
                     </button>
                   );
                 })}
@@ -483,31 +486,31 @@ export function TradeForm({
 
               <div className="flex gap-2">
                 <Input
-                  value={customMistakeInput}
-                  onChange={(event) => setCustomMistakeInput(event.target.value)}
+                  value={customTagInput}
+                  onChange={(event) => setCustomTagInput(event.target.value)}
                   onKeyDown={(event) => {
                     if (event.key !== 'Enter') {
                       return;
                     }
 
                     event.preventDefault();
-                    const label = customMistakeInput.trim();
+                    const label = customTagInput.trim();
 
                     if (!label) {
                       return;
                     }
 
-                    const value = `${CUSTOM_MISTAKE_PREFIX}${label}`;
+                    const value = `${CUSTOM_TAG_PREFIX}${label}`;
 
-                    onAddCustomMistake?.(value);
+                    onAddCustomTag?.(value);
 
-                    if (!trade.mistakes.includes(value)) {
-                      updateField('mistakes', [...trade.mistakes, value]);
+                    if (!trade.tags.includes(value)) {
+                      updateField('tags', [...trade.tags, value]);
                     }
 
-                    setCustomMistakeInput('');
+                    setCustomTagInput('');
                   }}
-                  placeholder="✏️ Crea un errore personalizzato"
+                  placeholder="✏️ Crea un tag personalizzato"
                   className="h-8 font-mono text-[11px]"
                 />
                 <Button
@@ -515,17 +518,17 @@ export function TradeForm({
                   variant="outline"
                   size="sm"
                   className="h-8 px-3 font-mono text-[11px]"
-                  disabled={!customMistakeInput.trim()}
+                  disabled={!customTagInput.trim()}
                   onClick={() => {
-                    const value = `${CUSTOM_MISTAKE_PREFIX}${customMistakeInput.trim()}`;
+                    const value = `${CUSTOM_TAG_PREFIX}${customTagInput.trim()}`;
 
-                    onAddCustomMistake?.(value);
+                    onAddCustomTag?.(value);
 
-                    if (!trade.mistakes.includes(value)) {
-                      updateField('mistakes', [...trade.mistakes, value]);
+                    if (!trade.tags.includes(value)) {
+                      updateField('tags', [...trade.tags, value]);
                     }
 
-                    setCustomMistakeInput('');
+                    setCustomTagInput('');
                   }}
                 >
                   Aggiungi

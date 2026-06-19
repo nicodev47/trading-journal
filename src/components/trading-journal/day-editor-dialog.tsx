@@ -9,6 +9,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -31,13 +32,17 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
-  CUSTOM_MISTAKE_PREFIX,
-  TRADE_MISTAKES,
+  CUSTOM_TAG_PREFIX,
+  TRADE_TAGS,
+  VALID_TRADE_SETUPS,
+  getEditableSetupValue,
   type Trade,
   type ScreenshotData,
 } from '@/lib/types/trade';
 import { generateId } from '@/lib/calculations';
 import { useStreamerMode } from '@/contexts/streamer-mode-context';
+import { PROFILE_NAME_KEY } from '@/lib/export-filename';
+import { TradeShareDialog } from './trade-share-dialog';
 
 interface TradeRow {
   id: string;
@@ -46,11 +51,14 @@ interface TradeRow {
   direction: 'long' | 'short' | '';
   time: string;
   setup: string;
-  mistakes: string[];
+  originalSetup: string;
+  tags: string[];
   isFavorite: boolean;
   screenshots: ScreenshotData[];
   notes: string;
 }
+
+type LegacyTrade = Trade & { mistakes?: string[] };
 
 interface DayEditorDialogProps {
   isOpen: boolean;
@@ -60,11 +68,11 @@ interface DayEditorDialogProps {
   onSave: (trades: Trade[]) => void;
   onDeleteDay: () => void;
   strategies: string[];
-  customMistakes: string[];
+  customTags: string[];
   onAddStrategy: (strategy: string) => void;
   onRemoveStrategy: (strategy: string) => void;
-  onAddCustomMistake: (mistake: string) => void;
-  onRemoveCustomMistake: (mistake: string) => void;
+  onAddCustomTag: (tag: string) => void;
+  onRemoveCustomTag: (tag: string) => void;
 }
 
 export function DayEditorDialog({
@@ -74,20 +82,18 @@ export function DayEditorDialog({
   existingTrades,
   onSave,
   onDeleteDay,
-  strategies = [],
-  customMistakes = [],
-  onAddStrategy,
-  onRemoveStrategy,
-  onAddCustomMistake,
-  onRemoveCustomMistake,
+  customTags = [],
+  onAddCustomTag,
+  onRemoveCustomTag,
 }: DayEditorDialogProps) {
   const { streamerMode } = useStreamerMode();
   const [tradeRows, setTradeRows] = useState<TradeRow[]>([]);
-  const [activeSetupDropdown, setActiveSetupDropdown] = useState<string | null>(null);
   const [screenshotInputs, setScreenshotInputs] = useState<Record<string, { url: string; name: string }>>({});
-  const [customMistakeInputs, setCustomMistakeInputs] = useState<Record<string, string>>({});
-  const [pendingNewStrategies, setPendingNewStrategies] = useState<string[]>([]);
-  const [isManagingMistakes, setIsManagingMistakes] = useState(false);
+  const [customTagInputs, setCustomTagInputs] = useState<Record<string, string>>({});
+  const [isManagingTags, setIsManagingTags] = useState(false);
+  const [tradeToDeleteId, setTradeToDeleteId] = useState<string | null>(null);
+  const [isDeleteDayConfirmOpen, setIsDeleteDayConfirmOpen] = useState(false);
+  const [selectedShareTrade, setSelectedShareTrade] = useState<Trade | null>(null);
   const [editingScreenshot, setEditingScreenshot] = useState<{
     tradeId: string;
     index: number;
@@ -98,14 +104,18 @@ export function DayEditorDialog({
     if (isOpen) {
       if (existingTrades.length > 0) {
         setTradeRows(
-          existingTrades.map(t => ({
+          existingTrades.map(t => {
+            const legacyTrade = t as LegacyTrade;
+
+            return {
             id: t.id,
             pnl: t.pnl.toString(),
             symbol: t.pair,
             direction: t.direction,
             time: (t.exitDate?.split('T')[1] || t.entryDate?.split('T')[1] || '').slice(0, 5),
-            setup: t.strategy,
-            mistakes: t.mistakes || [],
+            setup: getEditableSetupValue(t.strategy),
+            originalSetup: t.strategy || '',
+            tags: t.tags?.length ? t.tags : legacyTrade.mistakes ?? [],
             isFavorite: t.isFavorite ?? false,
             screenshots: (t.screenshots || []).map(s => {
               if (typeof s === 'object' && s !== null && 'url' in s) {
@@ -128,16 +138,16 @@ export function DayEditorDialog({
               return { url: '', name: '' };
             }),
             notes: t.notes || '',
-          }))
+            };
+          })
         );
       } else {
         setTradeRows([createEmptyRow()]);
       }
 
       setScreenshotInputs({});
-      setCustomMistakeInputs({});
-      setPendingNewStrategies([]);
-      setIsManagingMistakes(false);
+      setCustomTagInputs({});
+      setIsManagingTags(false);
       setEditingScreenshot(null);
     }
   }, [isOpen, existingTrades]);
@@ -149,7 +159,8 @@ export function DayEditorDialog({
     direction: '',
     time: '00:00',
     setup: '',
-    mistakes: [],
+    originalSetup: '',
+    tags: [],
     isFavorite: false,
     screenshots: [],
     notes: '',
@@ -162,6 +173,13 @@ export function DayEditorDialog({
   const removeTradeRow = (id: string) => {
     if (tradeRows.length > 1) {
       setTradeRows(prev => prev.filter(row => row.id !== id));
+    }
+  };
+
+  const confirmRemoveTradeRow = () => {
+    if (tradeToDeleteId) {
+      removeTradeRow(tradeToDeleteId);
+      setTradeToDeleteId(null);
     }
   };
 
@@ -225,44 +243,62 @@ export function DayEditorDialog({
     setEditingScreenshot(null);
   };
 
-  const getFilteredStrategies = (search: string) => {
-    const allStrategies = [...strategies, ...pendingNewStrategies];
-    if (!search) return allStrategies;
-
-    const searchLower = search.toLowerCase();
-    return allStrategies.filter(s => s.toLowerCase().includes(searchLower));
-  };
-
-  const isSetupSalvad = (setup: string) => {
-    if (!setup.trim()) return true;
-    return strategies.includes(setup) || pendingNewStrategies.includes(setup);
-  };
-
-  const addPendingStrategy = (setup: string) => {
-    const trimmed = setup.trim();
-
-    if (
-      trimmed &&
-      !strategies.includes(trimmed) &&
-      !pendingNewStrategies.includes(trimmed)
-    ) {
-      setPendingNewStrategies(prev => [...prev, trimmed]);
-    }
-  };
-
   const dayTotal = useMemo(() => {
     return tradeRows.reduce((sum, row) => sum + (parseFloat(row.pnl) || 0), 0);
   }, [tradeRows]);
 
+  const initialShareHandle = useMemo(() => {
+    try {
+      return localStorage.getItem(PROFILE_NAME_KEY) || '';
+    } catch {
+      return '';
+    }
+  }, [isOpen]);
+
+  const getTradeFromRow = (row: TradeRow): Trade => {
+    const pendingCustomTag = customTagInputs[row.id]?.trim()
+      ? `${CUSTOM_TAG_PREFIX}${customTagInputs[row.id].trim()}`
+      : null;
+    const tags =
+      pendingCustomTag && !row.tags.includes(pendingCustomTag)
+        ? [...row.tags, pendingCustomTag]
+        : row.tags;
+    const now = new Date().toISOString();
+    const tradeTime = row.time || '00:00';
+
+    return {
+      id: row.id,
+      pair: row.symbol || '',
+      direction: row.direction || 'long',
+      entryPrice: 0,
+      exitPrice: 0,
+      lotSize: 0.01,
+      stopLoss: 0,
+      takeProfit: 0,
+      entryDate: `${date}T${tradeTime}`,
+      exitDate: `${date}T${tradeTime}`,
+      pips: 0,
+      pnl: parseFloat(row.pnl) || 0,
+      commission: 0,
+      riskReward: 0,
+      screenshots: row.screenshots,
+      tags,
+      isFavorite: row.isFavorite,
+      strategy: row.setup || row.originalSetup,
+      notes: row.notes,
+      emotionalState: 'neutral',
+      setupRating: 3,
+      createdAt: now,
+      updatedAt: now,
+    };
+  };
+
   const handleSalva = () => {
-    pendingNewStrategies.forEach(strategy => {
-      onAddStrategy(strategy);
-    });
-    Object.values(customMistakeInputs).forEach((input) => {
+    Object.values(customTagInputs).forEach((input) => {
       const label = input.trim();
 
       if (label) {
-        onAddCustomMistake(`${CUSTOM_MISTAKE_PREFIX}${label}`);
+        onAddCustomTag(`${CUSTOM_TAG_PREFIX}${label}`);
       }
     });
 
@@ -271,14 +307,14 @@ export function DayEditorDialog({
     const trades: Trade[] = tradeRows
       .filter(row => row.pnl !== '' || row.symbol)
       .map(row => {
-        const customMistake = customMistakeInputs[row.id]?.trim();
-        const pendingCustomMistake = customMistake
-          ? `${CUSTOM_MISTAKE_PREFIX}${customMistake}`
+        const customTag = customTagInputs[row.id]?.trim();
+        const pendingCustomTag = customTag
+          ? `${CUSTOM_TAG_PREFIX}${customTag}`
           : null;
-        const mistakes =
-          pendingCustomMistake && !row.mistakes.includes(pendingCustomMistake)
-            ? [...row.mistakes, pendingCustomMistake]
-            : row.mistakes;
+        const tags =
+          pendingCustomTag && !row.tags.includes(pendingCustomTag)
+            ? [...row.tags, pendingCustomTag]
+            : row.tags;
 
         return {
           id: row.id,
@@ -296,10 +332,9 @@ export function DayEditorDialog({
           commission: 0,
           riskReward: 0,
           screenshots: row.screenshots,
-          tags: [],
-          mistakes,
+          tags,
           isFavorite: row.isFavorite,
-          strategy: row.setup,
+          strategy: row.setup || row.originalSetup,
           notes: row.notes,
           emotionalState: 'neutral' as const,
           setupRating: 3,
@@ -357,7 +392,18 @@ export function DayEditorDialog({
                     Trade {rowIndex + 1}
                   </span>
 
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-11 gap-2 rounded-xl border-profit/60 bg-profit/15 px-4 font-sans text-sm font-semibold text-profit shadow-[0_0_18px_rgba(0,214,143,0.12)] hover:border-profit/80 hover:bg-profit/25 hover:text-profit hover:shadow-[0_0_22px_rgba(0,214,143,0.22)]"
+                      onClick={() => setSelectedShareTrade(getTradeFromRow(row))}
+                    >
+                      <span aria-hidden="true">📷</span>
+                      Share
+                    </Button>
+
                     <Button
                       type="button"
                       variant="ghost"
@@ -389,8 +435,8 @@ export function DayEditorDialog({
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="size-7 text-muted-foreground hover:text-destructive"
-                      onClick={() => removeTradeRow(row.id)}
+                      className="size-7 rounded-lg border border-transparent text-muted-foreground hover:border-loss/80 hover:bg-loss/90 hover:text-white"
+                      onClick={() => setTradeToDeleteId(row.id)}
                       disabled={tradeRows.length === 1}
                       aria-label={`Elimina trade ${rowIndex + 1}`}
                     >
@@ -404,7 +450,7 @@ export function DayEditorDialog({
                     Dettagli trade
                   </p>
 
-                  <div className="grid grid-cols-1 gap-2.5 md:grid-cols-[130px_95px_105px_115px_1fr]">
+                  <div className="grid grid-cols-1 gap-3 md:grid-cols-[150px_120px_130px_120px_minmax(220px,1fr)]">
                   <div className="flex flex-col gap-1.5">
                     <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                       P&L
@@ -487,117 +533,50 @@ export function DayEditorDialog({
                       Orario
                     </Label>
 
-                    <Input
-                      type="time"
-                      value={row.time}
-                      onChange={e => updateTradeRow(row.id, 'time', e.target.value)}
-                      className={cn(
-                        'h-9 w-full border-border bg-background font-mono text-sm',
-                        row.time === '00:00' && 'text-muted-foreground/70'
-                      )}
-                      placeholder="00:00"
-                    />
+                    <div className="w-full">
+                      <Input
+                        type="text"
+                        inputMode="numeric"
+                        value={row.time}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/[^\d:]/g, '').slice(0, 5);
+
+                          updateTradeRow(row.id, 'time', value);
+                        }}
+                        className={cn(
+                          'h-9 w-full border-border bg-background text-center font-mono text-sm',
+                          row.time === '00:00' && 'text-muted-foreground/70'
+                        )}
+                        placeholder="15:38"
+                      />
+                    </div>
                   </div>
 
-                  <div className="relative flex flex-col gap-1.5">
+                  <div className="flex flex-col gap-1.5">
                     <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                       Setup
                     </Label>
 
-                    <div className="flex gap-1.5">
-                      <div className="relative flex-1">
-                        <Input
-                          type="text"
-                          value={row.setup}
-                          onChange={e => {
-                            updateTradeRow(row.id, 'setup', e.target.value);
-                            setActiveSetupDropdown(row.id);
-                          }}
-                          onFocus={() => setActiveSetupDropdown(row.id)}
-                          onBlur={() => setTimeout(() => setActiveSetupDropdown(null), 150)}
-                          placeholder="Nome setup..."
-                          className="h-9 w-full border-border bg-background text-sm"
-                        />
+                    <Select
+                      value={row.setup}
+                      onValueChange={value =>
+                        updateTradeRow(row.id, 'setup', value)
+                      }
+                    >
+                      <SelectTrigger className="h-9 w-full border-border bg-background text-sm">
+                        <SelectValue placeholder="Seleziona setup" />
+                      </SelectTrigger>
 
-                        {activeSetupDropdown === row.id &&
-                          (getFilteredStrategies(row.setup).length > 0 || row.setup.trim()) && (
-                            <div className="absolute top-full z-50 mt-1 max-h-[200px] w-full overflow-y-auto rounded-md border border-border bg-popover shadow-lg">
-                              {row.setup.trim() && !isSetupSalvad(row.setup) && (
-                                <button
-                                  type="button"
-                                  className="flex w-full items-center gap-2 border-b border-border px-3 py-2 text-left text-sm text-profit hover:bg-secondary"
-                                  onMouseDown={() => {
-                                    addPendingStrategy(row.setup);
-                                    setActiveSetupDropdown(null);
-                                  }}
-                                >
-                                  <Plus className="size-4" />
-                                  Salva &quot;{row.setup}&quot; come preset
-                                </button>
-                              )}
-
-                              {getFilteredStrategies(row.setup).map(strategy => (
-                                <div
-                                  key={strategy}
-                                  className="flex w-full items-center justify-between px-3 py-2 hover:bg-secondary"
-                                >
-                                  <button
-                                    type="button"
-                                    className="flex-1 text-left text-sm"
-                                    onMouseDown={() => {
-                                      updateTradeRow(row.id, 'setup', strategy);
-                                      setActiveSetupDropdown(null);
-                                    }}
-                                  >
-                                    {strategy}
-                                    {pendingNewStrategies.includes(strategy) && (
-                                      <span className="ml-2 text-xs text-muted-foreground">
-                                        (nuovo)
-                                      </span>
-                                    )}
-                                  </button>
-
-                                  {!pendingNewStrategies.includes(strategy) && (
-                                    <button
-                                      type="button"
-                                      className="ml-2 p-1 text-muted-foreground hover:text-destructive"
-                                      onMouseDown={(e) => {
-                                        e.stopPropagation();
-                                        onRemoveStrategy(strategy);
-                                      }}
-                                      title="Elimina preset"
-                                    >
-                                      <Trash2 className="size-3" />
-                                    </button>
-                                  )}
-
-                                  {pendingNewStrategies.includes(strategy) && (
-                                    <button
-                                      type="button"
-                                      className="ml-2 p-1 text-muted-foreground hover:text-destructive"
-                                      onMouseDown={(e) => {
-                                        e.stopPropagation();
-                                        setPendingNewStrategies(prev =>
-                                          prev.filter(s => s !== strategy)
-                                        );
-                                      }}
-                                      title="Annulla aggiunta preset"
-                                    >
-                                      <X className="size-3" />
-                                    </button>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                      </div>
-                    </div>
-
-                    {row.setup.trim() && !isSetupSalvad(row.setup) && (
-                      <p className="text-xs text-muted-foreground">
-                        Scrivi e clicca il menu per salvarlo come preset
-                      </p>
-                    )}
+                      <SelectContent>
+                        <SelectGroup>
+                          {VALID_TRADE_SETUPS.map(setup => (
+                            <SelectItem key={setup} value={setup}>
+                              {setup}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
                 </div>
@@ -826,23 +805,23 @@ export function DayEditorDialog({
 
                 <div className="flex flex-col gap-2.5 rounded-xl border border-border/70 bg-background/30 p-3.5">
                   <Label className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-                    Errori
+                    TAGS
                   </Label>
 
                   <div className="flex flex-wrap gap-2">
-                    {TRADE_MISTAKES.map((mistake) => {
-                      const isSelected = row.mistakes.includes(mistake.value);
+                    {TRADE_TAGS.map((tag) => {
+                      const isSelected = row.tags.includes(tag.value);
 
                       return (
                         <button
-                          key={mistake.value}
+                          key={tag.value}
                           type="button"
                           onClick={() => {
-                            const nextMistakes = isSelected
-                              ? row.mistakes.filter((m) => m !== mistake.value)
-                              : [...row.mistakes, mistake.value];
+                            const nextTags = isSelected
+                              ? row.tags.filter((value) => value !== tag.value)
+                              : [...row.tags, tag.value];
 
-                            updateTradeRow(row.id, 'mistakes', nextMistakes);
+                            updateTradeRow(row.id, 'tags', nextTags);
                           }}
                           className={cn(
                             'rounded-md border px-2.5 py-1.5 text-left font-mono text-[13px] leading-4 transition-colors',
@@ -852,26 +831,26 @@ export function DayEditorDialog({
                           )}
                         >
                           <span className="mr-2" aria-hidden="true">
-                            {mistake.emoji}
+                            {tag.emoji}
                           </span>
-                          {mistake.label}
+                          {tag.label}
                         </button>
                       );
                     })}
 
-                    {customMistakes.map((mistake) => {
-                      const isSelected = row.mistakes.includes(mistake);
+                    {customTags.map((tag) => {
+                      const isSelected = row.tags.includes(tag);
 
                       return (
-                        <div key={mistake} className="relative">
+                        <div key={tag} className="relative">
                           <button
                             type="button"
                             onClick={() => {
-                              const nextMistakes = isSelected
-                                ? row.mistakes.filter((value) => value !== mistake)
-                                : [...row.mistakes, mistake];
+                              const nextTags = isSelected
+                                ? row.tags.filter((value) => value !== tag)
+                                : [...row.tags, tag];
 
-                              updateTradeRow(row.id, 'mistakes', nextMistakes);
+                              updateTradeRow(row.id, 'tags', nextTags);
                             }}
                             className={cn(
                               'w-full rounded-md border px-2.5 py-1.5 text-left font-mono text-[13px] leading-4 transition-colors',
@@ -880,31 +859,31 @@ export function DayEditorDialog({
                                 : 'border-border bg-background/80 text-muted-foreground hover:bg-secondary hover:text-foreground'
                             )}
                           >
-                            {mistake.slice(CUSTOM_MISTAKE_PREFIX.length)}
+                            {tag.slice(CUSTOM_TAG_PREFIX.length)}
                           </button>
 
-                          {isManagingMistakes && (
+                          {isManagingTags && (
                             <button
                               type="button"
-                              aria-label={`Elimina ${mistake.slice(CUSTOM_MISTAKE_PREFIX.length)}`}
+                              aria-label={`Elimina ${tag.slice(CUSTOM_TAG_PREFIX.length)}`}
                               className="absolute -right-2 -top-2 flex size-5 items-center justify-center rounded-full border border-loss bg-background text-loss shadow-md transition-colors hover:bg-loss hover:text-white"
                               onClick={(event) => {
                                 event.stopPropagation();
-                                const label = mistake.slice(CUSTOM_MISTAKE_PREFIX.length);
+                                const label = tag.slice(CUSTOM_TAG_PREFIX.length);
                                 const confirmed = window.confirm(
-                                  `Vuoi eliminare l'errore personalizzato "${label}"? Verrà rimosso anche dai trade salvati.`
+                                  `Vuoi eliminare il tag personalizzato "${label}"? Verrà rimosso anche dai trade salvati.`
                                 );
 
                                 if (!confirmed) {
                                   return;
                                 }
 
-                                onRemoveCustomMistake(mistake);
+                                onRemoveCustomTag(tag);
                                 setTradeRows(previous =>
                                   previous.map(tradeRow => ({
                                     ...tradeRow,
-                                    mistakes: tradeRow.mistakes.filter(
-                                      value => value !== mistake
+                                    tags: tradeRow.tags.filter(
+                                      value => value !== tag
                                     ),
                                   }))
                                 );
@@ -920,9 +899,9 @@ export function DayEditorDialog({
 
                   <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2 rounded-lg border border-border/70 bg-background/35 p-2">
                     <Input
-                      value={customMistakeInputs[row.id] ?? ''}
+                      value={customTagInputs[row.id] ?? ''}
                       onChange={(event) =>
-                        setCustomMistakeInputs((previous) => ({
+                        setCustomTagInputs((previous) => ({
                           ...previous,
                           [row.id]: event.target.value,
                         }))
@@ -933,26 +912,26 @@ export function DayEditorDialog({
                         }
 
                         event.preventDefault();
-                        const label = customMistakeInputs[row.id]?.trim();
+                        const label = customTagInputs[row.id]?.trim();
 
                         if (!label) {
                           return;
                         }
 
-                        const value = `${CUSTOM_MISTAKE_PREFIX}${label}`;
+                        const value = `${CUSTOM_TAG_PREFIX}${label}`;
 
-                        onAddCustomMistake(value);
+                        onAddCustomTag(value);
 
-                        if (!row.mistakes.includes(value)) {
-                          updateTradeRow(row.id, 'mistakes', [...row.mistakes, value]);
+                        if (!row.tags.includes(value)) {
+                          updateTradeRow(row.id, 'tags', [...row.tags, value]);
                         }
 
-                        setCustomMistakeInputs((previous) => ({
+                        setCustomTagInputs((previous) => ({
                           ...previous,
                           [row.id]: '',
                         }));
                       }}
-                      placeholder="✏️ Crea un errore personalizzato"
+                      placeholder="Crea un tag personalizzato"
                       className="h-8 min-w-0 border-border/70 bg-background/60 font-mono text-[13px] placeholder:text-muted-foreground/60"
                     />
                     <Button
@@ -960,23 +939,23 @@ export function DayEditorDialog({
                       variant="outline"
                       size="sm"
                       className="h-8 px-3 font-mono text-xs"
-                      disabled={!customMistakeInputs[row.id]?.trim()}
+                      disabled={!customTagInputs[row.id]?.trim()}
                       onClick={() => {
-                        const label = customMistakeInputs[row.id]?.trim();
+                        const label = customTagInputs[row.id]?.trim();
 
                         if (!label) {
                           return;
                         }
 
-                        const value = `${CUSTOM_MISTAKE_PREFIX}${label}`;
+                        const value = `${CUSTOM_TAG_PREFIX}${label}`;
 
-                        onAddCustomMistake(value);
+                        onAddCustomTag(value);
 
-                        if (!row.mistakes.includes(value)) {
-                          updateTradeRow(row.id, 'mistakes', [...row.mistakes, value]);
+                        if (!row.tags.includes(value)) {
+                          updateTradeRow(row.id, 'tags', [...row.tags, value]);
                         }
 
-                        setCustomMistakeInputs((previous) => ({
+                        setCustomTagInputs((previous) => ({
                           ...previous,
                           [row.id]: '',
                         }));
@@ -986,11 +965,11 @@ export function DayEditorDialog({
                     </Button>
                     <Button
                       type="button"
-                      variant={isManagingMistakes ? 'default' : 'outline'}
+                      variant={isManagingTags ? 'default' : 'outline'}
                       size="sm"
                       className="h-8 px-3 font-mono text-xs"
-                      disabled={customMistakes.length === 0}
-                      onClick={() => setIsManagingMistakes(previous => !previous)}
+                      disabled={customTags.length === 0}
+                      onClick={() => setIsManagingTags(previous => !previous)}
                     >
                       Gestisci
                     </Button>
@@ -1005,7 +984,7 @@ export function DayEditorDialog({
                   <Textarea
                     value={row.notes}
                     onChange={e => updateTradeRow(row.id, 'notes', e.target.value)}
-                    placeholder="Cosa è successo in questo trade? Strategia, errori, lezioni..."
+                    placeholder="Cosa è successo in questo trade? Strategia, tag, lezioni..."
                     className="min-h-[72px] resize-y border-border bg-background text-sm"
                   />
                 </div>
@@ -1032,15 +1011,13 @@ export function DayEditorDialog({
             </span>
           </div>
 
-          {pendingNewStrategies.length > 0 && (
-            <p className="text-xs text-muted-foreground">
-              Nuovi preset da salvare: {pendingNewStrategies.join(', ')}
-            </p>
-          )}
         </div>
 
         <div className="flex items-center justify-between border-t border-border px-6 py-4">
-          <Button variant="destructive" onClick={onDeleteDay}>
+          <Button
+            variant="destructive"
+            onClick={() => setIsDeleteDayConfirmOpen(true)}
+          >
             Elimina giorno
           </Button>
 
@@ -1049,6 +1026,80 @@ export function DayEditorDialog({
           </Button>
         </div>
       </DialogContent>
+      <Dialog
+        open={Boolean(tradeToDeleteId)}
+        onOpenChange={(open) => !open && setTradeToDeleteId(null)}
+      >
+        <DialogContent className="max-w-[460px] border-border bg-card">
+          <DialogHeader>
+            <DialogTitle>Eliminare questo trade?</DialogTitle>
+            <DialogDescription>
+              Questa azione rimuoverà il trade selezionato dalla giornata. Non potrà essere recuperato se non tramite backup.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setTradeToDeleteId(null)}
+            >
+              Annulla
+            </Button>
+            <Button
+              type="button"
+              className="bg-loss text-white hover:bg-loss/90"
+              onClick={confirmRemoveTradeRow}
+            >
+              Elimina trade
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={isDeleteDayConfirmOpen}
+        onOpenChange={setIsDeleteDayConfirmOpen}
+      >
+        <DialogContent className="max-w-[460px] border-border bg-card">
+          <DialogHeader>
+            <DialogTitle>Eliminare questa giornata?</DialogTitle>
+            <DialogDescription>
+              Questa azione cancellerà tutti i trade e le informazioni salvate per questa giornata. Ti consigliamo di avere un backup prima di continuare.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsDeleteDayConfirmOpen(false)}
+            >
+              Annulla
+            </Button>
+            <Button
+              type="button"
+              className="bg-loss text-white hover:bg-loss/90"
+              onClick={() => {
+                setIsDeleteDayConfirmOpen(false);
+                onDeleteDay();
+              }}
+            >
+              Elimina giornata
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <TradeShareDialog
+        open={Boolean(selectedShareTrade)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSelectedShareTrade(null);
+          }
+        }}
+        trade={selectedShareTrade}
+        date={date}
+        initialHandle={initialShareHandle}
+      />
     </Dialog>
   );
 }

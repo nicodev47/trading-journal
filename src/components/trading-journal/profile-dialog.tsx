@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { calculateStatistics } from '@/lib/calculations';
+import { PROFILE_NAME_KEY } from '@/lib/export-filename';
 import { getBestOperatingWindow } from '@/lib/operating-windows';
 import type { Trade } from '@/lib/types/trade';
 import { useStreamerMode } from '@/contexts/streamer-mode-context';
@@ -26,7 +27,6 @@ interface ProfileDialogProps {
   onClearPersonal: () => void;
 }
 
-const PROFILE_NAME_KEY = 'eclipse-trading-journal-profile-name';
 const DEFAULT_PROFILE_AVATAR = '🍀';
 
 const TRADER_RANKS = [
@@ -550,8 +550,9 @@ export function ProfileDialog({
             </section>
 
             <section className="rounded-[14px] border border-violet-400/35 bg-violet-500/5 p-4">
-              <p className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-violet-300">
-                Modalità Streamer
+              <p className="flex items-center gap-2 font-mono text-xs font-semibold uppercase tracking-[0.14em] text-violet-300">
+                <span>Modalità Streamer</span>
+                <span className="text-xl leading-none">🙈</span>
               </p>
               <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
                 <p className="max-w-md font-sans text-xs leading-relaxed text-muted-foreground">
@@ -574,13 +575,14 @@ export function ProfileDialog({
             </section>
 
             <section className="rounded-[14px] border border-loss/30 bg-loss/5 p-4">
-              <p className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-loss">
-                Zona pericolosa
+              <p className="flex items-center gap-2 font-mono text-xs font-semibold uppercase tracking-[0.14em] text-loss">
+                <span>Zona pericolosa</span>
+                <span className="text-xl leading-none">🚨</span>
               </p>
               <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
                 <p className="max-w-md font-sans text-xs leading-relaxed text-muted-foreground">
-                  Cancella trade, piani, strategie ed errori personalizzati salvati nel
-                  journal Personale. La Preview non verrà modificata.
+                  Cancella trade, piani, strategie e tag personalizzati salvati nel
+                  journal Personale. Backtest e Preview non verranno modificati.
                 </p>
                 <Button
                   type="button"
@@ -608,7 +610,7 @@ export function ProfileDialog({
               Svuota journal Personale
             </DialogTitle>
             <DialogDescription>
-              Questa azione è irreversibile e non toccherà i dati Preview.
+              Questa azione è irreversibile e non toccherà i dati Backtest o Preview.
             </DialogDescription>
           </DialogHeader>
 

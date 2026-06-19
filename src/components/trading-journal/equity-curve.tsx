@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Area,
   AreaChart,
@@ -19,14 +19,42 @@ import { useStreamerMode } from '@/contexts/streamer-mode-context';
 
 interface EquityCurveProps {
   trades: Trade[];
-  onPointClick?: (date: string) => void;
+  onOpenTradeGroup?: (payload: {
+    title: string;
+    subtitle?: string;
+    trades: Trade[];
+  }) => void;
+  onOpenTrade?: (trade: Trade) => void;
 }
+
+type EquityPoint = {
+  date: string;
+  displayDate?: string;
+  equity: number;
+  pnl: number;
+  tradeIds?: string[];
+  isStart?: boolean;
+};
 
 interface CustomDotProps {
   cx?: number;
   cy?: number;
-  payload?: { date: string; equity: number; tradeId?: string };
-  onPointClick?: (date: string) => void;
+  payload?: EquityPoint;
+  active?: boolean;
+  strokeColor: string;
+  onPointClick?: (point: EquityPoint) => void;
+}
+
+interface EquityTooltipProps {
+  active?: boolean;
+  payload?: Array<{
+    payload?: {
+      displayDate?: string;
+      date?: string;
+      equity?: number;
+    };
+  }>;
+  streamerMode: boolean;
 }
 
 const ITALIAN_MONTHS = [
@@ -44,27 +72,68 @@ const ITALIAN_MONTHS = [
   'Dicembre',
 ] as const;
 
-function CustomDot({ cx, cy, payload, onPointClick }: CustomDotProps) {
+function CustomDot({
+  cx,
+  cy,
+  payload,
+  active = false,
+  strokeColor,
+  onPointClick,
+}: CustomDotProps) {
   if (!cx || !cy || !payload) return null;
+  const isClickable = !payload.isStart && Boolean(onPointClick);
 
   return (
     <circle
       cx={cx}
       cy={cy}
-      r={6}
-      fill="transparent"
-      stroke="transparent"
-      style={{ cursor: 'pointer' }}
-      onClick={() => {
-        if (payload.date && onPointClick) {
-          onPointClick(payload.date);
+      r={active ? 6 : 5}
+      fill={active ? strokeColor : 'transparent'}
+      stroke={active ? '#fff' : 'transparent'}
+      strokeWidth={active ? 2 : 0}
+      style={{ cursor: isClickable ? 'pointer' : 'default' }}
+      onClick={(event) => {
+        event.stopPropagation();
+        if (isClickable) {
+          onPointClick(payload);
         }
       }}
     />
   );
 }
 
-export function EquityCurve({ trades, onPointClick }: EquityCurveProps) {
+function CustomEquityTooltip({
+  active,
+  payload,
+  streamerMode,
+}: EquityTooltipProps) {
+  const item = payload?.[0]?.payload;
+
+  if (!active || !item) return null;
+
+  return (
+    <div className="min-w-36 rounded-xl border border-border bg-popover px-3 py-2.5 font-mono text-xs shadow-[0_10px_30px_rgba(0,0,0,0.45)]">
+      <p className="font-semibold text-foreground">
+        {item.displayDate ?? item.date ?? '—'}
+      </p>
+      <p className="mt-1 text-[11px] font-semibold text-profit">
+        Equity:{' '}
+        {streamerMode
+          ? '******'
+          : `$${(item.equity ?? 0).toLocaleString('it-IT', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}`}
+      </p>
+    </div>
+  );
+}
+
+export function EquityCurve({
+  trades,
+  onOpenTradeGroup,
+  onOpenTrade,
+}: EquityCurveProps) {
   const { streamerMode } = useStreamerMode();
   const [selectedMonth, setSelectedMonth] = useState<Date | null>(null);
 
@@ -111,7 +180,7 @@ export function EquityCurve({ trades, onPointClick }: EquityCurveProps) {
   const formattedData = useMemo(() => {
     return data.map(d => ({
       ...d,
-      displayDate: formatShortDate(d.date),
+      displayDate: d.displayDate ?? formatShortDate(d.date),
     }));
   }, [data]);
 
@@ -137,14 +206,29 @@ export function EquityCurve({ trades, onPointClick }: EquityCurveProps) {
       ? `${ITALIAN_MONTHS[selectedMonth.getMonth()]} ${selectedMonth.getFullYear()}`
       : 'Equity Totale';
 
-  const handleChartClick = useCallback(
-    (data: { activePayload?: Array<{ payload: { date: string } }> }) => {
-      if (data?.activePayload?.[0]?.payload?.date && onPointClick) {
-        onPointClick(data.activePayload[0].payload.date);
-      }
-    },
-    [onPointClick]
-  );
+  const handleEquityPointClick = (point: EquityPoint) => {
+    if (point.isStart) return;
+
+    const pointTrades = point.tradeIds?.length
+      ? displayedTrades.filter((trade) => point.tradeIds?.includes(trade.id))
+      : displayedTrades.filter(
+          (trade) => trade.exitDate.split('T')[0] === point.date
+        );
+
+    if (pointTrades.length > 0 && onOpenTradeGroup) {
+      onOpenTradeGroup({
+        title: `Trade del ${point.date.split('-').reverse().join('/')}`,
+        subtitle: 'Operazioni incluse nella curva equity.',
+        trades: pointTrades,
+      });
+      return;
+    }
+
+    if (pointTrades.length === 1 && onOpenTrade) {
+      onOpenTrade(pointTrades[0]);
+    }
+  };
+  const canClickPoints = Boolean(onOpenTradeGroup || onOpenTrade);
 
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-card/95 shadow-[0_16px_36px_rgba(0,0,0,0.22)]">
@@ -195,8 +279,6 @@ export function EquityCurve({ trades, onPointClick }: EquityCurveProps) {
               <AreaChart
                 data={formattedData}
                 margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
-                onClick={handleChartClick}
-                style={{ cursor: onPointClick ? 'pointer' : 'default' }}
               >
                 <defs>
                   <linearGradient id="equityGradient" x1="0" y1="0" x2="0" y2="1">
@@ -222,23 +304,16 @@ export function EquityCurve({ trades, onPointClick }: EquityCurveProps) {
                   tickFormatter={(value) => streamerMode ? '******' : `$${value}`}
                 />
                 <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'hsl(var(--popover))',
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '6px',
-                    fontSize: '12px',
+                  content={
+                    <CustomEquityTooltip streamerMode={streamerMode} />
+                  }
+                  cursor={{
+                    stroke: 'hsl(var(--border))',
+                    strokeWidth: 1,
                   }}
-                  labelStyle={{ color: 'hsl(var(--foreground))' }}
-                  formatter={(value: number) => [
-                    streamerMode
-                      ? '******'
-                      : `$${value.toLocaleString('it-IT', {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}`,
-                    'Equity',
-                  ]}
-                  cursor={{ stroke: 'rgba(255,255,255,0.2)', strokeWidth: 1 }}
+                  position={{ y: 80 }}
+                  wrapperStyle={{ outline: 'none', pointerEvents: 'none' }}
+                  allowEscapeViewBox={{ x: false, y: true }}
                 />
                 <Area
                   type="monotone"
@@ -246,21 +321,32 @@ export function EquityCurve({ trades, onPointClick }: EquityCurveProps) {
                   stroke={strokeColor}
                   strokeWidth={2}
                   fill="url(#equityGradient)"
-                  activeDot={{
-                    r: 6,
-                    fill: strokeColor,
-                    stroke: '#fff',
-                    strokeWidth: 2,
-                    cursor: 'pointer',
-                  }}
-                  dot={onPointClick ? <CustomDot onPointClick={onPointClick} /> : false}
+                  activeDot={(props) => (
+                    <CustomDot
+                      {...props}
+                      active
+                      strokeColor={strokeColor}
+                      onPointClick={canClickPoints ? handleEquityPointClick : undefined}
+                    />
+                  )}
+                  dot={
+                    canClickPoints
+                      ? (props) => (
+                          <CustomDot
+                            {...props}
+                            strokeColor={strokeColor}
+                            onPointClick={handleEquityPointClick}
+                          />
+                        )
+                      : false
+                  }
                 />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         )}
 
-        {onPointClick && data.length > 0 && (
+        {canClickPoints && data.length > 0 && (
           <p className="mt-3 text-center font-mono text-[10px] text-muted-foreground">
             Clicca su un punto per vedere i dettagli del trade
           </p>

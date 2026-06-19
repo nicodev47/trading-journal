@@ -1,24 +1,85 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { NavHeader } from '@/components/trading-journal/nav-header';
 import { TradingCalendar } from '@/components/trading-journal/trading-calendar';
 import { StatsGrid } from '@/components/trading-journal/stats-grid';
 import { EquityCurve } from '@/components/trading-journal/equity-curve';
 import { MonthlyAnalysis } from '@/components/trading-journal/monthly-analysis';
 import { DayEditorDialog } from '@/components/trading-journal/day-editor-dialog';
+import { TradeDetailDialog } from '@/components/trading-journal/trade-detail-dialog';
+import { TradeGroupDetailDialog } from '@/components/trading-journal/trade-group-detail-dialog';
 import { WeeklyPlanDialog, type WeeklyPlanData } from '@/components/trading-journal/weekly-plan-dialog';
 import { ImportExportDialog } from '@/components/trading-journal/import-export-dialog';
 import { useTrades, type JournalWorkspace } from '@/hooks/use-trades';
 import { Toaster } from '@/components/ui/sonner';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import type { Trade } from '@/lib/types/trade';
 import { AdvancedStatsGrid } from '@/components/trading-journal/advanced-stats-grid';
 import { ProfileDialog } from '@/components/trading-journal/profile-dialog';
 import { toast } from 'sonner';
 import { StreamerModeProvider } from '@/contexts/streamer-mode-context';
+import { useStreamerMode } from '@/contexts/streamer-mode-context';
 import { WhatsNewDialog } from '@/components/trading-journal/whats-new-dialog';
+import { Download, RotateCcw } from 'lucide-react';
+import {
+  getDefaultExportBaseName,
+  normalizeExportFileName,
+} from '@/lib/export-filename';
 
-const UPDATE_BANNER_KEY = 'dismissedUpdateBanner_v0_1';
+const UPDATE_BANNER_KEY =
+  'dismissedUpdateBanner_share_backtest_analytics_v2';
+const BACKTEST_STORAGE_KEY = 'eclipse-trading-journal-data-backtest';
+
+type TradeGroupDialogState = {
+  title: string;
+  subtitle?: string;
+  trades: Trade[];
+};
+
+const getBacktestHasData = () => {
+  try {
+    const raw = localStorage.getItem(BACKTEST_STORAGE_KEY);
+
+    if (!raw) return false;
+
+    const data = JSON.parse(raw) as Record<string, unknown>;
+
+    return (
+      (Array.isArray(data.trades) && data.trades.length > 0) ||
+      (Array.isArray(data.strategies) && data.strategies.length > 0) ||
+      (Array.isArray(data.weeklyPlans) && data.weeklyPlans.length > 0) ||
+      (Array.isArray(data.customTags) && data.customTags.length > 0) ||
+      (Array.isArray(data.nonExecutedDays) && data.nonExecutedDays.length > 0) ||
+      (Array.isArray(data.missedTrades) && data.missedTrades.length > 0)
+    );
+  } catch {
+    return false;
+  }
+};
+
+const getBacktestHasTrades = () => {
+  try {
+    const raw = localStorage.getItem(BACKTEST_STORAGE_KEY);
+
+    if (!raw) return false;
+
+    const data = JSON.parse(raw) as Record<string, unknown>;
+
+    return Array.isArray(data.trades) && data.trades.length > 0;
+  } catch {
+    return false;
+  }
+};
 
 function AppContent() {
+ const { streamerMode } = useStreamerMode();
  const [activeWorkspace, setActiveWorkspace] = useState<JournalWorkspace>('personal');
 const [activeView, setActiveView] = useState<'calendar' | 'monthly'>('calendar');
 const [isHelpOpen, setIsHelpOpen] = useState(false);
@@ -31,25 +92,34 @@ const [isUpdateBannerVisible, setIsUpdateBannerVisible] = useState(() => {
   }
 });
 const [isProfileOpen, setIsProfileOpen] = useState(false);
+const [isBacktestResetDialogOpen, setIsBacktestResetDialogOpen] = useState(false);
+const [backtestHasData, setBacktestHasData] = useState(() => getBacktestHasData());
+const [backtestHasTrades, setBacktestHasTrades] = useState(() => getBacktestHasTrades());
 const [personalProfileTrades, setPersonalProfileTrades] = useState<Trade[]>([]);
 const [privacyMode, setPrivacyMode] = useState(false);
+const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
+const [tradeGroupDialog, setTradeGroupDialog] = useState<TradeGroupDialogState | null>(null);
+const [isTradeGroupOpen, setIsTradeGroupOpen] = useState(false);
+const [returnToTradeGroup, setReturnToTradeGroup] = useState(false);
 
   const {
     trades,
+    missedTrades,
     strategies,
-    customMistakes,
+    customTags,
     weeklyPlans,
     isLoaded,
     addTrade,
     deleteTrade,
     addStrategy,
     removeStrategy,
-    addCustomMistake,
-    removeCustomMistake,
+    addCustomTag,
+    removeCustomTag,
     saveWeeklyPlan,
     getWeeklyPlan,
     exportData,
     importData,
+    appendImportData,
     clearAllData,
     getWorkspaceData,
     clearWorkspaceData,
@@ -58,7 +128,13 @@ const [privacyMode, setPrivacyMode] = useState(false);
 
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedWeek, setSelectedWeek] = useState<{ weekKey: string; weekLabel: string } | null>(null);
-  const [importExportMode, setImportExportMode] = useState<'import' | 'export' | null>(null);
+  const [importExportMode, setImportExportMode] = useState<'import' | 'export' | 'append' | null>(null);
+  const showBacktestResetButton = activeWorkspace === 'backtest' && backtestHasData;
+
+  useEffect(() => {
+    setBacktestHasData(getBacktestHasData());
+    setBacktestHasTrades(getBacktestHasTrades());
+  }, [activeWorkspace, trades, strategies, weeklyPlans, customTags, missedTrades]);
 
   const handleDayClick = (date: string) => {
     setSelectedDate(date);
@@ -68,10 +144,6 @@ const [privacyMode, setPrivacyMode] = useState(false);
     setSelectedWeek({ weekKey, weekLabel });
   };
 
-  const handleEquityPointClick = (date: string) => {
-    setSelectedDate(date);
-  };
-
   const handleSaveDayTrades = (dayTrades: Trade[]) => {
     const existingTrades = selectedDate ? getTradesByDate(selectedDate) : [];
     existingTrades.forEach((trade) => deleteTrade(trade.id));
@@ -79,6 +151,19 @@ const [privacyMode, setPrivacyMode] = useState(false);
     dayTrades.forEach((trade) => {
       addTrade(trade);
     });
+
+    if (activeWorkspace === 'backtest') {
+      const nextTradeCount = trades.length - existingTrades.length + dayTrades.length;
+
+      setBacktestHasData(
+        nextTradeCount > 0 ||
+        strategies.length > 0 ||
+        weeklyPlans.length > 0 ||
+        customTags.length > 0 ||
+        missedTrades.length > 0
+      );
+      setBacktestHasTrades(nextTradeCount > 0);
+    }
   };
 
   const handleDeleteDay = () => {
@@ -86,6 +171,19 @@ const [privacyMode, setPrivacyMode] = useState(false);
       const existingTrades = getTradesByDate(selectedDate);
       existingTrades.forEach((trade) => deleteTrade(trade.id));
       setSelectedDate(null);
+
+      if (activeWorkspace === 'backtest') {
+        const nextTradeCount = trades.length - existingTrades.length;
+
+        setBacktestHasData(
+          nextTradeCount > 0 ||
+          strategies.length > 0 ||
+          weeklyPlans.length > 0 ||
+          customTags.length > 0 ||
+          missedTrades.length > 0
+        );
+        setBacktestHasTrades(nextTradeCount > 0);
+      }
     }
   };
 
@@ -100,12 +198,19 @@ const [privacyMode, setPrivacyMode] = useState(false);
       calendarScreenshots: data.calendarScreenshots,
       notes: data.notes,
     });
-  }, [saveWeeklyPlan]);
+
+    if (activeWorkspace === 'backtest') {
+      setBacktestHasData(true);
+    }
+  }, [activeWorkspace, saveWeeklyPlan]);
 
   const handleWorkspaceChange = (workspace: JournalWorkspace) => {
     setSelectedDate(null);
     setSelectedWeek(null);
     setImportExportMode(null);
+    setIsBacktestResetDialogOpen(false);
+    setBacktestHasData(getBacktestHasData());
+    setBacktestHasTrades(getBacktestHasTrades());
     setActiveWorkspace(workspace);
   };
 
@@ -113,6 +218,26 @@ const [privacyMode, setPrivacyMode] = useState(false);
     const success = importData(data, workspace);
 
     if (success) {
+      if (workspace === 'backtest') {
+        setBacktestHasData(getBacktestHasData());
+        setBacktestHasTrades(getBacktestHasTrades());
+      }
+
+      handleWorkspaceChange(workspace);
+    }
+
+    return success;
+  };
+
+  const handleAppendImportData = (data: string, workspace: JournalWorkspace) => {
+    const success = appendImportData(data, workspace);
+
+    if (success) {
+      if (workspace === 'backtest') {
+        setBacktestHasData(getBacktestHasData());
+        setBacktestHasTrades(getBacktestHasTrades());
+      }
+
       handleWorkspaceChange(workspace);
     }
 
@@ -132,6 +257,41 @@ const [privacyMode, setPrivacyMode] = useState(false);
     setSelectedWeek(null);
     setImportExportMode(null);
     clearAllData();
+  };
+
+  const handleResetBacktestJournal = () => {
+    if (activeWorkspace !== 'backtest') return;
+
+    setSelectedDate(null);
+    setSelectedWeek(null);
+    setImportExportMode(null);
+    clearAllData();
+    setBacktestHasData(false);
+    setBacktestHasTrades(false);
+    setIsBacktestResetDialogOpen(false);
+  };
+
+  const handleBackupAndResetBacktest = () => {
+    if (activeWorkspace !== 'backtest') return;
+
+    const backtestData = getWorkspaceData('backtest');
+    const backupData = JSON.stringify(backtestData, null, 2);
+    const blob = new Blob([backupData], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    const backupBaseName = getDefaultExportBaseName(
+      'backtest',
+      backtestData.trades
+    );
+
+    anchor.href = url;
+    anchor.download = normalizeExportFileName(backupBaseName, backupBaseName);
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(url);
+
+    handleResetBacktestJournal();
   };
 
   const handleOpenProfile = () => {
@@ -155,6 +315,14 @@ const [privacyMode, setPrivacyMode] = useState(false);
     }
   };
 
+  const handleOpenTradeGroup = (payload: TradeGroupDialogState) => {
+    if (payload.trades.length === 0) return;
+
+    setTradeGroupDialog(payload);
+    setIsTradeGroupOpen(true);
+    setReturnToTradeGroup(false);
+  };
+
   const handleOpenWhatsNewFromHelp = () => {
     setIsHelpOpen(false);
     setIsWhatsNewOpen(true);
@@ -175,7 +343,7 @@ const [privacyMode, setPrivacyMode] = useState(false);
           <div className="relative flex min-h-11 w-full items-center justify-center px-11 py-2 sm:px-14">
             <div className="flex min-w-0 flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-center">
               <span className="font-mono text-xs font-semibold text-violet-100 sm:text-sm">
-                EclipseJournal v0.1 Fuori Ora!
+                Nuova versione — Share, Backtest & Analytics
               </span>
               <button
                 type="button"
@@ -215,11 +383,15 @@ const [privacyMode, setPrivacyMode] = useState(false);
     trades={trades}
     weeklyPlans={weeklyPlans}
     activeWorkspace={activeWorkspace}
+    showResetButton={showBacktestResetButton}
+    hasBacktestTrades={backtestHasTrades}
     onWorkspaceChange={handleWorkspaceChange}
     onResetStudentJournal={handleResetStudentJournal}
+    onResetBacktestJournal={() => setIsBacktestResetDialogOpen(true)}
     onDayClick={handleDayClick}
     onWeekPlanClick={handleWeekPlanClick}
     onImport={() => setImportExportMode('import')}
+    onAppendImport={() => setImportExportMode('append')}
     onExport={() => setImportExportMode('export')}
   />
 
@@ -228,13 +400,15 @@ const [privacyMode, setPrivacyMode] = useState(false);
   <div className="pb-6 pt-4">
     <EquityCurve
       trades={trades}
-      onPointClick={handleEquityPointClick}
+      onOpenTradeGroup={handleOpenTradeGroup}
     />
   </div>
 </>
           </>
         ) : (
-          <MonthlyAnalysis trades={trades} />
+          <MonthlyAnalysis
+            trades={trades}
+          />
         )}
       </main>
 
@@ -263,11 +437,11 @@ const [privacyMode, setPrivacyMode] = useState(false);
           onSave={handleSaveDayTrades}
           onDeleteDay={handleDeleteDay}
           strategies={strategies}
-          customMistakes={customMistakes}
+          customTags={customTags}
           onAddStrategy={addStrategy}
           onRemoveStrategy={removeStrategy}
-          onAddCustomMistake={addCustomMistake}
-          onRemoveCustomMistake={removeCustomMistake}
+          onAddCustomTag={addCustomTag}
+          onRemoveCustomTag={removeCustomTag}
         />
       )}
 
@@ -282,13 +456,52 @@ const [privacyMode, setPrivacyMode] = useState(false);
         />
       )}
 
+      <TradeDetailDialog
+        trade={selectedTrade}
+        streamerMode={streamerMode}
+        onClose={() => {
+          setSelectedTrade(null);
+          setReturnToTradeGroup(false);
+        }}
+        showBackButton={returnToTradeGroup}
+        onBack={() => {
+          setSelectedTrade(null);
+          if (returnToTradeGroup) {
+            setIsTradeGroupOpen(true);
+          }
+        }}
+      />
+      <TradeGroupDetailDialog
+        open={isTradeGroupOpen && Boolean(tradeGroupDialog)}
+        onOpenChange={(open) => {
+          setIsTradeGroupOpen(open);
+          if (!open) setReturnToTradeGroup(false);
+        }}
+        title={tradeGroupDialog?.title ?? ''}
+        subtitle={tradeGroupDialog?.subtitle}
+        trades={tradeGroupDialog?.trades ?? []}
+        onOpenTrade={(trade) => {
+          setIsTradeGroupOpen(false);
+          setSelectedTrade(trade);
+          setReturnToTradeGroup(true);
+        }}
+      />
+
       <ImportExportDialog
         isOpen={!!importExportMode}
         onClose={() => setImportExportMode(null)}
-        mode={importExportMode || 'export'}
+        mode={importExportMode === 'export' ? 'export' : 'import'}
+        importStrategy={importExportMode === 'append' ? 'append' : 'replace'}
         activeWorkspace={activeWorkspace}
         exportData={importExportMode === 'export' ? exportData() : undefined}
-        onImport={importExportMode === 'import' ? handleImportData : undefined}
+        exportTrades={trades}
+        onImport={
+          importExportMode === 'append'
+            ? handleAppendImportData
+            : importExportMode === 'import'
+              ? handleImportData
+              : undefined
+        }
       />
 
       <ProfileDialog
@@ -297,6 +510,68 @@ const [privacyMode, setPrivacyMode] = useState(false);
         trades={personalProfileTrades}
         onClearPersonal={handleClearPersonal}
       />
+
+      <Dialog
+        open={isBacktestResetDialogOpen}
+        onOpenChange={setIsBacktestResetDialogOpen}
+      >
+        <DialogContent className="w-[calc(100vw-2rem)] max-w-[520px] overflow-hidden rounded-2xl border border-border bg-card p-0">
+          <DialogHeader className="border-b border-border px-5 py-4">
+            <div className="flex items-start gap-3">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-full border border-loss/30 bg-loss/10 text-loss">
+                <RotateCcw className="size-5" />
+              </div>
+              <div className="min-w-0">
+                <DialogTitle className="font-sans text-lg font-semibold text-foreground">
+                  Reset Backtest
+                </DialogTitle>
+                <DialogDescription className="mt-1 font-sans text-sm text-muted-foreground">
+                  Prima di resettare il Backtest ti consigliamo di esportare un backup dei tuoi dati.
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+
+          <div className="px-5 py-5">
+            <div className="rounded-xl border border-loss/30 bg-loss/10 p-4">
+              <p className="font-sans text-sm leading-relaxed text-foreground">
+                Questa azione cancellerà trade, strategie e piani salvati nel Backtest.
+                Il journal Personale e Preview non verranno modificati.
+                Consigliato: scarica un backup prima di procedere.
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter className="flex-col gap-2 border-t border-border bg-background/25 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <Button
+              type="button"
+              onClick={handleBackupAndResetBacktest}
+              className="gap-2 bg-profit text-background hover:bg-profit/90"
+            >
+              <Download className="size-4" />
+              Scarica backup e resetta
+            </Button>
+
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsBacktestResetDialogOpen(false)}
+              >
+                Annulla
+              </Button>
+              <Button
+                type="button"
+                onClick={handleResetBacktestJournal}
+                className="gap-2 bg-loss text-white hover:bg-loss/90"
+              >
+                <RotateCcw className="size-4" />
+                Reset Backtest
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {isHelpOpen && (
         <div
@@ -333,10 +608,10 @@ const [privacyMode, setPrivacyMode] = useState(false);
                 <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
                   <div>
                     <h3 className="font-sans text-sm font-bold text-foreground">
-                      Novità EclipseJournal v0.1
+                      Nuova versione — Share, Backtest & Analytics
                     </h3>
                     <p className="mt-1 font-sans text-xs leading-relaxed text-muted-foreground">
-                      Scopri tutte le funzioni e i miglioramenti inclusi in questo aggiornamento.
+                      EclipseJournal introduce la condivisione social dei trade, la sezione Backtest nel calendario, una nuova Analisi ridisegnata e messaggi di sicurezza per le azioni critiche.
                     </p>
                   </div>
                   <button
@@ -358,16 +633,18 @@ const [privacyMode, setPrivacyMode] = useState(false);
                     'Clicca un giorno per aggiungere o modificare trade.',
                     'Verde positivo, rosso negativo.',
                     'Numero in basso = trade inseriti; ⭐️ = preferito.',
+                    'Usa Backtest per testare strategie separatamente dal journal reale.',
                   ],
                 },
                 {
                   icon: '👤',
-                  title: 'Personale / Preview',
-                  description: 'Due ambienti distinti per lavorare senza sovrascrivere dati.',
+                  title: 'Personale / Backtest / Preview',
+                  description: 'Tre ambienti distinti per lavorare senza sovrascrivere dati.',
                   bullets: [
                     'Personale è il journal reale.',
-                    'Preview serve per test e revisioni.',
-                    'I due archivi restano separati.',
+                    'Backtest è dedicato ai test strategici nel calendario.',
+                    'Preview serve per prove, revisioni e import temporanei.',
+                    'I tre archivi restano separati.',
                   ],
                 },
                 {
@@ -378,16 +655,29 @@ const [privacyMode, setPrivacyMode] = useState(false);
                     'Inserisci P&L, simbolo, direzione, orario e setup.',
                     'Aggiungi link TradingView / Google Drive.',
                     'Usa ⭐️ per marcare i trade importanti.',
+                    'Usa Share per generare una card da condividere sui social.',
+                  ],
+                },
+                {
+                  icon: '📸',
+                  title: 'Trade Recap Card',
+                  description: 'Crea una card visiva del singolo trade da condividere.',
+                  bullets: [
+                    'Genera una card con P&L, asset, direzione, orario e setup.',
+                    'Usa Copy to Clipboard per copiare l’immagine.',
+                    'Usa Save as Image per scaricarla.',
+                    'Pensata per social, recap personali e journaling visivo.',
                   ],
                 },
                 {
                   icon: '🧠',
-                  title: 'Errori e note',
+                  title: 'Tags e note',
                   description: 'Trasforma ogni trade in materiale utile per migliorare.',
                   bullets: [
-                    'Seleziona gli errori rapidi.',
-                    'Crea e gestisci errori personalizzati.',
+                    'Seleziona tag rapidi o crea tag personalizzati.',
                     'Scrivi note chiare sulla tua esecuzione.',
+                    'Usa tag e note per riconoscere pattern ricorrenti.',
+                    'Le note restano salvate nel backup.',
                   ],
                 },
                 {
@@ -414,11 +704,12 @@ const [privacyMode, setPrivacyMode] = useState(false);
                 {
                   icon: '📈',
                   title: 'Analisi',
-                  description: 'Leggi performance, abitudini ed edge del journal.',
+                  description: 'Leggi performance, abitudini, edge e qualità operativa.',
                   bullets: [
-                    'Consulta Equity, P&L mensile e distribuzione operazioni.',
-                    'Analizza setup breakdown, Long vs Short e Trading Radar.',
-                    'Usa Feedback & Insights per il coaching automatico.',
+                    'Esplora grafici cliccabili e più coerenti con il tema dell’app.',
+                    'Analizza setup breakdown, Long vs Short ed Execution Map.',
+                    'Monitora Eclipse Score, winrate, profit factor, frequenza e timing.',
+                    'Usa Feedback & Insights per individuare pattern e aree di miglioramento.',
                   ],
                 },
                 {
@@ -427,19 +718,20 @@ const [privacyMode, setPrivacyMode] = useState(false);
                   description: 'Crea backup e ripristina i dati dove preferisci.',
                   bullets: [
                     'Esporta il journal in formato JSON.',
-                    'Importa in Personale oppure Preview.',
-                    'Il backup JSON conserva i valori economici reali.',
-                    'Prima di condividere un file, verificane sempre il contenuto.',
+                    'Il backup salva dati e link, non incorpora immagini.',
+                    'Importa in Personale, Backtest oppure Preview.',
+                    'Prima di importare, EclipseJournal mostra un messaggio di sicurezza.',
                   ],
                 },
                 {
                   icon: '⚠️',
                   title: 'Zona pericolosa',
-                  description: 'La cancellazione è protetta per evitare errori.',
+                  description: 'Le azioni irreversibili sono protette da conferme.',
                   bullets: [
-                    'Svuota personale cancella solo Personale.',
-                    'Preview non viene modificata.',
-                    'È richiesta la conferma manuale SVUOTA.',
+                    'Prima di cancellare un trade viene mostrato un messaggio di sicurezza.',
+                    'Prima di importare dati viene richiesta conferma.',
+                    'La cancellazione è protetta per evitare errori accidentali.',
+                    'Esporta sempre un backup prima di azioni importanti.',
                   ],
                   danger: true,
                 },

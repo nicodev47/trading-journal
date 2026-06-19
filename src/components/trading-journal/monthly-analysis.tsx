@@ -6,24 +6,40 @@ import { Button } from '@/components/ui/button';
 import { EquityCurve } from '@/components/trading-journal/equity-curve';
 import { AdvancedStatsGrid } from '@/components/trading-journal/advanced-stats-grid';
 import { AnalysisDiagnostics } from '@/components/trading-journal/analysis-diagnostics';
+import { ExecutionMap } from '@/components/trading-journal/execution-map';
+import { TradeDetailDialog } from '@/components/trading-journal/trade-detail-dialog';
+import { TradeGroupDetailDialog } from '@/components/trading-journal/trade-group-detail-dialog';
 import { cn } from '@/lib/utils';
-import { CUSTOM_MISTAKE_PREFIX, type Trade } from '@/lib/types/trade';
+import {
+  CUSTOM_TAG_PREFIX,
+  TRADE_TAGS,
+  type Trade,
+} from '@/lib/types/trade';
 import { useStreamerMode } from '@/contexts/streamer-mode-context';
 
 interface MonthlyAnalysisProps {
   trades: Trade[];
 }
 
-const ANALYSIS_MISTAKES = [
-  { value: 'early_entry', emoji: '⏳', label: 'Entrata in Anticipo' },
-  { value: 'late_entry', emoji: '🥶', label: 'Entrata in Ritardo' },
-] as const;
-
-type MistakeCount = {
+type TagAnalytics = {
   value: string;
-  emoji: string;
   label: string;
-  count: number;
+  tradeCount: number;
+  totalPnl: number;
+  winRate: number;
+  percent: number;
+  trades: Trade[];
+};
+
+type TradeGroupDialogState = {
+  title: string;
+  subtitle?: string;
+  trades: Trade[];
+};
+
+type SummaryPill = {
+  label: string;
+  tone?: 'default' | 'profit' | 'loss';
 };
 
 const MONTHS = [
@@ -56,8 +72,15 @@ function formatPercent(value: number) {
   return `${value.toFixed(1)}%`;
 }
 
-export function MonthlyAnalysis({ trades }: MonthlyAnalysisProps) {
+export function MonthlyAnalysis({
+  trades,
+}: MonthlyAnalysisProps) {
   const { streamerMode } = useStreamerMode();
+  const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
+  const [tradeGroupDialog, setTradeGroupDialog] =
+    useState<TradeGroupDialogState | null>(null);
+  const [isTradeGroupOpen, setIsTradeGroupOpen] = useState(false);
+  const [returnToTradeGroup, setReturnToTradeGroup] = useState(false);
   const availableYears = useMemo(() => {
     const years = Array.from(
       new Set(trades.map((trade) => new Date(trade.exitDate).getFullYear()))
@@ -103,6 +126,7 @@ export function MonthlyAnalysis({ trades }: MonthlyAnalysisProps) {
       return {
         monthName,
         monthIndex,
+        monthTrades,
         totalPnl,
         trades: monthTrades.length,
         wins: wins.length,
@@ -121,6 +145,8 @@ export function MonthlyAnalysis({ trades }: MonthlyAnalysisProps) {
   const yearWins = months.reduce((sum, month) => sum + month.wins, 0);
   const yearLosses = months.reduce((sum, month) => sum + month.losses, 0);
   const yearWinRate = yearTrades > 0 ? (yearWins / yearTrades) * 100 : 0;
+  const yearLongTrades = yearFilteredTrades.filter((trade) => trade.direction === 'long').length;
+  const yearShortTrades = yearFilteredTrades.filter((trade) => trade.direction === 'short').length;
   const grossWins = months.reduce((sum, month) => sum + Math.max(month.totalPnl, 0), 0);
   const grossLosses = Math.abs(months.reduce((sum, month) => sum + Math.min(month.totalPnl, 0), 0));
   const profitFactor = grossLosses > 0 ? grossWins / grossLosses : grossWins > 0 ? Infinity : 0;
@@ -137,126 +163,91 @@ export function MonthlyAnalysis({ trades }: MonthlyAnalysisProps) {
     setSelectedYear(availableYears[nextIndex] || selectedYear + 1);
   };
 
-  const mistakeStats = useMemo(() => {
-    const mistakesMap = new Map<string, MistakeCount>(
-      ANALYSIS_MISTAKES.map(
-        (mistake): [string, MistakeCount] => [
-          mistake.value,
-          { ...mistake, count: 0 },
-        ]
-      )
-    );
+  const tagAnalytics = useMemo<TagAnalytics[]>(() => {
+    const tagMap = new Map<string, { trades: Trade[]; totalPnl: number; wins: number }>();
 
     yearFilteredTrades.forEach((trade) => {
-      const mistakes = trade.mistakes ?? [];
+      const uniqueTags = Array.from(new Set(trade.tags ?? []));
 
-      mistakes
-        .filter((mistake) => mistake.startsWith(CUSTOM_MISTAKE_PREFIX))
-        .forEach((mistake) => {
-          if (!mistakesMap.has(mistake)) {
-            mistakesMap.set(mistake, {
-              value: mistake,
-              emoji: '',
-              label: mistake.slice(CUSTOM_MISTAKE_PREFIX.length),
-              count: 0,
-            });
-          }
-        });
-    });
+      uniqueTags.forEach((tag) => {
+        const current = tagMap.get(tag) || { trades: [], totalPnl: 0, wins: 0 };
+        const pnl = netPnl(trade);
 
-    yearFilteredTrades.forEach((trade) => {
-      const mistakes = trade.mistakes ?? [];
-
-      mistakes.forEach((mistakeValue) => {
-        const current = mistakesMap.get(mistakeValue);
-
-        if (current) {
-          current.count += 1;
-        }
+        current.trades.push(trade);
+        current.totalPnl += pnl;
+        current.wins += pnl > 0 ? 1 : 0;
+        tagMap.set(tag, current);
       });
     });
 
-    const totalYearTrades = yearFilteredTrades.length;
-    const mistakeTrades = yearFilteredTrades.filter(
-      (trade) => (trade.mistakes ?? []).length > 0
-    );
-    const tradesWithMistakes = mistakeTrades.length;
-    const cleanTrades = totalYearTrades - tradesWithMistakes;
-    const disciplineScore =
-      totalYearTrades > 0
-        ? Math.round((cleanTrades / totalYearTrades) * 100)
-        : 100;
-
-    const mistakes = Array.from(mistakesMap.values())
-      .filter((mistake) => mistake.count > 0)
-      .sort((a, b) => b.count - a.count)
-      .map((mistake) => {
-        const percent =
-          totalYearTrades > 0
-            ? (mistake.count / totalYearTrades) * 100
-            : 0;
-        const heatColor =
-          percent >= 80
-            ? 'from-[#ff4d6d] to-[#ff2d55]'
-            : percent >= 60
-              ? 'from-[#ff4d6d]/95 to-[#ff2d55]/80'
-              : percent >= 40
-                ? 'from-[#ff4d6d]/85 to-[#ff2d55]/70'
-                : percent >= 25
-                  ? 'from-[#ff4d6d]/75 to-[#ff2d55]/60'
-                  : percent >= 10
-                    ? 'from-[#ff4d6d]/65 to-[#ff2d55]/50'
-                    : 'from-[#ff4d6d]/55 to-[#ff2d55]/40';
+    return Array.from(tagMap.entries())
+      .map(([value, stats]) => {
+        const standardTag = TRADE_TAGS.find((tag) => tag.value === value);
+        const label = standardTag
+          ? `${standardTag.emoji} ${standardTag.label}`
+          : value.startsWith(CUSTOM_TAG_PREFIX)
+            ? value.slice(CUSTOM_TAG_PREFIX.length)
+            : value;
 
         return {
-          ...mistake,
-          percent,
-          heatColor,
+          value,
+          label,
+          trades: stats.trades,
+          tradeCount: stats.trades.length,
+          totalPnl: stats.totalPnl,
+          winRate:
+            stats.trades.length > 0
+              ? (stats.wins / stats.trades.length) * 100
+              : 0,
+          percent:
+            yearFilteredTrades.length > 0
+              ? (stats.trades.length / yearFilteredTrades.length) * 100
+              : 0,
         };
-      });
-
-    const disciplineColor =
-      disciplineScore >= 65
-        ? 'bg-profit'
-        : disciplineScore >= 50
-          ? 'bg-profit/50'
-          : disciplineScore >= 25
-            ? 'bg-loss/60'
-            : 'bg-loss';
-    const topMistake = mistakes[0];
-    const tradesWithTopMistake = topMistake
-      ? yearFilteredTrades.filter((trade) =>
-          (trade.mistakes ?? []).includes(topMistake.value)
-        )
-      : [];
-    const winningTradesWithTopMistake = tradesWithTopMistake.filter(
-      (trade) => netPnl(trade) > 0
-    ).length;
-    const topMistakeWinRate =
-      tradesWithTopMistake.length > 0
-        ? (winningTradesWithTopMistake / tradesWithTopMistake.length) * 100
-        : null;
-
-    return {
-      mistakes,
-      tradesWithMistakes,
-      cleanTrades,
-      disciplineScore,
-      disciplineColor,
-      topMistake,
-      topMistakeTradeCount: tradesWithTopMistake.length,
-      topMistakeWinRate,
-    };
+      })
+      .sort((a, b) => b.tradeCount - a.tradeCount)
+      .slice(0, 6);
   }, [yearFilteredTrades]);
+
+  const openTradeGroup = (
+    title: string,
+    subtitle: string,
+    groupTrades: Trade[]
+  ) => {
+    if (groupTrades.length === 0) {
+      return;
+    }
+
+    setTradeGroupDialog({
+      title,
+      subtitle,
+      trades: groupTrades,
+    });
+    setIsTradeGroupOpen(true);
+    setReturnToTradeGroup(false);
+  };
+
+  const openMonthTradeGroup = (
+    month: (typeof months)[number],
+    titlePrefix: string,
+    subtitle: string
+  ) => {
+    openTradeGroup(
+      `${titlePrefix} ${month.monthName} ${selectedYear}`,
+      subtitle,
+      month.monthTrades
+    );
+  };
+
   return (
     <section className="pb-8">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="font-mono text-base font-semibold tracking-wide text-foreground">
-            Analisi mensile
+            Analisi annuale
           </h2>
           <p className="mt-1 font-mono text-xs text-muted-foreground">
-            Performance complessiva mese per mese.
+            Analisi annuale delle performance operative e dei pattern del journal.
           </p>
         </div>
 
@@ -274,14 +265,56 @@ export function MonthlyAnalysis({ trades }: MonthlyAnalysisProps) {
       </div>
 
       <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <SummaryBox title="P&L annuale" value={streamerMode ? '******' : formatCurrency(yearTotal)} color={yearTotal > 0 ? 'profit' : yearTotal < 0 ? 'loss' : 'neutral'} />
-        <SummaryBox title="Winrate" value={formatPercent(yearWinRate)} subtitle={`${yearWins} win / ${yearLosses} loss`} />
-        <SummaryBox title="Trade totali" value={yearTrades.toString()} />
-        <SummaryBox title="Profit factor" value={!isFinite(profitFactor) ? '∞' : profitFactor.toFixed(2)} />
+        <SummaryBox
+          title="P&L annuale"
+          value={streamerMode ? '******' : formatCurrency(yearTotal)}
+          color={yearTotal > 0 ? 'profit' : yearTotal < 0 ? 'loss' : 'neutral'}
+          description="Performance netta del periodo"
+          pills={[{ label: `${yearTrades} trade` }]}
+        />
+        <SummaryBox
+          title="Win Rate"
+          value={formatPercent(yearWinRate)}
+          description="Percentuale trade vincenti"
+          pills={[
+            { label: `${yearWins} win`, tone: 'profit' },
+            { label: `${yearLosses} loss`, tone: 'loss' },
+          ]}
+          progress={yearWinRate}
+        />
+        <SummaryBox
+          title="Trade totali"
+          value={yearTrades.toString()}
+          description="Operazioni registrate nel periodo"
+          pills={[
+            { label: `${yearLongTrades} long`, tone: 'profit' },
+            { label: `${yearShortTrades} short`, tone: 'loss' },
+          ]}
+        />
+        <SummaryBox
+          title="Profit factor"
+          value={!isFinite(profitFactor) ? '∞' : profitFactor.toFixed(2)}
+          description="Rapporto profitti / perdite"
+          progress={
+            Number.isFinite(profitFactor)
+              ? Math.min((profitFactor / 4.8) * 100, 100)
+              : 0
+          }
+        />
       </div>
 
       <div className="mb-4">
-        <EquityCurve key={selectedYear} trades={yearFilteredTrades} />
+        <EquityCurve
+          key={selectedYear}
+          trades={yearFilteredTrades}
+          onOpenTradeGroup={(payload) =>
+            openTradeGroup(
+              payload.title,
+              payload.subtitle ?? 'Operazioni incluse nella curva equity.',
+              payload.trades
+            )
+          }
+        />
       </div>
 
       <div className="mb-4 rounded-2xl border border-border bg-card/95 p-4 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
@@ -299,7 +332,17 @@ export function MonthlyAnalysis({ trades }: MonthlyAnalysisProps) {
               return (
                 <div
                   key={month.monthName}
-                  className="flex min-w-0 flex-1 flex-col items-center gap-2"
+                  className={cn(
+                    'flex min-w-0 flex-1 flex-col items-center gap-2',
+                    month.trades > 0 && 'cursor-pointer'
+                  )}
+                  onClick={() =>
+                    openMonthTradeGroup(
+                      month,
+                      'Trade di',
+                      'P&L mensile e operazioni del periodo selezionato.'
+                    )
+                  }
                 >
                   <div className="group relative flex h-[180px] w-full items-end justify-center">
                     {month.totalPnl !== 0 && (
@@ -317,14 +360,26 @@ export function MonthlyAnalysis({ trades }: MonthlyAnalysisProps) {
                           <span className="mr-1 text-foreground">
                             {month.monthName}:
                           </span>
-                          <span className="font-semibold text-teal-200">
+                          <span
+                            className={cn(
+                              'font-semibold',
+                              month.totalPnl > 0 && 'text-teal-200',
+                              month.totalPnl < 0 && 'text-rose-200'
+                            )}
+                          >
                             {streamerMode
                               ? '******'
                               : formatCurrency(month.totalPnl)}
                           </span>
                         </div>
                         <div
-                          className="w-11 rounded-t-lg bg-gradient-to-t from-emerald-950 via-teal-600 to-profit shadow-[0_0_12px_rgba(0,240,168,0.14)] transition-all duration-200 group-hover:scale-x-105 group-hover:brightness-110 group-hover:shadow-[0_0_22px_rgba(0,240,168,0.32)] sm:w-12"
+                          className={cn(
+                            'w-11 rounded-t-lg transition-all duration-200 group-hover:scale-x-105 group-hover:brightness-110 sm:w-12',
+                            month.totalPnl > 0 &&
+                              'bg-[linear-gradient(to_top,rgba(0,214,143,0.25),#00d68f)] shadow-[0_0_12px_rgba(0,214,143,0.18)] group-hover:shadow-[0_0_22px_rgba(0,214,143,0.34)]',
+                            month.totalPnl < 0 &&
+                              'bg-[linear-gradient(to_top,rgba(255,77,112,0.25),#ff4d70)] shadow-[0_0_12px_rgba(255,77,112,0.16)] group-hover:shadow-[0_0_22px_rgba(255,77,112,0.32)]'
+                          )}
                           style={{ height }}
                         />
                       </>
@@ -370,7 +425,17 @@ export function MonthlyAnalysis({ trades }: MonthlyAnalysisProps) {
                   return (
                     <div
                       key={month.monthName}
-                      className="flex min-w-0 flex-1 flex-col items-center gap-2"
+                      className={cn(
+                        'flex min-w-0 flex-1 flex-col items-center gap-2',
+                        month.trades > 0 && 'cursor-pointer'
+                      )}
+                      onClick={() =>
+                        openMonthTradeGroup(
+                          month,
+                          'Operazioni di',
+                          'Tutti i trade eseguiti nel mese selezionato.'
+                        )
+                      }
                     >
                       <div className="group relative flex h-[180px] w-full items-end justify-center">
                         {month.trades > 0 && (
@@ -393,7 +458,7 @@ export function MonthlyAnalysis({ trades }: MonthlyAnalysisProps) {
                               </span>
                             </div>
                             <div
-                              className="w-11 rounded-t-lg bg-gradient-to-t from-emerald-950 via-teal-700 to-teal-300 shadow-[0_0_12px_rgba(45,212,191,0.12)] transition-all duration-200 group-hover:scale-x-105 group-hover:brightness-110 group-hover:shadow-[0_0_22px_rgba(45,212,191,0.28)] sm:w-12"
+                              className="w-11 rounded-t-lg bg-[linear-gradient(to_top,rgba(0,214,143,0.25),#00d68f)] shadow-[0_0_12px_rgba(0,214,143,0.16)] transition-all duration-200 group-hover:scale-x-105 group-hover:brightness-110 group-hover:shadow-[0_0_22px_rgba(0,214,143,0.32)] sm:w-12"
                               style={{ height }}
                             />
                           </>
@@ -409,6 +474,12 @@ export function MonthlyAnalysis({ trades }: MonthlyAnalysisProps) {
             </div>
           </div>
         )}
+      </div>
+
+      <div className="mb-4">
+        <ExecutionMap
+          trades={trades}
+        />
       </div>
 
       <div className="mb-4 overflow-hidden rounded-2xl border border-border bg-card/95 shadow-[0_16px_36px_rgba(0,0,0,0.22)]">
@@ -454,109 +525,63 @@ export function MonthlyAnalysis({ trades }: MonthlyAnalysisProps) {
         <div className="rounded-2xl border border-border bg-card/95 p-4 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
           <div className="mb-4">
             <div className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-              Mistake Tracking
+              TAG ANALYTICS
             </div>
-            <p className="mt-1 font-mono text-xs text-muted-foreground">
-              Errori più frequenti registrati nei trade.
-            </p>
           </div>
 
           <div className="space-y-3">
-            {mistakeStats.mistakes.length > 0 ? (
-              mistakeStats.mistakes.map((mistake) => (
+            {tagAnalytics.length > 0 ? (
+              tagAnalytics.map((tag) => (
                 <div
-                  key={mistake.value}
-                  className="grid grid-cols-[140px_1fr_32px] items-center gap-4"
+                  key={tag.value}
+                  className="space-y-2 rounded-xl p-2 transition-colors hover:bg-secondary/10"
                 >
-                  <span className="font-mono text-xs text-foreground">
-                    {mistake.emoji && (
-                      <span className="mr-2" aria-hidden="true">
-                        {mistake.emoji}
-                      </span>
-                    )}
-                    {mistake.label}
-                  </span>
+                  <div className="grid grid-cols-[minmax(0,1fr)_auto_auto_auto_auto] items-center gap-3 font-mono text-xs">
+                    <span className="truncate text-foreground">{tag.label}</span>
+                    <span className="text-muted-foreground">
+                      {tag.tradeCount} trade
+                    </span>
+                    <span
+                      className={cn(
+                        tag.totalPnl > 0 && 'text-profit',
+                        tag.totalPnl < 0 && 'text-loss',
+                        tag.totalPnl === 0 && 'text-muted-foreground'
+                      )}
+                    >
+                      {streamerMode ? '******' : formatCurrency(tag.totalPnl)}
+                    </span>
+                    <span className="text-muted-foreground">
+                      {formatPercent(tag.winRate)} WR
+                    </span>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-9 rounded-lg border-border bg-background/50 px-3 font-mono text-xs text-muted-foreground hover:border-profit/50 hover:bg-secondary hover:text-foreground"
+                      onClick={() =>
+                        openTradeGroup(
+                          `Tag: ${tag.label}`,
+                          'Tutti i trade associati a questo tag.',
+                          tag.trades
+                        )
+                      }
+                    >
+                      Apri
+                    </Button>
+                  </div>
                   <div className="h-2 overflow-hidden rounded-full bg-secondary">
                     <div
-                      className={`h-full rounded-full bg-gradient-to-r transition-all duration-200 hover:brightness-110 hover:drop-shadow-[0_0_6px_rgba(255,77,109,0.45)] ${mistake.heatColor}`}
-                      style={{ width: `${mistake.percent}%` }}
+                      className="h-full rounded-full bg-gradient-to-r from-teal-700 to-profit transition-all duration-200 hover:brightness-110 hover:drop-shadow-[0_0_6px_rgba(45,212,191,0.45)]"
+                      style={{ width: `${tag.percent}%` }}
                     />
                   </div>
-                  <span className="min-w-6 text-right font-mono text-xs text-muted-foreground">
-                    {mistake.count}
-                  </span>
                 </div>
               ))
             ) : (
               <div className="rounded-xl border border-border bg-background/50 p-4 font-mono text-xs text-muted-foreground">
-                Nessun errore registrato.
+                Nessun tag registrato per questo anno.
               </div>
             )}
-          </div>
-        </div>
-      </div>
-
-      <div className="mb-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <div className="rounded-2xl border border-border bg-card/95 p-3.5 font-mono shadow-[0_12px_28px_rgba(0,0,0,0.18)] sm:p-4">
-          <div className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-            Discipline Score
-          </div>
-
-          <div className="mt-2.5 text-2xl font-semibold text-foreground">
-            {mistakeStats.disciplineScore} / 100
-          </div>
-          <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
-            <span>{mistakeStats.cleanTrades} trade corretti</span>
-            <span>{mistakeStats.tradesWithMistakes} trade con errori</span>
-          </div>
-
-          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-secondary">
-            <div
-              className={`h-full rounded-full transition-all ${mistakeStats.disciplineColor}`}
-              style={{ width: `${mistakeStats.disciplineScore}%` }}
-            />
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-border bg-card/95 p-3.5 font-mono shadow-[0_12px_28px_rgba(0,0,0,0.18)] sm:p-4">
-          <div className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-            Errore più commesso
-          </div>
-
-          <div className="mt-2.5 text-xl font-semibold text-foreground">
-            {mistakeStats.topMistake ? (
-              <>
-                <span className="mr-2" aria-hidden="true">
-                  {mistakeStats.topMistake.emoji}
-                </span>
-                {mistakeStats.topMistake.label}
-              </>
-            ) : (
-              'Errore più commesso: —'
-            )}
-          </div>
-          <div className="mt-1.5 text-[11px] text-muted-foreground">
-            {mistakeStats.topMistakeTradeCount}{' '}
-            {mistakeStats.topMistakeTradeCount === 1
-              ? 'volta commesso'
-              : 'volte commesso'}
-          </div>
-          <div className="mt-3 flex items-baseline gap-2 text-[11px] text-muted-foreground">
-            <p>Winrate:</p>
-            <p
-              className={cn(
-                'text-base font-semibold',
-                mistakeStats.topMistakeWinRate === null
-                  ? 'text-muted-foreground'
-                  : mistakeStats.topMistakeWinRate >= 50
-                    ? 'text-profit'
-                    : 'text-loss'
-              )}
-            >
-              {mistakeStats.topMistakeWinRate === null
-                ? '—'
-                : formatPercent(mistakeStats.topMistakeWinRate)}
-            </p>
           </div>
         </div>
       </div>
@@ -565,25 +590,113 @@ export function MonthlyAnalysis({ trades }: MonthlyAnalysisProps) {
         <AdvancedStatsGrid trades={yearFilteredTrades} extended />
       </div>
 
+      <TradeDetailDialog
+        trade={selectedTrade}
+        streamerMode={streamerMode}
+        onClose={() => {
+          setSelectedTrade(null);
+          setReturnToTradeGroup(false);
+        }}
+        showBackButton={returnToTradeGroup}
+        onBack={() => {
+          setSelectedTrade(null);
+          if (returnToTradeGroup) {
+            setIsTradeGroupOpen(true);
+          }
+        }}
+      />
+      <TradeGroupDetailDialog
+        open={isTradeGroupOpen && Boolean(tradeGroupDialog)}
+        onOpenChange={(open) => {
+          setIsTradeGroupOpen(open);
+          if (!open) setReturnToTradeGroup(false);
+        }}
+        title={tradeGroupDialog?.title ?? ''}
+        subtitle={tradeGroupDialog?.subtitle}
+        trades={tradeGroupDialog?.trades ?? []}
+        onOpenTrade={(trade) => {
+          setIsTradeGroupOpen(false);
+          setSelectedTrade(trade);
+          setReturnToTradeGroup(true);
+        }}
+      />
     </section>
   );
 }
 
-function SummaryBox({ title, value, subtitle, color = 'default' }: { title: string; value: string; subtitle?: string; color?: 'profit' | 'loss' | 'neutral' | 'default' }) {
+function SummaryBox({
+  title,
+  value,
+  subtitle,
+  description,
+  pills = [],
+  progress,
+  color = 'default',
+}: {
+  title: string;
+  value: string;
+  subtitle?: string;
+  description?: string;
+  pills?: SummaryPill[];
+  progress?: number;
+  color?: 'profit' | 'loss' | 'neutral' | 'default';
+}) {
+  const getPillClass = (tone: SummaryPill['tone'] = 'default') =>
+    cn(
+      'rounded-full border px-3 py-1 font-mono text-[11px] font-medium',
+      tone === 'profit' && 'border-profit/40 bg-profit/10 text-profit',
+      tone === 'loss' && 'border-loss/40 bg-loss/10 text-loss',
+      tone === 'default' &&
+        'border-border bg-background/70 text-muted-foreground'
+    );
+
   return (
-    <div className="rounded-xl border border-border bg-card/95 p-4">
-      <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{title}</div>
-      <div
-        className={cn(
-          'font-mono text-base font-semibold',
-          color === 'profit' && 'text-profit',
-          color === 'loss' && 'text-loss',
-          color === 'neutral' && 'text-muted-foreground'
-        )}
-      >
-        {value}
+    <div className="rounded-2xl border border-border bg-card/95 shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
+      <div className="flex min-h-[118px] flex-col justify-between gap-2 p-3.5">
+      <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{title}</div>
+      <div className="flex flex-wrap items-center gap-2">
+        <div
+          className={cn(
+            'font-mono text-xl font-semibold tracking-tight text-foreground',
+            color === 'profit' && 'text-profit',
+            color === 'loss' && 'text-loss',
+            color === 'neutral' && 'text-muted-foreground'
+          )}
+        >
+          {value}
+        </div>
+        {pills.map((pill) => (
+          <span
+            key={pill.label}
+            className={getPillClass(pill.tone)}
+          >
+            {pill.label}
+          </span>
+        ))}
       </div>
-      {subtitle && <div className="mt-1 font-mono text-[11px] text-muted-foreground">{subtitle}</div>}
+      {description && (
+        <p className="font-mono text-[11px] text-muted-foreground">
+          {description}
+        </p>
+      )}
+      {subtitle && (
+        <div className="flex flex-wrap gap-1.5">
+          {subtitle && (
+            <span className="rounded-full border border-border bg-background/50 px-2 py-1 font-mono text-[10px] text-muted-foreground">
+              {subtitle}
+            </span>
+          )}
+        </div>
+      )}
+      {typeof progress === 'number' && (
+        <div className="h-2 overflow-hidden rounded-full bg-secondary/40">
+          <div
+            className="h-full rounded-full bg-profit"
+            style={{ width: `${Math.min(Math.max(progress, 0), 100)}%` }}
+          />
+        </div>
+      )}
+      </div>
     </div>
   );
 }

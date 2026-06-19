@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { getBestOperatingWindow } from '@/lib/operating-windows';
-import type { Trade } from '@/lib/types/trade';
+import { isValidTradeSetup, type Trade } from '@/lib/types/trade';
 import { useStreamerMode } from '@/contexts/streamer-mode-context';
 import { cn } from '@/lib/utils';
 
@@ -60,7 +60,8 @@ export function AdvancedStatsGrid({
         weekdayStats.set(weekday, stats);
       }
 
-      const setup = trade.strategy.trim();
+      const rawSetup = trade.strategy.trim();
+      const setup = isValidTradeSetup(rawSetup) ? rawSetup : rawSetup ? 'Legacy' : '';
       if (setup) {
         const stats = setupStats.get(setup) ?? { trades: 0, wins: 0 };
         stats.trades += 1;

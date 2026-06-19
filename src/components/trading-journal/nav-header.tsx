@@ -35,13 +35,13 @@ export function NavHeader({
           </span>
         </div>
 
-        <nav className="flex items-center justify-center gap-2 justify-self-center max-sm:w-full max-sm:justify-start">
+        <nav className="flex items-center justify-center gap-2 justify-self-center max-sm:w-full max-sm:justify-start max-sm:overflow-x-auto max-sm:pr-20">
           <Button
             type="button"
             variant={activeView === 'calendar' ? 'default' : 'outline'}
             size="sm"
             className={cn(
-              'h-8 gap-2 rounded-lg font-sans text-xs font-semibold max-sm:flex-1',
+              'h-8 gap-2 whitespace-nowrap rounded-lg font-sans text-xs font-semibold max-sm:shrink-0',
               activeView !== 'calendar' && 'hover:bg-secondary'
             )}
             onClick={() => onViewChange('calendar')}
@@ -55,7 +55,7 @@ export function NavHeader({
             variant={activeView === 'monthly' ? 'default' : 'outline'}
             size="sm"
             className={cn(
-              'h-8 gap-2 rounded-lg font-sans text-xs font-semibold max-sm:flex-1',
+              'h-8 gap-2 whitespace-nowrap rounded-lg font-sans text-xs font-semibold max-sm:shrink-0',
               activeView !== 'monthly' && 'hover:bg-secondary'
             )}
             onClick={() => onViewChange('monthly')}

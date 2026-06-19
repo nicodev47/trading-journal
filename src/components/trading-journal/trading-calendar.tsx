@@ -5,15 +5,16 @@ import { Button } from '@/components/ui/button';
 import {
   ChevronLeft,
   ChevronRight,
+  Plus,
   Upload,
   Download,
   RotateCcw,
 } from 'lucide-react';
 import { CalendarDay } from './calendar-day';
 import { WeekSummary } from './week-summary';
+import { MonthYearPicker } from './month-year-picker';
 import {
   getWeeksOfMonth,
-  formatMonthYear,
   getDateKey,
   getWeekKey,
   nextMonth,
@@ -22,6 +23,7 @@ import {
   isToday as checkIsToday,
 } from '@/lib/date-utils';
 import { getDayData } from '@/lib/calculations';
+import { cn } from '@/lib/utils';
 import type { Trade, WeeklyPlan } from '@/lib/types/trade';
 import type { JournalWorkspace } from '@/hooks/use-trades';
 
@@ -29,11 +31,15 @@ interface TradingCalendarProps {
   trades: Trade[];
   weeklyPlans: WeeklyPlan[];
   activeWorkspace: JournalWorkspace;
+  showResetButton?: boolean;
+  hasBacktestTrades?: boolean;
   onWorkspaceChange: (workspace: JournalWorkspace) => void;
   onResetStudentJournal: () => void;
+  onResetBacktestJournal?: () => void;
   onDayClick: (date: string) => void;
   onWeekPlanClick: (weekKey: string, weekLabel: string) => void;
   onImport: () => void;
+  onAppendImport?: () => void;
   onExport: () => void;
 }
 
@@ -43,11 +49,15 @@ export function TradingCalendar({
   trades,
   weeklyPlans,
   activeWorkspace,
+  showResetButton = false,
+  hasBacktestTrades = false,
   onWorkspaceChange,
   onResetStudentJournal,
+  onResetBacktestJournal,
   onDayClick,
   onWeekPlanClick,
   onImport,
+  onAppendImport,
   onExport,
 }: TradingCalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -110,9 +120,23 @@ export function TradingCalendar({
     });
   }, [weeks, trades, weeklyPlans]);
 
+  const getWorkspaceButtonClass = (workspace: JournalWorkspace) => {
+    const isActive = activeWorkspace === workspace;
+
+    return cn(
+      'h-8 rounded-lg border font-sans text-xs font-semibold transition-colors',
+      isActive
+        ? '!border-profit !bg-profit !text-background hover:!border-profit hover:!bg-profit hover:!text-background'
+        : 'border-border bg-background/50 text-muted-foreground hover:border-border hover:bg-secondary hover:text-foreground'
+    );
+  };
+
+  const shouldShowAppendImport =
+    activeWorkspace === 'backtest' && hasBacktestTrades && onAppendImport;
+
   return (
     <div className="flex flex-col overflow-hidden rounded-lg border border-border bg-card shadow-[0_18px_50px_rgba(0,0,0,0.25)]">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-3 py-2.5">
+      <div className="flex flex-wrap items-center gap-3 border-b border-border px-4 py-3">
         <div className="flex flex-wrap items-center gap-2">
           <h2 className="mr-1 font-sans text-[15px] font-bold tracking-[-0.03em] text-foreground">
             Calendario P/L
@@ -120,9 +144,9 @@ export function TradingCalendar({
 
           <Button
             type="button"
-            variant={activeWorkspace === 'personal' ? 'default' : 'outline'}
+            variant="outline"
             size="sm"
-            className="h-8 rounded-lg font-sans text-xs font-semibold border-border hover:bg-secondary hover:text-foreground"
+            className={getWorkspaceButtonClass('personal')}
             onClick={() => onWorkspaceChange('personal')}
           >
             👤 Personale
@@ -130,21 +154,31 @@ export function TradingCalendar({
 
           <Button
             type="button"
-            variant={activeWorkspace === 'student' ? 'default' : 'outline'}
+            variant="outline"
             size="sm"
-            className="h-8 rounded-lg font-sans text-xs font-semibold border-border hover:bg-secondary hover:text-foreground"
+            className={getWorkspaceButtonClass('backtest')}
+            onClick={() => onWorkspaceChange('backtest')}
+          >
+            ⚙️ Backtest
+          </Button>
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className={getWorkspaceButtonClass('student')}
             onClick={() => onWorkspaceChange('student')}
           >
             👁️ Preview
           </Button>
 
-          {activeWorkspace === 'student' && (
+          {activeWorkspace === 'backtest' && showResetButton && (
             <Button
               type="button"
               variant="outline"
               size="sm"
               className="h-8 gap-2 rounded-lg border-loss/45 font-sans text-xs font-semibold text-loss hover:bg-loss/10 hover:text-loss"
-              onClick={onResetStudentJournal}
+              onClick={onResetBacktestJournal}
             >
               <RotateCcw className="size-3" />
               Reset
@@ -152,50 +186,65 @@ export function TradingCalendar({
           )}
         </div>
 
-        <div className="flex flex-wrap items-center justify-end gap-2 max-sm:w-full max-sm:justify-between">
+        <div className="ml-auto flex items-center gap-2 max-sm:ml-0 max-sm:w-full max-sm:justify-between">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setCurrentMonth(prevMonth(currentMonth))}
-            className="size-7 rounded-lg text-muted-foreground transition-colors hover:bg-secondary/70 hover:text-foreground"
+            className="size-8 rounded-lg text-muted-foreground transition-colors hover:bg-secondary/70 hover:text-foreground"
           >
             <ChevronLeft className="size-4" />
           </Button>
 
-          <span className="min-w-[130px] text-center font-sans text-[15px] font-bold capitalize tracking-[-0.04em] text-foreground max-sm:min-w-[110px]">
-            {formatMonthYear(currentMonth)}
-          </span>
+          <MonthYearPicker
+            value={currentMonth}
+            onChange={setCurrentMonth}
+            triggerClassName="h-auto min-w-[150px] rounded-xl border-0 bg-transparent px-4 py-1 text-base font-semibold text-foreground shadow-none transition-colors duration-200 hover:bg-white/10 hover:text-foreground"
+          />
 
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setCurrentMonth(nextMonth(currentMonth))}
-            className="size-7 rounded-lg text-muted-foreground transition-colors hover:bg-secondary/70 hover:text-foreground"
+            className="size-8 rounded-lg text-muted-foreground transition-colors hover:bg-secondary/70 hover:text-foreground"
           >
             <ChevronRight className="size-4" />
           </Button>
+        </div>
 
-          <div className="ml-2 flex items-center gap-1.5 max-sm:ml-0 max-sm:w-full max-sm:justify-end">
+        <div className="flex items-center gap-2 max-sm:w-full">
+          {shouldShowAppendImport ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onAppendImport}
+              className="h-9 gap-2 rounded-lg font-sans text-xs font-semibold max-sm:flex-1"
+              title="Aggiungi un altro file backtest senza sovrascrivere i dati attuali"
+            >
+              <Plus className="size-3" />
+              Aggiungi
+            </Button>
+          ) : (
             <Button
               variant="outline"
               size="sm"
               onClick={onImport}
-              className="h-8 gap-2 rounded-lg font-sans text-xs font-semibold max-sm:flex-1"
+              className="h-9 gap-2 rounded-lg font-sans text-xs font-semibold max-sm:flex-1"
             >
               <Upload className="size-3" />
               Importa
             </Button>
+          )}
 
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onExport}
-              className="h-8 gap-2 rounded-lg font-sans text-xs font-semibold max-sm:flex-1"
-            >
-              <Download className="size-3" />
-              Esporta
-            </Button>
-          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onExport}
+            className="h-9 gap-2 rounded-lg font-sans text-xs font-semibold max-sm:flex-1"
+          >
+            <Download className="size-3" />
+            Esporta
+          </Button>
         </div>
       </div>
 

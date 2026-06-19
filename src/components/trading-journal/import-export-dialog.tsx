@@ -15,7 +15,12 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
+import {
+  getDefaultExportBaseName,
+  normalizeExportFileName,
+} from '@/lib/export-filename';
 import type { JournalWorkspace } from '@/hooks/use-trades';
+import type { Trade } from '@/lib/types/trade';
 import { useStreamerMode } from '@/contexts/streamer-mode-context';
 
 interface ImportExportDialogProps {
@@ -24,28 +29,20 @@ interface ImportExportDialogProps {
   mode: 'import' | 'export';
   activeWorkspace: JournalWorkspace;
   exportData?: string;
+  exportTrades?: Trade[];
+  importStrategy?: 'replace' | 'append';
   onImport?: (data: string, workspace: JournalWorkspace) => boolean;
 }
 
-const getDefaultFileName = () => {
-  const now = new Date();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-
-  return `calendario-pl-${now.getFullYear()}-${month}`;
-};
-
-const normalizeFileName = (value: string) => {
-  const fallback = getDefaultFileName();
-  const withoutExtension = value.trim().replace(/\.json$/i, '');
-  const normalized = withoutExtension
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/[^a-zA-Z0-9._-]/g, '')
-    .replace(/-+/g, '-')
-    .replace(/^[.-]+|[.-]+$/g, '');
-
-  return `${normalized || fallback}.json`;
+const getWorkspaceLabel = (workspace: JournalWorkspace) => {
+  switch (workspace) {
+    case 'personal':
+      return 'Personale';
+    case 'backtest':
+      return 'Backtest';
+    case 'student':
+      return 'Preview';
+  }
 };
 
 export function ImportExportDialog({
@@ -54,10 +51,14 @@ export function ImportExportDialog({
   mode,
   activeWorkspace,
   exportData,
+  exportTrades = [],
+  importStrategy = 'replace',
   onImport,
 }: ImportExportDialogProps) {
   const { streamerMode } = useStreamerMode();
-  const [exportFileName, setExportFileName] = useState(getDefaultFileName);
+  const [exportFileName, setExportFileName] = useState(() =>
+    getDefaultExportBaseName(activeWorkspace, exportTrades)
+  );
   const [selectedFileName, setSelectedFileName] = useState('');
   const [pendingImportData, setPendingImportData] = useState<string | null>(null);
   const [importError, setImportError] = useState('');
@@ -69,13 +70,13 @@ export function ImportExportDialog({
   useEffect(() => {
     if (!isOpen) return;
 
-    setExportFileName(getDefaultFileName());
+    setExportFileName(getDefaultExportBaseName(activeWorkspace, exportTrades));
     setSelectedFileName('');
     setPendingImportData(null);
     setImportError('');
     setTargetWorkspace(activeWorkspace);
     setIsDragging(false);
-  }, [activeWorkspace, isOpen, mode]);
+  }, [activeWorkspace, exportTrades, isOpen, mode]);
 
   const handleClose = () => {
     setSelectedFileName('');
@@ -93,7 +94,10 @@ export function ImportExportDialog({
     const anchor = document.createElement('a');
 
     anchor.href = url;
-    anchor.download = normalizeFileName(exportFileName);
+    anchor.download = normalizeExportFileName(
+      exportFileName,
+      getDefaultExportBaseName(activeWorkspace, exportTrades)
+    );
     document.body.appendChild(anchor);
     anchor.click();
     document.body.removeChild(anchor);
@@ -191,21 +195,24 @@ export function ImportExportDialog({
       return;
     }
 
-    toast.success(
-      `Dati importati in ${targetWorkspace === 'personal' ? 'Personale' : 'Preview'}`
-    );
+    toast.success(`Dati importati in ${getWorkspaceLabel(targetWorkspace)}`);
     handleClose();
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={open => !open && handleClose()}>
-      <DialogContent className="overflow-hidden rounded-2xl border border-border bg-card p-0 shadow-[0_16px_36px_rgba(0,0,0,0.28)] sm:max-w-md">
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-[560px] overflow-hidden rounded-2xl border border-border bg-card p-0 shadow-[0_16px_36px_rgba(0,0,0,0.28)] sm:max-w-[560px]">
         <DialogHeader className="border-b border-border px-5 py-4">
           <DialogTitle className="flex items-center gap-2 font-mono text-base">
             {mode === 'export' ? (
               <>
                 <Download className="size-4 text-profit" />
                 Esporta dati
+              </>
+            ) : importStrategy === 'append' ? (
+              <>
+                <Upload className="size-4 text-profit" />
+                Aggiungi dati
               </>
             ) : (
               <>
@@ -218,8 +225,12 @@ export function ImportExportDialog({
             {mode === 'export'
               ? 'Scegli il nome del file JSON da scaricare.'
               : pendingImportData
-                ? 'Scegli dove caricare i dati importati.'
-                : 'Seleziona un file JSON esportato dal calendario.'}
+                ? importStrategy === 'append'
+                  ? 'Scegli dove aggiungere i dati importati senza sovrascrivere quelli esistenti.'
+                  : 'Scegli dove caricare i dati importati.'
+                : importStrategy === 'append'
+                  ? 'Seleziona un file JSON da aggiungere ai dati esistenti.'
+                  : 'Seleziona un file JSON esportato dal calendario.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -265,7 +276,10 @@ export function ImportExportDialog({
               <p className="font-sans text-xs text-muted-foreground">
                 Il file verrà salvato come{' '}
                 <span className="font-mono text-foreground">
-                  {normalizeFileName(exportFileName)}
+                  {normalizeExportFileName(
+                    exportFileName,
+                    getDefaultExportBaseName(activeWorkspace, exportTrades)
+                  )}
                 </span>
               </p>
             </div>
@@ -290,7 +304,7 @@ export function ImportExportDialog({
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <button
                   type="button"
                   onClick={() => setTargetWorkspace('personal')}
@@ -304,6 +318,22 @@ export function ImportExportDialog({
                   <span className="block font-sans text-sm font-semibold">👤 Personale</span>
                   <span className="mt-1 block font-sans text-xs text-muted-foreground">
                     Journal personale
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setTargetWorkspace('backtest')}
+                  className={cn(
+                    'rounded-xl border p-4 text-left transition-colors',
+                    targetWorkspace === 'backtest'
+                      ? 'border-profit/60 bg-profit/10 text-foreground'
+                      : 'border-border bg-background/40 text-muted-foreground hover:bg-secondary/50'
+                  )}
+                >
+                  <span className="block font-sans text-sm font-semibold">⚙️ Backtest</span>
+                  <span className="mt-1 block font-sans text-xs text-muted-foreground">
+                    Test strategie
                   </span>
                 </button>
 
@@ -337,7 +367,7 @@ export function ImportExportDialog({
               </Button>
               <Button type="button" onClick={handleImportConfirmation} className="gap-2">
                 <Upload className="size-4" />
-                Importa
+                {importStrategy === 'append' ? 'Aggiungi' : 'Importa'}
               </Button>
             </DialogFooter>
           </>
