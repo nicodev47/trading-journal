@@ -278,7 +278,7 @@ export function TradeDetailDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="overflow-y-auto px-5 py-5 sm:px-6">
+        <div className="ej-scrollbar overflow-y-auto overscroll-contain px-5 py-5 sm:px-6">
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
             <DetailCard label="Data">
               {date

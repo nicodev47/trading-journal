@@ -380,7 +380,7 @@ export function DayEditorDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex max-h-[calc(86vh-120px)] flex-col gap-4 overflow-y-auto p-4">
+        <div className="ej-scrollbar flex max-h-[calc(86vh-120px)] flex-col gap-4 overflow-y-auto overscroll-contain p-4">
           <div className="flex flex-col gap-4">
             {tradeRows.map((row, rowIndex) => (
               <div
@@ -397,10 +397,15 @@ export function DayEditorDialog({
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="h-11 gap-2 rounded-xl border-profit/60 bg-profit/15 px-4 font-sans text-sm font-semibold text-profit shadow-[0_0_18px_rgba(0,214,143,0.12)] hover:border-profit/80 hover:bg-profit/25 hover:text-profit hover:shadow-[0_0_22px_rgba(0,214,143,0.22)]"
+                      className="h-10 gap-2 rounded-xl border-[#0f8f6f] bg-[#06251f] px-3.5 font-mono text-sm font-semibold text-[#00f0aa] shadow-none transition-colors duration-150 hover:border-[#119979] hover:bg-[#073128] hover:text-[#00f0aa] hover:shadow-none"
                       onClick={() => setSelectedShareTrade(getTradeFromRow(row))}
                     >
-                      <span aria-hidden="true">📷</span>
+                      <span
+                        className="block shrink-0 text-base leading-none"
+                        aria-hidden="true"
+                      >
+                        📷
+                      </span>
                       Share
                     </Button>
 

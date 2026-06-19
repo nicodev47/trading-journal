@@ -398,6 +398,7 @@ export function AdvancedStatsGrid({
             value={data.longTrades ? `${data.longWinRate.toFixed(0)}%` : '—'}
             subtitle={`${data.longTrades} trade long`}
             tone="profit"
+            progress={data.longTrades > 0 ? data.longWinRate : 0}
           />
 
           <CompactAnalysisCard
@@ -405,6 +406,7 @@ export function AdvancedStatsGrid({
             value={data.shortTrades ? `${data.shortWinRate.toFixed(0)}%` : '—'}
             subtitle={`${data.shortTrades} trade short`}
             tone={data.shortWinRate >= 50 ? 'profit' : 'loss'}
+            progress={data.shortTrades > 0 ? data.shortWinRate : 0}
           />
 
           <CompactAnalysisCard
@@ -418,6 +420,7 @@ export function AdvancedStatsGrid({
                 : 'Nessun trade registrato'
             }
             tone="profit"
+            progress={data.bestWeekday?.winRate ?? 0}
           />
         </>
       )}
@@ -431,11 +434,13 @@ function CompactAnalysisCard({
   value,
   subtitle,
   tone,
+  progress,
 }: {
   title: string;
   value: string;
   subtitle: string;
   tone: 'profit' | 'loss';
+  progress: number;
 }) {
   return (
     <Card className="self-start rounded-2xl border border-border bg-card/95 py-0 shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
@@ -453,11 +458,14 @@ function CompactAnalysisCard({
         <p className="mt-1 font-mono text-[11px] text-muted-foreground">
           {subtitle}
         </p>
-        <div
-          className={`mt-3 h-1.5 w-full rounded-full ${
-            tone === 'profit' ? 'bg-profit/80' : 'bg-loss/80'
-          }`}
-        />
+        <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-secondary">
+          <div
+            className={`h-full rounded-full transition-all ${
+              tone === 'profit' ? 'bg-profit/80' : 'bg-loss/80'
+            }`}
+            style={{ width: `${Math.min(Math.max(progress, 0), 100)}%` }}
+          />
+        </div>
       </CardContent>
     </Card>
   );

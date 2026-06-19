@@ -594,7 +594,7 @@ const [returnToTradeGroup, setReturnToTradeGroup] = useState(false);
             if (event.target === event.currentTarget) setIsHelpOpen(false);
           }}
         >
-          <div className="eclipse-help-scrollbar max-h-[88vh] w-full max-w-4xl overflow-y-auto overscroll-contain rounded-2xl border border-border bg-card shadow-2xl">
+          <div className="ej-scrollbar max-h-[88vh] w-full max-w-4xl overflow-y-auto overscroll-contain rounded-2xl border border-border bg-card shadow-2xl">
             <div className="sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-border bg-card/95 px-5 py-4 backdrop-blur md:px-6">
               <div>
                 <h2 id="help-dialog-title" className="font-mono text-lg font-semibold text-foreground">

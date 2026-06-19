@@ -21,6 +21,7 @@ interface MonthYearPickerProps {
   value: Date;
   onChange: (date: Date) => void;
   triggerClassName?: string;
+  triggerVariant?: 'outline' | 'ghost';
 }
 
 const MONTHS = [
@@ -42,6 +43,7 @@ export function MonthYearPicker({
   value,
   onChange,
   triggerClassName,
+  triggerVariant = 'outline',
 }: MonthYearPickerProps) {
   const id = useId();
   const years = useMemo(() => {
@@ -69,7 +71,7 @@ export function MonthYearPicker({
       <PopoverTrigger asChild>
         <Button
           type="button"
-          variant="outline"
+          variant={triggerVariant}
           className={cn(
             'h-9 min-w-[150px] rounded-lg border border-border bg-background/50 px-4 text-sm font-semibold capitalize text-foreground hover:bg-secondary/70 hover:text-foreground',
             triggerClassName

@@ -160,8 +160,8 @@ export function TradeShareDialog({
           </div>
         </DialogHeader>
 
-        <div className="flex max-h-[calc(90vh-132px)] flex-col overflow-y-auto p-3">
-          <div className="overflow-x-auto rounded-2xl border border-border bg-card/60 p-2.5">
+        <div className="ej-scrollbar flex max-h-[calc(90vh-132px)] flex-col overflow-y-auto overscroll-contain p-3">
+          <div className="ej-scrollbar overflow-x-auto rounded-2xl border border-border bg-card/60 p-2.5">
             <div className="mx-auto w-fit">
               {trade && (
                 <div ref={cardRef}>

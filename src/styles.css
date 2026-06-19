@@ -140,24 +140,25 @@
   }
 }
 
-.eclipse-help-scrollbar {
+.ej-scrollbar {
   scrollbar-color: rgba(148, 163, 184, 0.28) transparent;
   scrollbar-width: thin;
 }
 
-.eclipse-help-scrollbar::-webkit-scrollbar {
+.ej-scrollbar::-webkit-scrollbar {
   width: 8px;
+  height: 8px;
 }
 
-.eclipse-help-scrollbar::-webkit-scrollbar-track {
+.ej-scrollbar::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.eclipse-help-scrollbar::-webkit-scrollbar-thumb {
+.ej-scrollbar::-webkit-scrollbar-thumb {
   border-radius: 999px;
   background: rgba(148, 163, 184, 0.22);
 }
 
-.eclipse-help-scrollbar::-webkit-scrollbar-thumb:hover {
+.ej-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(148, 163, 184, 0.38);
 }

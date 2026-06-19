@@ -199,7 +199,8 @@ export function TradingCalendar({
           <MonthYearPicker
             value={currentMonth}
             onChange={setCurrentMonth}
-            triggerClassName="h-auto min-w-[150px] rounded-xl border-0 bg-transparent px-4 py-1 text-base font-semibold text-foreground shadow-none transition-colors duration-200 hover:bg-white/10 hover:text-foreground"
+            triggerVariant="ghost"
+            triggerClassName="inline-flex items-center justify-center gap-2 whitespace-nowrap disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive has-[>svg]:px-3 capitalize h-auto min-w-[150px] rounded-xl border border-transparent bg-transparent px-4 py-1 text-base font-semibold text-foreground shadow-none ring-0 transition-colors duration-200 hover:bg-white/10 hover:text-foreground dark:bg-transparent dark:hover:bg-white/10 dark:hover:text-foreground"
           />
 
           <Button

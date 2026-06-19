@@ -89,7 +89,7 @@ export function TagInput({
             <div className="space-y-2">
               {/* Quick select existing tags */}
               {unselectedTags.length > 0 && (
-                <div className="flex max-h-32 flex-wrap gap-1 overflow-y-auto">
+                <div className="ej-scrollbar flex max-h-32 flex-wrap gap-1 overflow-y-auto overscroll-contain">
                   {unselectedTags.map(tag => (
                     <Badge
                       key={tag}

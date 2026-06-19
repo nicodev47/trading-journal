@@ -35,7 +35,7 @@ export function NavHeader({
           </span>
         </div>
 
-        <nav className="flex items-center justify-center gap-2 justify-self-center max-sm:w-full max-sm:justify-start max-sm:overflow-x-auto max-sm:pr-20">
+        <nav className="ej-scrollbar flex items-center justify-center gap-2 justify-self-center max-sm:w-full max-sm:justify-start max-sm:overflow-x-auto max-sm:pr-20">
           <Button
             type="button"
             variant={activeView === 'calendar' ? 'default' : 'outline'}

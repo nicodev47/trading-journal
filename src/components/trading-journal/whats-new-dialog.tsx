@@ -68,7 +68,7 @@ export function WhatsNewDialog({ open, onOpenChange }: WhatsNewDialogProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={false}
-        className="max-h-[88vh] max-w-4xl overflow-y-auto border-border/80 bg-card p-0 sm:rounded-2xl"
+        className="ej-scrollbar max-h-[88vh] max-w-4xl overflow-y-auto overscroll-contain border-border/80 bg-card p-0 sm:rounded-2xl"
       >
         <DialogHeader className="sticky top-0 z-10 border-b border-border/70 bg-card/95 px-6 py-5 text-left backdrop-blur">
           <div className="flex items-start justify-between gap-4">

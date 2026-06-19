@@ -185,7 +185,7 @@ export function TradeForm({
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
+      <SheetContent className="ej-scrollbar w-full overflow-y-auto overscroll-contain sm:max-w-lg">
         <SheetHeader>
           <SheetTitle>
             {existingTrade ? 'Edit Trade' : 'New Trade'}

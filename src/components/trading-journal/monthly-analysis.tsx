@@ -321,7 +321,7 @@ export function MonthlyAnalysis({
         <div className="mb-4 font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
           P&L mensile
         </div>
-        <div className="w-full overflow-x-auto">
+        <div className="ej-scrollbar w-full overflow-x-auto">
           <div className="flex h-60 min-w-[760px] items-end gap-2 border-b border-border/70 px-2 pb-4 sm:min-w-0">
             {months.map((month) => {
               const height = Math.max(
@@ -407,7 +407,7 @@ export function MonthlyAnalysis({
             </p>
           </div>
         ) : (
-          <div className="w-full overflow-x-auto">
+          <div className="ej-scrollbar w-full overflow-x-auto">
             <div className="flex min-w-[760px] gap-3 sm:min-w-0">
               <div className="flex h-60 w-7 shrink-0 flex-col justify-between pb-7 pt-1 text-right font-mono text-[9px] text-muted-foreground">
                 <span>{maxMonthlyTrades}</span>
@@ -483,7 +483,7 @@ export function MonthlyAnalysis({
       </div>
 
       <div className="mb-4 overflow-hidden rounded-2xl border border-border bg-card/95 shadow-[0_16px_36px_rgba(0,0,0,0.22)]">
-        <div className="w-full overflow-x-auto">
+        <div className="ej-scrollbar w-full overflow-x-auto">
           <div className="min-w-[860px]">
         <div className="grid grid-cols-[1.2fr_1fr_0.8fr_0.8fr_0.9fr_0.9fr_1fr_1fr] border-b border-border px-4 py-3 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
           <span>Mese</span>

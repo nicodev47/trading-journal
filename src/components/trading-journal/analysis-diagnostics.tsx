@@ -1667,7 +1667,7 @@ export function AnalysisDiagnostics({ trades }: AnalysisDiagnosticsProps) {
             <EmptyState>Nessun setup registrato.</EmptyState>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="ej-scrollbar overflow-x-auto">
             <table className="w-full min-w-[900px] font-mono text-xs">
               <thead>
                 <tr className="border-b border-border text-left text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
@@ -1911,7 +1911,7 @@ export function AnalysisDiagnostics({ trades }: AnalysisDiagnosticsProps) {
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto">
+            <div className="ej-scrollbar overflow-x-auto">
               <table className="w-full min-w-[1080px] table-fixed font-mono text-xs">
                 <colgroup>
                   <col className="w-[118px]" />

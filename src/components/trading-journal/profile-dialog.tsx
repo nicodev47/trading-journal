@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { ImageDown, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -428,7 +428,7 @@ export function ProfileDialog({
     <>
       <Dialog open={isOpen} onOpenChange={open => !open && onClose()}>
         <DialogContent
-          className="max-h-[88vh] overflow-y-auto rounded-2xl border border-border bg-card p-0 shadow-[0_20px_50px_rgba(0,0,0,0.35)] sm:max-w-2xl"
+          className="ej-scrollbar max-h-[88vh] overflow-y-auto overscroll-contain rounded-2xl border border-border bg-card p-0 shadow-[0_20px_50px_rgba(0,0,0,0.35)] sm:max-w-2xl"
           onOpenAutoFocus={event => event.preventDefault()}
         >
           <DialogHeader className="border-b border-border px-5 py-4">
@@ -465,7 +465,9 @@ export function ProfileDialog({
                   onClick={handleShare}
                   disabled={isGeneratingImage}
                 >
-                  <ImageDown className="size-3.5" />
+                  <span className="text-base leading-none" aria-hidden="true">
+                    📷
+                  </span>
                   {isGeneratingImage ? 'Genero...' : 'Share'}
                 </Button>
               </div>

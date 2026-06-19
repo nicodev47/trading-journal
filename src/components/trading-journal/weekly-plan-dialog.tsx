@@ -174,7 +174,7 @@ export function WeeklyPlanDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-h-[90vh] w-[95vw] max-w-2xl overflow-y-auto border-border bg-card">
+      <DialogContent className="ej-scrollbar max-h-[90vh] w-[95vw] max-w-2xl overflow-y-auto overscroll-contain border-border bg-card">
         <DialogHeader className="border-b border-border px-6 py-4">
           <DialogTitle className="font-mono text-base font-medium tracking-wide">
             Piano settimanale - {weekLabel}
