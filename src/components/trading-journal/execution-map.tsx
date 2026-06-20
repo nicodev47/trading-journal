@@ -61,19 +61,16 @@ function getInitialMonth(trades: Trade[]) {
   return startOfMonth(latestTrade ?? new Date());
 }
 
-function formatCompactMoney(value: number, streamerMode: boolean) {
+function formatExecutionPnl(value: number, streamerMode: boolean) {
   if (streamerMode) return '******';
 
-  const sign = value > 0 ? '+' : '';
-  const absoluteValue = Math.abs(value);
+  const sign = value > 0 ? '+' : value < 0 ? '-' : '';
+  const formatted = Math.abs(value).toLocaleString('it-IT', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 
-  if (absoluteValue >= 1000) {
-    return `${sign}${(value / 1000).toLocaleString('it-IT', {
-      maximumFractionDigits: 1,
-    })}k`;
-  }
-
-  return `${sign}${Math.round(value).toLocaleString('it-IT')}`;
+  return `${sign}${formatted}`;
 }
 
 function getStatus(dayData?: DayExecutionData): DayStatus {
@@ -259,7 +256,7 @@ export function ExecutionMap({ trades }: ExecutionMapProps) {
                     status === 'loss' && 'text-loss'
                   )}
                 >
-                  {formatCompactMoney(dayData?.realPnl ?? 0, streamerMode)}
+                  {formatExecutionPnl(dayData?.realPnl ?? 0, streamerMode)}
                 </span>
               )}
 

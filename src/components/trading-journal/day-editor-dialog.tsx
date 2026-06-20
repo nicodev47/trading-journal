@@ -60,6 +60,51 @@ interface TradeRow {
 
 type LegacyTrade = Trade & { mistakes?: string[] };
 
+function formatPnlDraft(value: string): string {
+  let next = value.replace(/\./g, ',').replace(/[^\d,-]/g, '');
+  const isNegative = next.startsWith('-');
+
+  next = next.replace(/-/g, '');
+
+  const [integerPart, ...decimalParts] = next.split(',');
+  const decimalPart = decimalParts.join('').slice(0, 2);
+  const unsignedValue =
+    decimalParts.length > 0 ? `${integerPart},${decimalPart}` : integerPart;
+
+  return isNegative ? `-${unsignedValue}` : unsignedValue;
+}
+
+function getPnlNumber(value: string): number {
+  const pnl = Number(value.replace(',', '.'));
+
+  return Number.isFinite(pnl) ? pnl : 0;
+}
+
+function formatTimeDraft(value: string): string {
+  const digits = value.replace(/\D/g, '').slice(0, 4);
+
+  if (digits.length <= 2) {
+    return digits;
+  }
+
+  return `${digits.slice(0, 2)}:${digits.slice(2)}`;
+}
+
+function normalizeTime(value: string): string {
+  const digits = value.replace(/\D/g, '').slice(0, 4);
+
+  if (digits.length === 0) {
+    return '00:00';
+  }
+
+  const hours = digits.slice(0, 2);
+  const minutes = digits.slice(2, 4);
+  const safeHours = Math.min(Number(hours || 0), 23);
+  const safeMinutes = Math.min(Number(minutes.padEnd(2, '0') || 0), 59);
+
+  return `${String(safeHours).padStart(2, '0')}:${String(safeMinutes).padStart(2, '0')}`;
+}
+
 interface DayEditorDialogProps {
   isOpen: boolean;
   onClose: () => void;
@@ -88,6 +133,7 @@ export function DayEditorDialog({
 }: DayEditorDialogProps) {
   const { streamerMode } = useStreamerMode();
   const [tradeRows, setTradeRows] = useState<TradeRow[]>([]);
+  const [timeDrafts, setTimeDrafts] = useState<Record<string, string>>({});
   const [screenshotInputs, setScreenshotInputs] = useState<Record<string, { url: string; name: string }>>({});
   const [customTagInputs, setCustomTagInputs] = useState<Record<string, string>>({});
   const [isManagingTags, setIsManagingTags] = useState(false);
@@ -109,10 +155,12 @@ export function DayEditorDialog({
 
             return {
             id: t.id,
-            pnl: t.pnl.toString(),
+            pnl: formatPnlDraft(t.pnl.toString()),
             symbol: t.pair,
             direction: t.direction,
-            time: (t.exitDate?.split('T')[1] || t.entryDate?.split('T')[1] || '').slice(0, 5),
+            time: normalizeTime(
+              (t.exitDate?.split('T')[1] || t.entryDate?.split('T')[1] || '').slice(0, 5)
+            ),
             setup: getEditableSetupValue(t.strategy),
             originalSetup: t.strategy || '',
             tags: t.tags?.length ? t.tags : legacyTrade.mistakes ?? [],
@@ -146,6 +194,7 @@ export function DayEditorDialog({
       }
 
       setScreenshotInputs({});
+      setTimeDrafts({});
       setCustomTagInputs({});
       setIsManagingTags(false);
       setEditingScreenshot(null);
@@ -244,7 +293,7 @@ export function DayEditorDialog({
   };
 
   const dayTotal = useMemo(() => {
-    return tradeRows.reduce((sum, row) => sum + (parseFloat(row.pnl) || 0), 0);
+    return tradeRows.reduce((sum, row) => sum + getPnlNumber(row.pnl), 0);
   }, [tradeRows]);
 
   const initialShareHandle = useMemo(() => {
@@ -264,7 +313,7 @@ export function DayEditorDialog({
         ? [...row.tags, pendingCustomTag]
         : row.tags;
     const now = new Date().toISOString();
-    const tradeTime = row.time || '00:00';
+    const tradeTime = normalizeTime(timeDrafts[row.id] ?? row.time);
 
     return {
       id: row.id,
@@ -275,10 +324,10 @@ export function DayEditorDialog({
       lotSize: 0.01,
       stopLoss: 0,
       takeProfit: 0,
-      entryDate: `${date}T${tradeTime}`,
-      exitDate: `${date}T${tradeTime}`,
+      entryDate: `${date}T${tradeTime}:00`,
+      exitDate: `${date}T${tradeTime}:00`,
       pips: 0,
-      pnl: parseFloat(row.pnl) || 0,
+      pnl: getPnlNumber(row.pnl),
       commission: 0,
       riskReward: 0,
       screenshots: row.screenshots,
@@ -316,6 +365,8 @@ export function DayEditorDialog({
             ? [...row.tags, pendingCustomTag]
             : row.tags;
 
+        const tradeTime = normalizeTime(timeDrafts[row.id] ?? row.time);
+
         return {
           id: row.id,
           pair: row.symbol || '',
@@ -325,10 +376,10 @@ export function DayEditorDialog({
           lotSize: 0.01,
           stopLoss: 0,
           takeProfit: 0,
-          entryDate: `${date}T${row.time || '00:00'}`,
-          exitDate: `${date}T${row.time || '00:00'}`,
+          entryDate: `${date}T${tradeTime}:00`,
+          exitDate: `${date}T${tradeTime}:00`,
           pips: 0,
-          pnl: parseFloat(row.pnl) || 0,
+          pnl: getPnlNumber(row.pnl),
           commission: 0,
           riskReward: 0,
           screenshots: row.screenshots,
@@ -467,17 +518,18 @@ export function DayEditorDialog({
                         inputMode="decimal"
                         value={streamerMode ? '******' : row.pnl}
                         readOnly={streamerMode}
-                        onChange={e => {
-                          const val = e.target.value;
-                          if (val === '' || val === '-' || /^-?\d*\.?\d*$/.test(val)) {
-                            updateTradeRow(row.id, 'pnl', val);
-                          }
-                        }}
+                        onChange={e =>
+                          updateTradeRow(
+                            row.id,
+                            'pnl',
+                            formatPnlDraft(e.target.value)
+                          )
+                        }
                         placeholder="0"
                         className={cn(
                           'h-9 w-full border-border bg-background pr-7 font-mono text-sm',
-                          parseFloat(row.pnl) > 0 && 'border-profit/50 text-profit',
-                          parseFloat(row.pnl) < 0 && 'border-loss/50 text-loss'
+                          getPnlNumber(row.pnl) > 0 && 'border-profit/50 text-profit',
+                          getPnlNumber(row.pnl) < 0 && 'border-loss/50 text-loss'
                         )}
                       />
 
@@ -542,17 +594,62 @@ export function DayEditorDialog({
                       <Input
                         type="text"
                         inputMode="numeric"
-                        value={row.time}
-                        onChange={(e) => {
-                          const value = e.target.value.replace(/[^\d:]/g, '').slice(0, 5);
+                        value={timeDrafts[row.id] ?? row.time}
+                        onFocus={(event) => {
+                          if ((timeDrafts[row.id] ?? row.time) === '00:00') {
+                            const input = event.currentTarget;
 
-                          updateTradeRow(row.id, 'time', value);
+                            requestAnimationFrame(() => {
+                              input.setSelectionRange(0, 0);
+                            });
+                          }
+                        }}
+                        onClick={(event) => {
+                          if ((timeDrafts[row.id] ?? row.time) === '00:00') {
+                            const input = event.currentTarget;
+
+                            requestAnimationFrame(() => {
+                              input.setSelectionRange(0, 0);
+                            });
+                          }
+                        }}
+                        onKeyDown={(event) => {
+                          if (
+                            (timeDrafts[row.id] ?? row.time) === '00:00' &&
+                            /^\d$/.test(event.key)
+                          ) {
+                            event.preventDefault();
+                            setTimeDrafts(prev => ({
+                              ...prev,
+                              [row.id]: event.key,
+                            }));
+                          }
+                        }}
+                        onChange={(e) => {
+                          const draft = formatTimeDraft(e.target.value);
+
+                          setTimeDrafts(prev => ({ ...prev, [row.id]: draft }));
+                        }}
+                        onBlur={() => {
+                          const normalized = normalizeTime(
+                            timeDrafts[row.id] ?? row.time
+                          );
+
+                          updateTradeRow(row.id, 'time', normalized);
+                          setTimeDrafts(prev => ({
+                            ...prev,
+                            [row.id]: normalized,
+                          }));
                         }}
                         className={cn(
-                          'h-9 w-full border-border bg-background text-center font-mono text-sm',
-                          row.time === '00:00' && 'text-muted-foreground/70'
+                          'h-9 w-full border-border bg-background text-center font-mono text-sm placeholder:text-muted-foreground/70',
+                          /\d/.test(timeDrafts[row.id] ?? row.time) &&
+                            (timeDrafts[row.id] ?? row.time) !== '00:00'
+                            ? 'text-foreground'
+                            : 'text-muted-foreground/70'
                         )}
-                        placeholder="15:38"
+                        placeholder="00:00"
+                        maxLength={5}
                       />
                     </div>
                   </div>
