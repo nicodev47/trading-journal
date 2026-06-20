@@ -34,7 +34,7 @@ import {
 } from '@/lib/export-filename';
 
 const UPDATE_BANNER_KEY =
-  'dismissedUpdateBanner_share_backtest_analytics_v2';
+  'dismissedUpdateBanner_eclipsejournal_v02';
 const BACKTEST_STORAGE_KEY = 'eclipse-trading-journal-data-backtest';
 
 type TradeGroupDialogState = {
@@ -353,9 +353,14 @@ const [returnToTradeGroup, setReturnToTradeGroup] = useState(false);
         <div className="border-b border-violet-400/25 bg-gradient-to-r from-violet-950/90 via-violet-900/65 to-slate-950">
           <div className="relative flex min-h-11 w-full items-center justify-center px-11 py-2 sm:px-14">
             <div className="flex min-w-0 flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-center">
-              <span className="font-mono text-xs font-semibold text-violet-100 sm:text-sm">
-                Nuova versione — Share, Backtest & Analytics
-              </span>
+              <div className="min-w-0">
+                <p className="font-mono text-xs font-semibold text-violet-100 sm:text-sm">
+                  EclipseJournal v0.2 è disponibile
+                </p>
+                <p className="hidden font-sans text-[11px] text-violet-200/75 lg:block">
+                  Share card, Backtest, Execution Map e Analisi interattiva sono ora disponibili.
+                </p>
+              </div>
               <button
                 type="button"
                 onClick={() => setIsWhatsNewOpen(true)}
