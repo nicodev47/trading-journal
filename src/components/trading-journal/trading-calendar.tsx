@@ -185,7 +185,7 @@ export function TradingCalendar({
             </Button>
           )}
 
-          {activeWorkspace === 'student' && (
+          {activeWorkspace === 'student' && trades.length > 0 && (
             <Button
               type="button"
               variant="outline"
