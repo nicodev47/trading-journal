@@ -92,6 +92,7 @@ const [isUpdateBannerVisible, setIsUpdateBannerVisible] = useState(() => {
   }
 });
 const [isProfileOpen, setIsProfileOpen] = useState(false);
+const [isResetPreviewConfirmOpen, setIsResetPreviewConfirmOpen] = useState(false);
 const [isBacktestResetDialogOpen, setIsBacktestResetDialogOpen] = useState(false);
 const [backtestHasData, setBacktestHasData] = useState(() => getBacktestHasData());
 const [backtestHasTrades, setBacktestHasTrades] = useState(() => getBacktestHasTrades());
@@ -219,6 +220,7 @@ const [returnToTradeGroup, setReturnToTradeGroup] = useState(false);
     setSelectedDate(null);
     setSelectedWeek(null);
     setImportExportMode(null);
+    setIsResetPreviewConfirmOpen(false);
     setIsBacktestResetDialogOpen(false);
     setBacktestHasData(getBacktestHasData());
     setBacktestHasTrades(getBacktestHasTrades());
@@ -258,16 +260,20 @@ const [returnToTradeGroup, setReturnToTradeGroup] = useState(false);
   const handleResetStudentJournal = () => {
     if (activeWorkspace !== 'student') return;
 
-    const confirmed = window.confirm(
-      'Vuoi davvero resettare la Preview? Questa azione cancella trade, strategie e piani salvati nella Preview.'
-    );
+    setIsResetPreviewConfirmOpen(true);
+  };
 
-    if (!confirmed) return;
+  const confirmResetPreview = () => {
+    if (activeWorkspace !== 'student') {
+      setIsResetPreviewConfirmOpen(false);
+      return;
+    }
 
     setSelectedDate(null);
     setSelectedWeek(null);
     setImportExportMode(null);
     clearAllData();
+    setIsResetPreviewConfirmOpen(false);
   };
 
   const handleResetBacktestJournal = () => {
@@ -526,6 +532,40 @@ const [returnToTradeGroup, setReturnToTradeGroup] = useState(false);
         trades={personalProfileTrades}
         onClearPersonal={handleClearPersonal}
       />
+
+      <Dialog
+        open={isResetPreviewConfirmOpen}
+        onOpenChange={setIsResetPreviewConfirmOpen}
+      >
+        <DialogContent className="w-[calc(100vw-2rem)] max-w-md rounded-2xl border border-border bg-background shadow-xl">
+          <DialogHeader>
+            <DialogTitle className="font-sans text-lg font-semibold text-foreground">
+              Reset Preview?
+            </DialogTitle>
+            <DialogDescription className="font-sans text-sm leading-relaxed text-muted-foreground">
+              Questa azione cancellerà tutti i trade, le strategie e i piani salvati nella Preview. I dati del journal Personale e del Backtest non verranno modificati.
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter className="gap-2 sm:justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsResetPreviewConfirmOpen(false)}
+            >
+              Annulla
+            </Button>
+            <Button
+              type="button"
+              onClick={confirmResetPreview}
+              className="gap-2 bg-loss text-white hover:bg-loss/90"
+            >
+              <RotateCcw className="size-4" />
+              Reset Preview
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog
         open={isBacktestResetDialogOpen}

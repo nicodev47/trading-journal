@@ -184,6 +184,19 @@ export function TradingCalendar({
               Reset
             </Button>
           )}
+
+          {activeWorkspace === 'student' && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-8 gap-2 rounded-lg border-loss/45 font-sans text-xs font-semibold text-loss hover:bg-loss/10 hover:text-loss"
+              onClick={onResetStudentJournal}
+            >
+              <RotateCcw className="size-3" />
+              Reset
+            </Button>
+          )}
         </div>
 
         <div className="ml-auto flex items-center gap-2 max-sm:ml-0 max-sm:w-full max-sm:justify-between">
