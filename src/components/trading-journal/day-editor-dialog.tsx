@@ -105,6 +105,28 @@ function normalizeTime(value: string): string {
   return `${String(safeHours).padStart(2, '0')}:${String(safeMinutes).padStart(2, '0')}`;
 }
 
+function formatDialogDate(date: string | Date) {
+  if (typeof date === 'string') {
+    const [year, month, day] = date.split('-');
+
+    if (year && month && day) {
+      return `${day.padStart(2, '0')}/${month.padStart(2, '0')}/${year}`;
+    }
+  }
+
+  const parsedDate = date instanceof Date ? date : new Date(date);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return 'Trade';
+  }
+
+  return parsedDate.toLocaleDateString('it-IT', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+}
+
 interface DayEditorDialogProps {
   isOpen: boolean;
   onClose: () => void;
@@ -424,7 +446,7 @@ export function DayEditorDialog({
       >
         <DialogHeader className="border-b border-border px-6 py-4">
           <DialogTitle className="font-mono text-base font-medium tracking-wide">
-            Nuovo trade
+            {formatDialogDate(date)}
           </DialogTitle>
           <DialogDescription className="sr-only">
             Aggiungi P&L, simbolo, direzione, orario, setup e screenshot per ogni trade.
