@@ -441,10 +441,11 @@ export function DayEditorDialog({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
-        className="max-h-[86vh] w-[92vw] max-w-4xl gap-0 overflow-hidden bg-card p-0"
+        className="max-h-[92dvh] w-[calc(100vw-1.25rem)] max-w-4xl gap-0 overflow-hidden bg-card p-0 sm:w-[92vw] sm:max-h-[86vh]"
+        data-tutorial="trade-editor"
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
-        <DialogHeader className="border-b border-border px-6 py-4">
+        <DialogHeader className="border-b border-border px-4 py-3.5 text-left sm:px-6 sm:py-4">
           <DialogTitle className="font-mono text-base font-medium tracking-wide">
             {formatDialogDate(date)}
           </DialogTitle>
@@ -453,12 +454,12 @@ export function DayEditorDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="ej-scrollbar flex max-h-[calc(86vh-120px)] flex-col gap-4 overflow-y-auto overscroll-contain p-4">
-          <div className="flex flex-col gap-4">
+        <div className="ej-scrollbar flex max-h-[calc(92dvh-116px)] flex-col gap-3 overflow-y-auto overscroll-contain p-3 sm:max-h-[calc(86vh-120px)] sm:gap-4 sm:p-4">
+          <div className="flex flex-col gap-3 sm:gap-4">
             {tradeRows.map((row, rowIndex) => (
               <div
                 key={row.id}
-                className="flex flex-col gap-3.5 rounded-[14px] border border-border bg-secondary/15 p-4"
+                className="flex min-w-0 flex-col gap-3 rounded-[14px] border border-border bg-secondary/15 p-3 sm:gap-3.5 sm:p-4"
               >
                 <div className="flex items-center justify-between">
                   <span className="font-mono text-xs font-medium text-muted-foreground">
@@ -523,7 +524,7 @@ export function DayEditorDialog({
                   </div>
                 </div>
 
-                <div className="rounded-xl border border-border/70 bg-background/30 p-3.5">
+                <div className="rounded-xl border border-border/70 bg-background/30 p-3 sm:p-3.5">
                   <p className="mb-3 font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
                     Dettagli trade
                   </p>
@@ -704,7 +705,7 @@ export function DayEditorDialog({
                   </div>
                 </div>
                 </div>
-                <div className="flex flex-col gap-3 rounded-xl border border-border/70 bg-background/30 p-3.5">
+                <div className="flex min-w-0 flex-col gap-3 rounded-xl border border-border/70 bg-background/30 p-3 sm:p-3.5">
                   <p className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
                     Link TradingView / Google Drive
                   </p>
@@ -927,7 +928,7 @@ export function DayEditorDialog({
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-2.5 rounded-xl border border-border/70 bg-background/30 p-3.5">
+                <div className="flex min-w-0 flex-col gap-2.5 rounded-xl border border-border/70 bg-background/30 p-3 sm:p-3.5">
                   <Label className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
                     TAGS
                   </Label>
@@ -1021,7 +1022,7 @@ export function DayEditorDialog({
                     })}
                   </div>
 
-                  <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2 rounded-lg border border-border/70 bg-background/35 p-2">
+                  <div className="grid grid-cols-1 items-center gap-2 rounded-lg border border-border/70 bg-background/35 p-2 min-[430px]:grid-cols-[minmax(0,1fr)_auto_auto]">
                     <Input
                       value={customTagInputs[row.id] ?? ''}
                       onChange={(event) =>
@@ -1100,7 +1101,7 @@ export function DayEditorDialog({
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-2 rounded-xl border border-border/70 bg-background/30 p-3.5">
+                <div className="flex flex-col gap-2 rounded-xl border border-border/70 bg-background/30 p-3 sm:p-3.5">
                   <Label className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
                     Note trade {rowIndex + 1}
                   </Label>
@@ -1116,18 +1117,18 @@ export function DayEditorDialog({
             ))}
           </div>
 
-          <div className="flex flex-wrap items-center gap-4 rounded-xl border border-border/70 bg-background/30 px-4 py-3">
+          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border/70 bg-background/30 px-3 py-3 sm:gap-4 sm:px-4">
             <Button
               variant="outline"
               size="sm"
               onClick={addTradeRow}
-              className="gap-2 border-border"
+              className="gap-2 border-border max-sm:w-full"
             >
               <Plus className="size-4" />
               Aggiungi trade
             </Button>
 
-            <span className="font-mono text-sm text-muted-foreground">
+            <span className="min-w-0 break-words font-mono text-xs text-muted-foreground sm:text-sm">
               Trade: {tradeRows.length} | Totale giorno:{' '}
               <span className={cn(dayTotal > 0 && 'text-profit', dayTotal < 0 && 'text-loss')}>
                 {streamerMode ? '******' : `${dayTotal.toFixed(2)} USD`}
@@ -1137,7 +1138,7 @@ export function DayEditorDialog({
 
         </div>
 
-        <div className="flex items-center justify-between border-t border-border px-6 py-4">
+        <div className="flex flex-col-reverse gap-2 border-t border-border px-4 py-3.5 max-sm:[&_button]:w-full sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-4">
           <Button
             variant="destructive"
             onClick={() => setIsDeleteDayConfirmOpen(true)}
@@ -1154,14 +1155,14 @@ export function DayEditorDialog({
         open={Boolean(tradeToDeleteId)}
         onOpenChange={(open) => !open && setTradeToDeleteId(null)}
       >
-        <DialogContent className="max-w-[460px] border-border bg-card">
+        <DialogContent className="max-h-[92dvh] w-[calc(100vw-1.75rem)] max-w-[460px] border-border bg-card">
           <DialogHeader>
             <DialogTitle>Eliminare questo trade?</DialogTitle>
             <DialogDescription>
               Questa azione rimuoverà il trade selezionato dalla giornata. Non potrà essere recuperato se non tramite backup.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter>
+          <DialogFooter className="max-sm:[&_button]:w-full">
             <Button
               type="button"
               variant="outline"
@@ -1184,14 +1185,14 @@ export function DayEditorDialog({
         open={isDeleteDayConfirmOpen}
         onOpenChange={setIsDeleteDayConfirmOpen}
       >
-        <DialogContent className="max-w-[460px] border-border bg-card">
+        <DialogContent className="max-h-[92dvh] w-[calc(100vw-1.75rem)] max-w-[460px] border-border bg-card">
           <DialogHeader>
             <DialogTitle>Eliminare questa giornata?</DialogTitle>
             <DialogDescription>
               Questa azione cancellerà tutti i trade e le informazioni salvate per questa giornata. Ti consigliamo di avere un backup prima di continuare.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter>
+          <DialogFooter className="max-sm:[&_button]:w-full">
             <Button
               type="button"
               variant="outline"

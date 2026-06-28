@@ -25,23 +25,23 @@ export function StatsCard({
   showNoTradesIndicator = false,
 }: StatsCardProps) {
   return (
-    <Card className="rounded-2xl border border-border bg-card/95 shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
-      <CardContent className="flex min-h-[72px] flex-col justify-between gap-2 p-3.5">
-        <span className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+    <Card className="max-w-full rounded-2xl border border-border bg-card/95 shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
+      <CardContent className="flex min-h-[68px] min-w-0 flex-col justify-between gap-2 p-3 md:min-h-[72px] md:p-3.5">
+        <span className="font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground md:tracking-[0.18em]">
           {title}
         </span>
 
-        <div className="flex flex-1 items-center gap-3">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
           {showNoTradesIndicator && (
             <div className="flex size-8 items-center justify-center rounded-full border-2 border-muted-foreground/50">
               <span className="font-mono text-base text-muted-foreground">-</span>
             </div>
           )}
 
-          <div className="flex flex-col justify-center gap-0.5">
+          <div className="flex min-w-0 flex-col justify-center gap-0.5">
             <span
               className={cn(
-                'font-mono text-xl font-semibold tracking-tight',
+                'break-words font-mono text-lg font-semibold tracking-tight md:text-xl',
                 valueColor === 'profit' && 'text-profit',
                 valueColor === 'loss' && 'text-loss',
                 valueColor === 'neutral' && 'text-muted-foreground',

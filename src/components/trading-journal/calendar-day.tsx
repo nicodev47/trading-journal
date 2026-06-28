@@ -9,6 +9,7 @@ interface CalendarDayProps {
   dayData: DayData | null;
   isCurrentMonth: boolean;
   isToday: boolean;
+  tutorialTarget?: string;
   maxPnl: number;
   minPnl: number;
   onClick: () => void;
@@ -19,6 +20,7 @@ export function CalendarDay({
   dayData,
   isCurrentMonth,
   isToday,
+  tutorialTarget,
   maxPnl,
   minPnl,
   onClick,
@@ -96,18 +98,19 @@ export function CalendarDay({
   return (
     <button
       onClick={onClick}
+      data-tutorial={tutorialTarget}
       className={cn(
-        'group relative flex h-[66px] w-full min-w-0 flex-col bg-background p-1.5 text-left transition-colors hover:bg-secondary/30 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-profit/80 sm:h-[82px] sm:p-2 md:h-[100px] md:p-2.5',
+        'group relative flex h-[56px] w-full min-w-0 flex-col bg-background p-1 text-left transition-colors hover:bg-secondary/30 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-profit/80 min-[380px]:h-[62px] min-[380px]:p-1.5 sm:h-[82px] sm:p-2 md:h-[100px] md:p-2.5',
         !isCurrentMonth &&
           '!bg-background text-muted-foreground/20 hover:!bg-background',
         isToday && 'ring-1 ring-inset ring-profit/80'
       )}
       style={getBackgroundStyle()}
     >
-      <div className="flex w-full flex-col gap-2">
+      <div className="flex w-full min-w-0 flex-col gap-1.5 sm:gap-2">
         <span
           className={cn(
-            'font-sans text-[13px] font-bold leading-none tracking-[-0.04em] sm:text-[15px] md:text-[17px]',
+            'font-sans text-[12px] font-bold leading-none tracking-[-0.04em] min-[380px]:text-[13px] sm:text-[15px] md:text-[17px]',
             isToday && 'text-profit',
             !isCurrentMonth && 'text-muted-foreground/20',
             isCurrentMonth && !isToday && 'text-foreground'
@@ -119,7 +122,7 @@ export function CalendarDay({
         {hasTrades && (
           <span
             className={cn(
-              'block w-full min-w-0 break-words font-mono text-[9px] font-semibold leading-tight sm:text-[11px] md:text-sm',
+              'block w-full min-w-0 truncate font-mono text-[8px] font-semibold leading-tight min-[380px]:text-[9px] sm:text-[11px] md:text-sm',
               pnl > 0 && 'text-profit',
               pnl < 0 && 'text-loss',
               pnl === 0 && 'text-muted-foreground'
@@ -138,7 +141,7 @@ export function CalendarDay({
       </div>
 
       {hasTrades && (
-        <span className="absolute bottom-1.5 left-1.5 font-mono text-[9px] text-muted-foreground sm:bottom-2 sm:left-2 sm:text-[10px] md:bottom-2.5 md:left-2.5 md:text-xs">
+        <span className="absolute bottom-1 left-1 font-mono text-[8px] text-muted-foreground min-[380px]:bottom-1.5 min-[380px]:left-1.5 min-[380px]:text-[9px] sm:bottom-2 sm:left-2 sm:text-[10px] md:bottom-2.5 md:left-2.5 md:text-xs">
           {tradeCount}
         </span>
       )}
@@ -147,7 +150,7 @@ export function CalendarDay({
         <span
           aria-label="Trade preferito"
           className={cn(
-            'pointer-events-none absolute right-1.5 top-1.5 text-[16px] leading-none sm:right-2 sm:top-2 sm:text-[18px]',
+            'pointer-events-none absolute right-1 top-1 text-[13px] leading-none min-[380px]:right-1.5 min-[380px]:top-1.5 min-[380px]:text-[16px] sm:right-2 sm:top-2 sm:text-[18px]',
             !isCurrentMonth && 'opacity-30'
           )}
         >

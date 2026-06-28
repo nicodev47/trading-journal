@@ -174,8 +174,8 @@ export function WeeklyPlanDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="ej-scrollbar max-h-[90vh] w-[95vw] max-w-2xl overflow-y-auto overscroll-contain border-border bg-card">
-        <DialogHeader className="border-b border-border px-6 py-4">
+      <DialogContent className="ej-scrollbar max-h-[92dvh] w-[calc(100vw-1.75rem)] max-w-2xl overflow-y-auto overscroll-contain border-border bg-card sm:w-[95vw] sm:max-h-[90vh]">
+        <DialogHeader className="border-b border-border px-4 py-3.5 text-left sm:px-6 sm:py-4">
           <DialogTitle className="font-mono text-base font-medium tracking-wide">
             Piano settimanale - {weekLabel}
           </DialogTitle>
@@ -184,18 +184,18 @@ export function WeeklyPlanDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-col gap-6 p-6">
+        <div className="flex flex-col gap-4 p-4 sm:gap-6 sm:p-6">
           {/* Approccio trading - with bordered buttons */}
           <div className="flex flex-col gap-3">
             <Label className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
               Approccio trading
             </Label>
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2 min-[420px]:flex-row">
               <button
                 type="button"
                 onClick={() => setApproach(approach === 'intraday' ? '' : 'intraday')}
                 className={cn(
-                  'rounded-md border px-4 py-2 font-mono text-sm transition-colors',
+                  'rounded-md border px-4 py-2 font-mono text-sm transition-colors max-[419px]:w-full',
                   approach === 'intraday'
                     ? 'border-profit bg-profit text-background'
                     : 'border-border bg-background text-foreground hover:bg-secondary'
@@ -207,7 +207,7 @@ export function WeeklyPlanDialog({
                 type="button"
                 onClick={() => setApproach(approach === 'swing' ? '' : 'swing')}
                 className={cn(
-                  'rounded-md border px-4 py-2 font-mono text-sm transition-colors',
+                  'rounded-md border px-4 py-2 font-mono text-sm transition-colors max-[419px]:w-full',
                   approach === 'swing'
                     ? 'border-profit bg-profit text-background'
                     : 'border-border bg-background text-foreground hover:bg-secondary'

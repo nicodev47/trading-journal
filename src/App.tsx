@@ -32,9 +32,18 @@ import {
   getDefaultExportBaseName,
   normalizeExportFileName,
 } from '@/lib/export-filename';
+import { TutorialTour } from '@/components/trading-journal/tutorial/tutorial-tour';
+import { TutorialWelcomeDialog } from '@/components/trading-journal/tutorial/tutorial-welcome-dialog';
+import { TUTORIAL_STEPS } from '@/components/trading-journal/tutorial/tutorial-steps';
+import {
+  createTutorialTrades,
+  getTutorialDemoDateKey,
+  isValidTutorialTradeSet,
+  TUTORIAL_SEEN_KEY,
+} from '@/components/trading-journal/tutorial/tutorial-constants';
 
 const UPDATE_BANNER_KEY =
-  'dismissedUpdateBanner_eclipsejournal_v02';
+  'dismissedUpdateBanner_eclipsejournal_v03';
 const BACKTEST_STORAGE_KEY = 'eclipse-trading-journal-data-backtest';
 
 type TradeGroupDialogState = {
@@ -102,6 +111,17 @@ const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
 const [tradeGroupDialog, setTradeGroupDialog] = useState<TradeGroupDialogState | null>(null);
 const [isTradeGroupOpen, setIsTradeGroupOpen] = useState(false);
 const [returnToTradeGroup, setReturnToTradeGroup] = useState(false);
+const [isTutorialWelcomeOpen, setIsTutorialWelcomeOpen] = useState(() => {
+  try {
+    return localStorage.getItem(TUTORIAL_SEEN_KEY) !== 'true';
+  } catch {
+    return true;
+  }
+});
+const [isTutorialActive, setIsTutorialActive] = useState(false);
+const [tutorialStepIndex, setTutorialStepIndex] = useState(0);
+const [tutorialTrades, setTutorialTrades] = useState<Trade[]>([]);
+const tutorialDemoDateKey = getTutorialDemoDateKey();
 
   useEffect(() => {
     if (!isHelpOpen) return;
@@ -140,8 +160,115 @@ const [returnToTradeGroup, setReturnToTradeGroup] = useState(false);
 
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedWeek, setSelectedWeek] = useState<{ weekKey: string; weekLabel: string } | null>(null);
-  const [importExportMode, setImportExportMode] = useState<'import' | 'export' | 'append' | null>(null);
+  const [importExportMode, setImportExportMode] = useState<'import' | 'export' | null>(null);
   const showBacktestResetButton = activeWorkspace === 'backtest' && backtestHasData;
+  const visibleTrades = isTutorialActive ? tutorialTrades : trades;
+
+  useEffect(() => {
+    if (!isTutorialActive) return;
+
+    if (!isValidTutorialTradeSet(tutorialTrades)) {
+      setTutorialTrades(createTutorialTrades());
+      return;
+    }
+
+    const step = TUTORIAL_STEPS[tutorialStepIndex];
+    const calendarTargets = new Set([
+      'calendar',
+      'workspace-tabs',
+      'import-export-buttons',
+      'stats-grid',
+      'profile-button',
+      'help-button',
+    ]);
+
+    if (step?.target === 'trade-editor') {
+      setActiveView('calendar');
+      setIsHelpOpen(false);
+      setSelectedDate(tutorialDemoDateKey);
+      return;
+    }
+
+    if (step?.target && calendarTargets.has(step.target)) {
+      setActiveView('calendar');
+    }
+
+    if (step?.target === 'analysis-section') {
+      setActiveView('monthly');
+    }
+
+    if (selectedDate) {
+      setSelectedDate(null);
+    }
+
+    if (isHelpOpen) {
+      setIsHelpOpen(false);
+    }
+  }, [
+    isHelpOpen,
+    isTutorialActive,
+    selectedDate,
+    tutorialTrades,
+    tutorialDemoDateKey,
+    tutorialStepIndex,
+  ]);
+
+  const markTutorialSeen = () => {
+    try {
+      localStorage.setItem(TUTORIAL_SEEN_KEY, 'true');
+    } catch {
+      // The tutorial stays dismissed for the current session.
+    }
+  };
+
+  const closeTutorial = useCallback(() => {
+    markTutorialSeen();
+    setIsTutorialActive(false);
+    setIsTutorialWelcomeOpen(false);
+    setTutorialStepIndex(0);
+    setTutorialTrades([]);
+    setSelectedDate(null);
+    setSelectedWeek(null);
+    setImportExportMode(null);
+    setIsProfileOpen(false);
+    setIsHelpOpen(false);
+  }, []);
+
+  const handleStartTutorial = () => {
+    setSelectedDate(null);
+    setSelectedWeek(null);
+    setImportExportMode(null);
+    setIsProfileOpen(false);
+    setIsHelpOpen(false);
+    setTutorialTrades(createTutorialTrades());
+    setTutorialStepIndex(0);
+    setIsTutorialWelcomeOpen(false);
+    setIsTutorialActive(true);
+    setActiveView('calendar');
+  };
+
+  const handleRestartTutorial = () => {
+    setIsHelpOpen(false);
+    setIsTutorialActive(false);
+    setTutorialTrades([]);
+    setTutorialStepIndex(0);
+    setIsTutorialWelcomeOpen(true);
+  };
+
+  const handleTutorialNext = () => {
+    const step = TUTORIAL_STEPS[tutorialStepIndex];
+
+    if (step?.target === 'trade-editor') {
+      setSelectedDate(null);
+    }
+
+    if (step?.action === 'complete' || tutorialStepIndex >= TUTORIAL_STEPS.length - 1) {
+      closeTutorial();
+      return;
+    }
+
+    setTutorialStepIndex((index) => index + 1);
+  };
 
   useEffect(() => {
     setBacktestHasData(getBacktestHasData());
@@ -149,14 +276,23 @@ const [returnToTradeGroup, setReturnToTradeGroup] = useState(false);
   }, [activeWorkspace, trades, strategies, weeklyPlans, customTags, missedTrades]);
 
   const handleDayClick = (date: string) => {
+    if (isTutorialActive) return;
+
     setSelectedDate(date);
   };
 
   const handleWeekPlanClick = (weekKey: string, weekLabel: string) => {
+    if (isTutorialActive) return;
+
     setSelectedWeek({ weekKey, weekLabel });
   };
 
   const handleSaveDayTrades = (dayTrades: Trade[]) => {
+    if (isTutorialActive) {
+      setSelectedDate(null);
+      return;
+    }
+
     const existingTrades = selectedDate ? getTradesByDate(selectedDate) : [];
     existingTrades.forEach((trade) => deleteTrade(trade.id));
 
@@ -179,6 +315,11 @@ const [returnToTradeGroup, setReturnToTradeGroup] = useState(false);
   };
 
   const handleDeleteDay = () => {
+    if (isTutorialActive) {
+      setSelectedDate(null);
+      return;
+    }
+
     if (selectedDate) {
       const existingTrades = getTradesByDate(selectedDate);
       existingTrades.forEach((trade) => deleteTrade(trade.id));
@@ -312,7 +453,9 @@ const [returnToTradeGroup, setReturnToTradeGroup] = useState(false);
   };
 
   const handleOpenProfile = () => {
-    setPersonalProfileTrades(getWorkspaceData('personal').trades);
+    setPersonalProfileTrades(
+      isTutorialActive ? tutorialTrades : getWorkspaceData('personal').trades
+    );
     setIsProfileOpen(true);
   };
 
@@ -361,10 +504,10 @@ const [returnToTradeGroup, setReturnToTradeGroup] = useState(false);
             <div className="flex min-w-0 flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-center">
               <div className="min-w-0">
                 <p className="font-mono text-xs font-semibold text-violet-100 sm:text-sm">
-                  EclipseJournal v0.2 è disponibile
+                  EclipseJournal v0.3 è Fuori Ora!
                 </p>
                 <p className="hidden font-sans text-[11px] text-violet-200/75 lg:block">
-                  Share card, Backtest, Execution Map e Analisi interattiva sono ora disponibili.
+                  Tutorial, import migliorato e ottimizzazioni generali.
                 </p>
               </div>
               <button
@@ -395,33 +538,36 @@ const [returnToTradeGroup, setReturnToTradeGroup] = useState(false);
   
 />
 
-      <main className="mx-auto w-full max-w-6xl flex-1 overflow-x-hidden px-3 py-3 sm:px-4">
+      <main className="mx-auto w-full max-w-6xl flex-1 overflow-x-hidden px-3.5 py-2.5 sm:px-4 sm:py-3">
         {activeView === 'calendar' ? (
           <>
           <>
-  <StatsGrid trades={trades} />
+  <StatsGrid trades={visibleTrades} />
 
   <TradingCalendar
-    trades={trades}
-    weeklyPlans={weeklyPlans}
+    trades={visibleTrades}
+    weeklyPlans={isTutorialActive ? [] : weeklyPlans}
     activeWorkspace={activeWorkspace}
-    showResetButton={showBacktestResetButton}
-    hasBacktestTrades={backtestHasTrades}
+    showResetButton={!isTutorialActive && showBacktestResetButton}
     onWorkspaceChange={handleWorkspaceChange}
     onResetStudentJournal={handleResetStudentJournal}
     onResetBacktestJournal={() => setIsBacktestResetDialogOpen(true)}
     onDayClick={handleDayClick}
     onWeekPlanClick={handleWeekPlanClick}
-    onImport={() => setImportExportMode('import')}
-    onAppendImport={() => setImportExportMode('append')}
-    onExport={() => setImportExportMode('export')}
+    onImport={() => {
+      if (!isTutorialActive) setImportExportMode('import');
+    }}
+    onExport={() => {
+      if (!isTutorialActive) setImportExportMode('export');
+    }}
+    tutorialDemoDateKey={isTutorialActive ? tutorialDemoDateKey : undefined}
   />
 
-  <AdvancedStatsGrid trades={trades} />
+  <AdvancedStatsGrid trades={visibleTrades} />
 
-  <div className="pb-6 pt-4">
+  <div className="pb-5 pt-3 sm:pb-6 sm:pt-4">
     <EquityCurve
-      trades={trades}
+      trades={visibleTrades}
       onOpenTradeGroup={handleOpenTradeGroup}
     />
   </div>
@@ -429,7 +575,7 @@ const [returnToTradeGroup, setReturnToTradeGroup] = useState(false);
           </>
         ) : (
           <MonthlyAnalysis
-            trades={trades}
+            trades={visibleTrades}
           />
         )}
       </main>
@@ -455,7 +601,15 @@ const [returnToTradeGroup, setReturnToTradeGroup] = useState(false);
           isOpen={!!selectedDate}
           onClose={handleCloseDayEditor}
           date={selectedDate}
-          existingTrades={getTradesByDate(selectedDate)}
+          existingTrades={
+            isTutorialActive
+              ? visibleTrades.filter(
+                  (trade) =>
+                    (trade.exitDate || trade.entryDate).split('T')[0] ===
+                    selectedDate
+                )
+              : getTradesByDate(selectedDate)
+          }
           onSave={handleSaveDayTrades}
           onDeleteDay={handleDeleteDay}
           strategies={strategies}
@@ -513,16 +667,12 @@ const [returnToTradeGroup, setReturnToTradeGroup] = useState(false);
         isOpen={!!importExportMode}
         onClose={() => setImportExportMode(null)}
         mode={importExportMode === 'export' ? 'export' : 'import'}
-        importStrategy={importExportMode === 'append' ? 'append' : 'replace'}
         activeWorkspace={activeWorkspace}
-        exportData={importExportMode === 'export' ? exportData() : undefined}
+        exportData={exportData()}
         exportTrades={trades}
-        onImport={
-          importExportMode === 'append'
-            ? handleAppendImportData
-            : importExportMode === 'import'
-              ? handleImportData
-              : undefined
+        onImport={importExportMode === 'import' ? handleImportData : undefined}
+        onAppendImport={
+          importExportMode === 'import' ? handleAppendImportData : undefined
         }
       />
 
@@ -537,7 +687,7 @@ const [returnToTradeGroup, setReturnToTradeGroup] = useState(false);
         open={isResetPreviewConfirmOpen}
         onOpenChange={setIsResetPreviewConfirmOpen}
       >
-        <DialogContent className="w-[calc(100vw-2rem)] max-w-md rounded-2xl border border-border bg-background shadow-xl">
+        <DialogContent className="max-h-[92dvh] w-[calc(100vw-1.75rem)] max-w-md rounded-2xl border border-border bg-background shadow-xl">
           <DialogHeader>
             <DialogTitle className="font-sans text-lg font-semibold text-foreground">
               Reset Preview?
@@ -571,8 +721,8 @@ const [returnToTradeGroup, setReturnToTradeGroup] = useState(false);
         open={isBacktestResetDialogOpen}
         onOpenChange={setIsBacktestResetDialogOpen}
       >
-        <DialogContent className="w-[calc(100vw-2rem)] max-w-[520px] overflow-hidden rounded-2xl border border-border bg-card p-0">
-          <DialogHeader className="border-b border-border px-5 py-4">
+        <DialogContent className="max-h-[92dvh] w-[calc(100vw-1.75rem)] max-w-[520px] overflow-hidden rounded-2xl border border-border bg-card p-0">
+          <DialogHeader className="border-b border-border px-4 py-3.5 sm:px-5 sm:py-4">
             <div className="flex items-start gap-3">
               <div className="flex size-10 shrink-0 items-center justify-center rounded-full border border-loss/30 bg-loss/10 text-loss">
                 <RotateCcw className="size-5" />
@@ -588,7 +738,7 @@ const [returnToTradeGroup, setReturnToTradeGroup] = useState(false);
             </div>
           </DialogHeader>
 
-          <div className="px-5 py-5">
+          <div className="ej-scrollbar max-h-[calc(92dvh-9rem)] overflow-y-auto px-4 py-4 sm:px-5 sm:py-5">
             <div className="rounded-xl border border-loss/30 bg-loss/10 p-4">
               <p className="font-sans text-sm leading-relaxed text-foreground">
                 Questa azione cancellerà trade, strategie e piani salvati nel Backtest.
@@ -598,7 +748,7 @@ const [returnToTradeGroup, setReturnToTradeGroup] = useState(false);
             </div>
           </div>
 
-          <DialogFooter className="flex-col gap-2 border-t border-border bg-background/25 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <DialogFooter className="flex-col gap-2 border-t border-border bg-background/25 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-4 max-sm:[&_button]:w-full">
             <Button
               type="button"
               onClick={handleBackupAndResetBacktest}
@@ -639,14 +789,14 @@ const [returnToTradeGroup, setReturnToTradeGroup] = useState(false);
             if (event.target === event.currentTarget) setIsHelpOpen(false);
           }}
         >
-          <div className="ej-scrollbar max-h-[88vh] w-full max-w-4xl overflow-y-auto overscroll-contain rounded-2xl border border-border bg-card shadow-2xl">
-            <div className="sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-border bg-card/95 px-5 py-4 backdrop-blur md:px-6">
+          <div className="ej-scrollbar max-h-[90dvh] w-full max-w-4xl overflow-y-auto overscroll-contain rounded-2xl border border-border bg-card shadow-2xl">
+            <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-border bg-card/95 px-4 py-3.5 backdrop-blur md:px-6 md:py-4">
               <div>
                 <h2 id="help-dialog-title" className="font-mono text-lg font-semibold text-foreground">
                   Guida EclipseJournal
                 </h2>
                 <p className="mt-1 max-w-xl font-sans text-xs text-muted-foreground sm:text-sm">
-                  Tutto quello che ti serve per usare calendario, journal, profilo e backup.
+                  Una guida rapida per capire calendario, trade, analisi, backup e profilo.
                 </p>
               </div>
 
@@ -659,15 +809,35 @@ const [returnToTradeGroup, setReturnToTradeGroup] = useState(false);
               </button>
             </div>
 
-            <div className="grid grid-cols-1 gap-3 p-5 md:grid-cols-2 md:p-6">
+            <div className="grid grid-cols-1 gap-3 p-4 md:grid-cols-2 md:p-6">
+              <section className="rounded-[14px] border border-profit/30 bg-profit/5 p-4 md:col-span-2">
+                <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+                  <div>
+                    <h3 className="font-sans text-sm font-bold text-foreground">
+                      Tutorial
+                    </h3>
+                    <p className="mt-1 font-sans text-xs leading-relaxed text-muted-foreground">
+                      Fai un tour rapido dell’app con dati demo temporanei. I tuoi dati reali non vengono modificati.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleRestartTutorial}
+                    className="shrink-0 rounded-lg border border-profit/30 bg-profit/10 px-3 py-2 font-sans text-xs font-semibold text-profit transition hover:border-profit/60 hover:bg-profit/15"
+                  >
+                    Riavvia tutorial
+                  </button>
+                </div>
+              </section>
+
               <section className="rounded-[14px] border border-violet-400/30 bg-violet-500/[0.06] p-4 md:col-span-2">
                 <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
                   <div>
                     <h3 className="font-sans text-sm font-bold text-foreground">
-                      Nuova versione — Share, Backtest & Analytics
+                      EclipseJournal v0.3 — Tutorial, import e stabilità
                     </h3>
                     <p className="mt-1 font-sans text-xs leading-relaxed text-muted-foreground">
-                      EclipseJournal introduce la condivisione social dei trade, la sezione Backtest nel calendario, una nuova Analisi ridisegnata e messaggi di sicurezza per le azioni critiche.
+                      Scopri le novità dell’ultimo aggiornamento: tutorial guidato, import più sicuro e ottimizzazioni generali dell’esperienza.
                     </p>
                   </div>
                   <button
@@ -675,7 +845,7 @@ const [returnToTradeGroup, setReturnToTradeGroup] = useState(false);
                     onClick={handleOpenWhatsNewFromHelp}
                     className="shrink-0 rounded-lg border border-violet-300/30 bg-violet-300/10 px-3 py-2 font-sans text-xs font-semibold text-violet-100 transition hover:border-violet-200/50 hover:bg-violet-300/15"
                   >
-                    Visualizza novità di questo aggiornamento
+                    Visualizza novità
                   </button>
                 </div>
               </section>
@@ -684,110 +854,111 @@ const [returnToTradeGroup, setReturnToTradeGroup] = useState(false);
                 {
                   icon: '📅',
                   title: 'Calendario P/L',
-                  description: 'Registra e riconosci subito l’andamento di ogni giornata.',
+                  description: 'Segui l’andamento delle tue giornate operative in modo semplice e visivo.',
                   bullets: [
-                    'Clicca un giorno per aggiungere o modificare trade.',
-                    'Verde positivo, rosso negativo.',
-                    'Numero in basso = trade inseriti; ⭐️ = preferito.',
-                    'Usa Backtest per testare strategie separatamente dal journal reale.',
+                    'Clicca su un giorno per aggiungere o modificare i trade.',
+                    'Verde indica una giornata positiva, rosso una giornata negativa.',
+                    'Il numero in basso mostra quanti trade hai inserito.',
+                    'La stella indica il tuo giorno preferito o più importante.',
                   ],
                 },
                 {
                   icon: '👤',
                   title: 'Personale / Backtest / Preview',
-                  description: 'Tre ambienti distinti per lavorare senza sovrascrivere dati.',
+                  description: 'Tre spazi separati per lavorare senza mischiare i dati.',
                   bullets: [
-                    'Personale è il journal reale.',
-                    'Backtest è dedicato ai test strategici nel calendario.',
-                    'Preview serve per prove, revisioni e import temporanei.',
-                    'I tre archivi restano separati.',
+                    'Personale è il tuo journal principale.',
+                    'Backtest serve per testare strategie senza toccare il journal reale.',
+                    'Preview serve per provare import, backup o modifiche temporanee.',
+                    'I tre archivi restano sempre separati.',
                   ],
                 },
                 {
                   icon: '➕',
                   title: 'Nuovo trade',
-                  description: 'Raccogli in un unico posto tutti i dettagli operativi.',
+                  description: 'Registra tutti i dettagli importanti di ogni operazione.',
                   bullets: [
                     'Inserisci P&L, simbolo, direzione, orario e setup.',
-                    'Aggiungi link TradingView / Google Drive.',
-                    'Usa ⭐️ per marcare i trade importanti.',
-                    'Usa Share per generare una card da condividere sui social.',
+                    'Aggiungi note per ricordare cosa è successo nel trade.',
+                    'Salva link TradingView, Google Drive o altri servizi cloud.',
+                    'Usa la stella per segnare i trade più importanti.',
                   ],
                 },
                 {
                   icon: '📸',
                   title: 'Trade Recap Card',
-                  description: 'Crea una card visiva del singolo trade da condividere.',
+                  description: 'Crea una card visiva del singolo trade, pronta da salvare o condividere.',
                   bullets: [
-                    'Genera una card con P&L, asset, direzione, orario e setup.',
-                    'Usa Copy to Clipboard per copiare l’immagine.',
-                    'Usa Save as Image per scaricarla.',
-                    'Pensata per social, recap personali e journaling visivo.',
+                    'Mostra P&L, asset, direzione, orario, setup e data.',
+                    'Puoi copiarla negli appunti.',
+                    'Puoi scaricarla come immagine.',
+                    'È pensata per recap personali, social e journaling visivo.',
                   ],
                 },
                 {
                   icon: '🧠',
                   title: 'Tags e note',
-                  description: 'Trasforma ogni trade in materiale utile per migliorare.',
+                  description: 'Organizza meglio i trade e rendi più facile la review.',
                   bullets: [
-                    'Seleziona tag rapidi o crea tag personalizzati.',
-                    'Scrivi note chiare sulla tua esecuzione.',
-                    'Usa tag e note per riconoscere pattern ricorrenti.',
-                    'Le note restano salvate nel backup.',
+                    'Usa tag rapidi o crea tag personalizzati.',
+                    'Scrivi cosa hai fatto bene, cosa migliorare e cosa hai imparato.',
+                    'Le note ti aiutano a riconoscere errori e pattern ricorrenti.',
+                    'Tag e note vengono inclusi nel backup.',
                   ],
                 },
                 {
                   icon: '🙈',
                   title: 'Modalità Streamer',
-                  description: 'Proteggi i valori economici durante contenuti pubblici.',
+                  description: 'Nasconde i valori economici quando condividi lo schermo o registri contenuti.',
                   bullets: [
-                    'Sostituisce profitti e perdite visibili con ******.',
-                    'È utile per live, video, screenshot e condivisioni.',
-                    'I valori reali restano salvati e non vengono cancellati.',
+                    'Sostituisce profitti e perdite visibili con valori nascosti.',
+                    'Utile per video, live, call e condivisioni pubbliche.',
+                    'I dati reali restano salvati normalmente.',
+                    'Puoi attivarla o disattivarla quando vuoi.',
                   ],
                 },
                 {
                   icon: '📊',
                   title: 'Profilo trader',
-                  description: 'Segui i progressi con una player card personale.',
+                  description: 'Tieni traccia dei tuoi progressi e della tua identità da trader.',
                   bullets: [
-                    'Visualizza livello, XP e statistiche.',
-                    'Il livello cresce con i trade inseriti.',
-                    'Share scarica una PNG del profilo trader.',
-                    'La PNG rispetta la Modalità Streamer.',
+                    'Visualizza livello, rank e statistiche principali.',
+                    'Personalizza nome, stile e informazioni del profilo.',
+                    'Segui la crescita del tuo journal nel tempo.',
+                    'Usa la player card per avere una panoramica rapida.',
                   ],
                 },
                 {
                   icon: '📈',
                   title: 'Analisi',
-                  description: 'Leggi performance, abitudini, edge e qualità operativa.',
+                  description: 'Approfondisci performance, abitudini e qualità operativa.',
                   bullets: [
-                    'Esplora grafici cliccabili e più coerenti con il tema dell’app.',
-                    'Analizza setup breakdown, Long vs Short ed Execution Map.',
-                    'Monitora Eclipse Score, winrate, profit factor, frequenza e timing.',
-                    'Usa Feedback & Insights per individuare pattern e aree di miglioramento.',
+                    'Esplora grafici chiari e coerenti con il tema dell’app.',
+                    'Clicca sui grafici per aprire i trade filtrati.',
+                    'Analizza setup, direzione, performance e distribuzione.',
+                    'Usa Execution Map ed Eclipse Score per leggere meglio il journal.',
                   ],
                 },
                 {
                   icon: '📥',
                   title: 'Import / Export',
-                  description: 'Crea backup e ripristina i dati dove preferisci.',
+                  description: 'Gestisci backup e trasferimento dei dati in modo sicuro.',
                   bullets: [
-                    'Esporta il journal in formato JSON.',
-                    'Il backup salva dati e link, non incorpora immagini.',
-                    'Importa in Personale, Backtest oppure Preview.',
-                    'Prima di importare, EclipseJournal mostra un messaggio di sicurezza.',
+                    'Export scarica un backup JSON del tuo journal.',
+                    'Import carica un backup già esportato.',
+                    'Il backup salva trade, note, setup, tag, piani e link.',
+                    'Le immagini non vengono incorporate: usa link esterni per screenshot e grafici.',
                   ],
                 },
                 {
                   icon: '⚠️',
-                  title: 'Zona pericolosa',
-                  description: 'Le azioni irreversibili sono protette da conferme.',
+                  title: 'Backup e sicurezza',
+                  description: 'Proteggi i tuoi dati prima di fare modifiche importanti.',
                   bullets: [
-                    'Prima di cancellare un trade viene mostrato un messaggio di sicurezza.',
-                    'Prima di importare dati viene richiesta conferma.',
-                    'La cancellazione è protetta per evitare errori accidentali.',
-                    'Esporta sempre un backup prima di azioni importanti.',
+                    'Esporta periodicamente un backup JSON.',
+                    'Prima di importare dati, salva sempre una copia di sicurezza.',
+                    'Le azioni delicate mostrano messaggi di conferma.',
+                    'I dati restano nel browser finché non li cancelli o resetti manualmente.',
                   ],
                   danger: true,
                 },
@@ -852,6 +1023,19 @@ const [returnToTradeGroup, setReturnToTradeGroup] = useState(false);
       <WhatsNewDialog
         open={isWhatsNewOpen}
         onOpenChange={setIsWhatsNewOpen}
+      />
+
+      <TutorialWelcomeDialog
+        open={isTutorialWelcomeOpen}
+        onStart={handleStartTutorial}
+        onSkip={closeTutorial}
+      />
+
+      <TutorialTour
+        active={isTutorialActive}
+        stepIndex={tutorialStepIndex}
+        onNext={handleTutorialNext}
+        onSkip={closeTutorial}
       />
 
       <Toaster />

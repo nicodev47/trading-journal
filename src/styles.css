@@ -162,3 +162,31 @@
 .ej-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(148, 163, 184, 0.38);
 }
+
+@media (max-width: 767px) {
+  html,
+  body,
+  #root {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  body {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  button,
+  [role='button'],
+  input,
+  textarea,
+  select {
+    touch-action: manipulation;
+  }
+
+  img,
+  svg,
+  canvas {
+    max-width: 100%;
+  }
+}

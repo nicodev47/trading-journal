@@ -189,17 +189,17 @@ export function AdvancedStatsGrid({
   return (
     <div
       className={cn(
-        'grid grid-cols-1 items-start gap-4 py-4 md:grid-cols-2 xl:grid-cols-3',
+        'grid grid-cols-1 items-start gap-3 py-3 md:grid-cols-2 md:gap-4 md:py-4 xl:grid-cols-3',
         extended && '[&_[data-slot=card-content]]:!min-h-[124px]'
       )}
     >
       <Card className="self-start rounded-2xl border border-border bg-card/95 py-0 shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
-        <CardContent className="flex min-h-[148px] flex-col justify-center p-4">
-          <p className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+        <CardContent className="flex min-h-[112px] min-w-0 flex-col justify-center p-3.5 md:min-h-[148px] md:p-4">
+          <p className="font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground md:tracking-[0.18em]">
             Giorni operativi
           </p>
 
-          <p className="mt-3 font-mono text-2xl font-bold tracking-tight text-foreground">
+          <p className="mt-2 font-mono text-xl font-bold tracking-tight text-foreground md:mt-3 md:text-2xl">
             <span className="text-profit">{data.tradingDays}</span>{' '}
             {data.tradingDays === 1 ? 'giorno' : 'giorni'}
           </p>
@@ -208,7 +208,7 @@ export function AdvancedStatsGrid({
             {trades.length} {trades.length === 1 ? 'trade eseguito' : 'trade eseguiti'}
           </p>
 
-          <div className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-secondary">
+          <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-secondary md:mt-4">
             <div
               className="h-full rounded-full bg-profit/80 transition-all"
               style={{ width: data.tradingDays > 0 ? '100%' : '0%' }}
@@ -218,13 +218,13 @@ export function AdvancedStatsGrid({
       </Card>
 
       <Card className="self-start rounded-2xl border border-border bg-card/95 py-0 shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
-        <CardContent className="flex min-h-[148px] flex-col justify-center p-4">
-          <p className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+        <CardContent className="flex min-h-[112px] min-w-0 flex-col justify-center p-3.5 md:min-h-[148px] md:p-4">
+          <p className="font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground md:tracking-[0.18em]">
             Serie attuale
           </p>
 
           <p
-            className={`mt-3 font-mono text-2xl font-bold tracking-tight ${
+            className={`mt-2 font-mono text-xl font-bold tracking-tight md:mt-3 md:text-2xl ${
               data.currentStreakType === 'loss' ? 'text-loss' : 'text-profit'
             }`}
           >
@@ -237,7 +237,7 @@ export function AdvancedStatsGrid({
             Migliore: {data.longestPositiveStreak} win
           </p>
 
-          <div className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-secondary">
+          <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-secondary md:mt-4">
             <div
               className={`h-full rounded-full transition-all ${
                 data.currentStreakType === 'loss'
@@ -251,12 +251,12 @@ export function AdvancedStatsGrid({
       </Card>
 
       <Card className="self-start rounded-2xl border border-border bg-card/95 py-0 shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
-        <CardContent className="flex min-h-[148px] flex-col justify-center p-4">
-          <p className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+        <CardContent className="flex min-h-[112px] min-w-0 flex-col justify-center p-3.5 md:min-h-[148px] md:p-4">
+          <p className="font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground md:tracking-[0.18em]">
             Media win / Media loss
           </p>
 
-          <div className="mt-3 flex flex-wrap items-baseline gap-x-2 gap-y-1 font-mono font-bold tracking-tight">
+          <div className="mt-2 flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1 font-mono font-bold tracking-tight md:mt-3">
             <span className="text-[clamp(1.15rem,1.8vw,1.5rem)] text-profit">
               {streamerMode ? '******' : formatCurrency(data.avgWin)}
             </span>
@@ -272,7 +272,7 @@ export function AdvancedStatsGrid({
             {data.winningTrades} win / {data.losingTrades} loss
           </p>
 
-          <div className="mt-4 flex h-1.5 w-full overflow-hidden rounded-full bg-secondary">
+          <div className="mt-3 flex h-1.5 w-full overflow-hidden rounded-full bg-secondary md:mt-4">
             <div
               className="h-full bg-profit transition-all"
               style={{
@@ -298,12 +298,12 @@ export function AdvancedStatsGrid({
       </Card>
 
       <Card className="self-start rounded-2xl border border-border bg-card/95 py-0 shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
-        <CardContent className="flex min-h-[148px] flex-col justify-center p-4">
-          <p className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+        <CardContent className="flex min-h-[112px] min-w-0 flex-col justify-center p-3.5 md:min-h-[148px] md:p-4">
+          <p className="font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground md:tracking-[0.18em]">
             Finestra operativa migliore
           </p>
 
-          <p className="mt-3 font-mono text-2xl font-bold tracking-tight text-profit">
+          <p className="mt-2 break-words font-mono text-xl font-bold tracking-tight text-profit md:mt-3 md:text-2xl">
             {data.bestOperatingWindow?.name ?? '—'}
           </p>
 
@@ -311,7 +311,7 @@ export function AdvancedStatsGrid({
             {data.bestOperatingWindow?.description ?? 'Nessun trade registrato'}
           </p>
 
-          <div className="mt-4 flex h-1.5 w-full overflow-hidden rounded-full bg-secondary">
+          <div className="mt-3 flex h-1.5 w-full overflow-hidden rounded-full bg-secondary md:mt-4">
             {data.bestOperatingWindow && (
               <div className="h-full w-full rounded-full bg-profit/80" />
             )}
@@ -320,12 +320,12 @@ export function AdvancedStatsGrid({
       </Card>
 
       <Card className="self-start rounded-2xl border border-border bg-card/95 py-0 shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
-        <CardContent className="flex min-h-[148px] flex-col justify-center p-4">
-          <p className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+        <CardContent className="flex min-h-[112px] min-w-0 flex-col justify-center p-3.5 md:min-h-[148px] md:p-4">
+          <p className="font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground md:tracking-[0.18em]">
             Setup migliore
           </p>
 
-          <p className="mt-3 truncate font-mono text-2xl font-bold tracking-tight text-profit">
+          <p className="mt-2 truncate font-mono text-xl font-bold tracking-tight text-profit md:mt-3 md:text-2xl">
             {data.bestSetup.name ?? '—'}
           </p>
 
@@ -337,7 +337,7 @@ export function AdvancedStatsGrid({
               : 'Nessun setup registrato'}
           </p>
 
-          <div className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-secondary">
+          <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-secondary md:mt-4">
             <div
               className="h-full rounded-full bg-profit transition-all"
               style={{
@@ -351,22 +351,22 @@ export function AdvancedStatsGrid({
       </Card>
 
       <Card className="self-start rounded-2xl border border-border bg-card/95 py-0 shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
-        <CardContent className="flex min-h-[148px] flex-col justify-center p-4">
-          <p className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+        <CardContent className="flex min-h-[112px] min-w-0 flex-col justify-center p-3.5 md:min-h-[148px] md:p-4">
+          <p className="font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground md:tracking-[0.18em]">
             Long vs Short
           </p>
 
-          <div className="mt-3 flex items-baseline gap-2 font-mono font-bold tracking-tight">
-            <span className="text-2xl text-profit">{data.longTrades} long</span>
-            <span className="text-2xl text-foreground">/</span>
-            <span className="text-2xl text-loss">{data.shortTrades} short</span>
+          <div className="mt-2 flex flex-wrap items-baseline gap-2 font-mono font-bold tracking-tight md:mt-3">
+            <span className="text-xl text-profit md:text-2xl">{data.longTrades} long</span>
+            <span className="text-xl text-foreground md:text-2xl">/</span>
+            <span className="text-xl text-loss md:text-2xl">{data.shortTrades} short</span>
           </div>
 
           <p className="mt-1 font-mono text-[11px] text-muted-foreground">
             {data.longTrades + data.shortTrades} posizioni totali
           </p>
 
-          <div className="mt-4 flex h-1.5 w-full overflow-hidden rounded-full bg-secondary">
+          <div className="mt-3 flex h-1.5 w-full overflow-hidden rounded-full bg-secondary md:mt-4">
             <div
               className="h-full bg-profit transition-all"
               style={{
@@ -444,12 +444,12 @@ function CompactAnalysisCard({
 }) {
   return (
     <Card className="self-start rounded-2xl border border-border bg-card/95 py-0 shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
-      <CardContent className="flex min-h-[124px] flex-col justify-center p-4">
-        <p className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+      <CardContent className="flex min-h-[104px] min-w-0 flex-col justify-center p-3.5 md:min-h-[124px] md:p-4">
+        <p className="font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground md:tracking-[0.18em]">
           {title}
         </p>
         <p
-          className={`mt-3 truncate font-mono text-xl font-bold tracking-tight ${
+          className={`mt-2 truncate font-mono text-lg font-bold tracking-tight md:mt-3 md:text-xl ${
             tone === 'profit' ? 'text-profit' : 'text-loss'
           }`}
         >

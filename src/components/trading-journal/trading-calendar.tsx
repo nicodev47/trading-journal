@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import {
   ChevronLeft,
   ChevronRight,
-  Plus,
   Upload,
   Download,
   RotateCcw,
@@ -32,15 +31,14 @@ interface TradingCalendarProps {
   weeklyPlans: WeeklyPlan[];
   activeWorkspace: JournalWorkspace;
   showResetButton?: boolean;
-  hasBacktestTrades?: boolean;
   onWorkspaceChange: (workspace: JournalWorkspace) => void;
   onResetStudentJournal: () => void;
   onResetBacktestJournal?: () => void;
   onDayClick: (date: string) => void;
   onWeekPlanClick: (weekKey: string, weekLabel: string) => void;
   onImport: () => void;
-  onAppendImport?: () => void;
   onExport: () => void;
+  tutorialDemoDateKey?: string;
 }
 
 const WEEKDAYS = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
@@ -50,15 +48,14 @@ export function TradingCalendar({
   weeklyPlans,
   activeWorkspace,
   showResetButton = false,
-  hasBacktestTrades = false,
   onWorkspaceChange,
   onResetStudentJournal,
   onResetBacktestJournal,
   onDayClick,
   onWeekPlanClick,
   onImport,
-  onAppendImport,
   onExport,
+  tutorialDemoDateKey,
 }: TradingCalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
@@ -124,21 +121,24 @@ export function TradingCalendar({
     const isActive = activeWorkspace === workspace;
 
     return cn(
-      'h-8 rounded-lg border font-sans text-xs font-semibold transition-colors',
+      'h-8 rounded-lg border font-sans text-xs font-semibold transition-colors max-md:h-9 max-md:flex-1 max-md:px-2 max-[360px]:text-[11px]',
       isActive
         ? '!border-profit !bg-profit !text-background hover:!border-profit hover:!bg-profit hover:!text-background'
         : 'border-border bg-background/50 text-muted-foreground hover:border-border hover:bg-secondary hover:text-foreground'
     );
   };
 
-  const shouldShowAppendImport =
-    activeWorkspace === 'backtest' && hasBacktestTrades && onAppendImport;
-
   return (
-    <div className="flex flex-col overflow-hidden rounded-lg border border-border bg-card shadow-[0_18px_50px_rgba(0,0,0,0.25)]">
-      <div className="flex flex-wrap items-center gap-3 border-b border-border px-4 py-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <h2 className="mr-1 font-sans text-[15px] font-bold tracking-[-0.03em] text-foreground">
+    <div
+      className="flex max-w-full flex-col overflow-hidden rounded-lg border border-border bg-card shadow-[0_18px_50px_rgba(0,0,0,0.25)]"
+      data-tutorial="calendar"
+    >
+      <div className="flex flex-wrap items-center gap-3 border-b border-border px-4 py-3 max-md:gap-2 max-md:px-3 max-md:py-2.5">
+        <div
+          className="flex min-w-0 flex-wrap items-center gap-2 max-md:w-full"
+          data-tutorial="workspace-tabs"
+        >
+          <h2 className="mr-1 font-sans text-[15px] font-bold tracking-[-0.03em] text-foreground max-md:w-full">
             Calendario P/L
           </h2>
 
@@ -177,7 +177,7 @@ export function TradingCalendar({
               type="button"
               variant="outline"
               size="sm"
-              className="h-8 gap-2 rounded-lg border-loss/45 font-sans text-xs font-semibold text-loss hover:bg-loss/10 hover:text-loss"
+              className="h-8 gap-2 rounded-lg border-loss/45 font-sans text-xs font-semibold text-loss hover:bg-loss/10 hover:text-loss max-md:h-9 max-md:flex-1"
               onClick={onResetBacktestJournal}
             >
               <RotateCcw className="size-3" />
@@ -190,7 +190,7 @@ export function TradingCalendar({
               type="button"
               variant="outline"
               size="sm"
-              className="h-8 gap-2 rounded-lg border-loss/45 font-sans text-xs font-semibold text-loss hover:bg-loss/10 hover:text-loss"
+              className="h-8 gap-2 rounded-lg border-loss/45 font-sans text-xs font-semibold text-loss hover:bg-loss/10 hover:text-loss max-md:h-9 max-md:flex-1"
               onClick={onResetStudentJournal}
             >
               <RotateCcw className="size-3" />
@@ -199,7 +199,7 @@ export function TradingCalendar({
           )}
         </div>
 
-        <div className="ml-auto flex items-center gap-2 max-sm:ml-0 max-sm:w-full max-sm:justify-between">
+        <div className="ml-auto flex min-w-0 items-center gap-2 max-md:ml-0 max-md:w-full max-md:justify-between">
           <Button
             variant="ghost"
             size="icon"
@@ -213,7 +213,7 @@ export function TradingCalendar({
             value={currentMonth}
             onChange={setCurrentMonth}
             triggerVariant="ghost"
-            triggerClassName="inline-flex items-center justify-center gap-2 whitespace-nowrap disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive has-[>svg]:px-3 capitalize h-auto min-w-[150px] rounded-xl border border-transparent bg-transparent px-4 py-1 text-base font-semibold text-foreground shadow-none ring-0 transition-colors duration-200 hover:bg-white/10 hover:text-foreground dark:bg-transparent dark:hover:bg-white/10 dark:hover:text-foreground"
+            triggerClassName="inline-flex items-center justify-center gap-2 whitespace-nowrap disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive has-[>svg]:px-3 capitalize h-auto min-w-[150px] rounded-xl border border-transparent bg-transparent px-4 py-1 text-base font-semibold text-foreground shadow-none ring-0 transition-colors duration-200 hover:bg-white/10 hover:text-foreground dark:bg-transparent dark:hover:bg-white/10 dark:hover:text-foreground max-md:min-w-0 max-md:flex-1 max-md:px-2 max-md:text-sm"
           />
 
           <Button
@@ -226,35 +226,25 @@ export function TradingCalendar({
           </Button>
         </div>
 
-        <div className="flex items-center gap-2 max-sm:w-full">
-          {shouldShowAppendImport ? (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onAppendImport}
-              className="h-9 gap-2 rounded-lg font-sans text-xs font-semibold max-sm:flex-1"
-              title="Aggiungi un altro file backtest senza sovrascrivere i dati attuali"
-            >
-              <Plus className="size-3" />
-              Aggiungi
-            </Button>
-          ) : (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onImport}
-              className="h-9 gap-2 rounded-lg font-sans text-xs font-semibold max-sm:flex-1"
-            >
-              <Upload className="size-3" />
-              Importa
-            </Button>
-          )}
+        <div
+          className="flex items-center gap-2 max-md:w-full"
+          data-tutorial="import-export-buttons"
+        >
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onImport}
+            className="h-9 gap-2 rounded-lg font-sans text-xs font-semibold max-md:flex-1"
+          >
+            <Upload className="size-3" />
+            Importa
+          </Button>
 
           <Button
             variant="outline"
             size="sm"
             onClick={onExport}
-            className="h-9 gap-2 rounded-lg font-sans text-xs font-semibold max-sm:flex-1"
+            className="h-9 gap-2 rounded-lg font-sans text-xs font-semibold max-md:flex-1"
           >
             <Download className="size-3" />
             Esporta
@@ -264,7 +254,7 @@ export function TradingCalendar({
 
       <div className="w-full overflow-hidden">
         <div className="flex w-full min-w-0 flex-col gap-px bg-border">
-          <div className="grid grid-cols-[repeat(7,minmax(0,1fr))_54px] gap-px sm:grid-cols-[repeat(7,minmax(0,1fr))_80px] lg:grid-cols-[repeat(7,minmax(0,1fr))_155px]">
+          <div className="grid grid-cols-7 gap-px sm:grid-cols-[repeat(7,minmax(0,1fr))_80px] lg:grid-cols-[repeat(7,minmax(0,1fr))_155px]">
             {WEEKDAYS.map((day) => (
               <div
                 key={day}
@@ -274,7 +264,7 @@ export function TradingCalendar({
               </div>
             ))}
 
-            <div className="bg-card px-1 py-1.5 text-right font-sans text-[10px] font-bold uppercase tracking-[0.08em] text-muted-foreground/85 sm:px-2.5 sm:py-2.5 sm:text-xs lg:text-sm">
+            <div className="hidden bg-card px-1 py-1.5 text-right font-sans text-[10px] font-bold uppercase tracking-[0.08em] text-muted-foreground/85 sm:block sm:px-2.5 sm:py-2.5 sm:text-xs lg:text-sm">
               <span className="sm:hidden">Sett</span>
               <span className="hidden sm:inline">Settimana</span>
             </div>
@@ -283,7 +273,7 @@ export function TradingCalendar({
           {weeks.map((week, weekIndex) => (
             <div
               key={weekIndex}
-              className="grid grid-cols-[repeat(7,minmax(0,1fr))_54px] gap-px sm:grid-cols-[repeat(7,minmax(0,1fr))_80px] lg:grid-cols-[repeat(7,minmax(0,1fr))_155px]"
+              className="grid grid-cols-7 gap-px sm:grid-cols-[repeat(7,minmax(0,1fr))_80px] lg:grid-cols-[repeat(7,minmax(0,1fr))_155px]"
             >
               {week.map((day) => {
                 const dateKey = getDateKey(day);
@@ -297,6 +287,11 @@ export function TradingCalendar({
                     dayData={hasTrades ? dayData : null}
                     isCurrentMonth={checkCurrentMonth(day, currentMonth)}
                     isToday={checkIsToday(day)}
+                    tutorialTarget={
+                      dateKey === tutorialDemoDateKey
+                        ? 'current-demo-day'
+                        : undefined
+                    }
                     maxPnl={maxPnl}
                     minPnl={minPnl}
                     onClick={() => onDayClick(dateKey)}
@@ -304,16 +299,18 @@ export function TradingCalendar({
                 );
               })}
 
-              <WeekSummary
-                totalPnl={weekData[weekIndex].totalPnl}
-                tradeCount={weekData[weekIndex].tradeCount}
-              />
+              <div className="hidden sm:block">
+                <WeekSummary
+                  totalPnl={weekData[weekIndex].totalPnl}
+                  tradeCount={weekData[weekIndex].tradeCount}
+                />
+              </div>
             </div>
           ))}
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-border px-3 py-2">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-border px-3 py-2 max-md:gap-x-3 max-md:px-3 max-md:text-[11px]">
         <div className="flex items-center gap-2">
           <div className="size-3 rounded-sm bg-muted" />
           <span className="font-sans text-xs font-medium text-muted-foreground">
@@ -335,7 +332,7 @@ export function TradingCalendar({
           </span>
         </div>
 
-        <span className="max-w-full font-sans text-xs font-medium text-muted-foreground max-sm:basis-full">
+        <span className="max-w-full font-sans text-xs font-medium text-muted-foreground max-md:basis-full">
           — l’intensità scala in base ai tuoi giorni migliori/peggiori
         </span>
       </div>

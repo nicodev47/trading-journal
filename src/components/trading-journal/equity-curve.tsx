@@ -95,7 +95,7 @@ function CustomDot({
       onClick={(event) => {
         event.stopPropagation();
         if (isClickable) {
-          onPointClick(payload);
+          onPointClick?.(payload);
         }
       }}
     />
@@ -231,13 +231,13 @@ export function EquityCurve({
   const canClickPoints = Boolean(onOpenTradeGroup || onOpenTrade);
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-card/95 shadow-[0_16px_36px_rgba(0,0,0,0.22)]">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3">
+    <div className="max-w-full overflow-hidden rounded-2xl border border-border bg-card/95 shadow-[0_16px_36px_rgba(0,0,0,0.22)]">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-3 py-3 sm:px-4">
         <h2 className="font-sans text-[15px] font-bold tracking-[-0.03em] text-foreground">
           Curva Equity
         </h2>
 
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 flex-1 items-center justify-end gap-1.5 sm:flex-none sm:gap-2">
           <Button
             type="button"
             variant="ghost"
@@ -249,7 +249,7 @@ export function EquityCurve({
             <ChevronLeft className="size-4" />
           </Button>
 
-          <span className="min-w-[150px] text-center font-sans text-[15px] font-bold capitalize tracking-[-0.04em] text-foreground">
+          <span className="min-w-0 flex-1 truncate text-center font-sans text-[13px] font-bold capitalize tracking-[-0.04em] text-foreground sm:min-w-[150px] sm:flex-none sm:text-[15px]">
             {selectedMonthLabel}
           </span>
 
@@ -266,7 +266,7 @@ export function EquityCurve({
         </div>
       </div>
 
-      <div className="p-5 sm:p-6">
+      <div className="p-3 sm:p-6">
         {data.length === 0 ? (
           <div className="flex h-[180px] items-center justify-center">
             <p className="font-mono text-sm text-muted-foreground">
@@ -274,7 +274,7 @@ export function EquityCurve({
             </p>
           </div>
         ) : (
-          <div className="h-[320px]">
+          <div className="h-[240px] sm:h-[320px]">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart
                 data={formattedData}

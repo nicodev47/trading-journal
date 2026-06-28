@@ -3,12 +3,22 @@
 import { useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { EquityCurve } from '@/components/trading-journal/equity-curve';
 import { AdvancedStatsGrid } from '@/components/trading-journal/advanced-stats-grid';
 import { AnalysisDiagnostics } from '@/components/trading-journal/analysis-diagnostics';
 import { ExecutionMap } from '@/components/trading-journal/execution-map';
 import { TradeDetailDialog } from '@/components/trading-journal/trade-detail-dialog';
 import { TradeGroupDetailDialog } from '@/components/trading-journal/trade-group-detail-dialog';
+import { calculateStatistics } from '@/lib/calculations';
 import { cn } from '@/lib/utils';
 import {
   CUSTOM_TAG_PREFIX,
@@ -72,6 +82,75 @@ function formatPercent(value: number) {
   return `${value.toFixed(1)}%`;
 }
 
+function formatProfitFactor(value: number) {
+  if (!isFinite(value)) return '∞';
+  if (isNaN(value)) return '—';
+  return value.toFixed(2);
+}
+
+function getTagLabel(value: string) {
+  const standardTag = TRADE_TAGS.find((tag) => tag.value === value);
+
+  if (standardTag) return `${standardTag.emoji} ${standardTag.label}`;
+  if (value.startsWith(CUSTOM_TAG_PREFIX)) {
+    return value.slice(CUSTOM_TAG_PREFIX.length);
+  }
+
+  return value;
+}
+
+function getTradeTime(trade: Trade) {
+  const source = trade.exitDate || trade.entryDate;
+  return source?.split('T')[1]?.slice(0, 5) || '—';
+}
+
+function getTradeDateLabel(trade: Trade) {
+  const date = new Date(trade.exitDate || trade.entryDate);
+
+  if (Number.isNaN(date.getTime())) return '—';
+
+  return date.toLocaleDateString('it-IT', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+}
+
+function getBestSetup(trades: Trade[]) {
+  const setupStats = new Map<string, { trades: number; wins: number }>();
+
+  trades.forEach((trade) => {
+    const setup = trade.strategy?.trim();
+
+    if (!setup) return;
+
+    const stats = setupStats.get(setup) ?? { trades: 0, wins: 0 };
+    stats.trades += 1;
+    if (netPnl(trade) > 0) stats.wins += 1;
+    setupStats.set(setup, stats);
+  });
+
+  return Array.from(setupStats.entries()).reduce<{
+    name: string | null;
+    trades: number;
+    winRate: number;
+  }>(
+    (best, [name, stats]) => {
+      const winRate = (stats.wins / stats.trades) * 100;
+
+      if (
+        winRate > best.winRate ||
+        (winRate === best.winRate && stats.trades > best.trades)
+      ) {
+        return { name, trades: stats.trades, winRate };
+      }
+
+      return best;
+    },
+    { name: null, trades: 0, winRate: -1 }
+  );
+}
+
 export function MonthlyAnalysis({
   trades,
 }: MonthlyAnalysisProps) {
@@ -81,6 +160,7 @@ export function MonthlyAnalysis({
     useState<TradeGroupDialogState | null>(null);
   const [isTradeGroupOpen, setIsTradeGroupOpen] = useState(false);
   const [returnToTradeGroup, setReturnToTradeGroup] = useState(false);
+  const [selectedMonthIndex, setSelectedMonthIndex] = useState<number | null>(null);
   const availableYears = useMemo(() => {
     const years = Array.from(
       new Set(trades.map((trade) => new Date(trade.exitDate).getFullYear()))
@@ -152,6 +232,30 @@ export function MonthlyAnalysis({
   const profitFactor = grossLosses > 0 ? grossWins / grossLosses : grossWins > 0 ? Infinity : 0;
   const maxAbsPnl = Math.max(...months.map((month) => Math.abs(month.totalPnl)), 1);
   const maxMonthlyTrades = Math.max(...months.map((month) => month.trades), 1);
+  const selectedMonthDetail =
+    selectedMonthIndex !== null ? months[selectedMonthIndex] : null;
+  const selectedMonthStats = useMemo(() => {
+    if (!selectedMonthDetail) return null;
+
+    const stats = calculateStatistics(selectedMonthDetail.monthTrades);
+    const longTrades = selectedMonthDetail.monthTrades.filter(
+      (trade) => trade.direction === 'long'
+    ).length;
+    const shortTrades = selectedMonthDetail.monthTrades.filter(
+      (trade) => trade.direction === 'short'
+    ).length;
+
+    return {
+      stats,
+      bestSetup: getBestSetup(selectedMonthDetail.monthTrades),
+      longTrades,
+      shortTrades,
+      sortedTrades: [...selectedMonthDetail.monthTrades].sort(
+        (a, b) =>
+          new Date(b.exitDate).getTime() - new Date(a.exitDate).getTime()
+      ),
+    };
+  }, [selectedMonthDetail]);
 
   const selectedYearIndex = availableYears.indexOf(selectedYear);
   const goPreviousYear = () => {
@@ -239,10 +343,18 @@ export function MonthlyAnalysis({
     );
   };
 
+  const openMonthDetail = (monthIndex: number) => {
+    const month = months[monthIndex];
+
+    if (!month || month.trades === 0) return;
+
+    setSelectedMonthIndex(monthIndex);
+  };
+
   return (
-    <section className="pb-8">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div>
+    <section className="max-w-full pb-6 md:pb-8" data-tutorial="analysis-section">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3 md:mb-4">
+        <div className="min-w-0">
           <h2 className="font-mono text-base font-semibold tracking-wide text-foreground">
             Analisi annuale
           </h2>
@@ -251,7 +363,7 @@ export function MonthlyAnalysis({
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 max-md:w-full max-md:justify-between">
           <Button variant="outline" size="icon" className="size-8" onClick={goPreviousYear}>
             <ChevronLeft className="size-4" />
           </Button>
@@ -264,60 +376,62 @@ export function MonthlyAnalysis({
         </div>
       </div>
 
-      <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <SummaryBox
-          title="P&L annuale"
-          value={streamerMode ? '******' : formatCurrency(yearTotal)}
-          color={yearTotal > 0 ? 'profit' : yearTotal < 0 ? 'loss' : 'neutral'}
-          description="Performance netta del periodo"
-          pills={[{ label: `${yearTrades} trade` }]}
-        />
-        <SummaryBox
-          title="Win Rate"
-          value={formatPercent(yearWinRate)}
-          description="Percentuale trade vincenti"
-          pills={[
-            { label: `${yearWins} win`, tone: 'profit' },
-            { label: `${yearLosses} loss`, tone: 'loss' },
-          ]}
-          progress={yearWinRate}
-        />
-        <SummaryBox
-          title="Trade totali"
-          value={yearTrades.toString()}
-          description="Operazioni registrate nel periodo"
-          pills={[
-            { label: `${yearLongTrades} long`, tone: 'profit' },
-            { label: `${yearShortTrades} short`, tone: 'loss' },
-          ]}
-        />
-        <SummaryBox
-          title="Profit factor"
-          value={!isFinite(profitFactor) ? '∞' : profitFactor.toFixed(2)}
-          description="Rapporto profitti / perdite"
-          progress={
-            Number.isFinite(profitFactor)
-              ? Math.min((profitFactor / 4.8) * 100, 100)
-              : 0
-          }
-        />
+      <div data-tour-target="analysis-overview">
+        <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <SummaryBox
+            title="P&L annuale"
+            value={streamerMode ? '******' : formatCurrency(yearTotal)}
+            color={yearTotal > 0 ? 'profit' : yearTotal < 0 ? 'loss' : 'neutral'}
+            description="Performance netta del periodo"
+            pills={[{ label: `${yearTrades} trade` }]}
+          />
+          <SummaryBox
+            title="Win Rate"
+            value={formatPercent(yearWinRate)}
+            description="Percentuale trade vincenti"
+            pills={[
+              { label: `${yearWins} win`, tone: 'profit' },
+              { label: `${yearLosses} loss`, tone: 'loss' },
+            ]}
+            progress={yearWinRate}
+          />
+          <SummaryBox
+            title="Trade totali"
+            value={yearTrades.toString()}
+            description="Operazioni registrate nel periodo"
+            pills={[
+              { label: `${yearLongTrades} long`, tone: 'profit' },
+              { label: `${yearShortTrades} short`, tone: 'loss' },
+            ]}
+          />
+          <SummaryBox
+            title="Profit factor"
+            value={!isFinite(profitFactor) ? '∞' : profitFactor.toFixed(2)}
+            description="Rapporto profitti / perdite"
+            progress={
+              Number.isFinite(profitFactor)
+                ? Math.min((profitFactor / 4.8) * 100, 100)
+                : 0
+            }
+          />
+        </div>
+
+        <div className="mb-4">
+          <EquityCurve
+            key={selectedYear}
+            trades={yearFilteredTrades}
+            onOpenTradeGroup={(payload) =>
+              openTradeGroup(
+                payload.title,
+                payload.subtitle ?? 'Operazioni incluse nella curva equity.',
+                payload.trades
+              )
+            }
+          />
+        </div>
       </div>
 
-      <div className="mb-4">
-        <EquityCurve
-          key={selectedYear}
-          trades={yearFilteredTrades}
-          onOpenTradeGroup={(payload) =>
-            openTradeGroup(
-              payload.title,
-              payload.subtitle ?? 'Operazioni incluse nella curva equity.',
-              payload.trades
-            )
-          }
-        />
-      </div>
-
-      <div className="mb-4 rounded-2xl border border-border bg-card/95 p-4 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
+      <div className="mb-4 rounded-2xl border border-border bg-card/95 p-3.5 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
         <div className="mb-4 font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
           P&L mensile
         </div>
@@ -395,7 +509,7 @@ export function MonthlyAnalysis({
         </div>
       </div>
 
-      <div className="mb-4 rounded-2xl border border-border bg-card/95 p-4 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
+      <div className="mb-4 rounded-2xl border border-border bg-card/95 p-3.5 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
         <div className="mb-4 font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
           Distribuzione operazioni
         </div>
@@ -483,9 +597,19 @@ export function MonthlyAnalysis({
       </div>
 
       <div className="mb-4 overflow-hidden rounded-2xl border border-border bg-card/95 shadow-[0_16px_36px_rgba(0,0,0,0.22)]">
+        <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
+          <div>
+            <div className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+              Performance mese per mese
+            </div>
+            <p className="mt-1 font-sans text-xs text-muted-foreground">
+              Clicca un mese con dati per vedere statistiche e trade.
+            </p>
+          </div>
+        </div>
         <div className="ej-scrollbar w-full overflow-x-auto">
-          <div className="min-w-[860px]">
-        <div className="grid grid-cols-[1.2fr_1fr_0.8fr_0.8fr_0.9fr_0.9fr_1fr_1fr] border-b border-border px-4 py-3 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+          <div className="min-w-[960px]">
+        <div className="grid grid-cols-[1.2fr_1fr_0.8fr_0.8fr_0.9fr_0.9fr_1fr_1fr_64px] border-b border-border px-4 py-3 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
           <span>Mese</span>
           <span>P&L netto</span>
           <span>Trade</span>
@@ -494,10 +618,39 @@ export function MonthlyAnalysis({
           <span>Profit factor</span>
           <span>Giorno migliore</span>
           <span>Giorno peggiore</span>
+          <span className="sr-only">Apri</span>
         </div>
-        {months.map((month) => (
-          <div key={month.monthName} className="grid grid-cols-[1.2fr_1fr_0.8fr_0.8fr_0.9fr_0.9fr_1fr_1fr] border-b border-border/70 px-4 py-3 font-mono text-xs last:border-b-0">
-            <span className="text-foreground">{month.monthName}</span>
+        {months.map((month) => {
+          const isClickable = month.trades > 0;
+
+          return (
+          <div
+            key={month.monthName}
+            role={isClickable ? 'button' : undefined}
+            tabIndex={isClickable ? 0 : undefined}
+            aria-label={
+              isClickable
+                ? `Apri performance ${month.monthName} ${selectedYear}`
+                : undefined
+            }
+            onClick={() => openMonthDetail(month.monthIndex)}
+            onKeyDown={(event) => {
+              if (!isClickable) return;
+              if (event.key !== 'Enter' && event.key !== ' ') return;
+
+              event.preventDefault();
+              openMonthDetail(month.monthIndex);
+            }}
+            className={cn(
+              'grid grid-cols-[1.2fr_1fr_0.8fr_0.8fr_0.9fr_0.9fr_1fr_1fr_64px] items-center border-b border-border/70 px-4 py-3 font-mono text-xs outline-none last:border-b-0',
+              isClickable
+                ? 'cursor-pointer transition hover:bg-profit/[0.035] hover:shadow-[inset_3px_0_0_rgba(0,240,168,0.55)] focus-visible:bg-profit/[0.06] focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-profit/60'
+                : 'text-muted-foreground/55'
+            )}
+          >
+            <span className={isClickable ? 'text-foreground' : 'text-muted-foreground/55'}>
+              {month.monthName}
+            </span>
             <span className={cn(month.totalPnl > 0 && 'text-profit', month.totalPnl < 0 && 'text-loss', month.totalPnl === 0 && 'text-muted-foreground')}>
               {month.trades
                 ? streamerMode
@@ -511,8 +664,25 @@ export function MonthlyAnalysis({
             <span>{month.trades ? (!isFinite(month.profitFactor) ? '∞' : month.profitFactor.toFixed(2)) : '—'}</span>
             <span className={month.bestDay > 0 ? 'text-profit' : 'text-muted-foreground'}>{month.trades ? streamerMode ? '******' : formatCurrency(month.bestDay) : '—'}</span>
             <span className={month.worstDay < 0 ? 'text-loss' : 'text-muted-foreground'}>{month.trades ? streamerMode ? '******' : formatCurrency(month.worstDay) : '—'}</span>
+            <span className="flex justify-end">
+              {isClickable && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 rounded-lg border-border bg-background/50 px-3 font-mono text-xs text-muted-foreground hover:border-profit/50 hover:bg-secondary hover:text-foreground"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    openMonthDetail(month.monthIndex);
+                  }}
+                >
+                  Apri
+                </Button>
+              )}
+            </span>
           </div>
-        ))}
+          );
+        })}
           </div>
         </div>
       </div>
@@ -522,7 +692,7 @@ export function MonthlyAnalysis({
       </div>
 
       <div className="mb-4">
-        <div className="rounded-2xl border border-border bg-card/95 p-4 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
+        <div className="rounded-2xl border border-border bg-card/95 p-3.5 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
           <div className="mb-4">
             <div className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
               TAG ANALYTICS
@@ -536,13 +706,14 @@ export function MonthlyAnalysis({
                   key={tag.value}
                   className="space-y-2 rounded-xl p-2 transition-colors hover:bg-secondary/10"
                 >
-                  <div className="grid grid-cols-[minmax(0,1fr)_auto_auto_auto_auto] items-center gap-3 font-mono text-xs">
+                  <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 font-mono text-xs sm:grid-cols-[minmax(0,1fr)_auto_auto_auto_auto] sm:gap-3">
                     <span className="truncate text-foreground">{tag.label}</span>
                     <span className="text-muted-foreground">
                       {tag.tradeCount} trade
                     </span>
                     <span
                       className={cn(
+                        'max-sm:col-span-2',
                         tag.totalPnl > 0 && 'text-profit',
                         tag.totalPnl < 0 && 'text-loss',
                         tag.totalPnl === 0 && 'text-muted-foreground'
@@ -550,14 +721,14 @@ export function MonthlyAnalysis({
                     >
                       {streamerMode ? '******' : formatCurrency(tag.totalPnl)}
                     </span>
-                    <span className="text-muted-foreground">
+                    <span className="text-muted-foreground max-sm:col-span-2">
                       {formatPercent(tag.winRate)} WR
                     </span>
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="h-9 rounded-lg border-border bg-background/50 px-3 font-mono text-xs text-muted-foreground hover:border-profit/50 hover:bg-secondary hover:text-foreground"
+                      className="h-9 rounded-lg border-border bg-background/50 px-3 font-mono text-xs text-muted-foreground hover:border-profit/50 hover:bg-secondary hover:text-foreground max-sm:col-span-2 max-sm:w-full"
                       onClick={() =>
                         openTradeGroup(
                           `Tag: ${tag.label}`,
@@ -589,6 +760,230 @@ export function MonthlyAnalysis({
       <div className="mb-4">
         <AdvancedStatsGrid trades={yearFilteredTrades} extended />
       </div>
+
+      <Dialog
+        open={Boolean(selectedMonthDetail && selectedMonthStats)}
+        onOpenChange={(open) => {
+          if (!open) setSelectedMonthIndex(null);
+        }}
+      >
+        {selectedMonthDetail && selectedMonthStats && (
+          <DialogContent className="max-h-[92dvh] w-[calc(100vw-1.75rem)] max-w-5xl overflow-hidden rounded-2xl border border-border bg-card p-0 shadow-[0_20px_50px_rgba(0,0,0,0.35)]">
+            <DialogHeader className="border-b border-border px-4 py-3.5 text-left sm:px-5 sm:py-4">
+              <DialogTitle className="font-mono text-base text-foreground sm:text-lg">
+                Performance — {selectedMonthDetail.monthName} {selectedYear}
+              </DialogTitle>
+              <DialogDescription className="font-sans text-sm">
+                Statistiche e operazioni del mese selezionato.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="ej-scrollbar max-h-[calc(92dvh-8.5rem)] overflow-y-auto overscroll-contain px-4 py-4 sm:px-5 sm:py-5">
+              <section className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
+                <MonthlyMetric
+                  label="P&L netto"
+                  value={
+                    streamerMode
+                      ? '******'
+                      : formatCurrency(selectedMonthStats.stats.totalPnl)
+                  }
+                  tone={
+                    selectedMonthStats.stats.totalPnl > 0
+                      ? 'profit'
+                      : selectedMonthStats.stats.totalPnl < 0
+                        ? 'loss'
+                        : 'default'
+                  }
+                />
+                <MonthlyMetric
+                  label="Trade"
+                  value={`${selectedMonthStats.stats.totalTrades}`}
+                  detail={`${selectedMonthStats.stats.winningTrades} win / ${selectedMonthStats.stats.losingTrades} loss`}
+                />
+                <MonthlyMetric
+                  label="Win rate"
+                  value={formatPercent(selectedMonthStats.stats.winRate)}
+                  detail={`${selectedMonthStats.stats.greenDays} giorni positivi`}
+                  tone={selectedMonthStats.stats.winRate >= 50 ? 'profit' : 'loss'}
+                />
+                <MonthlyMetric
+                  label="Profit factor"
+                  value={formatProfitFactor(selectedMonthStats.stats.profitFactor)}
+                />
+                <MonthlyMetric
+                  label="Giorni operativi"
+                  value={`${selectedMonthStats.stats.tradingDays}`}
+                  detail={`Media ${selectedMonthStats.stats.avgTradesPerDay.toFixed(1)} trade/giorno`}
+                />
+                <MonthlyMetric
+                  label="Giorno migliore"
+                  value={
+                    streamerMode
+                      ? '******'
+                      : formatCurrency(selectedMonthStats.stats.bestDay)
+                  }
+                  tone={selectedMonthStats.stats.bestDay > 0 ? 'profit' : 'default'}
+                />
+                <MonthlyMetric
+                  label="Giorno peggiore"
+                  value={
+                    streamerMode
+                      ? '******'
+                      : formatCurrency(selectedMonthStats.stats.worstDay)
+                  }
+                  tone={selectedMonthStats.stats.worstDay < 0 ? 'loss' : 'default'}
+                />
+                <MonthlyMetric
+                  label="Setup migliore"
+                  value={selectedMonthStats.bestSetup.name ?? '—'}
+                  detail={
+                    selectedMonthStats.bestSetup.name
+                      ? `${selectedMonthStats.bestSetup.winRate.toFixed(0)}% WR · ${selectedMonthStats.bestSetup.trades} trade`
+                      : 'Nessun setup registrato'
+                  }
+                  tone={selectedMonthStats.bestSetup.name ? 'profit' : 'default'}
+                />
+                <MonthlyMetric
+                  label="Long vs Short"
+                  value={`${selectedMonthStats.longTrades} / ${selectedMonthStats.shortTrades}`}
+                  detail="long / short"
+                />
+                <MonthlyMetric
+                  label="Media win"
+                  value={
+                    streamerMode
+                      ? '******'
+                      : formatCurrency(selectedMonthStats.stats.avgWin)
+                  }
+                  tone="profit"
+                />
+                <MonthlyMetric
+                  label="Media loss"
+                  value={
+                    streamerMode
+                      ? '******'
+                      : formatCurrency(selectedMonthStats.stats.avgLoss)
+                  }
+                  tone="loss"
+                />
+              </section>
+
+              <section className="mt-5 rounded-2xl border border-border bg-background/25">
+                <div className="border-b border-border px-4 py-3">
+                  <p className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                    Trade del mese
+                  </p>
+                </div>
+
+                <div className="divide-y divide-border/70">
+                  {selectedMonthStats.sortedTrades.map((trade) => {
+                    const pnl = netPnl(trade);
+                    const note = trade.notes?.trim();
+
+                    return (
+                      <div
+                        key={trade.id}
+                        role="button"
+                        tabIndex={0}
+                        className="grid w-full grid-cols-1 gap-2 px-4 py-3 text-left transition hover:bg-profit/[0.035] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-profit/60 md:grid-cols-[96px_120px_72px_84px_64px_minmax(0,1fr)_64px]"
+                        onClick={() => {
+                          setSelectedMonthIndex(null);
+                          setSelectedTrade(trade);
+                          setReturnToTradeGroup(false);
+                        }}
+                        onKeyDown={(event) => {
+                          if (event.key !== 'Enter' && event.key !== ' ') {
+                            return;
+                          }
+
+                          event.preventDefault();
+                          setSelectedMonthIndex(null);
+                          setSelectedTrade(trade);
+                          setReturnToTradeGroup(false);
+                        }}
+                      >
+                        <div className="font-mono text-xs text-foreground">
+                          {getTradeDateLabel(trade)}
+                        </div>
+                        <div
+                          className={cn(
+                            'font-mono text-xs font-semibold',
+                            pnl > 0 && 'text-profit',
+                            pnl < 0 && 'text-loss',
+                            pnl === 0 && 'text-muted-foreground'
+                          )}
+                        >
+                          {streamerMode ? '******' : formatCurrency(pnl)}
+                        </div>
+                        <div className="font-mono text-xs text-muted-foreground">
+                          {trade.pair?.trim() || '—'}
+                        </div>
+                        <div className="font-mono text-xs capitalize text-muted-foreground">
+                          {trade.direction || '—'}
+                        </div>
+                        <div className="font-mono text-xs text-muted-foreground">
+                          {getTradeTime(trade)}
+                        </div>
+                        <div className="min-w-0 space-y-1">
+                          <p className="truncate font-mono text-xs text-foreground">
+                            {trade.strategy?.trim() || '—'}
+                          </p>
+                          {trade.tags?.length > 0 && (
+                            <div className="flex flex-wrap gap-1">
+                              {trade.tags.slice(0, 3).map((tag) => (
+                                <span
+                                  key={tag}
+                                  className="rounded-md border border-profit/20 bg-profit/5 px-1.5 py-0.5 font-mono text-[10px] text-profit"
+                                >
+                                  {getTagLabel(tag)}
+                                </span>
+                              ))}
+                              {trade.tags.length > 3 && (
+                                <span className="font-mono text-[10px] text-muted-foreground">
+                                  +{trade.tags.length - 3}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                          {note && (
+                            <p className="truncate font-sans text-xs text-muted-foreground">
+                              {note}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex items-center justify-end">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-8 rounded-lg border-border bg-background/50 px-3 font-mono text-xs text-muted-foreground hover:border-profit/50 hover:bg-secondary hover:text-foreground max-md:w-full"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              setSelectedMonthIndex(null);
+                              setSelectedTrade(trade);
+                              setReturnToTradeGroup(false);
+                            }}
+                          >
+                            Apri
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            </div>
+
+            <DialogFooter className="border-t border-border bg-background/25 px-4 py-3.5 sm:px-5 sm:py-4 max-sm:[&_button]:w-full">
+              <DialogClose asChild>
+                <Button type="button" variant="outline">
+                  Chiudi
+                </Button>
+              </DialogClose>
+            </DialogFooter>
+          </DialogContent>
+        )}
+      </Dialog>
 
       <TradeDetailDialog
         trade={selectedTrade}
@@ -651,13 +1046,13 @@ function SummaryBox({
     );
 
   return (
-    <div className="rounded-2xl border border-border bg-card/95 shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
-      <div className="flex min-h-[118px] flex-col justify-between gap-2 p-3.5">
-      <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{title}</div>
-      <div className="flex flex-wrap items-center gap-2">
+    <div className="max-w-full rounded-2xl border border-border bg-card/95 shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
+      <div className="flex min-h-[104px] min-w-0 flex-col justify-between gap-2 p-3 md:min-h-[118px] md:p-3.5">
+      <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground md:tracking-[0.18em]">{title}</div>
+      <div className="flex min-w-0 flex-wrap items-center gap-2">
         <div
           className={cn(
-            'font-mono text-xl font-semibold tracking-tight text-foreground',
+            'break-words font-mono text-lg font-semibold tracking-tight text-foreground md:text-xl',
             color === 'profit' && 'text-profit',
             color === 'loss' && 'text-loss',
             color === 'neutral' && 'text-muted-foreground'
@@ -697,6 +1092,40 @@ function SummaryBox({
         </div>
       )}
       </div>
+    </div>
+  );
+}
+
+function MonthlyMetric({
+  label,
+  value,
+  detail,
+  tone = 'default',
+}: {
+  label: string;
+  value: string;
+  detail?: string;
+  tone?: 'default' | 'profit' | 'loss';
+}) {
+  return (
+    <div className="min-w-0 rounded-xl border border-border bg-background/45 p-3">
+      <p className="font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+        {label}
+      </p>
+      <p
+        className={cn(
+          'mt-2 break-words font-mono text-base font-semibold text-foreground',
+          tone === 'profit' && 'text-profit',
+          tone === 'loss' && 'text-loss'
+        )}
+      >
+        {value}
+      </p>
+      {detail && (
+        <p className="mt-1 font-mono text-[11px] text-muted-foreground">
+          {detail}
+        </p>
+      )}
     </div>
   );
 }

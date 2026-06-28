@@ -43,19 +43,22 @@ export function StatsGrid({ trades }: StatsGridProps) {
       : 'bg-[#ff4d70]';
 
   return (
-    <div className="grid grid-cols-1 gap-4 py-4 md:grid-cols-3">
+    <div
+      className="grid grid-cols-1 gap-3 py-3 md:grid-cols-3 md:gap-4 md:py-4"
+      data-tutorial="stats-grid"
+    >
       <Card className="rounded-2xl border border-border bg-card/95 shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
-        <CardContent className="flex min-h-[72px] flex-col justify-between gap-2 p-3.5">
-          <span className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+        <CardContent className="flex min-h-[68px] flex-col justify-between gap-2 p-3 md:min-h-[72px] md:p-3.5">
+          <span className="font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground md:tracking-[0.18em]">
             P&L attuale
           </span>
 
-          <div className="flex items-center gap-3">
-            <span className="font-mono text-xl font-semibold tracking-tight text-profit">
+          <div className="flex min-w-0 flex-wrap items-center gap-2 md:gap-3">
+            <span className="min-w-0 break-words font-mono text-lg font-semibold tracking-tight text-profit md:text-xl">
               {streamerMode ? '******' : formatCurrency(stats.totalPnl)}
             </span>
 
-            <div className="rounded-full border border-border bg-background/70 px-3 py-1 font-mono text-[11px] font-medium text-white">
+            <div className="shrink-0 rounded-full border border-border bg-background/70 px-2.5 py-1 font-mono text-[11px] font-medium text-white md:px-3">
               {stats.totalTrades} trade
             </div>
           </div>
@@ -67,23 +70,23 @@ export function StatsGrid({ trades }: StatsGridProps) {
       </Card>
 
      <Card className="rounded-2xl border border-border bg-card/95 shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
-  <CardContent className="flex min-h-[72px] flex-col justify-between gap-2 p-3.5">
-    <span className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+  <CardContent className="flex min-h-[68px] flex-col justify-between gap-2 p-3 md:min-h-[72px] md:p-3.5">
+    <span className="font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground md:tracking-[0.18em]">
       Win rate
     </span>
 
-    <div className="flex items-start gap-3">
+    <div className="flex min-w-0 items-start gap-3">
       <div className="flex flex-col gap-2">
-        <div className="flex items-center gap-2">
-          <span className="font-mono text-xl font-semibold tracking-tight text-foreground">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="font-mono text-lg font-semibold tracking-tight text-foreground md:text-xl">
             {hasNoTrades ? '—' : `${stats.winRate.toFixed(0)}%`}
           </span>
 
-          <div className="rounded-full border border-profit/40 bg-profit/10 px-2.5 py-1 font-mono text-[11px] font-medium text-profit">
+          <div className="rounded-full border border-profit/40 bg-profit/10 px-2 py-1 font-mono text-[11px] font-medium text-profit md:px-2.5">
             {stats.winningTrades} win
           </div>
 
-          <div className="rounded-full border border-loss/40 bg-loss/10 px-2.5 py-1 font-mono text-[11px] font-medium text-loss">
+          <div className="rounded-full border border-loss/40 bg-loss/10 px-2 py-1 font-mono text-[11px] font-medium text-loss md:px-2.5">
             {stats.losingTrades} loss
           </div>
         </div>
@@ -97,17 +100,17 @@ export function StatsGrid({ trades }: StatsGridProps) {
 </Card>
 
       <Card className="rounded-2xl border border-border bg-card/95 shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
-        <CardContent className="flex min-h-[72px] flex-col justify-between gap-2 p-3.5">
-          <span className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+        <CardContent className="flex min-h-[68px] flex-col justify-between gap-2 p-3 md:min-h-[72px] md:p-3.5">
+          <span className="font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground md:tracking-[0.18em]">
             Profit factor
           </span>
 
-          <div className="flex items-center justify-between gap-4">
-            <span className="font-mono text-xl font-semibold tracking-tight text-foreground">
+          <div className="flex min-w-0 items-center justify-between gap-3">
+            <span className="font-mono text-lg font-semibold tracking-tight text-foreground md:text-xl">
               {hasNoTrades ? '—' : formatRatio(stats.profitFactor)}
             </span>
 
-            <div className="h-1.5 w-40 overflow-hidden rounded-full bg-secondary">
+            <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-secondary md:w-40 md:flex-none">
               <div
                 className={`h-full rounded-full transition-all ${profitFactorColor}`}
                 style={{ width: `${profitFactorPercent}%` }}

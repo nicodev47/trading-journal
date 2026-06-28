@@ -144,8 +144,8 @@ export function TradeGroupDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[86vh] w-[94vw] max-w-[860px] gap-0 overflow-hidden border-border bg-card p-0">
-        <DialogHeader className="border-b border-border px-5 py-4 pr-12 sm:px-6">
+      <DialogContent className="max-h-[92dvh] w-[calc(100vw-1.75rem)] max-w-[860px] gap-0 overflow-hidden border-border bg-card p-0 sm:max-h-[86vh] sm:w-[94vw]">
+        <DialogHeader className="border-b border-border px-4 py-3.5 pr-12 text-left sm:px-6 sm:py-4">
           <DialogTitle className="font-mono text-base font-semibold tracking-wide">
             {title}
           </DialogTitle>
@@ -156,8 +156,8 @@ export function TradeGroupDetailDialog({
           )}
         </DialogHeader>
 
-        <div className="ej-scrollbar overflow-y-auto overscroll-contain px-5 py-5 sm:px-6">
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+        <div className="ej-scrollbar max-h-[calc(92dvh-7rem)] overflow-y-auto overscroll-contain px-4 py-4 sm:max-h-none sm:px-6 sm:py-5">
+          <div className="grid grid-cols-1 gap-2.5 min-[420px]:grid-cols-2 sm:gap-3 md:grid-cols-5">
             <SummaryStat label="Trade">{sortedTrades.length}</SummaryStat>
             <SummaryStat label="P&L totale">
               <EconomicValue value={totalPnl} streamerMode={streamerMode} />
@@ -184,7 +184,7 @@ export function TradeGroupDetailDialog({
                 return (
                   <div
                     key={trade.id}
-                    className="grid grid-cols-2 items-center gap-3 rounded-xl border border-border/80 bg-background/35 p-3 font-mono text-xs md:grid-cols-[112px_64px_82px_86px_minmax(0,1fr)_96px_auto]"
+                    className="grid grid-cols-2 items-center gap-2 rounded-xl border border-border/80 bg-background/35 p-3 font-mono text-xs sm:gap-3 md:grid-cols-[112px_64px_82px_86px_minmax(0,1fr)_96px_auto]"
                   >
                     <span className="text-foreground">
                       {date

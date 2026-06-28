@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
 import {
   Dialog,
   DialogContent,
@@ -428,20 +429,20 @@ export function ProfileDialog({
     <>
       <Dialog open={isOpen} onOpenChange={open => !open && onClose()}>
         <DialogContent
-          className="ej-scrollbar max-h-[88vh] overflow-y-auto overscroll-contain rounded-2xl border border-border bg-card p-0 shadow-[0_20px_50px_rgba(0,0,0,0.35)] sm:max-w-2xl"
+          className="ej-scrollbar max-h-[90dvh] w-[calc(100vw-1.75rem)] overflow-y-auto overscroll-contain rounded-2xl border border-border bg-card p-0 shadow-[0_20px_50px_rgba(0,0,0,0.35)] sm:max-w-2xl"
           onOpenAutoFocus={event => event.preventDefault()}
         >
-          <DialogHeader className="border-b border-border px-5 py-4">
-            <DialogTitle className="font-mono text-lg">Profilo trader</DialogTitle>
+          <DialogHeader className="border-b border-border px-4 py-3.5 text-left sm:px-5 sm:py-4">
+            <DialogTitle className="font-mono text-base sm:text-lg">Profilo trader</DialogTitle>
             <DialogDescription>
               Progressi e statistiche calcolati dal journal Personale.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 p-5">
-            <section className="rounded-[14px] border border-profit/25 bg-gradient-to-br from-profit/10 via-background/60 to-background/30 p-4">
+          <div className="space-y-3 p-4 sm:space-y-4 sm:p-5">
+            <section className="rounded-[14px] border border-profit/25 bg-gradient-to-br from-profit/10 via-background/60 to-background/30 p-3.5 sm:p-4">
               <div className="mb-4 flex flex-wrap items-end justify-between gap-3 border-b border-border/70 pb-4">
-                <div className="min-w-[190px] flex-1 space-y-1.5">
+                <div className="min-w-0 flex-1 space-y-1.5 sm:min-w-[190px]">
                   <Label
                     htmlFor="trader-profile-name"
                     className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground"
@@ -461,7 +462,7 @@ export function ProfileDialog({
                 <Button
                   type="button"
                   size="sm"
-                  className="gap-2 bg-profit text-background hover:bg-profit/90"
+                  className="gap-2 bg-profit text-background hover:bg-profit/90 max-sm:w-full"
                   onClick={handleShare}
                   disabled={isGeneratingImage}
                 >
@@ -472,13 +473,13 @@ export function ProfileDialog({
                 </Button>
               </div>
 
-              <div className="flex items-center gap-4">
-                <div className="flex size-16 shrink-0 items-center justify-center rounded-2xl border border-profit/30 bg-profit/10 text-[46px] leading-none shadow-[0_0_24px_rgba(0,214,143,0.08)]">
+              <div className="flex items-center gap-3 sm:gap-4">
+                <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl border border-profit/30 bg-profit/10 text-[40px] leading-none shadow-[0_0_24px_rgba(0,214,143,0.08)] sm:size-16 sm:text-[46px]">
                   {DEFAULT_PROFILE_AVATAR}
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-end justify-between gap-2">
+                  <div className="flex min-w-0 flex-wrap items-end justify-between gap-2">
                     <div>
                       <p className="truncate font-sans text-sm font-semibold text-muted-foreground">
                         {traderName.trim() || 'Il tuo nome'}
@@ -516,7 +517,7 @@ export function ProfileDialog({
               </div>
             </section>
 
-            <section className="grid grid-cols-1 gap-3 min-[460px]:grid-cols-2 lg:grid-cols-4">
+            <section className="grid grid-cols-1 gap-2.5 min-[460px]:grid-cols-2 sm:gap-3 lg:grid-cols-4">
               {statCards.map(stat => (
                 <div
                   key={stat.label}
@@ -551,7 +552,7 @@ export function ProfileDialog({
               ))}
             </section>
 
-            <section className="rounded-[14px] border border-violet-400/35 bg-violet-500/5 p-4">
+            <section className="rounded-[14px] border border-violet-400/35 bg-violet-500/5 p-3.5 sm:p-4">
               <p className="flex items-center gap-2 font-mono text-xs font-semibold uppercase tracking-[0.14em] text-violet-300">
                 <span>Modalità Streamer</span>
                 <span className="text-xl leading-none">🙈</span>
@@ -566,7 +567,7 @@ export function ProfileDialog({
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="border-violet-400/45 bg-violet-500/10 text-violet-200 hover:bg-violet-500/20 hover:text-violet-100"
+                  className="border-violet-400/45 bg-violet-500/10 text-violet-200 hover:bg-violet-500/20 hover:text-violet-100 max-sm:w-full"
                   onClick={toggleStreamerMode}
                 >
                   {streamerMode
@@ -576,7 +577,7 @@ export function ProfileDialog({
               </div>
             </section>
 
-            <section className="rounded-[14px] border border-loss/30 bg-loss/5 p-4">
+            <section className="rounded-[14px] border border-loss/30 bg-loss/5 p-3.5 sm:p-4">
               <p className="flex items-center gap-2 font-mono text-xs font-semibold uppercase tracking-[0.14em] text-loss">
                 <span>Zona pericolosa</span>
                 <span className="text-xl leading-none">🚨</span>
@@ -590,7 +591,7 @@ export function ProfileDialog({
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="gap-2 border-loss/50 text-loss hover:bg-loss/10 hover:text-loss"
+                  className="gap-2 border-loss/50 text-loss hover:bg-loss/10 hover:text-loss max-sm:w-full"
                   onClick={() => setIsClearDialogOpen(true)}
                 >
                   <Trash2 className="size-3.5" />
@@ -606,7 +607,7 @@ export function ProfileDialog({
         open={isClearDialogOpen}
         onOpenChange={open => !open && closeClearDialog()}
       >
-        <DialogContent className="rounded-2xl border border-loss/35 bg-card sm:max-w-md">
+        <DialogContent className="max-h-[92dvh] w-[calc(100vw-1.75rem)] rounded-2xl border border-loss/35 bg-card sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="font-mono text-loss">
               Svuota journal Personale
@@ -631,7 +632,7 @@ export function ProfileDialog({
             />
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="max-sm:[&_button]:w-full">
             <Button type="button" variant="outline" onClick={closeClearDialog}>
               Annulla
             </Button>
@@ -646,6 +647,7 @@ export function ProfileDialog({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
     </>
   );
 }

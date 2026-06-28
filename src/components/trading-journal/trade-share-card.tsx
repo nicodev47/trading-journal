@@ -1,9 +1,5 @@
 import { Moon } from 'lucide-react';
-import {
-  CUSTOM_TAG_PREFIX,
-  TRADE_TAGS,
-  type Trade,
-} from '@/lib/types/trade';
+import type { Trade } from '@/lib/types/trade';
 import { cn } from '@/lib/utils';
 
 interface TradeShareCardProps {
@@ -61,20 +57,6 @@ const getDisplayHandle = (handle: string) => {
   return normalizedHandle ? `@${normalizedHandle}` : null;
 };
 
-const getTagLabel = (tag: string) => {
-  const defaultTag = TRADE_TAGS.find(item => item.value === tag);
-
-  if (defaultTag) {
-    return defaultTag.label;
-  }
-
-  if (tag.startsWith(CUSTOM_TAG_PREFIX)) {
-    return tag.slice(CUSTOM_TAG_PREFIX.length);
-  }
-
-  return tag;
-};
-
 const formatShareCardSetup = (setup?: string | null) => {
   if (setup === 'Continuation') return 'Continuation';
   if (setup === 'Reversal Sequence') return 'Reversal Seq.';
@@ -119,11 +101,18 @@ export function TradeShareCard({
   className,
 }: TradeShareCardProps) {
   const netPnl = trade.pnl - (trade.commission || 0);
-  const isProfit = netPnl > 0;
   const isLoss = netPnl < 0;
-  const accent = isProfit ? '#00d68f' : isLoss ? '#ff4d70' : '#d6d9e0';
-  const badgeLabel = isProfit ? 'PROFIT' : isLoss ? 'LOSS' : 'BREAKEVEN';
-  const visibleTags = trade.tags.slice(0, 2).map(getTagLabel);
+  const accent = isLoss ? '#ff4d70' : '#00d68f';
+  const accentGlow = isLoss
+    ? 'rgba(255, 77, 112, 0.18)'
+    : 'rgba(0, 214, 143, 0.18)';
+  const accentBorder = isLoss
+    ? 'rgba(255, 77, 112, 0.42)'
+    : 'rgba(0, 214, 143, 0.42)';
+  const accentShadow = isLoss
+    ? 'rgba(255, 77, 112, 0.16)'
+    : 'rgba(0, 214, 143, 0.16)';
+  const badgeLabel = isLoss ? 'LOSS' : 'PROFIT';
   const displayHandle = getDisplayHandle(handle);
 
   return (
@@ -133,20 +122,9 @@ export function TradeShareCard({
         className
       )}
       style={{
-        background:
-          'radial-gradient(circle at 18% 14%, rgba(0, 214, 143, 0.18), transparent 32%), radial-gradient(circle at 88% 6%, rgba(135, 92, 255, 0.18), transparent 28%), linear-gradient(135deg, #05080c 0%, #081019 45%, #05070b 100%)',
-        borderColor: isProfit
-          ? 'rgba(0, 214, 143, 0.42)'
-          : isLoss
-            ? 'rgba(255, 77, 112, 0.42)'
-            : 'rgba(255, 255, 255, 0.16)',
-        boxShadow: `0 0 0 1px rgba(255,255,255,0.04), 0 30px 90px ${
-          isProfit
-            ? 'rgba(0, 214, 143, 0.16)'
-            : isLoss
-              ? 'rgba(255, 77, 112, 0.16)'
-              : 'rgba(0, 0, 0, 0.35)'
-        }`,
+        background: `radial-gradient(circle at 18% 14%, ${accentGlow}, transparent 32%), radial-gradient(circle at 88% 6%, rgba(135, 92, 255, 0.18), transparent 28%), linear-gradient(135deg, #05080c 0%, #081019 45%, #05070b 100%)`,
+        borderColor: accentBorder,
+        boxShadow: `0 0 0 1px rgba(255,255,255,0.04), 0 30px 90px ${accentShadow}`,
       }}
     >
       <div
@@ -178,9 +156,9 @@ export function TradeShareCard({
             </div>
           </div>
 
-          <div className="text-right">
+          <div className="flex min-w-[210px] flex-col items-end pt-8 text-right">
             <div
-              className="inline-flex rounded-full border px-4 py-2 text-[12px] font-black uppercase tracking-[0.2em]"
+              className="inline-flex rounded-full border px-4 py-2 text-[11px] font-black uppercase tracking-[0.22em]"
               style={{
                 borderColor: `${accent}66`,
                 backgroundColor: `${accent}18`,
@@ -189,7 +167,7 @@ export function TradeShareCard({
             >
               {badgeLabel}
             </div>
-            <div className="mt-4 text-[17px] font-semibold capitalize text-white/55">
+            <div className="mt-5 text-[17px] font-semibold capitalize text-white/55">
               {formatTradeDate(trade, date)}
             </div>
           </div>
@@ -206,18 +184,6 @@ export function TradeShareCard({
             >
               {formatPnl(netPnl, streamerMode)}
             </div>
-            {visibleTags.length > 0 && (
-            <div className="mt-5 flex flex-wrap items-center gap-3">
-              {visibleTags.map(tag => (
-                <span
-                  key={tag}
-                  className="rounded-full border border-white/10 bg-white/[0.055] px-4 py-2 text-[13px] font-semibold text-white/68"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
-            )}
           </section>
 
           <section className="grid grid-cols-[0.9fr_1.15fr] gap-4">
@@ -247,7 +213,7 @@ export function TradeShareCard({
             <div className="text-[12px] font-semibold uppercase tracking-[0.26em] text-white/36">
               POWERED BY
             </div>
-            <div className="mt-1 text-[20px] font-black" style={{ color: accent }}>
+            <div className="mt-1 text-[20px] font-black text-white/90">
               EclipseJournal
             </div>
           </div>

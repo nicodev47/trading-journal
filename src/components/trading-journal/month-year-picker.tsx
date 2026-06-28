@@ -73,7 +73,7 @@ export function MonthYearPicker({
           type="button"
           variant={triggerVariant}
           className={cn(
-            'h-9 min-w-[150px] rounded-lg border border-border bg-background/50 px-4 text-sm font-semibold capitalize text-foreground hover:bg-secondary/70 hover:text-foreground',
+            'h-9 min-w-0 rounded-lg border border-border bg-background/50 px-3 text-sm font-semibold capitalize text-foreground hover:bg-secondary/70 hover:text-foreground sm:min-w-[150px] sm:px-4',
             triggerClassName
           )}
         >
@@ -82,7 +82,7 @@ export function MonthYearPicker({
       </PopoverTrigger>
       <PopoverContent
         align="center"
-        className="w-[260px] rounded-xl border border-border bg-card p-4 text-foreground shadow-xl"
+        className="w-[min(260px,calc(100vw-2rem))] rounded-xl border border-border bg-card p-4 text-foreground shadow-xl"
       >
         <div className="space-y-3">
           <div className="space-y-1.5">
