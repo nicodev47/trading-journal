@@ -1,6 +1,6 @@
 'use client';
 
-import { useId, useMemo } from 'react';
+import { useId, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
@@ -22,6 +22,10 @@ interface MonthYearPickerProps {
   onChange: (date: Date) => void;
   triggerClassName?: string;
   triggerVariant?: 'outline' | 'ghost';
+  triggerLabel?: string;
+  showTodayButton?: boolean;
+  actionLabel?: string;
+  onActionClick?: () => void;
 }
 
 const MONTHS = [
@@ -44,8 +48,13 @@ export function MonthYearPicker({
   onChange,
   triggerClassName,
   triggerVariant = 'outline',
+  triggerLabel,
+  showTodayButton = false,
+  actionLabel,
+  onActionClick,
 }: MonthYearPickerProps) {
   const id = useId();
+  const [isOpen, setIsOpen] = useState(false);
   const years = useMemo(() => {
     const currentYear = new Date().getFullYear();
     const selectedYear = value.getFullYear();
@@ -66,8 +75,23 @@ export function MonthYearPicker({
     onChange(new Date(year, value.getMonth(), 1));
   };
 
+  const handleTodayClick = () => {
+    onChange(new Date());
+    setIsOpen(false);
+  };
+
+  const handleActionClick = () => {
+    if (onActionClick) {
+      onActionClick();
+      setIsOpen(false);
+      return;
+    }
+
+    handleTodayClick();
+  };
+
   return (
-    <Popover>
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
         <Button
           type="button"
@@ -77,7 +101,7 @@ export function MonthYearPicker({
             triggerClassName
           )}
         >
-          {formatMonthYear(value)}
+          {triggerLabel ?? formatMonthYear(value)}
         </Button>
       </PopoverTrigger>
       <PopoverContent
@@ -142,6 +166,17 @@ export function MonthYearPicker({
               </SelectContent>
             </Select>
           </div>
+
+          {showTodayButton && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleActionClick}
+              className="mt-1 h-11 w-full rounded-xl border-profit/35 bg-profit/10 font-sans text-sm font-semibold text-profit transition-colors hover:border-profit/60 hover:bg-profit/15 hover:text-profit"
+            >
+              {actionLabel ?? 'Vai a oggi'}
+            </Button>
+          )}
         </div>
       </PopoverContent>
     </Popover>

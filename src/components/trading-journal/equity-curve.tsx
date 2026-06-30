@@ -12,8 +12,14 @@ import {
 } from 'recharts';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { MonthYearPicker } from '@/components/trading-journal/month-year-picker';
 import { getEquityCurveData } from '@/lib/calculations';
-import { formatShortDate } from '@/lib/date-utils';
+import {
+  formatMonthYear,
+  formatShortDate,
+  nextMonth,
+  prevMonth,
+} from '@/lib/date-utils';
 import type { Trade } from '@/lib/types/trade';
 import { useStreamerMode } from '@/contexts/streamer-mode-context';
 
@@ -56,21 +62,6 @@ interface EquityTooltipProps {
   }>;
   streamerMode: boolean;
 }
-
-const ITALIAN_MONTHS = [
-  'Gennaio',
-  'Febbraio',
-  'Marzo',
-  'Aprile',
-  'Maggio',
-  'Giugno',
-  'Luglio',
-  'Agosto',
-  'Settembre',
-  'Ottobre',
-  'Novembre',
-  'Dicembre',
-] as const;
 
 function CustomDot({
   cx,
@@ -143,7 +134,8 @@ export function EquityCurve({
       .filter((date) => !Number.isNaN(date.getTime()));
 
     if (validDates.length === 0) {
-      return new Date();
+      const today = new Date();
+      return new Date(today.getFullYear(), today.getMonth(), 1);
     }
 
     const latestDate = validDates.reduce((latest, date) =>
@@ -153,8 +145,8 @@ export function EquityCurve({
     return new Date(latestDate.getFullYear(), latestDate.getMonth(), 1);
   }, [trades]);
 
-  const selectedMonthTrades = useMemo(() => {
-    if (!selectedMonth) return [];
+  const displayedTrades = useMemo(() => {
+    if (!selectedMonth) return trades;
 
     return trades.filter((trade) => {
       const tradeDate = new Date(trade.exitDate);
@@ -166,11 +158,6 @@ export function EquityCurve({
       );
     });
   }, [selectedMonth, trades]);
-
-  const displayedTrades =
-    selectedMonth && selectedMonthTrades.length > 0
-      ? selectedMonthTrades
-      : trades;
 
   const data = useMemo(
     () => getEquityCurveData(displayedTrades),
@@ -193,18 +180,29 @@ export function EquityCurve({
 
   // White color for axis text
   const axisTextColor = '#e5e5e5';
+  const pickerMonth = selectedMonth ?? latestTradeMonth;
 
-  const changeMonth = (offset: number) => {
-    const baseMonth = selectedMonth ?? latestTradeMonth;
-    setSelectedMonth(
-      new Date(baseMonth.getFullYear(), baseMonth.getMonth() + offset, 1)
-    );
+  const handleSelectedMonthChange = (date: Date) => {
+    setSelectedMonth(new Date(date.getFullYear(), date.getMonth(), 1));
   };
 
-  const selectedMonthLabel =
-    selectedMonth && selectedMonthTrades.length > 0
-      ? `${ITALIAN_MONTHS[selectedMonth.getMonth()]} ${selectedMonth.getFullYear()}`
-      : 'Equity Totale';
+  const handleShowTotalEquity = () => {
+    setSelectedMonth(null);
+  };
+
+  const changeMonth = (offset: number) => {
+    setSelectedMonth((current) => {
+      if (!current) {
+        return offset > 0 ? nextMonth(latestTradeMonth) : latestTradeMonth;
+      }
+
+      return offset > 0 ? nextMonth(current) : prevMonth(current);
+    });
+  };
+
+  const selectedMonthLabel = selectedMonth
+    ? formatMonthYear(selectedMonth)
+    : 'Equity Totale';
 
   const handleEquityPointClick = (point: EquityPoint) => {
     if (point.isStart) return;
@@ -249,9 +247,16 @@ export function EquityCurve({
             <ChevronLeft className="size-4" />
           </Button>
 
-          <span className="min-w-0 flex-1 truncate text-center font-sans text-[13px] font-bold capitalize tracking-[-0.04em] text-foreground sm:min-w-[150px] sm:flex-none sm:text-[15px]">
-            {selectedMonthLabel}
-          </span>
+          <MonthYearPicker
+            value={pickerMonth}
+            onChange={handleSelectedMonthChange}
+            triggerVariant="ghost"
+            triggerLabel={selectedMonthLabel}
+            showTodayButton
+            actionLabel="Visualizza equity totale"
+            onActionClick={handleShowTotalEquity}
+            triggerClassName="inline-flex items-center justify-center gap-2 whitespace-nowrap disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive has-[>svg]:px-3 capitalize h-auto min-w-0 flex-1 rounded-xl border border-transparent bg-transparent px-2 py-1 text-center text-[13px] font-bold tracking-[-0.04em] text-foreground shadow-none ring-0 transition-colors duration-200 hover:bg-white/10 hover:text-foreground dark:bg-transparent dark:hover:bg-white/10 dark:hover:text-foreground sm:min-w-[150px] sm:flex-none sm:px-4 sm:text-[15px]"
+          />
 
           <Button
             type="button"
@@ -270,7 +275,9 @@ export function EquityCurve({
         {data.length === 0 ? (
           <div className="flex h-[180px] items-center justify-center">
             <p className="font-mono text-sm text-muted-foreground">
-              Nessun trade disponibile per generare la curva equity.
+              {selectedMonth
+                ? `Nessun trade disponibile per ${selectedMonthLabel}.`
+                : 'Nessun trade disponibile per generare la curva equity.'}
             </p>
           </div>
         ) : (

@@ -177,6 +177,7 @@ export function ExecutionMap({ trades }: ExecutionMapProps) {
           <MonthYearPicker
             value={selectedMonth}
             onChange={setSelectedMonth}
+            showTodayButton
           />
           <Button
             type="button"

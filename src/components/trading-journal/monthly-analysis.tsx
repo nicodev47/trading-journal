@@ -418,8 +418,7 @@ export function MonthlyAnalysis({
 
         <div className="mb-4">
           <EquityCurve
-            key={selectedYear}
-            trades={yearFilteredTrades}
+            trades={trades}
             onOpenTradeGroup={(payload) =>
               openTradeGroup(
                 payload.title,
