@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -160,6 +160,7 @@ export function DayEditorDialog({
   const [customTagInputs, setCustomTagInputs] = useState<Record<string, string>>({});
   const [isManagingTags, setIsManagingTags] = useState(false);
   const [tradeToDeleteId, setTradeToDeleteId] = useState<string | null>(null);
+  const [customTagToDelete, setCustomTagToDelete] = useState<string | null>(null);
   const [isDeleteDayConfirmOpen, setIsDeleteDayConfirmOpen] = useState(false);
   const [selectedShareTrade, setSelectedShareTrade] = useState<Trade | null>(null);
   const [editingScreenshot, setEditingScreenshot] = useState<{
@@ -167,61 +168,16 @@ export function DayEditorDialog({
     index: number;
     name: string;
   } | null>(null);
-
-  useEffect(() => {
-    if (isOpen) {
-      if (existingTrades.length > 0) {
-        setTradeRows(
-          existingTrades.map(t => {
-            const legacyTrade = t as LegacyTrade;
-
-            return {
-            id: t.id,
-            pnl: formatPnlDraft(t.pnl.toString()),
-            symbol: t.pair,
-            direction: t.direction,
-            time: normalizeTime(
-              (t.exitDate?.split('T')[1] || t.entryDate?.split('T')[1] || '').slice(0, 5)
-            ),
-            setup: getEditableSetupValue(t.strategy),
-            originalSetup: t.strategy || '',
-            tags: t.tags?.length ? t.tags : legacyTrade.mistakes ?? [],
-            isFavorite: t.isFavorite ?? false,
-            screenshots: (t.screenshots || []).map(s => {
-              if (typeof s === 'object' && s !== null && 'url' in s) {
-                return s as ScreenshotData;
-              }
-
-              if (typeof s === 'string') {
-                try {
-                  const parsed = JSON.parse(s);
-                  if (parsed && typeof parsed === 'object' && 'url' in parsed) {
-                    return parsed as ScreenshotData;
-                  }
-                } catch {
-                  // Not JSON, treat as plain URL
-                }
-
-                return { url: s, name: '' };
-              }
-
-              return { url: '', name: '' };
-            }),
-            notes: t.notes || '',
-            };
-          })
-        );
-      } else {
-        setTradeRows([createEmptyRow()]);
-      }
-
-      setScreenshotInputs({});
-      setTimeDrafts({});
-      setCustomTagInputs({});
-      setIsManagingTags(false);
-      setEditingScreenshot(null);
-    }
-  }, [isOpen, existingTrades]);
+  const [autosaveStatus, setAutosaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const tradeRowsRef = useRef<TradeRow[]>([]);
+  const timeDraftsRef = useRef<Record<string, string>>({});
+  const customTagInputsRef = useRef<Record<string, string>>({});
+  const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastSavedSignatureRef = useRef('');
+  const hasUserChangedRef = useRef(false);
+  const initialTradeIdsRef = useRef<Set<string>>(new Set());
+  const existingTradesByIdRef = useRef<Map<string, Trade>>(new Map());
+  const isOpenRef = useRef(isOpen);
 
   const createEmptyRow = (): TradeRow => ({
     id: generateId(),
@@ -237,13 +193,246 @@ export function DayEditorDialog({
     notes: '',
   });
 
+  const normalizeScreenshots = (screenshots: Trade['screenshots']): ScreenshotData[] =>
+    (screenshots || []).map(s => {
+      if (typeof s === 'object' && s !== null && 'url' in s) {
+        return s as ScreenshotData;
+      }
+
+      if (typeof s === 'string') {
+        try {
+          const parsed = JSON.parse(s);
+          if (parsed && typeof parsed === 'object' && 'url' in parsed) {
+            return parsed as ScreenshotData;
+          }
+        } catch {
+          // Not JSON, treat as plain URL
+        }
+
+        return { url: s, name: '' };
+      }
+
+      return { url: '', name: '' };
+    });
+
+  const getRowsFromTrades = (trades: Trade[]): TradeRow[] =>
+    trades.map(t => {
+      const legacyTrade = t as LegacyTrade;
+
+      return {
+        id: t.id,
+        pnl: formatPnlDraft(t.pnl.toString()),
+        symbol: t.pair,
+        direction: t.direction,
+        time: normalizeTime(
+          (t.exitDate?.split('T')[1] || t.entryDate?.split('T')[1] || '').slice(0, 5)
+        ),
+        setup: getEditableSetupValue(t.strategy),
+        originalSetup: t.strategy || '',
+        tags: t.tags?.length ? t.tags : legacyTrade.mistakes ?? [],
+        isFavorite: t.isFavorite ?? false,
+        screenshots: normalizeScreenshots(t.screenshots),
+        notes: t.notes || '',
+      };
+    });
+
+  const rowHasContent = useCallback((row: TradeRow): boolean => {
+    return (
+      initialTradeIdsRef.current.has(row.id) ||
+      row.pnl !== '' ||
+      row.symbol.trim() !== '' ||
+      row.direction !== '' ||
+      row.time !== '00:00' ||
+      row.setup !== '' ||
+      row.tags.length > 0 ||
+      row.isFavorite ||
+      row.screenshots.length > 0 ||
+      row.notes.trim() !== ''
+    );
+  }, []);
+
+  const buildTradesFromRows = useCallback((
+    rows: TradeRow[],
+    drafts: Record<string, string>,
+    tagInputs: Record<string, string>,
+    options: { includePendingCustomTags?: boolean } = {}
+  ): Trade[] => {
+    const now = new Date().toISOString();
+
+    return rows
+      .filter(row => rowHasContent(row))
+      .map(row => {
+        const customTag = options.includePendingCustomTags
+          ? tagInputs[row.id]?.trim()
+          : '';
+        const pendingCustomTag = customTag
+          ? `${CUSTOM_TAG_PREFIX}${customTag}`
+          : null;
+        const tags =
+          pendingCustomTag && !row.tags.includes(pendingCustomTag)
+            ? [...row.tags, pendingCustomTag]
+            : row.tags;
+        const tradeTime = normalizeTime(drafts[row.id] ?? row.time);
+        const existingTrade = existingTradesByIdRef.current.get(row.id);
+
+        return {
+          id: row.id,
+          pair: row.symbol || '',
+          direction: row.direction || 'long',
+          entryPrice: 0,
+          exitPrice: 0,
+          lotSize: 0.01,
+          stopLoss: 0,
+          takeProfit: 0,
+          entryDate: `${date}T${tradeTime}:00`,
+          exitDate: `${date}T${tradeTime}:00`,
+          pips: 0,
+          pnl: getPnlNumber(row.pnl),
+          commission: 0,
+          riskReward: 0,
+          screenshots: row.screenshots,
+          tags,
+          isFavorite: row.isFavorite,
+          strategy: row.setup || row.originalSetup,
+          notes: row.notes,
+          emotionalState: 'neutral' as const,
+          setupRating: 3,
+          createdAt: existingTrade?.createdAt || now,
+          updatedAt: now,
+        };
+      });
+  }, [date, rowHasContent]);
+
+  const getAutosaveSignature = (trades: Trade[]) =>
+    JSON.stringify(
+      trades.map(({ createdAt, updatedAt, ...trade }) => trade)
+    );
+
+  const persistCurrentRows = useCallback((
+    options: { includePendingCustomTags?: boolean; force?: boolean } = {}
+  ) => {
+    if (!isOpenRef.current) return;
+
+    if (autosaveTimerRef.current) {
+      clearTimeout(autosaveTimerRef.current);
+      autosaveTimerRef.current = null;
+    }
+
+    const trades = buildTradesFromRows(
+      tradeRowsRef.current,
+      timeDraftsRef.current,
+      customTagInputsRef.current,
+      options
+    );
+    const signature = getAutosaveSignature(trades);
+
+    if (!options.force && signature === lastSavedSignatureRef.current) {
+      setAutosaveStatus(signature ? 'saved' : 'idle');
+      return;
+    }
+
+    setAutosaveStatus('saving');
+    onSave(trades);
+    existingTradesByIdRef.current = new Map(trades.map(trade => [trade.id, trade]));
+    lastSavedSignatureRef.current = signature;
+    setAutosaveStatus(signature ? 'saved' : 'idle');
+  }, [buildTradesFromRows, onSave]);
+
+  const scheduleAutosave = useCallback((delay = 400) => {
+    if (!isOpenRef.current || !hasUserChangedRef.current) return;
+
+    if (autosaveTimerRef.current) {
+      clearTimeout(autosaveTimerRef.current);
+    }
+
+    setAutosaveStatus('saving');
+    autosaveTimerRef.current = setTimeout(() => {
+      persistCurrentRows();
+    }, delay);
+  }, [persistCurrentRows]);
+
+  const replaceTradeRows = (
+    updater: (previous: TradeRow[]) => TradeRow[],
+    delay = 400
+  ) => {
+    hasUserChangedRef.current = true;
+    setTradeRows(previous => {
+      const next = updater(previous);
+      tradeRowsRef.current = next;
+      return next;
+    });
+    scheduleAutosave(delay);
+  };
+
+  const replaceTimeDrafts = (
+    updater: (previous: Record<string, string>) => Record<string, string>,
+    delay = 400
+  ) => {
+    hasUserChangedRef.current = true;
+    setTimeDrafts(previous => {
+      const next = updater(previous);
+      timeDraftsRef.current = next;
+      return next;
+    });
+    scheduleAutosave(delay);
+  };
+
+  useEffect(() => {
+    isOpenRef.current = isOpen;
+  }, [isOpen]);
+
+  useEffect(() => {
+    tradeRowsRef.current = tradeRows;
+  }, [tradeRows]);
+
+  useEffect(() => {
+    timeDraftsRef.current = timeDrafts;
+  }, [timeDrafts]);
+
+  useEffect(() => {
+    customTagInputsRef.current = customTagInputs;
+  }, [customTagInputs]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const initialRows =
+      existingTrades.length > 0 ? getRowsFromTrades(existingTrades) : [createEmptyRow()];
+
+    initialTradeIdsRef.current = new Set(existingTrades.map(trade => trade.id));
+    existingTradesByIdRef.current = new Map(existingTrades.map(trade => [trade.id, trade]));
+    const initialSignature = getAutosaveSignature(
+      buildTradesFromRows(initialRows, {}, {}, { includePendingCustomTags: false })
+    );
+    tradeRowsRef.current = initialRows;
+    timeDraftsRef.current = {};
+    customTagInputsRef.current = {};
+    lastSavedSignatureRef.current = initialSignature;
+    hasUserChangedRef.current = false;
+
+    setTradeRows(initialRows);
+    setScreenshotInputs({});
+    setTimeDrafts({});
+    setCustomTagInputs({});
+    setIsManagingTags(false);
+    setEditingScreenshot(null);
+    setCustomTagToDelete(null);
+    setAutosaveStatus(initialSignature ? 'saved' : 'idle');
+
+    return () => {
+      if (autosaveTimerRef.current) {
+        persistCurrentRows();
+      }
+    };
+  }, [isOpen, date]);
+
   const addTradeRow = () => {
-    setTradeRows(prev => [...prev, createEmptyRow()]);
+    replaceTradeRows(prev => [...prev, createEmptyRow()], 0);
   };
 
   const removeTradeRow = (id: string) => {
     if (tradeRows.length > 1) {
-      setTradeRows(prev => prev.filter(row => row.id !== id));
+      replaceTradeRows(prev => prev.filter(row => row.id !== id), 0);
     }
   };
 
@@ -254,13 +443,30 @@ export function DayEditorDialog({
     }
   };
 
+  const confirmRemoveCustomTag = () => {
+    if (!customTagToDelete) return;
+
+    onRemoveCustomTag(customTagToDelete);
+    replaceTradeRows(
+      previous =>
+        previous.map(tradeRow => ({
+          ...tradeRow,
+          tags: tradeRow.tags.filter(value => value !== customTagToDelete),
+        })),
+      0
+    );
+    setCustomTagToDelete(null);
+  };
+
   const updateTradeRow = (
     id: string,
     field: keyof TradeRow,
-    value: string | boolean | string[] | ScreenshotData[]
+    value: string | boolean | string[] | ScreenshotData[],
+    delay = 400
   ) => {
-    setTradeRows(prev =>
-      prev.map(row => (row.id === id ? { ...row, [field]: value } : row))
+    replaceTradeRows(
+      prev => prev.map(row => (row.id === id ? { ...row, [field]: value } : row)),
+      delay
     );
   };
 
@@ -278,7 +484,7 @@ export function DayEditorDialog({
       name: input?.name?.trim() || '',
     };
 
-    updateTradeRow(tradeId, 'screenshots', [...trade.screenshots, newScreenshot]);
+    updateTradeRow(tradeId, 'screenshots', [...trade.screenshots, newScreenshot], 0);
     setScreenshotInputs(prev => ({ ...prev, [tradeId]: { url: '', name: '' } }));
   };
 
@@ -289,7 +495,8 @@ export function DayEditorDialog({
       updateTradeRow(
         tradeId,
         'screenshots',
-        trade.screenshots.filter((_, i) => i !== index)
+        trade.screenshots.filter((_, i) => i !== index),
+        0
       );
     }
   };
@@ -310,7 +517,7 @@ export function DayEditorDialog({
       index === editingScreenshot.index ? { ...item, name: nextName } : item
     );
 
-    updateTradeRow(trade.id, 'screenshots', screenshots);
+    updateTradeRow(trade.id, 'screenshots', screenshots, 0);
     setEditingScreenshot(null);
   };
 
@@ -373,51 +580,15 @@ export function DayEditorDialog({
       }
     });
 
-    const now = new Date().toISOString();
-
-    const trades: Trade[] = tradeRows
-      .filter(row => row.pnl !== '' || row.symbol)
-      .map(row => {
-        const customTag = customTagInputs[row.id]?.trim();
-        const pendingCustomTag = customTag
-          ? `${CUSTOM_TAG_PREFIX}${customTag}`
-          : null;
-        const tags =
-          pendingCustomTag && !row.tags.includes(pendingCustomTag)
-            ? [...row.tags, pendingCustomTag]
-            : row.tags;
-
-        const tradeTime = normalizeTime(timeDrafts[row.id] ?? row.time);
-
-        return {
-          id: row.id,
-          pair: row.symbol || '',
-          direction: row.direction || 'long',
-          entryPrice: 0,
-          exitPrice: 0,
-          lotSize: 0.01,
-          stopLoss: 0,
-          takeProfit: 0,
-          entryDate: `${date}T${tradeTime}:00`,
-          exitDate: `${date}T${tradeTime}:00`,
-          pips: 0,
-          pnl: getPnlNumber(row.pnl),
-          commission: 0,
-          riskReward: 0,
-          screenshots: row.screenshots,
-          tags,
-          isFavorite: row.isFavorite,
-          strategy: row.setup || row.originalSetup,
-          notes: row.notes,
-          emotionalState: 'neutral' as const,
-          setupRating: 3,
-          createdAt: now,
-          updatedAt: now,
-        };
-      });
-
-    onSave(trades);
+    persistCurrentRows({ includePendingCustomTags: true, force: true });
     onClose();
+  };
+
+  const handleDialogOpenChange = (open: boolean) => {
+    if (!open) {
+      persistCurrentRows();
+      onClose();
+    }
   };
 
   const getTradingViewImageUrl = (url: string): string => {
@@ -439,7 +610,7 @@ export function DayEditorDialog({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleDialogOpenChange}>
       <DialogContent
         className="max-h-[92dvh] w-[calc(100vw-1.25rem)] max-w-4xl gap-0 overflow-hidden bg-card p-0 sm:w-[92vw] sm:max-h-[86vh]"
         data-tutorial="trade-editor"
@@ -493,7 +664,7 @@ export function DayEditorDialog({
                           'text-yellow-400 hover:text-yellow-300'
                       )}
                       onClick={() =>
-                        updateTradeRow(row.id, 'isFavorite', !row.isFavorite)
+                        updateTradeRow(row.id, 'isFavorite', !row.isFavorite, 0)
                       }
                       aria-label={
                         row.isFavorite
@@ -548,6 +719,7 @@ export function DayEditorDialog({
                             formatPnlDraft(e.target.value)
                           )
                         }
+                        onBlur={() => persistCurrentRows()}
                         placeholder="0"
                         className={cn(
                           'h-9 w-full border-border bg-background pr-7 font-mono text-sm',
@@ -571,7 +743,7 @@ export function DayEditorDialog({
 
                     <Select
                       value={row.symbol}
-                      onValueChange={v => updateTradeRow(row.id, 'symbol', v)}
+                      onValueChange={v => updateTradeRow(row.id, 'symbol', v, 0)}
                     >
                       <SelectTrigger className="h-9 w-full border-border bg-background text-sm">
                         <SelectValue placeholder="--" />
@@ -593,7 +765,7 @@ export function DayEditorDialog({
 
                     <Select
                       value={row.direction}
-                      onValueChange={v => updateTradeRow(row.id, 'direction', v)}
+                      onValueChange={v => updateTradeRow(row.id, 'direction', v, 0)}
                     >
                       <SelectTrigger className="h-9 w-full border-border bg-background text-sm">
                         <SelectValue placeholder="--" />
@@ -642,7 +814,7 @@ export function DayEditorDialog({
                             /^\d$/.test(event.key)
                           ) {
                             event.preventDefault();
-                            setTimeDrafts(prev => ({
+                            replaceTimeDrafts(prev => ({
                               ...prev,
                               [row.id]: event.key,
                             }));
@@ -651,18 +823,19 @@ export function DayEditorDialog({
                         onChange={(e) => {
                           const draft = formatTimeDraft(e.target.value);
 
-                          setTimeDrafts(prev => ({ ...prev, [row.id]: draft }));
+                          replaceTimeDrafts(prev => ({ ...prev, [row.id]: draft }));
                         }}
                         onBlur={() => {
                           const normalized = normalizeTime(
                             timeDrafts[row.id] ?? row.time
                           );
 
-                          updateTradeRow(row.id, 'time', normalized);
-                          setTimeDrafts(prev => ({
+                          updateTradeRow(row.id, 'time', normalized, 0);
+                          replaceTimeDrafts(prev => ({
                             ...prev,
                             [row.id]: normalized,
-                          }));
+                          }), 0);
+                          persistCurrentRows();
                         }}
                         className={cn(
                           'h-9 w-full border-border bg-background text-center font-mono text-sm placeholder:text-muted-foreground/70',
@@ -685,7 +858,7 @@ export function DayEditorDialog({
                     <Select
                       value={row.setup}
                       onValueChange={value =>
-                        updateTradeRow(row.id, 'setup', value)
+                        updateTradeRow(row.id, 'setup', value, 0)
                       }
                     >
                       <SelectTrigger className="h-9 w-full border-border bg-background text-sm">
@@ -946,7 +1119,7 @@ export function DayEditorDialog({
                               ? row.tags.filter((value) => value !== tag.value)
                               : [...row.tags, tag.value];
 
-                            updateTradeRow(row.id, 'tags', nextTags);
+                            updateTradeRow(row.id, 'tags', nextTags, 0);
                           }}
                           className={cn(
                             'rounded-md border px-2.5 py-1.5 text-left font-mono text-[13px] leading-4 transition-colors',
@@ -975,7 +1148,7 @@ export function DayEditorDialog({
                                 ? row.tags.filter((value) => value !== tag)
                                 : [...row.tags, tag];
 
-                              updateTradeRow(row.id, 'tags', nextTags);
+                              updateTradeRow(row.id, 'tags', nextTags, 0);
                             }}
                             className={cn(
                               'w-full rounded-md border px-2.5 py-1.5 text-left font-mono text-[13px] leading-4 transition-colors',
@@ -994,24 +1167,7 @@ export function DayEditorDialog({
                               className="absolute -right-2 -top-2 flex size-5 items-center justify-center rounded-full border border-loss bg-background text-loss shadow-md transition-colors hover:bg-loss hover:text-white"
                               onClick={(event) => {
                                 event.stopPropagation();
-                                const label = tag.slice(CUSTOM_TAG_PREFIX.length);
-                                const confirmed = window.confirm(
-                                  `Vuoi eliminare il tag personalizzato "${label}"? Verrà rimosso anche dai trade salvati.`
-                                );
-
-                                if (!confirmed) {
-                                  return;
-                                }
-
-                                onRemoveCustomTag(tag);
-                                setTradeRows(previous =>
-                                  previous.map(tradeRow => ({
-                                    ...tradeRow,
-                                    tags: tradeRow.tags.filter(
-                                      value => value !== tag
-                                    ),
-                                  }))
-                                );
+                                setCustomTagToDelete(tag);
                               }}
                             >
                               <X className="size-3" />
@@ -1048,7 +1204,7 @@ export function DayEditorDialog({
                         onAddCustomTag(value);
 
                         if (!row.tags.includes(value)) {
-                          updateTradeRow(row.id, 'tags', [...row.tags, value]);
+                          updateTradeRow(row.id, 'tags', [...row.tags, value], 0);
                         }
 
                         setCustomTagInputs((previous) => ({
@@ -1077,7 +1233,7 @@ export function DayEditorDialog({
                         onAddCustomTag(value);
 
                         if (!row.tags.includes(value)) {
-                          updateTradeRow(row.id, 'tags', [...row.tags, value]);
+                          updateTradeRow(row.id, 'tags', [...row.tags, value], 0);
                         }
 
                         setCustomTagInputs((previous) => ({
@@ -1109,6 +1265,7 @@ export function DayEditorDialog({
                   <Textarea
                     value={row.notes}
                     onChange={e => updateTradeRow(row.id, 'notes', e.target.value)}
+                    onBlur={() => persistCurrentRows()}
                     placeholder="Cosa è successo in questo trade? Strategia, tag, lezioni..."
                     className="min-h-[72px] resize-y border-border bg-background text-sm"
                   />
@@ -1146,9 +1303,26 @@ export function DayEditorDialog({
             Elimina giorno
           </Button>
 
-          <Button onClick={handleSalva} className="bg-profit text-background hover:bg-profit/90">
-            Salva
-          </Button>
+          <div className="flex items-center justify-end gap-3 max-sm:flex-col-reverse max-sm:items-stretch">
+            <span
+              className={cn(
+                'min-h-4 text-right font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground/70',
+                autosaveStatus === 'saving' && 'text-profit/80',
+                autosaveStatus === 'saved' && 'text-muted-foreground/80'
+              )}
+              aria-live="polite"
+            >
+              {autosaveStatus === 'saving'
+                ? 'Salvataggio...'
+                : autosaveStatus === 'saved'
+                  ? 'Salvato'
+                  : ''}
+            </span>
+
+            <Button onClick={handleSalva} className="bg-profit text-background hover:bg-profit/90">
+              Salva
+            </Button>
+          </div>
         </div>
       </DialogContent>
       <Dialog
@@ -1176,6 +1350,36 @@ export function DayEditorDialog({
               onClick={confirmRemoveTradeRow}
             >
               Elimina trade
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(customTagToDelete)}
+        onOpenChange={(open) => !open && setCustomTagToDelete(null)}
+      >
+        <DialogContent className="max-h-[92dvh] w-[calc(100vw-1.75rem)] max-w-[460px] border-border bg-card">
+          <DialogHeader>
+            <DialogTitle>Eliminare questo tag?</DialogTitle>
+            <DialogDescription>
+              Il tag personalizzato verrà rimosso anche dai trade salvati.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="max-sm:[&_button]:w-full">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setCustomTagToDelete(null)}
+            >
+              Annulla
+            </Button>
+            <Button
+              type="button"
+              className="bg-loss text-white hover:bg-loss/90"
+              onClick={confirmRemoveCustomTag}
+            >
+              Elimina tag
             </Button>
           </DialogFooter>
         </DialogContent>
