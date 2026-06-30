@@ -19,7 +19,7 @@ export function normalizeExportName(value: string, fallback = FALLBACK_TRADER_NA
   return normalized || fallback;
 }
 
-export function getWorkspaceExportSlug(workspace: JournalWorkspace) {
+export function getWorkspaceExportSlug(workspace: JournalWorkspace, workspaceName?: string) {
   switch (workspace) {
     case 'personal':
       return 'personale';
@@ -27,6 +27,8 @@ export function getWorkspaceExportSlug(workspace: JournalWorkspace) {
       return 'backtest';
     case 'student':
       return 'preview';
+    default:
+      return normalizeExportName(workspaceName || workspace, 'workspace');
   }
 }
 
@@ -75,14 +77,15 @@ function getFirstTradeDate(trades: Trade[]) {
 
 export function getDefaultExportBaseName(
   workspace: JournalWorkspace,
-  trades: Trade[] = []
+  trades: Trade[] = [],
+  workspaceName?: string
 ) {
   const exportDate =
     workspace === 'backtest' ? getFirstTradeDate(trades) ?? new Date() : new Date();
 
   return [
     getProfileExportName(),
-    getWorkspaceExportSlug(workspace),
+    getWorkspaceExportSlug(workspace, workspaceName),
     'backup',
     getExportDateSlug(exportDate, workspace === 'backtest'),
   ].join('-');

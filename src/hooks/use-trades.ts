@@ -10,10 +10,28 @@ import {
 } from '@/lib/types/trade';
 
 const STORAGE_KEY_PREFIX = 'eclipse-trading-journal-data';
+const WORKSPACES_STORAGE_KEY = 'eclipse-trading-journal-workspaces';
+const MAX_CUSTOM_WORKSPACES = 5;
 
-export type JournalWorkspace = 'personal' | 'student' | 'backtest';
+export type SystemJournalWorkspace = 'personal' | 'student' | 'backtest';
+export type CustomJournalWorkspace = `custom-${string}`;
+export type JournalWorkspace = SystemJournalWorkspace | CustomJournalWorkspace;
+export type JournalWorkspaceType = 'system' | 'custom';
+
+export interface JournalWorkspaceMeta {
+  id: JournalWorkspace;
+  name: string;
+  type: JournalWorkspaceType;
+}
+
 type LegacyTrade = Partial<Trade> & { mistakes?: string[] };
 type LegacyJournalState = Partial<JournalState> & { customMistakes?: string[] };
+
+export const SYSTEM_WORKSPACES: JournalWorkspaceMeta[] = [
+  { id: 'personal', name: 'Personale', type: 'system' },
+  { id: 'backtest', name: 'Backtest', type: 'system' },
+  { id: 'student', name: 'Preview', type: 'system' },
+];
 
 const initialState: JournalState = {
   trades: [],
@@ -73,6 +91,129 @@ const parseImportedJournal = (jsonString: string): JournalState | null => {
     return null;
   }
 };
+
+const getWorkspaceStorageKey = (workspace: JournalWorkspace) =>
+  `${STORAGE_KEY_PREFIX}-${workspace}`;
+
+const normalizeWorkspaceName = (name: string) => name.trim().replace(/\s+/g, ' ');
+
+const parseCustomWorkspaces = (raw: string | null): JournalWorkspaceMeta[] => {
+  if (!raw) return [];
+
+  try {
+    const data = JSON.parse(raw) as unknown;
+
+    if (!Array.isArray(data)) return [];
+
+    return data
+      .filter((item): item is Partial<JournalWorkspaceMeta> => {
+        return Boolean(item) && typeof item === 'object';
+      })
+      .map((item) => ({
+        id: String(item.id || '') as JournalWorkspace,
+        name: normalizeWorkspaceName(String(item.name || '')),
+        type: item.type === 'custom' ? 'custom' : 'system',
+      }))
+      .filter(
+        (workspace): workspace is JournalWorkspaceMeta =>
+          workspace.type === 'custom' &&
+          workspace.id.startsWith('custom-') &&
+          workspace.name.length > 0
+      )
+      .slice(0, MAX_CUSTOM_WORKSPACES);
+  } catch {
+    return [];
+  }
+};
+
+const persistCustomWorkspaces = (workspaces: JournalWorkspaceMeta[]) => {
+  localStorage.setItem(WORKSPACES_STORAGE_KEY, JSON.stringify(workspaces));
+};
+
+export function useJournalWorkspaces() {
+  const [customWorkspaces, setCustomWorkspaces] = useState<JournalWorkspaceMeta[]>([]);
+
+  useEffect(() => {
+    setCustomWorkspaces(parseCustomWorkspaces(localStorage.getItem(WORKSPACES_STORAGE_KEY)));
+  }, []);
+
+  const createWorkspace = useCallback((name: string) => {
+    const normalizedName = normalizeWorkspaceName(name);
+
+    if (!normalizedName || normalizedName.length > 20) {
+      return { success: false, error: 'Inserisci un nome valido, massimo 20 caratteri.' };
+    }
+
+    const allNames = [...SYSTEM_WORKSPACES, ...customWorkspaces].map((workspace) =>
+      workspace.name.toLowerCase()
+    );
+
+    if (allNames.includes(normalizedName.toLowerCase())) {
+      return { success: false, error: 'Esiste già uno spazio di lavoro con questo nome.' };
+    }
+
+    if (customWorkspaces.length >= MAX_CUSTOM_WORKSPACES) {
+      return {
+        success: false,
+        error: 'Hai raggiunto il limite massimo di 5 spazi di lavoro personalizzati.',
+      };
+    }
+
+    const workspace: JournalWorkspaceMeta = {
+      id: `custom-${Date.now()}-${Math.random().toString(36).slice(2, 8)}` as CustomJournalWorkspace,
+      name: normalizedName,
+      type: 'custom',
+    };
+    const nextWorkspaces = [...customWorkspaces, workspace];
+
+    persistCustomWorkspaces(nextWorkspaces);
+    setCustomWorkspaces(nextWorkspaces);
+
+    return { success: true, workspace };
+  }, [customWorkspaces]);
+
+  const deleteWorkspace = useCallback((workspaceId: JournalWorkspace) => {
+    const workspace = customWorkspaces.find((item) => item.id === workspaceId);
+
+    if (!workspace) return false;
+
+    const nextWorkspaces = customWorkspaces.filter((item) => item.id !== workspaceId);
+
+    persistCustomWorkspaces(nextWorkspaces);
+    localStorage.removeItem(getWorkspaceStorageKey(workspaceId));
+    setCustomWorkspaces(nextWorkspaces);
+
+    return true;
+  }, [customWorkspaces]);
+
+  const reorderCustomWorkspaces = useCallback((
+    sourceId: JournalWorkspace,
+    targetId: JournalWorkspace
+  ) => {
+    if (sourceId === targetId) return;
+
+    const sourceIndex = customWorkspaces.findIndex((item) => item.id === sourceId);
+    const targetIndex = customWorkspaces.findIndex((item) => item.id === targetId);
+
+    if (sourceIndex < 0 || targetIndex < 0) return;
+
+    const nextWorkspaces = [...customWorkspaces];
+    const [movedWorkspace] = nextWorkspaces.splice(sourceIndex, 1);
+
+    nextWorkspaces.splice(targetIndex, 0, movedWorkspace);
+    persistCustomWorkspaces(nextWorkspaces);
+    setCustomWorkspaces(nextWorkspaces);
+  }, [customWorkspaces]);
+
+  return {
+    workspaces: [...SYSTEM_WORKSPACES, ...customWorkspaces],
+    customWorkspaces,
+    maxCustomWorkspaces: MAX_CUSTOM_WORKSPACES,
+    createWorkspace,
+    deleteWorkspace,
+    reorderCustomWorkspaces,
+  };
+}
 
 const getTradeDedupKey = (trade: Trade) => {
   const date = trade.exitDate?.split('T')[0] || trade.entryDate?.split('T')[0] || '';
@@ -145,7 +286,7 @@ const mergeJournalState = (
 };
 
 export function useTrades(workspace: JournalWorkspace = 'personal') {
-  const storageKey = `${STORAGE_KEY_PREFIX}-${workspace}`;
+  const storageKey = getWorkspaceStorageKey(workspace);
 
   const [state, setState] = useState<JournalState>(initialState);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -335,7 +476,7 @@ export function useTrades(workspace: JournalWorkspace = 'personal') {
       return false;
     }
 
-    const targetStorageKey = `${STORAGE_KEY_PREFIX}-${targetWorkspace}`;
+    const targetStorageKey = getWorkspaceStorageKey(targetWorkspace);
 
     try {
       localStorage.setItem(targetStorageKey, JSON.stringify(importedState));
@@ -361,7 +502,7 @@ export function useTrades(workspace: JournalWorkspace = 'personal') {
       return false;
     }
 
-    const targetStorageKey = `${STORAGE_KEY_PREFIX}-${targetWorkspace}`;
+    const targetStorageKey = getWorkspaceStorageKey(targetWorkspace);
 
     try {
       const stored = localStorage.getItem(targetStorageKey);
@@ -397,14 +538,14 @@ export function useTrades(workspace: JournalWorkspace = 'personal') {
     }
 
     const stored = localStorage.getItem(
-      `${STORAGE_KEY_PREFIX}-${targetWorkspace}`
+      getWorkspaceStorageKey(targetWorkspace)
     );
 
     return stored ? parseImportedJournal(stored) || initialState : initialState;
   }, [state, workspace]);
 
   const clearWorkspaceData = useCallback((targetWorkspace: JournalWorkspace) => {
-    localStorage.removeItem(`${STORAGE_KEY_PREFIX}-${targetWorkspace}`);
+    localStorage.removeItem(getWorkspaceStorageKey(targetWorkspace));
 
     if (targetWorkspace === workspace) {
       setState(initialState);

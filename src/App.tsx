@@ -52,6 +52,46 @@ type TradeGroupDialogState = {
   trades: Trade[];
 };
 
+const getValidDate = (value: unknown) => {
+  if (typeof value !== 'string' || !value.trim()) return null;
+
+  const date = new Date(value);
+
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const getEarliestImportedTradeMonth = (jsonString: string) => {
+  try {
+    const data = JSON.parse(jsonString) as Record<string, unknown>;
+
+    if (!Array.isArray(data.trades)) return null;
+
+    const earliestDate = data.trades.reduce<Date | null>((earliest, item) => {
+      if (!item || typeof item !== 'object') return earliest;
+
+      const trade = item as Record<string, unknown>;
+      const validDates = [
+        getValidDate(trade.exitDate),
+        getValidDate(trade.entryDate),
+      ].filter((date): date is Date => Boolean(date));
+
+      validDates.forEach((date) => {
+        if (!earliest || date.getTime() < earliest.getTime()) {
+          earliest = date;
+        }
+      });
+
+      return earliest;
+    }, null);
+
+    if (!earliestDate) return null;
+
+    return new Date(earliestDate.getFullYear(), earliestDate.getMonth(), 1);
+  } catch {
+    return null;
+  }
+};
+
 const getBacktestHasData = () => {
   try {
     const raw = localStorage.getItem(BACKTEST_STORAGE_KEY);
@@ -121,6 +161,7 @@ const [isTutorialWelcomeOpen, setIsTutorialWelcomeOpen] = useState(() => {
 const [isTutorialActive, setIsTutorialActive] = useState(false);
 const [tutorialStepIndex, setTutorialStepIndex] = useState(0);
 const [tutorialTrades, setTutorialTrades] = useState<Trade[]>([]);
+const [importTargetMonth, setImportTargetMonth] = useState<Date | null>(null);
 const tutorialDemoDateKey = getTutorialDemoDateKey();
 
   useEffect(() => {
@@ -369,6 +410,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
   };
 
   const handleImportData = (data: string, workspace: JournalWorkspace) => {
+    const targetMonth = getEarliestImportedTradeMonth(data);
     const success = importData(data, workspace);
 
     if (success) {
@@ -378,12 +420,15 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
       }
 
       handleWorkspaceChange(workspace);
+      setActiveView('calendar');
+      setImportTargetMonth(targetMonth);
     }
 
     return success;
   };
 
   const handleAppendImportData = (data: string, workspace: JournalWorkspace) => {
+    const targetMonth = getEarliestImportedTradeMonth(data);
     const success = appendImportData(data, workspace);
 
     if (success) {
@@ -393,6 +438,8 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
       }
 
       handleWorkspaceChange(workspace);
+      setActiveView('calendar');
+      setImportTargetMonth(targetMonth);
     }
 
     return success;
@@ -560,6 +607,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
     onExport={() => {
       if (!isTutorialActive) setImportExportMode('export');
     }}
+    importTargetMonth={importTargetMonth}
     tutorialDemoDateKey={isTutorialActive ? tutorialDemoDateKey : undefined}
   />
 

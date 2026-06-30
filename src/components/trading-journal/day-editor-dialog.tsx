@@ -707,7 +707,7 @@ export function DayEditorDialog({
                 </div>
                 <div className="flex min-w-0 flex-col gap-3 rounded-xl border border-border/70 bg-background/30 p-3 sm:p-3.5">
                   <p className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-                    Link TradingView / Google Drive
+                    ANALISI TRADE
                   </p>
 
                   {row.screenshots.length > 0 && (
@@ -863,7 +863,7 @@ export function DayEditorDialog({
                             },
                           }))
                         }
-                        placeholder="Nome (opzionale)"
+                        placeholder="Inserisci il timeframe"
                         className="h-8 border-border bg-background text-sm"
                       />
 
@@ -1103,7 +1103,7 @@ export function DayEditorDialog({
 
                 <div className="flex flex-col gap-2 rounded-xl border border-border/70 bg-background/30 p-3 sm:p-3.5">
                   <Label className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-                    Note trade {rowIndex + 1}
+                    Note trade
                   </Label>
 
                   <Textarea

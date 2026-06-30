@@ -32,10 +32,6 @@ export function TutorialWelcomeDialog({
           Questo breve tutorial ti mostra le funzioni principali del journal usando dati demo temporanei.
         </p>
 
-        <p className="mt-2 font-sans text-sm leading-relaxed text-muted-foreground">
-          I tuoi dati reali non verranno modificati e potrai saltare il tutorial in qualsiasi momento.
-        </p>
-
         <div className="mt-5 flex flex-col-reverse gap-2 sm:mt-6 sm:flex-row sm:justify-center max-sm:[&_button]:w-full">
           <Button type="button" variant="outline" onClick={onSkip}>
             Salta
