@@ -9,7 +9,11 @@ import { TradeDetailDialog } from '@/components/trading-journal/trade-detail-dia
 import { TradeGroupDetailDialog } from '@/components/trading-journal/trade-group-detail-dialog';
 import { WeeklyPlanDialog, type WeeklyPlanData } from '@/components/trading-journal/weekly-plan-dialog';
 import { ImportExportDialog } from '@/components/trading-journal/import-export-dialog';
-import { useTrades, type JournalWorkspace } from '@/hooks/use-trades';
+import {
+  useJournalWorkspaces,
+  useTrades,
+  type JournalWorkspace,
+} from '@/hooks/use-trades';
 import { Toaster } from '@/components/ui/sonner';
 import { Button } from '@/components/ui/button';
 import {
@@ -43,7 +47,7 @@ import {
 } from '@/components/trading-journal/tutorial/tutorial-constants';
 
 const UPDATE_BANNER_KEY =
-  'dismissedUpdateBanner_eclipsejournal_v03';
+  'dismissedUpdateBanner_eclipsejournal_v04';
 const BACKTEST_STORAGE_KEY = 'eclipse-trading-journal-data-backtest';
 
 type TradeGroupDialogState = {
@@ -92,6 +96,42 @@ const getEarliestImportedTradeMonth = (jsonString: string) => {
   }
 };
 
+const getLatestTradeMonth = (trades: Trade[]) => {
+  const latestDate = trades.reduce<Date | null>((latest, trade) => {
+    const validDates = [
+      getValidDate(trade.exitDate),
+      getValidDate(trade.entryDate),
+    ].filter((date): date is Date => Boolean(date));
+
+    validDates.forEach((date) => {
+      if (!latest || date.getTime() > latest.getTime()) {
+        latest = date;
+      }
+    });
+
+    return latest;
+  }, null);
+
+  if (!latestDate) return null;
+
+  return new Date(latestDate.getFullYear(), latestDate.getMonth(), 1);
+};
+
+const getWorkspaceNavigationTargetMonth = (
+  workspace: JournalWorkspace,
+  trades: Trade[]
+) => {
+  if (workspace === 'personal') {
+    return new Date();
+  }
+
+  if (workspace === 'backtest' || workspace === 'student') {
+    return getLatestTradeMonth(trades);
+  }
+
+  return null;
+};
+
 const getBacktestHasData = () => {
   try {
     const raw = localStorage.getItem(BACKTEST_STORAGE_KEY);
@@ -129,6 +169,7 @@ const getBacktestHasTrades = () => {
 
 function AppContent() {
  const { streamerMode } = useStreamerMode();
+ const { workspaces } = useJournalWorkspaces();
  const [activeWorkspace, setActiveWorkspace] = useState<JournalWorkspace>('personal');
 const [activeView, setActiveView] = useState<'calendar' | 'monthly'>('calendar');
 const [isHelpOpen, setIsHelpOpen] = useState(false);
@@ -178,6 +219,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
   const {
     trades,
     missedTrades,
+    tags,
     strategies,
     customTags,
     weeklyPlans,
@@ -186,8 +228,8 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
     deleteTrade,
     addStrategy,
     removeStrategy,
+    removeTag,
     addCustomTag,
-    removeCustomTag,
     saveWeeklyPlan,
     getWeeklyPlan,
     exportData,
@@ -399,6 +441,11 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
   }, [activeWorkspace, saveWeeklyPlan]);
 
   const handleWorkspaceChange = (workspace: JournalWorkspace) => {
+    const targetMonth = getWorkspaceNavigationTargetMonth(
+      workspace,
+      getWorkspaceData(workspace).trades
+    );
+
     setSelectedDate(null);
     setSelectedWeek(null);
     setImportExportMode(null);
@@ -406,8 +453,23 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
     setIsBacktestResetDialogOpen(false);
     setBacktestHasData(getBacktestHasData());
     setBacktestHasTrades(getBacktestHasTrades());
+    setImportTargetMonth(targetMonth);
     setActiveWorkspace(workspace);
   };
+
+  const getWorkspaceExportData = useCallback((workspace: JournalWorkspace) => {
+    return JSON.stringify(getWorkspaceData(workspace), null, 2);
+  }, [getWorkspaceData]);
+
+  const getWorkspaceTradesForExport = useCallback((workspace: JournalWorkspace) => {
+    return getWorkspaceData(workspace).trades;
+  }, [getWorkspaceData]);
+
+  const getWorkspaceHasImportData = useCallback((workspace: JournalWorkspace) => {
+    const data = getWorkspaceData(workspace);
+
+    return data.trades.length > 0;
+  }, [getWorkspaceData]);
 
   const handleImportData = (data: string, workspace: JournalWorkspace) => {
     const targetMonth = getEarliestImportedTradeMonth(data);
@@ -547,32 +609,34 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
     <div className="flex min-h-screen flex-col bg-background">
       {isUpdateBannerVisible && (
         <div className="border-b border-violet-400/25 bg-gradient-to-r from-violet-950/90 via-violet-900/65 to-slate-950">
-          <div className="relative flex min-h-11 w-full items-center justify-center px-11 py-2 sm:px-14">
+          <div className="flex min-h-11 w-full items-center justify-center px-4 py-2">
             <div className="flex min-w-0 flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-center">
-              <div className="min-w-0">
+              <div className="min-w-0 basis-full sm:basis-auto">
                 <p className="font-mono text-xs font-semibold text-violet-100 sm:text-sm">
-                  EclipseJournal v0.3 è Fuori Ora!
+                  EclipseJournal v0.4 è fuori ora!
                 </p>
-                <p className="hidden font-sans text-[11px] text-violet-200/75 lg:block">
-                  Tutorial, import migliorato e ottimizzazioni generali.
+                <p className="font-sans text-[11px] text-violet-200/75">
+                  Import migliorato, nuove impostazioni calendario, navigazione rapida e fix generali.
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => setIsWhatsNewOpen(true)}
-                className="shrink-0 rounded-lg border border-violet-300/25 bg-violet-300/10 px-3 py-1.5 font-sans text-xs font-semibold text-violet-100 transition hover:border-violet-200/50 hover:bg-violet-300/15"
-              >
-                Visualizza novità
-              </button>
+              <div className="flex shrink-0 items-center justify-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setIsWhatsNewOpen(true)}
+                  className="shrink-0 rounded-lg border border-violet-300/25 bg-violet-300/10 px-3 py-1.5 font-sans text-xs font-semibold text-violet-100 transition hover:border-violet-200/50 hover:bg-violet-300/15"
+                >
+                  Visualizza novità
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDismissUpdateBanner}
+                  className="flex size-7 shrink-0 items-center justify-center rounded-lg text-sm leading-none text-violet-200/70 transition hover:bg-white/10 hover:text-white"
+                  aria-label="Chiudi annuncio aggiornamento"
+                >
+                  ×
+                </button>
+              </div>
             </div>
-            <button
-              type="button"
-              onClick={handleDismissUpdateBanner}
-              className="absolute right-3 top-1/2 flex size-7 -translate-y-1/2 items-center justify-center rounded-lg text-base text-violet-200/70 transition hover:bg-white/10 hover:text-white sm:right-4"
-              aria-label="Chiudi annuncio aggiornamento"
-            >
-              ×
-            </button>
           </div>
         </div>
       )}
@@ -593,6 +657,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
 
   <TradingCalendar
     trades={visibleTrades}
+    navigationTrades={isTutorialActive ? [] : trades}
     weeklyPlans={isTutorialActive ? [] : weeklyPlans}
     activeWorkspace={activeWorkspace}
     showResetButton={!isTutorialActive && showBacktestResetButton}
@@ -661,11 +726,12 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
           onSave={handleSaveDayTrades}
           onDeleteDay={handleDeleteDay}
           strategies={strategies}
+          availableStandardTags={tags}
           customTags={customTags}
           onAddStrategy={addStrategy}
           onRemoveStrategy={removeStrategy}
           onAddCustomTag={addCustomTag}
-          onRemoveCustomTag={removeCustomTag}
+          onRemoveTag={removeTag}
         />
       )}
 
@@ -716,8 +782,12 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
         onClose={() => setImportExportMode(null)}
         mode={importExportMode === 'export' ? 'export' : 'import'}
         activeWorkspace={activeWorkspace}
+        workspaceOptions={workspaces}
         exportData={exportData()}
         exportTrades={trades}
+        getWorkspaceExportData={getWorkspaceExportData}
+        getWorkspaceTrades={getWorkspaceTradesForExport}
+        workspaceHasData={getWorkspaceHasImportData}
         onImport={importExportMode === 'import' ? handleImportData : undefined}
         onAppendImport={
           importExportMode === 'import' ? handleAppendImportData : undefined
@@ -882,10 +952,10 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
                 <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
                   <div>
                     <h3 className="font-sans text-sm font-bold text-foreground">
-                      EclipseJournal v0.3 — Tutorial, import e stabilità
+                      EclipseJournal v0.4 — Import, calendario e share
                     </h3>
                     <p className="mt-1 font-sans text-xs leading-relaxed text-muted-foreground">
-                      Scopri le novità dell’ultimo aggiornamento: tutorial guidato, import più sicuro e ottimizzazioni generali dell’esperienza.
+                      Scopri le novità dell’ultimo aggiornamento: import migliorato, nuove impostazioni calendario, navigazione rapida e share profilo.
                     </p>
                   </div>
                   <button

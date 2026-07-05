@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   CUSTOM_TAG_PREFIX,
+  TRADE_TAGS,
   type MissedTrade,
   type Trade,
   type JournalState,
@@ -33,10 +34,13 @@ export const SYSTEM_WORKSPACES: JournalWorkspaceMeta[] = [
   { id: 'student', name: 'Preview', type: 'system' },
 ];
 
+const DEFAULT_AVAILABLE_TAGS = TRADE_TAGS.map((tag) => tag.value);
+
 const initialState: JournalState = {
   trades: [],
   missedTrades: [],
-  tags: [],
+  tags: DEFAULT_AVAILABLE_TAGS,
+  tagsInitialized: true,
   strategies: [],
   customTags: [],
   weeklyPlans: [],
@@ -71,6 +75,12 @@ const parseImportedJournal = (jsonString: string): JournalState | null => {
       ])
     );
 
+    const tags = data.tagsInitialized
+      ? data.tags || []
+      : Array.isArray(data.tags) && data.tags.length > 0
+        ? data.tags
+        : DEFAULT_AVAILABLE_TAGS;
+
     return {
       ...initialState,
       ...data,
@@ -78,7 +88,8 @@ const parseImportedJournal = (jsonString: string): JournalState | null => {
       missedTrades: Array.isArray(data.missedTrades)
         ? (data.missedTrades as MissedTrade[])
         : [],
-      tags: data.tags || [],
+      tags,
+      tagsInitialized: true,
       strategies: data.strategies || [],
       customTags,
       weeklyPlans: data.weeklyPlans || [],
@@ -392,6 +403,7 @@ export function useTrades(workspace: JournalWorkspace = 'personal') {
   const addTag = useCallback((tag: string) => {
     setState(prev => ({
       ...prev,
+      tagsInitialized: true,
       tags: prev.tags.includes(tag) ? prev.tags : [...prev.tags, tag],
     }));
   }, []);
@@ -399,7 +411,17 @@ export function useTrades(workspace: JournalWorkspace = 'personal') {
   const removeTag = useCallback((tag: string) => {
     setState(prev => ({
       ...prev,
+      tagsInitialized: true,
       tags: prev.tags.filter(t => t !== tag),
+      customTags: prev.customTags.filter(value => value !== tag),
+      trades: prev.trades.map(trade => ({
+        ...trade,
+        tags: (trade.tags || []).filter(value => value !== tag),
+      })),
+      missedTrades: prev.missedTrades.map(missedTrade => ({
+        ...missedTrade,
+        tags: (missedTrade.tags || []).filter(value => value !== tag),
+      })),
     }));
   }, []);
 
@@ -431,10 +453,16 @@ export function useTrades(workspace: JournalWorkspace = 'personal') {
   const removeCustomTag = useCallback((tag: string) => {
     setState(prev => ({
       ...prev,
+      tagsInitialized: true,
+      tags: prev.tags.filter(value => value !== tag),
       customTags: prev.customTags.filter(value => value !== tag),
       trades: prev.trades.map(trade => ({
         ...trade,
         tags: (trade.tags || []).filter(value => value !== tag),
+      })),
+      missedTrades: prev.missedTrades.map(missedTrade => ({
+        ...missedTrade,
+        tags: (missedTrade.tags || []).filter(value => value !== tag),
       })),
     }));
   }, []);

@@ -53,7 +53,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     target: 'profile-button',
     title: 'Profilo trader',
     description:
-      'Il profilo raccoglie la tua identità e i tuoi progressi dentro EclipseJournal.\n\nDa qui puoi vedere statistiche personali, livello, rank e player card.',
+      'Il profilo raccoglie la tua identità e i tuoi progressi dentro EclipseJournal.\n\nDa qui puoi vedere statistiche personali, livello, rank e impostazioni del Journal.',
     cta: 'Avanti',
   },
   {

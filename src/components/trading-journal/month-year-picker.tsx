@@ -26,6 +26,8 @@ interface MonthYearPickerProps {
   showTodayButton?: boolean;
   actionLabel?: string;
   onActionClick?: () => void;
+  firstTradeMonth?: Date | null;
+  lastTradeMonth?: Date | null;
 }
 
 const MONTHS = [
@@ -52,9 +54,13 @@ export function MonthYearPicker({
   showTodayButton = false,
   actionLabel,
   onActionClick,
+  firstTradeMonth,
+  lastTradeMonth,
 }: MonthYearPickerProps) {
   const id = useId();
   const [isOpen, setIsOpen] = useState(false);
+  const hasTradeNavigation =
+    firstTradeMonth !== undefined || lastTradeMonth !== undefined;
   const years = useMemo(() => {
     const currentYear = new Date().getFullYear();
     const selectedYear = value.getFullYear();
@@ -80,6 +86,13 @@ export function MonthYearPicker({
     setIsOpen(false);
   };
 
+  const handleTradeMonthClick = (date?: Date | null) => {
+    if (!date) return;
+
+    onChange(date);
+    setIsOpen(false);
+  };
+
   const handleActionClick = () => {
     if (onActionClick) {
       onActionClick();
@@ -88,6 +101,22 @@ export function MonthYearPicker({
     }
 
     handleTodayClick();
+  };
+
+  const handleGoToChange = (nextValue: string) => {
+    if (nextValue === 'first-trade') {
+      handleTradeMonthClick(firstTradeMonth);
+      return;
+    }
+
+    if (nextValue === 'last-trade') {
+      handleTradeMonthClick(lastTradeMonth);
+      return;
+    }
+
+    if (nextValue === 'today') {
+      handleActionClick();
+    }
   };
 
   return (
@@ -167,7 +196,42 @@ export function MonthYearPicker({
             </Select>
           </div>
 
-          {showTodayButton && (
+          {hasTradeNavigation && (
+            <div className="space-y-1.5">
+              <label
+                htmlFor={`${id}-go-to`}
+                className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground"
+              >
+                Vai a
+              </label>
+              <Select
+                value=""
+                onValueChange={handleGoToChange}
+              >
+                <SelectTrigger
+                  id={`${id}-go-to`}
+                  className="relative flex h-12 w-full items-center justify-between rounded-xl border border-border bg-background/50 px-4 text-sm font-semibold text-foreground hover:bg-secondary/40 focus-visible:border-profit/60"
+                >
+                  <SelectValue placeholder="Seleziona destinazione" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="first-trade" disabled={!firstTradeMonth}>
+                    Primo trade
+                  </SelectItem>
+                  <SelectItem value="last-trade" disabled={!lastTradeMonth}>
+                    Ultimo trade
+                  </SelectItem>
+                  {showTodayButton && (
+                    <SelectItem value="today">
+                      {actionLabel ?? 'Oggi'}
+                    </SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {showTodayButton && !hasTradeNavigation && (
             <Button
               type="button"
               variant="outline"

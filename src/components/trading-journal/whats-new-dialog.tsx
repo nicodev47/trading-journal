@@ -14,22 +14,52 @@ interface WhatsNewDialogProps {
 
 const updates = [
   {
-    icon: "🎓",
-    title: "Tutorial inserito",
-    description:
-      "È stato aggiunto un tutorial guidato per aiutarti a scoprire le funzioni principali del journal usando dati demo temporanei, senza modificare i tuoi dati reali.",
-  },
-  {
-    icon: "🛡️",
+    icon: "📥",
     title: "Import migliorato",
     description:
-      "La funzione Importa è stata resa più chiara e sicura: ora puoi gestire meglio l’inserimento di file JSON, con conferme dedicate e suggerimento di backup prima della sovrascrittura.",
+      "Scelta della destinazione, aggiunta ai dati attuali, sovrascrittura sicura e conferme dedicate per lavorare con più controllo sui file JSON.",
+  },
+  {
+    icon: "⚙️",
+    title: "Nuove impostazioni calendario",
+    description:
+      "Puoi scegliere la settimana che inizia di domenica e decidere se mostrare setup e tag nelle celle del calendario.",
+  },
+  {
+    icon: "🗓️",
+    title: "Calendario ed Execution Map",
+    description:
+      "Calendario ed Execution Map sono più coerenti, puliti e leggibili durante l’analisi delle sessioni operative.",
+  },
+  {
+    icon: "🧭",
+    title: "Menu Vai a",
+    description:
+      "Nel selettore mese/anno puoi raggiungere rapidamente primo trade, ultimo trade o giorno corrente del workspace attivo.",
+  },
+  {
+    icon: "📷",
+    title: "Share Profilo trader",
+    description:
+      "Nuova preview condivisibile del profilo trader con salvataggio come immagine e dati coerenti con il profilo reale.",
+  },
+  {
+    icon: "🏷️",
+    title: "Tag migliorati",
+    description:
+      "La gestione dei tag è stata rifinita per renderli più chiari e consistenti tra inserimento, calendario e analisi.",
+  },
+  {
+    icon: "🎓",
+    title: "Tutorial rifinito",
+    description:
+      "Il tutorial è stato aggiornato con testi più chiari e passaggi più coerenti con le nuove funzioni.",
   },
   {
     icon: "🛠️",
-    title: "Ottimizzazione e fix generali",
+    title: "Fix e ottimizzazioni",
     description:
-      "Sono stati migliorati diversi aspetti dell’interfaccia, della versione mobile, delle modali e della stabilità generale del sito.",
+      "Risolti bug UI e problemi generali, con ottimizzazioni per stabilità, modali e usabilità quotidiana.",
   },
 ];
 
@@ -44,10 +74,10 @@ export function WhatsNewDialog({ open, onOpenChange }: WhatsNewDialogProps) {
           <div className="flex items-start justify-between gap-4">
             <div>
               <DialogTitle className="text-lg text-foreground sm:text-xl">
-                Novità EclipseJournal v0.3
+                Novità EclipseJournal v0.4
               </DialogTitle>
               <DialogDescription className="mt-1 text-sm text-muted-foreground">
-                EclipseJournal v0.3 è fuori ora! Questo aggiornamento rende il journal più semplice da usare, più sicuro durante l’importazione dei dati e più stabile nell’esperienza generale.
+                EclipseJournal v0.4 è fuori ora! Questo aggiornamento migliora import, calendario, navigazione rapida, share del profilo e stabilità generale.
               </DialogDescription>
             </div>
             <button

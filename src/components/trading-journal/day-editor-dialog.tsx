@@ -135,11 +135,12 @@ interface DayEditorDialogProps {
   onSave: (trades: Trade[]) => void;
   onDeleteDay: () => void;
   strategies: string[];
+  availableStandardTags: string[];
   customTags: string[];
   onAddStrategy: (strategy: string) => void;
   onRemoveStrategy: (strategy: string) => void;
   onAddCustomTag: (tag: string) => void;
-  onRemoveCustomTag: (tag: string) => void;
+  onRemoveTag: (tag: string) => void;
 }
 
 export function DayEditorDialog({
@@ -149,9 +150,10 @@ export function DayEditorDialog({
   existingTrades,
   onSave,
   onDeleteDay,
+  availableStandardTags = [],
   customTags = [],
   onAddCustomTag,
-  onRemoveCustomTag,
+  onRemoveTag,
 }: DayEditorDialogProps) {
   const { streamerMode } = useStreamerMode();
   const [tradeRows, setTradeRows] = useState<TradeRow[]>([]);
@@ -160,7 +162,7 @@ export function DayEditorDialog({
   const [customTagInputs, setCustomTagInputs] = useState<Record<string, string>>({});
   const [isManagingTags, setIsManagingTags] = useState(false);
   const [tradeToDeleteId, setTradeToDeleteId] = useState<string | null>(null);
-  const [customTagToDelete, setCustomTagToDelete] = useState<string | null>(null);
+  const [tagToDelete, setTagToDelete] = useState<string | null>(null);
   const [isDeleteDayConfirmOpen, setIsDeleteDayConfirmOpen] = useState(false);
   const [selectedShareTrade, setSelectedShareTrade] = useState<Trade | null>(null);
   const [editingScreenshot, setEditingScreenshot] = useState<{
@@ -178,6 +180,14 @@ export function DayEditorDialog({
   const initialTradeIdsRef = useRef<Set<string>>(new Set());
   const existingTradesByIdRef = useRef<Map<string, Trade>>(new Map());
   const isOpenRef = useRef(isOpen);
+  const availablePresetTags = useMemo(
+    () =>
+      availableStandardTags
+        .map((tagValue) => TRADE_TAGS.find((tag) => tag.value === tagValue))
+        .filter((tag): tag is (typeof TRADE_TAGS)[number] => Boolean(tag)),
+    [availableStandardTags]
+  );
+  const canManageTags = availablePresetTags.length > 0 || customTags.length > 0;
 
   const createEmptyRow = (): TradeRow => ({
     id: generateId(),
@@ -416,7 +426,7 @@ export function DayEditorDialog({
     setCustomTagInputs({});
     setIsManagingTags(false);
     setEditingScreenshot(null);
-    setCustomTagToDelete(null);
+    setTagToDelete(null);
     setAutosaveStatus(initialSignature ? 'saved' : 'idle');
 
     return () => {
@@ -443,19 +453,19 @@ export function DayEditorDialog({
     }
   };
 
-  const confirmRemoveCustomTag = () => {
-    if (!customTagToDelete) return;
+  const confirmRemoveTag = () => {
+    if (!tagToDelete) return;
 
-    onRemoveCustomTag(customTagToDelete);
+    onRemoveTag(tagToDelete);
     replaceTradeRows(
       previous =>
         previous.map(tradeRow => ({
           ...tradeRow,
-          tags: tradeRow.tags.filter(value => value !== customTagToDelete),
+          tags: tradeRow.tags.filter(value => value !== tagToDelete),
         })),
       0
     );
-    setCustomTagToDelete(null);
+    setTagToDelete(null);
   };
 
   const updateTradeRow = (
@@ -1107,32 +1117,48 @@ export function DayEditorDialog({
                   </Label>
 
                   <div className="flex flex-wrap gap-2">
-                    {TRADE_TAGS.map((tag) => {
+                    {availablePresetTags.map((tag) => {
                       const isSelected = row.tags.includes(tag.value);
 
                       return (
-                        <button
-                          key={tag.value}
-                          type="button"
-                          onClick={() => {
-                            const nextTags = isSelected
-                              ? row.tags.filter((value) => value !== tag.value)
-                              : [...row.tags, tag.value];
+                        <div key={tag.value} className="relative">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const nextTags = isSelected
+                                ? row.tags.filter((value) => value !== tag.value)
+                                : [...row.tags, tag.value];
 
-                            updateTradeRow(row.id, 'tags', nextTags, 0);
-                          }}
-                          className={cn(
-                            'rounded-md border px-2.5 py-1.5 text-left font-mono text-[13px] leading-4 transition-colors',
-                            isSelected
-                              ? 'border-loss/50 bg-loss/10 text-loss'
-                              : 'border-border bg-background/80 text-muted-foreground hover:bg-secondary hover:text-foreground'
+                              updateTradeRow(row.id, 'tags', nextTags, 0);
+                            }}
+                            className={cn(
+                              'w-full rounded-md border px-2.5 py-1.5 text-left font-mono text-[13px] leading-4 transition-colors',
+                              isManagingTags && 'pr-6',
+                              isSelected
+                                ? 'border-loss/50 bg-loss/10 text-loss'
+                                : 'border-border bg-background/80 text-muted-foreground hover:bg-secondary hover:text-foreground'
+                            )}
+                          >
+                            <span className="mr-2" aria-hidden="true">
+                              {tag.emoji}
+                            </span>
+                            {tag.label}
+                          </button>
+
+                          {isManagingTags && (
+                            <button
+                              type="button"
+                              aria-label={`Elimina ${tag.label}`}
+                              className="absolute -right-2 -top-2 flex size-5 items-center justify-center rounded-full border border-loss bg-background text-loss shadow-md transition-colors hover:bg-loss hover:text-white"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                setTagToDelete(tag.value);
+                              }}
+                            >
+                              <X className="size-3" />
+                            </button>
                           )}
-                        >
-                          <span className="mr-2" aria-hidden="true">
-                            {tag.emoji}
-                          </span>
-                          {tag.label}
-                        </button>
+                        </div>
                       );
                     })}
 
@@ -1152,6 +1178,7 @@ export function DayEditorDialog({
                             }}
                             className={cn(
                               'w-full rounded-md border px-2.5 py-1.5 text-left font-mono text-[13px] leading-4 transition-colors',
+                              isManagingTags && 'pr-6',
                               isSelected
                                 ? 'border-loss/50 bg-loss/10 text-loss'
                                 : 'border-border bg-background/80 text-muted-foreground hover:bg-secondary hover:text-foreground'
@@ -1167,7 +1194,7 @@ export function DayEditorDialog({
                               className="absolute -right-2 -top-2 flex size-5 items-center justify-center rounded-full border border-loss bg-background text-loss shadow-md transition-colors hover:bg-loss hover:text-white"
                               onClick={(event) => {
                                 event.stopPropagation();
-                                setCustomTagToDelete(tag);
+                                setTagToDelete(tag);
                               }}
                             >
                               <X className="size-3" />
@@ -1249,7 +1276,7 @@ export function DayEditorDialog({
                       variant={isManagingTags ? 'default' : 'outline'}
                       size="sm"
                       className="h-8 px-3 font-mono text-xs"
-                      disabled={customTags.length === 0}
+                      disabled={!canManageTags}
                       onClick={() => setIsManagingTags(previous => !previous)}
                     >
                       Gestisci
@@ -1356,30 +1383,31 @@ export function DayEditorDialog({
       </Dialog>
 
       <Dialog
-        open={Boolean(customTagToDelete)}
-        onOpenChange={(open) => !open && setCustomTagToDelete(null)}
+        open={Boolean(tagToDelete)}
+        onOpenChange={(open) => !open && setTagToDelete(null)}
       >
         <DialogContent className="max-h-[92dvh] w-[calc(100vw-1.75rem)] max-w-[460px] border-border bg-card">
           <DialogHeader>
-            <DialogTitle>Eliminare questo tag?</DialogTitle>
+            <DialogTitle>Elimina tag</DialogTitle>
             <DialogDescription>
-              Il tag personalizzato verrà rimosso anche dai trade salvati.
+              Vuoi eliminare questo tag? Verrà rimosso anche dai trade in cui è
+              stato utilizzato.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="max-sm:[&_button]:w-full">
             <Button
               type="button"
               variant="outline"
-              onClick={() => setCustomTagToDelete(null)}
+              onClick={() => setTagToDelete(null)}
             >
               Annulla
             </Button>
             <Button
               type="button"
               className="bg-loss text-white hover:bg-loss/90"
-              onClick={confirmRemoveCustomTag}
+              onClick={confirmRemoveTag}
             >
-              Elimina tag
+              Elimina
             </Button>
           </DialogFooter>
         </DialogContent>

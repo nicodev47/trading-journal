@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Trash2 } from 'lucide-react';
-import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,8 +17,11 @@ import {
 import { calculateStatistics } from '@/lib/calculations';
 import { PROFILE_NAME_KEY } from '@/lib/export-filename';
 import { getBestOperatingWindow } from '@/lib/operating-windows';
+import { TRADER_RANKS, getProfileLevelIcon } from '@/lib/profile-levels';
 import type { Trade } from '@/lib/types/trade';
 import { useStreamerMode } from '@/contexts/streamer-mode-context';
+import { ProfileShareDialog } from './profile-share-dialog';
+import type { ProfileShareData } from './profile-share-card';
 
 interface ProfileDialogProps {
   isOpen: boolean;
@@ -27,21 +29,6 @@ interface ProfileDialogProps {
   trades: Trade[];
   onClearPersonal: () => void;
 }
-
-const DEFAULT_PROFILE_AVATAR = '🍀';
-
-const TRADER_RANKS = [
-  { emoji: '🍀', name: 'Principiante' },
-  { emoji: '🧑‍🎓', name: 'Apprendista' },
-  { emoji: '🧭', name: 'Esploratore' },
-  { emoji: '⚔️', name: 'Stratega' },
-  { emoji: '🦅', name: 'Cacciatore' },
-  { emoji: '🐺', name: 'Trader Disciplinato' },
-  { emoji: '📈', name: 'Analista' },
-  { emoji: '🐉', name: 'Maestro' },
-  { emoji: '👑', name: 'Élite' },
-  { emoji: '🧙‍♂️', name: 'Mago dei mercati' },
-] as const;
 
 const formatCurrency = (value: number) =>
   `${value.toLocaleString('it-IT', {
@@ -61,71 +48,6 @@ const formatPercent = (value: number) =>
     maximumFractionDigits: 1,
   })}%`;
 
-const drawRoundedRect = (
-  context: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-  radius: number
-) => {
-  const safeRadius = Math.min(radius, width / 2, height / 2);
-
-  context.beginPath();
-  context.moveTo(x + safeRadius, y);
-  context.lineTo(x + width - safeRadius, y);
-  context.quadraticCurveTo(x + width, y, x + width, y + safeRadius);
-  context.lineTo(x + width, y + height - safeRadius);
-  context.quadraticCurveTo(
-    x + width,
-    y + height,
-    x + width - safeRadius,
-    y + height
-  );
-  context.lineTo(x + safeRadius, y + height);
-  context.quadraticCurveTo(x, y + height, x, y + height - safeRadius);
-  context.lineTo(x, y + safeRadius);
-  context.quadraticCurveTo(x, y, x + safeRadius, y);
-  context.closePath();
-};
-
-const fitCanvasText = (
-  context: CanvasRenderingContext2D,
-  value: string,
-  maxWidth: number
-) => {
-  if (context.measureText(value).width <= maxWidth) {
-    return value;
-  }
-
-  let shortened = value;
-
-  while (
-    shortened.length > 1 &&
-    context.measureText(`${shortened}…`).width > maxWidth
-  ) {
-    shortened = shortened.slice(0, -1);
-  }
-
-  return `${shortened}…`;
-};
-
-const normalizeProfileFileName = (name: string) => {
-  const normalizedName = name
-    .trim()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/[^a-zA-Z0-9_-]/g, '')
-    .replace(/-+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .toLowerCase();
-
-  return normalizedName
-    ? `profilo-trader-${normalizedName}.png`
-    : 'profilo-trader.png';
-};
-
 export function ProfileDialog({
   isOpen,
   onClose,
@@ -135,8 +57,17 @@ export function ProfileDialog({
   const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
   const [confirmationText, setConfirmationText] = useState('');
   const [traderName, setTraderName] = useState('');
-  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
-  const { streamerMode, toggleStreamerMode } = useStreamerMode();
+  const [isShareOpen, setIsShareOpen] = useState(false);
+  const {
+    streamerMode,
+    toggleStreamerMode,
+    sundayWeekStart,
+    setSundayWeekStart,
+    showCalendarSetup,
+    setShowCalendarSetup,
+    showCalendarTags,
+    setShowCalendarTags,
+  } = useStreamerMode();
 
   useEffect(() => {
     setTraderName(localStorage.getItem(PROFILE_NAME_KEY) || '');
@@ -148,6 +79,7 @@ export function ProfileDialog({
     const level = Math.floor(totalXP / 100) + 1;
     const currentLevelXP = totalXP % 100;
     const rank = TRADER_RANKS[Math.min(level, 10) - 1];
+    const profileIcon = getProfileLevelIcon(level);
     const bestOperatingWindow = getBestOperatingWindow(trades);
     const nextRank =
       level >= 10 ? TRADER_RANKS[9] : TRADER_RANKS[level];
@@ -162,6 +94,7 @@ export function ProfileDialog({
       level,
       currentLevelXP,
       rank,
+      profileIcon,
       nextLevelLabel,
       bestOperatingWindow,
     };
@@ -227,202 +160,27 @@ export function ProfileDialog({
     }
   };
 
-  const handleShare = async () => {
-    setIsGeneratingImage(true);
+  const shareProfileData: ProfileShareData = {
+    traderName: traderName.trim() || 'Trader',
+    rank: profile.rank,
+    profileIcon: profile.profileIcon,
+    level: profile.level,
+    totalXP: profile.totalXP,
+    currentLevelXP: profile.currentLevelXP,
+    nextLevelLabel: profile.nextLevelLabel,
+    totalTrades: profile.stats.totalTrades,
+    totalPnl: profile.stats.totalPnl,
+    winRate: profile.stats.winRate,
+    longestWinStreak: profile.stats.longestWinStreak,
+    greenDays: profile.stats.greenDays,
+    redDays: profile.stats.redDays,
+    avgWin: profile.stats.avgWin,
+    bestOperatingWindowName: profile.bestOperatingWindow?.name ?? '—',
+    bestOperatingWindowDescription: profile.bestOperatingWindow?.description,
+  };
 
-    try {
-      await document.fonts.ready;
-
-      const canvas = document.createElement('canvas');
-      canvas.width = 1080;
-      canvas.height = 1080;
-
-      const context = canvas.getContext('2d');
-
-      if (!context) {
-        throw new Error('Canvas unavailable');
-      }
-
-      const displayName = traderName.trim() || 'Trader';
-      const teal = '#00d68f';
-      const foreground = '#f4f7f6';
-      const muted = '#89928f';
-      const loss = '#ff4d70';
-      const backgroundGradient = context.createLinearGradient(0, 0, 1080, 1080);
-      backgroundGradient.addColorStop(0, '#030608');
-      backgroundGradient.addColorStop(0.55, '#07100f');
-      backgroundGradient.addColorStop(1, '#020405');
-      context.fillStyle = backgroundGradient;
-      context.fillRect(0, 0, canvas.width, canvas.height);
-
-      context.save();
-      context.shadowColor = 'rgba(0, 214, 143, 0.16)';
-      context.shadowBlur = 45;
-      drawRoundedRect(context, 48, 48, 984, 984, 34);
-      context.fillStyle = '#080d0f';
-      context.fill();
-      context.restore();
-      context.strokeStyle = 'rgba(0, 214, 143, 0.55)';
-      context.lineWidth = 2;
-      drawRoundedRect(context, 48, 48, 984, 984, 34);
-      context.stroke();
-
-      context.fillStyle = foreground;
-      context.font = '700 34px system-ui, sans-serif';
-      context.fillText('Profilo Trader', 92, 115);
-      context.fillStyle = muted;
-      context.font = '500 18px ui-monospace, monospace';
-      context.textAlign = 'right';
-      context.fillText('CALENDARIO P/L', 988, 112);
-      context.textAlign = 'left';
-
-      const playerGradient = context.createLinearGradient(90, 155, 990, 455);
-      playerGradient.addColorStop(0, 'rgba(0, 214, 143, 0.15)');
-      playerGradient.addColorStop(1, 'rgba(8, 17, 18, 0.95)');
-      drawRoundedRect(context, 90, 155, 900, 300, 28);
-      context.fillStyle = playerGradient;
-      context.fill();
-      context.strokeStyle = 'rgba(0, 214, 143, 0.3)';
-      context.lineWidth = 2;
-      context.stroke();
-
-      context.font =
-        '88px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
-      context.fillText(DEFAULT_PROFILE_AVATAR, 130, 285);
-
-      context.fillStyle = muted;
-      context.font = '600 24px system-ui, sans-serif';
-      context.fillText(fitCanvasText(context, displayName, 560), 280, 215);
-      context.fillStyle = foreground;
-      context.font = '800 46px system-ui, sans-serif';
-      context.fillText(
-        fitCanvasText(
-          context,
-          `${profile.rank.emoji} ${profile.rank.name}`,
-          620
-        ),
-        280,
-        270
-      );
-      context.fillStyle = teal;
-      context.font = '700 23px ui-monospace, monospace';
-      context.fillText(`LIVELLO ${profile.level}`, 280, 310);
-      context.textAlign = 'right';
-      context.fillText(`${profile.totalXP} XP TOTALI`, 945, 310);
-      context.textAlign = 'left';
-
-      drawRoundedRect(context, 130, 350, 820, 20, 10);
-      context.fillStyle = '#17211f';
-      context.fill();
-      const progressWidth = (profile.currentLevelXP / 100) * 820;
-
-      if (progressWidth > 0) {
-        drawRoundedRect(context, 130, 350, progressWidth, 20, 10);
-        context.fillStyle = teal;
-        context.fill();
-      }
-
-      context.fillStyle = muted;
-      context.font = '500 18px ui-monospace, monospace';
-      context.fillText(`${profile.currentLevelXP} / 100 XP`, 130, 405);
-      context.textAlign = 'right';
-      context.fillText(
-        fitCanvasText(context, profile.nextLevelLabel.toUpperCase(), 560),
-        950,
-        405
-      );
-      context.textAlign = 'left';
-
-      const imageStats = [
-        ['Trade totali', profile.stats.totalTrades.toString(), teal],
-        [
-          'P&L totale',
-          streamerMode ? '******' : formatPnlCurrency(profile.stats.totalPnl),
-          profile.stats.totalPnl >= 0 ? teal : loss,
-        ],
-        ['Winrate', formatPercent(profile.stats.winRate), teal],
-        ['Streak migliore', `${profile.stats.longestWinStreak} win`, teal],
-        ['Giorni positivi', profile.stats.greenDays.toString(), teal],
-        ['Giorni negativi', profile.stats.redDays.toString(), loss],
-        [
-          'Vincita media',
-          streamerMode ? '******' : formatCurrency(profile.stats.avgWin),
-          teal,
-        ],
-        [
-          'Orario migliore',
-          profile.bestOperatingWindow?.name ?? '—',
-          profile.bestOperatingWindow ? teal : muted,
-          profile.bestOperatingWindow?.description,
-        ],
-      ] as const;
-
-      imageStats.forEach(([label, value, color, subtitle], index) => {
-        const column = index % 2;
-        const row = Math.floor(index / 2);
-        const x = 90 + column * 465;
-        const y = 495 + row * 117;
-
-        drawRoundedRect(context, x, y, 435, 92, 18);
-        context.fillStyle = '#0c1315';
-        context.fill();
-        context.strokeStyle = 'rgba(255, 255, 255, 0.08)';
-        context.lineWidth = 1;
-        context.stroke();
-
-        context.fillStyle = muted;
-        context.font = '600 16px system-ui, sans-serif';
-        context.fillText(label.toUpperCase(), x + 24, y + 31);
-        context.fillStyle = color;
-        context.font = subtitle
-          ? '700 22px ui-monospace, monospace'
-          : '700 27px ui-monospace, monospace';
-        context.fillText(
-          fitCanvasText(context, value, 385),
-          x + 24,
-          subtitle ? y + 60 : y + 68
-        );
-
-        if (subtitle) {
-          context.fillStyle = muted;
-          context.font = '500 13px ui-monospace, monospace';
-          context.fillText(
-            fitCanvasText(context, subtitle, 385),
-            x + 24,
-            y + 80
-          );
-        }
-      });
-
-      context.fillStyle = muted;
-      context.font = '500 17px system-ui, sans-serif';
-      context.textAlign = 'center';
-      context.fillText('Generato da EclipseJournal 🌙', 540, 992);
-      context.textAlign = 'left';
-
-      const blob = await new Promise<Blob>((resolve, reject) => {
-        canvas.toBlob(result => {
-          if (result) {
-            resolve(result);
-          } else {
-            reject(new Error('PNG generation failed'));
-          }
-        }, 'image/png');
-      });
-      const url = URL.createObjectURL(blob);
-      const anchor = document.createElement('a');
-      anchor.href = url;
-      anchor.download = normalizeProfileFileName(traderName);
-      document.body.appendChild(anchor);
-      anchor.click();
-      document.body.removeChild(anchor);
-      URL.revokeObjectURL(url);
-      toast.success('Profilo PNG scaricato.');
-    } catch {
-      toast.error('Impossibile generare il profilo PNG.');
-    } finally {
-      setIsGeneratingImage(false);
-    }
+  const handleShare = () => {
+    setIsShareOpen(true);
   };
 
   return (
@@ -464,18 +222,17 @@ export function ProfileDialog({
                   size="sm"
                   className="gap-2 bg-profit text-background hover:bg-profit/90 max-sm:w-full"
                   onClick={handleShare}
-                  disabled={isGeneratingImage}
                 >
                   <span className="text-base leading-none" aria-hidden="true">
                     📷
                   </span>
-                  {isGeneratingImage ? 'Genero...' : 'Share'}
+                  Share
                 </Button>
               </div>
 
               <div className="flex items-center gap-3 sm:gap-4">
                 <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl border border-profit/30 bg-profit/10 text-[40px] leading-none shadow-[0_0_24px_rgba(0,214,143,0.08)] sm:size-16 sm:text-[46px]">
-                  {DEFAULT_PROFILE_AVATAR}
+                  {profile.profileIcon}
                 </div>
 
                 <div className="min-w-0 flex-1">
@@ -577,6 +334,112 @@ export function ProfileDialog({
               </div>
             </section>
 
+            <section className="rounded-[14px] border border-border bg-background/35 p-3.5 sm:p-4">
+              <p className="flex items-center gap-2 font-mono text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                <span>Impostazioni calendario</span>
+                <span className="text-xl leading-none">🗓️</span>
+              </p>
+              <p className="mt-3 max-w-xl font-sans text-xs leading-relaxed text-muted-foreground">
+                Personalizza la visualizzazione del calendario in base al tuo modo
+                di leggere la settimana.
+              </p>
+
+              <div className="mt-3 space-y-2.5">
+                <div className="rounded-xl border border-border/70 bg-background/35 p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-sans text-sm font-semibold text-foreground">
+                        Settimana che inizia di domenica
+                      </p>
+                      <p className="mt-1 font-sans text-xs leading-relaxed text-muted-foreground">
+                        Mostra il calendario con la domenica come primo giorno della settimana.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={sundayWeekStart}
+                      aria-label="Settimana che inizia di domenica"
+                      onClick={() => setSundayWeekStart(!sundayWeekStart)}
+                      className={`relative h-6 w-11 shrink-0 rounded-full border transition-colors ${
+                        sundayWeekStart
+                          ? 'border-profit/60 bg-profit'
+                          : 'border-border bg-input/80'
+                      }`}
+                    >
+                      <span
+                        className={`absolute left-0.5 top-0.5 size-5 rounded-full bg-background shadow-sm transition-transform ${
+                          sundayWeekStart ? 'translate-x-5' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-border/70 bg-background/35 p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-sans text-sm font-semibold text-foreground">
+                        Mostra setup nel calendario
+                      </p>
+                      <p className="mt-1 font-sans text-xs leading-relaxed text-muted-foreground">
+                        Mostra il setup principale della giornata sotto il P&L.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={showCalendarSetup}
+                      aria-label="Mostra setup nel calendario"
+                      onClick={() => setShowCalendarSetup(!showCalendarSetup)}
+                      className={`relative h-6 w-11 shrink-0 rounded-full border transition-colors ${
+                        showCalendarSetup
+                          ? 'border-profit/60 bg-profit'
+                          : 'border-border bg-input/80'
+                      }`}
+                    >
+                      <span
+                        className={`absolute left-0.5 top-0.5 size-5 rounded-full bg-background shadow-sm transition-transform ${
+                          showCalendarSetup ? 'translate-x-5' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-border/70 bg-background/35 p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-sans text-sm font-semibold text-foreground">
+                        Mostra tag nel calendario
+                      </p>
+                      <p className="mt-1 font-sans text-xs leading-relaxed text-muted-foreground">
+                        Mostra i tag principali della giornata sotto il P&L.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={showCalendarTags}
+                      aria-label="Mostra tag nel calendario"
+                      onClick={() => setShowCalendarTags(!showCalendarTags)}
+                      className={`relative h-6 w-11 shrink-0 rounded-full border transition-colors ${
+                        showCalendarTags
+                          ? 'border-profit/60 bg-profit'
+                          : 'border-border bg-input/80'
+                      }`}
+                    >
+                      <span
+                        className={`absolute left-0.5 top-0.5 size-5 rounded-full bg-background shadow-sm transition-transform ${
+                          showCalendarTags ? 'translate-x-5' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </section>
+
             <section className="rounded-[14px] border border-loss/30 bg-loss/5 p-3.5 sm:p-4">
               <p className="flex items-center gap-2 font-mono text-xs font-semibold uppercase tracking-[0.14em] text-loss">
                 <span>Zona pericolosa</span>
@@ -648,6 +511,12 @@ export function ProfileDialog({
         </DialogContent>
       </Dialog>
 
+      <ProfileShareDialog
+        open={isShareOpen}
+        onOpenChange={setIsShareOpen}
+        profile={shareProfileData}
+        streamerMode={streamerMode}
+      />
     </>
   );
 }

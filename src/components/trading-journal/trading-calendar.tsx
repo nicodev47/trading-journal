@@ -25,9 +25,11 @@ import { getDayData } from '@/lib/calculations';
 import { cn } from '@/lib/utils';
 import type { Trade, WeeklyPlan } from '@/lib/types/trade';
 import type { JournalWorkspace } from '@/hooks/use-trades';
+import { useStreamerMode } from '@/contexts/streamer-mode-context';
 
 interface TradingCalendarProps {
   trades: Trade[];
+  navigationTrades?: Trade[];
   weeklyPlans: WeeklyPlan[];
   activeWorkspace: JournalWorkspace;
   showResetButton?: boolean;
@@ -43,9 +45,47 @@ interface TradingCalendarProps {
 }
 
 const WEEKDAYS = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
+const SUNDAY_START_WEEKDAYS = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'];
+
+const getValidTradeDate = (trade: Trade) => {
+  const validDates = [trade.exitDate, trade.entryDate]
+    .map((dateValue) => new Date(dateValue))
+    .filter((date) => !Number.isNaN(date.getTime()));
+
+  return validDates[0] ?? null;
+};
+
+const getTradeBoundaryMonth = (
+  trades: Trade[],
+  boundary: 'first' | 'last'
+) => {
+  const boundaryDate = trades.reduce<Date | null>((selectedDate, trade) => {
+    const tradeDate = getValidTradeDate(trade);
+
+    if (!tradeDate) return selectedDate;
+
+    if (!selectedDate) return tradeDate;
+
+    const isEarlier = tradeDate.getTime() < selectedDate.getTime();
+    const isLater = tradeDate.getTime() > selectedDate.getTime();
+
+    return boundary === 'first'
+      ? isEarlier
+        ? tradeDate
+        : selectedDate
+      : isLater
+        ? tradeDate
+        : selectedDate;
+  }, null);
+
+  if (!boundaryDate) return null;
+
+  return new Date(boundaryDate.getFullYear(), boundaryDate.getMonth(), 1);
+};
 
 export function TradingCalendar({
   trades,
+  navigationTrades = trades,
   weeklyPlans,
   activeWorkspace,
   showResetButton = false,
@@ -60,6 +100,7 @@ export function TradingCalendar({
   tutorialDemoDateKey,
 }: TradingCalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const { sundayWeekStart } = useStreamerMode();
 
   useEffect(() => {
     if (!importTargetMonth) return;
@@ -67,14 +108,32 @@ export function TradingCalendar({
     setCurrentMonth(importTargetMonth);
   }, [importTargetMonth]);
 
-  const weeks = useMemo(() => getWeeksOfMonth(currentMonth), [currentMonth]);
+  const weeks = useMemo(
+    () => getWeeksOfMonth(currentMonth, sundayWeekStart ? 0 : 1),
+    [currentMonth, sundayWeekStart]
+  );
+  const weekdayLabels = sundayWeekStart
+    ? SUNDAY_START_WEEKDAYS
+    : WEEKDAYS;
+  const firstTradeMonth = useMemo(
+    () => getTradeBoundaryMonth(navigationTrades, 'first'),
+    [navigationTrades]
+  );
+  const lastTradeMonth = useMemo(
+    () => getTradeBoundaryMonth(navigationTrades, 'last'),
+    [navigationTrades]
+  );
 
   const { maxPnl, minPnl } = useMemo(() => {
     let max = 0;
     let min = 0;
+    const currentMonthKey = getDateKey(currentMonth).slice(0, 7);
 
     trades.forEach((trade) => {
       const dateKey = trade.exitDate.split('T')[0];
+
+      if (!dateKey.startsWith(currentMonthKey)) return;
+
       const dayData = getDayData(trades, dateKey);
 
       if (dayData.totalPnl > max) max = dayData.totalPnl;
@@ -82,7 +141,7 @@ export function TradingCalendar({
     });
 
     return { maxPnl: max, minPnl: min };
-  }, [trades]);
+  }, [trades, currentMonth]);
 
   const weekData = useMemo(() => {
     return weeks.map((week) => {
@@ -90,6 +149,8 @@ export function TradingCalendar({
       let tradeCount = 0;
 
       week.forEach((day) => {
+        if (!checkCurrentMonth(day, currentMonth)) return;
+
         const dateKey = getDateKey(day);
         const dayData = getDayData(trades, dateKey);
 
@@ -97,7 +158,10 @@ export function TradingCalendar({
         tradeCount += dayData.tradeCount;
       });
 
-      const weekKey = getWeekKey(week[0]);
+      const startDate = week[0];
+      const weekKey = sundayWeekStart
+        ? `sun-${getDateKey(startDate)}`
+        : getWeekKey(startDate);
       const plans = weeklyPlans || [];
       const weekPlan = plans.find((p) => p.weekKey === weekKey);
 
@@ -108,7 +172,6 @@ export function TradingCalendar({
             weekPlan.calendarScreenshots.length > 0) ||
           weekPlan.notes !== '');
 
-      const startDate = week[0];
       const weekLabel = `Settimana del ${startDate.toLocaleDateString(
         'it-IT',
         { day: 'numeric', month: 'short' }
@@ -123,7 +186,7 @@ export function TradingCalendar({
         approach: weekPlan?.approach || '',
       };
     });
-  }, [weeks, trades, weeklyPlans]);
+  }, [weeks, trades, weeklyPlans, sundayWeekStart, currentMonth]);
 
   const getWorkspaceButtonClass = (workspace: JournalWorkspace) => {
     const isActive = activeWorkspace === workspace;
@@ -222,6 +285,8 @@ export function TradingCalendar({
             onChange={setCurrentMonth}
             triggerVariant="ghost"
             showTodayButton
+            firstTradeMonth={firstTradeMonth}
+            lastTradeMonth={lastTradeMonth}
             triggerClassName="inline-flex items-center justify-center gap-2 whitespace-nowrap disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive has-[>svg]:px-3 capitalize h-auto min-w-[150px] rounded-xl border border-transparent bg-transparent px-4 py-1 text-base font-semibold text-foreground shadow-none ring-0 transition-colors duration-200 hover:bg-white/10 hover:text-foreground dark:bg-transparent dark:hover:bg-white/10 dark:hover:text-foreground max-md:min-w-0 max-md:flex-1 max-md:px-2 max-md:text-sm"
           />
 
@@ -264,7 +329,7 @@ export function TradingCalendar({
       <div className="w-full overflow-hidden">
         <div className="flex w-full min-w-0 flex-col gap-px bg-border">
           <div className="grid grid-cols-7 gap-px sm:grid-cols-[repeat(7,minmax(0,1fr))_80px] lg:grid-cols-[repeat(7,minmax(0,1fr))_155px]">
-            {WEEKDAYS.map((day) => (
+            {weekdayLabels.map((day) => (
               <div
                 key={day}
                 className="bg-card px-1 py-1.5 font-sans text-[11px] font-bold tracking-[-0.02em] text-muted-foreground/85 sm:px-2 sm:py-2 sm:text-xs"
@@ -286,15 +351,18 @@ export function TradingCalendar({
             >
               {week.map((day) => {
                 const dateKey = getDateKey(day);
-                const dayData = getDayData(trades, dateKey);
-                const hasTrades = dayData.tradeCount > 0;
+                const isDayCurrentMonth = checkCurrentMonth(day, currentMonth);
+                const dayData = isDayCurrentMonth
+                  ? getDayData(trades, dateKey)
+                  : null;
+                const hasTrades = (dayData?.tradeCount ?? 0) > 0;
 
                 return (
                   <CalendarDay
                     key={dateKey}
                     date={day}
                     dayData={hasTrades ? dayData : null}
-                    isCurrentMonth={checkCurrentMonth(day, currentMonth)}
+                    isCurrentMonth={isDayCurrentMonth}
                     isToday={checkIsToday(day)}
                     tutorialTarget={
                       dateKey === tutorialDemoDateKey
@@ -303,7 +371,11 @@ export function TradingCalendar({
                     }
                     maxPnl={maxPnl}
                     minPnl={minPnl}
-                    onClick={() => onDayClick(dateKey)}
+                    onClick={() => {
+                      if (!isDayCurrentMonth) return;
+
+                      onDayClick(dateKey);
+                    }}
                   />
                 );
               })}

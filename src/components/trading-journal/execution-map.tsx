@@ -2,14 +2,10 @@
 
 import { useMemo, useState } from 'react';
 import {
-  addDays,
   addMonths,
-  endOfMonth,
-  endOfWeek,
   format,
   isSameMonth,
   startOfMonth,
-  startOfWeek,
   subMonths,
 } from 'date-fns';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -20,6 +16,10 @@ import { TradeGroupDetailDialog } from '@/components/trading-journal/trade-group
 import { cn } from '@/lib/utils';
 import { type Trade } from '@/lib/types/trade';
 import { useStreamerMode } from '@/contexts/streamer-mode-context';
+import {
+  getDateKey,
+  getMonthDays,
+} from '@/lib/date-utils';
 
 interface ExecutionMapProps {
   trades: Trade[];
@@ -39,10 +39,7 @@ type TradeGroupDialogState = {
 type DayStatus = 'profit' | 'loss' | 'none';
 
 const weekdays = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
-
-function getDateKey(date: Date) {
-  return format(date, 'yyyy-MM-dd');
-}
+const sundayStartWeekdays = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'];
 
 function getTradeDateKey(trade: Trade) {
   return trade.exitDate.split('T')[0] || trade.entryDate.split('T')[0] || '';
@@ -92,7 +89,7 @@ function getStatusLabel(status: DayStatus) {
 }
 
 export function ExecutionMap({ trades }: ExecutionMapProps) {
-  const { streamerMode } = useStreamerMode();
+  const { streamerMode, sundayWeekStart } = useStreamerMode();
   const [selectedMonth, setSelectedMonth] = useState(() =>
     getInitialMonth(trades)
   );
@@ -124,20 +121,9 @@ export function ExecutionMap({ trades }: ExecutionMapProps) {
   }, [trades]);
 
   const calendarDays = useMemo(() => {
-    const monthStart = startOfMonth(selectedMonth);
-    const monthEnd = endOfMonth(selectedMonth);
-    const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 });
-    const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
-    const days: Date[] = [];
-    let cursor = calendarStart;
-
-    while (cursor <= calendarEnd) {
-      days.push(cursor);
-      cursor = addDays(cursor, 1);
-    }
-
-    return days;
-  }, [selectedMonth]);
+    return getMonthDays(selectedMonth, sundayWeekStart ? 0 : 1);
+  }, [selectedMonth, sundayWeekStart]);
+  const weekdayLabels = sundayWeekStart ? sundayStartWeekdays : weekdays;
 
   const openDayTradeGroup = (dateKey: string, dayTrades: Trade[]) => {
     if (dayTrades.length === 0) return;
@@ -193,7 +179,7 @@ export function ExecutionMap({ trades }: ExecutionMapProps) {
       </div>
 
       <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
-        {weekdays.map((weekday) => (
+        {weekdayLabels.map((weekday) => (
           <div
             key={weekday}
             className="px-0.5 pb-1 text-center font-mono text-[9px] font-semibold uppercase tracking-[0.08em] text-muted-foreground sm:px-1 sm:text-[10px] sm:tracking-[0.12em]"
@@ -204,35 +190,46 @@ export function ExecutionMap({ trades }: ExecutionMapProps) {
 
         {calendarDays.map((day) => {
           const dateKey = getDateKey(day);
-          const dayData = dayDataByDate.get(dateKey);
-          const status = getStatus(dayData);
           const isCurrentMonth = isSameMonth(day, selectedMonth);
+          const dayData = isCurrentMonth
+            ? dayDataByDate.get(dateKey)
+            : undefined;
+          const status = getStatus(dayData);
           const hasTrades = Boolean(dayData?.realTrades.length);
           const tradeCount = dayData?.realTrades.length ?? 0;
           const hasFavorite = Boolean(
             dayData?.realTrades.some((trade) => trade.isFavorite)
           );
 
+          if (!isCurrentMonth) {
+            return (
+              <div
+                key={dateKey}
+                aria-hidden="true"
+                className="h-[54px] rounded-lg border border-border bg-background p-1.5 min-[380px]:h-[62px] sm:h-[80px] sm:rounded-xl sm:p-2.5"
+              >
+                <span className="font-mono text-[11px] font-semibold text-muted-foreground/25 sm:text-sm">
+                  {format(day, 'd')}
+                </span>
+              </div>
+            );
+          }
+
           return (
             <div
               key={dateKey}
               className={cn(
                 'group flex h-[54px] min-w-0 flex-col justify-between rounded-lg border border-border bg-secondary/20 p-1.5 text-muted-foreground transition min-[380px]:h-[62px] sm:h-[80px] sm:rounded-xl sm:p-2.5',
-                isCurrentMonth && 'bg-background/40',
-                isCurrentMonth && hasTrades
-                  ? 'cursor-pointer hover:brightness-110'
-                  : 'cursor-default',
-                isCurrentMonth && !hasTrades && 'hover:border-profit/40',
+                'bg-background/40',
+                hasTrades ? 'cursor-pointer hover:brightness-110' : 'cursor-default',
+                !hasTrades && 'hover:border-profit/40',
                 status === 'profit' &&
-                  isCurrentMonth &&
                   'border-profit/40 bg-profit/15 text-foreground hover:border-profit/70',
                 status === 'loss' &&
-                  isCurrentMonth &&
-                  'border-loss/40 bg-loss/15 text-foreground hover:border-loss/70',
-                !isCurrentMonth && 'pointer-events-none opacity-25'
+                  'border-loss/40 bg-loss/15 text-foreground hover:border-loss/70'
               )}
               onClick={() => {
-                if (!isCurrentMonth || !dayData?.realTrades.length) return;
+                if (!dayData?.realTrades.length) return;
 
                 openDayTradeGroup(dateKey, dayData.realTrades);
               }}
@@ -242,14 +239,14 @@ export function ExecutionMap({ trades }: ExecutionMapProps) {
                 <span className="font-mono text-[11px] font-semibold sm:text-sm">
                   {format(day, 'd')}
                 </span>
-                {hasFavorite && isCurrentMonth && (
+                {hasFavorite && (
                   <span className="text-[11px] leading-none text-amber-300">
                     ★
                   </span>
                 )}
               </div>
 
-              {hasTrades && isCurrentMonth && (
+              {hasTrades && (
                 <span
                   className={cn(
                     'truncate font-mono text-[8px] font-bold min-[380px]:text-[10px] sm:text-sm',
@@ -261,7 +258,7 @@ export function ExecutionMap({ trades }: ExecutionMapProps) {
                 </span>
               )}
 
-              {hasTrades && isCurrentMonth && (
+              {hasTrades && (
                 <span
                   className={cn(
                     'self-end font-mono text-[9px] text-muted-foreground sm:text-xs',

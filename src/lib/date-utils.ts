@@ -15,14 +15,16 @@ import {
 } from 'date-fns';
 import { it } from 'date-fns/locale';
 
-export function getMonthDays(date: Date): Date[] {
-  const start = startOfWeek(startOfMonth(date), { weekStartsOn: 1 });
-  const end = endOfWeek(endOfMonth(date), { weekStartsOn: 1 });
+type WeekStartsOn = 0 | 1;
+
+export function getMonthDays(date: Date, weekStartsOn: WeekStartsOn = 1): Date[] {
+  const start = startOfWeek(startOfMonth(date), { weekStartsOn });
+  const end = endOfWeek(endOfMonth(date), { weekStartsOn });
   return eachDayOfInterval({ start, end });
 }
 
-export function getWeeksOfMonth(date: Date): Date[][] {
-  const days = getMonthDays(date);
+export function getWeeksOfMonth(date: Date, weekStartsOn: WeekStartsOn = 1): Date[][] {
+  const days = getMonthDays(date, weekStartsOn);
   const weeks: Date[][] = [];
   
   for (let i = 0; i < days.length; i += 7) {
