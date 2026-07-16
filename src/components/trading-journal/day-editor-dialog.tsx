@@ -1159,6 +1159,7 @@ export function DayEditorDialog({
                       const tagColor = getTagColor(tag.value, tagColors);
                       const tagManagementKey = `${row.id}:${tag.value}`;
                       const isManaged = managedTagKey === tagManagementKey;
+                      const shouldShowTagColor = isSelected || isManaged;
 
                       return (
                         <div key={tag.value} className="relative">
@@ -1179,11 +1180,11 @@ export function DayEditorDialog({
                             className={cn(
                               'w-full rounded-md border px-2.5 py-1.5 text-left font-mono text-[13px] leading-4 transition-colors',
                               isManaged && 'ring-1 ring-white/35',
-                              !isSelected &&
+                              !shouldShowTagColor &&
                                 'border-border bg-background/80 text-muted-foreground hover:bg-secondary hover:text-foreground'
                             )}
                             style={
-                              isSelected
+                              shouldShowTagColor
                                 ? {
                                     borderColor: `${tagColor}80`,
                                     backgroundColor: `${tagColor}1a`,
@@ -1220,6 +1221,7 @@ export function DayEditorDialog({
                       const tagColor = getTagColor(tag, tagColors);
                       const tagManagementKey = `${row.id}:${tag}`;
                       const isManaged = managedTagKey === tagManagementKey;
+                      const shouldShowTagColor = isSelected || isManaged;
 
                       return (
                         <div key={tag} className="relative">
@@ -1240,11 +1242,11 @@ export function DayEditorDialog({
                             className={cn(
                               'w-full rounded-md border px-2.5 py-1.5 text-left font-mono text-[13px] leading-4 transition-colors',
                               isManaged && 'ring-1 ring-white/35',
-                              !isSelected &&
+                              !shouldShowTagColor &&
                                 'border-border bg-background/80 text-muted-foreground hover:bg-secondary hover:text-foreground'
                             )}
                             style={
-                              isSelected
+                              shouldShowTagColor
                                 ? {
                                     borderColor: `${tagColor}80`,
                                     backgroundColor: `${tagColor}1a`,
