@@ -55,7 +55,7 @@ import {
 } from '@/lib/journal-export';
 
 const UPDATE_BANNER_KEY =
-  'dismissedUpdateBanner_eclipsejournal_v05';
+  'dismissedUpdateBanner_eclipsejournal_v05_revision2';
 const BACKTEST_STORAGE_KEY = 'eclipse-trading-journal-data-backtest';
 
 type TradeGroupDialogState = {
