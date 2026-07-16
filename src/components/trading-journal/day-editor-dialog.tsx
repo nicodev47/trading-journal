@@ -42,6 +42,11 @@ import {
 import { generateId } from '@/lib/calculations';
 import { useStreamerMode } from '@/contexts/streamer-mode-context';
 import { PROFILE_NAME_KEY } from '@/lib/export-filename';
+import {
+  DEFAULT_TAG_COLOR,
+  getTagColor,
+  TAG_COLOR_PALETTE,
+} from '@/lib/tag-colors';
 import { TradeShareDialog } from './trade-share-dialog';
 
 interface TradeRow {
@@ -105,6 +110,15 @@ function normalizeTime(value: string): string {
   return `${String(safeHours).padStart(2, '0')}:${String(safeMinutes).padStart(2, '0')}`;
 }
 
+function resizeNotesTextarea(element: HTMLTextAreaElement | null) {
+  if (!element) {
+    return;
+  }
+
+  element.style.height = 'auto';
+  element.style.height = `${element.scrollHeight}px`;
+}
+
 function formatDialogDate(date: string | Date) {
   if (typeof date === 'string') {
     const [year, month, day] = date.split('-');
@@ -138,9 +152,11 @@ interface DayEditorDialogProps {
   strategies: string[];
   availableStandardTags: string[];
   customTags: string[];
+  tagColors: Record<string, string>;
   onAddStrategy: (strategy: string) => void;
   onRemoveStrategy: (strategy: string) => void;
   onAddCustomTag: (tag: string) => void;
+  onUpdateTagColor: (tag: string, color: string) => void;
   onRemoveTag: (tag: string) => void;
 }
 
@@ -154,7 +170,9 @@ export function DayEditorDialog({
   onDeleteDay,
   availableStandardTags = [],
   customTags = [],
+  tagColors,
   onAddCustomTag,
+  onUpdateTagColor,
   onRemoveTag,
 }: DayEditorDialogProps) {
   const { streamerMode } = useStreamerMode();
@@ -162,7 +180,9 @@ export function DayEditorDialog({
   const [timeDrafts, setTimeDrafts] = useState<Record<string, string>>({});
   const [screenshotInputs, setScreenshotInputs] = useState<Record<string, { url: string; name: string }>>({});
   const [customTagInputs, setCustomTagInputs] = useState<Record<string, string>>({});
+  const [customTagColors, setCustomTagColors] = useState<Record<string, string>>({});
   const [isManagingTags, setIsManagingTags] = useState(false);
+  const [managedTagKey, setManagedTagKey] = useState<string | null>(null);
   const [tradeToDeleteId, setTradeToDeleteId] = useState<string | null>(null);
   const [tagToDelete, setTagToDelete] = useState<string | null>(null);
   const [isDeleteDayConfirmOpen, setIsDeleteDayConfirmOpen] = useState(false);
@@ -426,7 +446,9 @@ export function DayEditorDialog({
     setScreenshotInputs({});
     setTimeDrafts({});
     setCustomTagInputs({});
+    setCustomTagColors({});
     setIsManagingTags(false);
+    setManagedTagKey(null);
     setEditingScreenshot(null);
     setTagToDelete(null);
     setAutosaveStatus(initialSignature ? 'saved' : 'idle');
@@ -584,11 +606,16 @@ export function DayEditorDialog({
   };
 
   const handleSalva = () => {
-    Object.values(customTagInputs).forEach((input) => {
+    Object.entries(customTagInputs).forEach(([rowId, input]) => {
       const label = input.trim();
 
       if (label) {
-        onAddCustomTag(`${CUSTOM_TAG_PREFIX}${label}`);
+        const value = `${CUSTOM_TAG_PREFIX}${label}`;
+        onAddCustomTag(value);
+        onUpdateTagColor(
+          value,
+          customTagColors[rowId] ?? DEFAULT_TAG_COLOR
+        );
       }
     });
 
@@ -1129,12 +1156,20 @@ export function DayEditorDialog({
                   <div className="flex flex-wrap gap-2">
                     {availablePresetTags.map((tag) => {
                       const isSelected = row.tags.includes(tag.value);
+                      const tagColor = getTagColor(tag.value, tagColors);
+                      const tagManagementKey = `${row.id}:${tag.value}`;
+                      const isManaged = managedTagKey === tagManagementKey;
 
                       return (
                         <div key={tag.value} className="relative">
                           <button
                             type="button"
                             onClick={() => {
+                              if (isManagingTags) {
+                                setManagedTagKey(tagManagementKey);
+                                return;
+                              }
+
                               const nextTags = isSelected
                                 ? row.tags.filter((value) => value !== tag.value)
                                 : [...row.tags, tag.value];
@@ -1143,11 +1178,19 @@ export function DayEditorDialog({
                             }}
                             className={cn(
                               'w-full rounded-md border px-2.5 py-1.5 text-left font-mono text-[13px] leading-4 transition-colors',
-                              isManagingTags && 'pr-6',
-                              isSelected
-                                ? 'border-loss/50 bg-loss/10 text-loss'
-                                : 'border-border bg-background/80 text-muted-foreground hover:bg-secondary hover:text-foreground'
+                              isManaged && 'ring-1 ring-white/35',
+                              !isSelected &&
+                                'border-border bg-background/80 text-muted-foreground hover:bg-secondary hover:text-foreground'
                             )}
+                            style={
+                              isSelected
+                                ? {
+                                    borderColor: `${tagColor}80`,
+                                    backgroundColor: `${tagColor}1a`,
+                                    color: tagColor,
+                                  }
+                                : undefined
+                            }
                           >
                             <span className="mr-2" aria-hidden="true">
                               {tag.emoji}
@@ -1174,12 +1217,20 @@ export function DayEditorDialog({
 
                     {customTags.map((tag) => {
                       const isSelected = row.tags.includes(tag);
+                      const tagColor = getTagColor(tag, tagColors);
+                      const tagManagementKey = `${row.id}:${tag}`;
+                      const isManaged = managedTagKey === tagManagementKey;
 
                       return (
                         <div key={tag} className="relative">
                           <button
                             type="button"
                             onClick={() => {
+                              if (isManagingTags) {
+                                setManagedTagKey(tagManagementKey);
+                                return;
+                              }
+
                               const nextTags = isSelected
                                 ? row.tags.filter((value) => value !== tag)
                                 : [...row.tags, tag];
@@ -1188,11 +1239,19 @@ export function DayEditorDialog({
                             }}
                             className={cn(
                               'w-full rounded-md border px-2.5 py-1.5 text-left font-mono text-[13px] leading-4 transition-colors',
-                              isManagingTags && 'pr-6',
-                              isSelected
-                                ? 'border-loss/50 bg-loss/10 text-loss'
-                                : 'border-border bg-background/80 text-muted-foreground hover:bg-secondary hover:text-foreground'
+                              isManaged && 'ring-1 ring-white/35',
+                              !isSelected &&
+                                'border-border bg-background/80 text-muted-foreground hover:bg-secondary hover:text-foreground'
                             )}
+                            style={
+                              isSelected
+                                ? {
+                                    borderColor: `${tagColor}80`,
+                                    backgroundColor: `${tagColor}1a`,
+                                    color: tagColor,
+                                  }
+                                : undefined
+                            }
                           >
                             {tag.slice(CUSTOM_TAG_PREFIX.length)}
                           </button>
@@ -1239,6 +1298,10 @@ export function DayEditorDialog({
                         const value = `${CUSTOM_TAG_PREFIX}${label}`;
 
                         onAddCustomTag(value);
+                        onUpdateTagColor(
+                          value,
+                          customTagColors[row.id] ?? DEFAULT_TAG_COLOR
+                        );
 
                         if (!row.tags.includes(value)) {
                           updateTradeRow(row.id, 'tags', [...row.tags, value], 0);
@@ -1247,6 +1310,10 @@ export function DayEditorDialog({
                         setCustomTagInputs((previous) => ({
                           ...previous,
                           [row.id]: '',
+                        }));
+                        setCustomTagColors((previous) => ({
+                          ...previous,
+                          [row.id]: DEFAULT_TAG_COLOR,
                         }));
                       }}
                       placeholder="Crea un tag personalizzato"
@@ -1268,6 +1335,10 @@ export function DayEditorDialog({
                         const value = `${CUSTOM_TAG_PREFIX}${label}`;
 
                         onAddCustomTag(value);
+                        onUpdateTagColor(
+                          value,
+                          customTagColors[row.id] ?? DEFAULT_TAG_COLOR
+                        );
 
                         if (!row.tags.includes(value)) {
                           updateTradeRow(row.id, 'tags', [...row.tags, value], 0);
@@ -1276,6 +1347,10 @@ export function DayEditorDialog({
                         setCustomTagInputs((previous) => ({
                           ...previous,
                           [row.id]: '',
+                        }));
+                        setCustomTagColors((previous) => ({
+                          ...previous,
+                          [row.id]: DEFAULT_TAG_COLOR,
                         }));
                       }}
                     >
@@ -1287,10 +1362,56 @@ export function DayEditorDialog({
                       size="sm"
                       className="h-8 px-3 font-mono text-xs"
                       disabled={!canManageTags}
-                      onClick={() => setIsManagingTags(previous => !previous)}
+                      onClick={() =>
+                        setIsManagingTags((previous) => {
+                          setManagedTagKey(null);
+                          return !previous;
+                        })
+                      }
                     >
                       Gestisci
                     </Button>
+                    {isManagingTags &&
+                    managedTagKey?.startsWith(`${row.id}:`) ? (
+                      <div className="min-[430px]:col-span-3">
+                        {(() => {
+                          const managedTag = managedTagKey.slice(
+                            `${row.id}:`.length
+                          );
+                          const presetTag = TRADE_TAGS.find(
+                            (tag) => tag.value === managedTag
+                          );
+                          const label =
+                            presetTag?.label ??
+                            managedTag.slice(CUSTOM_TAG_PREFIX.length);
+
+                          return (
+                            <TagColorPicker
+                              value={getTagColor(managedTag, tagColors)}
+                              label={label}
+                              onChange={(color) =>
+                                onUpdateTagColor(managedTag, color)
+                              }
+                            />
+                          );
+                        })()}
+                      </div>
+                    ) : customTagInputs[row.id]?.trim() ? (
+                      <div className="min-[430px]:col-span-3">
+                        <TagColorPicker
+                          value={
+                            customTagColors[row.id] ?? DEFAULT_TAG_COLOR
+                          }
+                          label="nuovo tag"
+                          onChange={(color) =>
+                            setCustomTagColors((previous) => ({
+                              ...previous,
+                              [row.id]: color,
+                            }))
+                          }
+                        />
+                      </div>
+                    ) : null}
                   </div>
                 </div>
 
@@ -1300,11 +1421,15 @@ export function DayEditorDialog({
                   </Label>
 
                   <Textarea
+                    ref={resizeNotesTextarea}
                     value={row.notes}
-                    onChange={e => updateTradeRow(row.id, 'notes', e.target.value)}
+                    onChange={(event) => {
+                      resizeNotesTextarea(event.currentTarget);
+                      updateTradeRow(row.id, 'notes', event.target.value);
+                    }}
                     onBlur={() => persistCurrentRows()}
-                    placeholder="Cosa è successo in questo trade? Strategia, tag, lezioni..."
-                    className="min-h-[72px] resize-y border-border bg-background text-sm"
+                    placeholder="Cosa è successo in questo trade? Narrativa, Setup, Emozioni..."
+                    className="min-h-[72px] resize-none overflow-hidden border-border bg-background text-sm"
                   />
                 </div>
               </div>
@@ -1468,5 +1593,42 @@ export function DayEditorDialog({
         initialHandle={initialShareHandle}
       />
     </Dialog>
+  );
+}
+
+function TagColorPicker({
+  value,
+  label,
+  onChange,
+}: {
+  value: string;
+  label: string;
+  onChange: (color: string) => void;
+}) {
+  return (
+    <div
+      className="mt-1 flex w-fit items-center gap-1"
+      aria-label={`Colore del tag ${label}`}
+    >
+      {TAG_COLOR_PALETTE.map((color) => (
+        <button
+          key={color}
+          type="button"
+          aria-label={`Imposta colore ${color}`}
+          aria-pressed={value === color}
+          className={cn(
+            'size-4 rounded-full border transition-transform hover:scale-110',
+            value === color
+              ? 'border-white ring-1 ring-white/50'
+              : 'border-white/15'
+          )}
+          style={{ backgroundColor: color }}
+          onClick={(event) => {
+            event.stopPropagation();
+            onChange(color);
+          }}
+        />
+      ))}
+    </div>
   );
 }

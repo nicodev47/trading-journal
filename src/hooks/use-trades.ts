@@ -47,6 +47,7 @@ const initialState: JournalState = {
   tagsInitialized: true,
   strategies: [],
   customTags: [],
+  tagColors: {},
   weeklyPlans: [],
   settings: {
     currency: 'USD',
@@ -99,6 +100,10 @@ const parseImportedJournal = (jsonString: string): JournalState | null => {
       tagsInitialized: true,
       strategies: data.strategies || [],
       customTags,
+      tagColors:
+        data.tagColors && typeof data.tagColors === 'object'
+          ? data.tagColors
+          : {},
       weeklyPlans: data.weeklyPlans || [],
       settings: {
         ...initialState.settings,
@@ -330,6 +335,10 @@ const mergeJournalState = (
     customTags: Array.from(
       new Set([...currentState.customTags, ...importedState.customTags])
     ),
+    tagColors: {
+      ...importedState.tagColors,
+      ...currentState.tagColors,
+    },
     weeklyPlans: mergedWeeklyPlans,
     settings: currentState.settings,
   };
@@ -456,6 +465,9 @@ export function useTrades(workspace: JournalWorkspace = 'personal') {
       tagsInitialized: true,
       tags: prev.tags.filter(t => t !== tag),
       customTags: prev.customTags.filter(value => value !== tag),
+      tagColors: Object.fromEntries(
+        Object.entries(prev.tagColors).filter(([value]) => value !== tag)
+      ),
       trades: prev.trades.map(trade => ({
         ...trade,
         tags: (trade.tags || []).filter(value => value !== tag),
@@ -498,6 +510,9 @@ export function useTrades(workspace: JournalWorkspace = 'personal') {
       tagsInitialized: true,
       tags: prev.tags.filter(value => value !== tag),
       customTags: prev.customTags.filter(value => value !== tag),
+      tagColors: Object.fromEntries(
+        Object.entries(prev.tagColors).filter(([value]) => value !== tag)
+      ),
       trades: prev.trades.map(trade => ({
         ...trade,
         tags: (trade.tags || []).filter(value => value !== tag),
@@ -506,6 +521,16 @@ export function useTrades(workspace: JournalWorkspace = 'personal') {
         ...missedTrade,
         tags: (missedTrade.tags || []).filter(value => value !== tag),
       })),
+    }));
+  }, []);
+
+  const updateTagColor = useCallback((tag: string, color: string) => {
+    setState(prev => ({
+      ...prev,
+      tagColors: {
+        ...prev.tagColors,
+        [tag]: color,
+      },
     }));
   }, []);
 
@@ -644,6 +669,7 @@ export function useTrades(workspace: JournalWorkspace = 'personal') {
     tags: state.tags,
     strategies: state.strategies,
     customTags: state.customTags,
+    tagColors: state.tagColors,
     weeklyPlans: state.weeklyPlans,
     settings: state.settings,
     isLoaded,
@@ -660,6 +686,7 @@ export function useTrades(workspace: JournalWorkspace = 'personal') {
     removeStrategy,
     addCustomTag,
     removeCustomTag,
+    updateTagColor,
     updateSettings,
     saveWeeklyPlan,
     getWeeklyPlan,

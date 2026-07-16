@@ -5,14 +5,20 @@ import {
   isValidStatTrade,
 } from './calculations';
 
+export type OperatingWindowName =
+  | 'Sessione di Londra'
+  | 'Inizio sessione'
+  | 'Fine sessione'
+  | 'Late New York / Asia';
+
 interface OperatingWindowDefinition {
-  name: string;
+  name: OperatingWindowName;
   start: number;
   end: number;
 }
 
 export interface OperatingWindowResult {
-  name: string;
+  name: OperatingWindowName;
   description: string;
   pnl: number;
   tradeCount: number;
@@ -20,6 +26,11 @@ export interface OperatingWindowResult {
 }
 
 const OPERATING_WINDOWS: OperatingWindowDefinition[] = [
+  {
+    name: 'Sessione di Londra',
+    start: 0,
+    end: 15 * 60 + 30,
+  },
   {
     name: 'Inizio sessione',
     start: 15 * 60 + 30,
@@ -30,12 +41,12 @@ const OPERATING_WINDOWS: OperatingWindowDefinition[] = [
     start: 15 * 60 + 50,
     end: 16 * 60 + 11,
   },
+  {
+    name: 'Late New York / Asia',
+    start: 16 * 60 + 11,
+    end: 24 * 60,
+  },
 ];
-
-const OUTSIDE_WINDOW = {
-  name: 'Fuori orario',
-  description: 'Trade fuori dalle finestre operative',
-} as const;
 
 const formatMinutes = (minutes: number) => {
   const hours = Math.floor(minutes / 60);
@@ -70,6 +81,21 @@ const getTradeTimeInMinutes = (trade: Trade) => {
   return hours * 60 + minutes;
 };
 
+export function getOperatingWindowName(
+  trade: Trade
+): OperatingWindowName | null {
+  const timeInMinutes = getTradeTimeInMinutes(trade);
+
+  if (timeInMinutes === null) return null;
+
+  return (
+    OPERATING_WINDOWS.find(
+      window =>
+        timeInMinutes >= window.start && timeInMinutes < window.end
+    )?.name ?? null
+  );
+}
+
 export function getBestOperatingWindow(
   trades: Trade[]
 ): OperatingWindowResult | null {
@@ -87,15 +113,6 @@ export function getBestOperatingWindow(
       winningTrades: 0,
       losingTrades: 0,
     })),
-    {
-      ...OUTSIDE_WINDOW,
-      start: null,
-      end: null,
-      pnl: 0,
-      tradeCount: 0,
-      winningTrades: 0,
-      losingTrades: 0,
-    },
   ];
 
   validTrades.forEach(trade => {
@@ -103,14 +120,14 @@ export function getBestOperatingWindow(
     const configuredWindow =
       timeInMinutes === null
         ? undefined
-        : groups.slice(0, OPERATING_WINDOWS.length).find(
+        : groups.find(
             window =>
-              window.start !== null &&
-              window.end !== null &&
               timeInMinutes >= window.start &&
               timeInMinutes < window.end
           );
-    const group = configuredWindow ?? groups[groups.length - 1];
+    if (!configuredWindow) return;
+
+    const group = configuredWindow;
     const netPnl = trade.pnl - trade.commission;
 
     group.pnl += netPnl;
@@ -133,6 +150,8 @@ export function getBestOperatingWindow(
       tradeCount: group.tradeCount,
       winRate: calculateWinRate(group.winningTrades, group.losingTrades),
     }));
+
+  if (populatedGroups.length === 0) return null;
 
   return populatedGroups.reduce((best, current) => {
     if (current.pnl !== best.pnl) {

@@ -38,16 +38,16 @@ const updates = [
       "Il Risk-to-Reward Ratio sostituisce il Profit Factor e confronta la media dei trade vincenti con quella dei trade perdenti, fornendo un dato più rilevante per valutare l'efficacia della strategia.",
   },
   {
-    icon: "🧭",
-    title: "Tutorial Migliorato",
+    icon: "🎨",
+    title: "Colori personalizzati per i tag",
     description:
-      "Il tutorial guidato è ora più completo e accompagna passo dopo passo tra statistiche principali, dati dettagliati, curva Equity e sezione Analisi.",
+      "Ora puoi assegnare un colore ai tag durante la creazione o modificarlo in seguito. Il colore scelto viene utilizzato anche nelle barre della sezione Tag Analytics.",
   },
   {
     icon: "🛠️",
     title: "Bug Fix & Improvements",
     description:
-      "• Risolti numerosi bug minori. • Migliorata la stabilità generale. • Ottimizzazioni dell'interfaccia e dell'esperienza utente. • Miglioramenti generali delle prestazioni.",
+      "• Tutorial guidato migliorato. • Risolti numerosi bug minori. • Migliorata la stabilità generale. • Ottimizzazioni dell'interfaccia e dell'esperienza utente. • Miglioramenti generali delle prestazioni.",
   },
 ];
 

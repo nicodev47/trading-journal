@@ -2,7 +2,11 @@
 
 import { useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { getBestOperatingWindow } from '@/lib/operating-windows';
+import {
+  getBestOperatingWindow,
+  getOperatingWindowName,
+  type OperatingWindowName,
+} from '@/lib/operating-windows';
 import { isValidTradeSetup, type Trade } from '@/lib/types/trade';
 import { useStreamerMode } from '@/contexts/streamer-mode-context';
 import { cn } from '@/lib/utils';
@@ -13,11 +17,13 @@ import {
 import { StatisticsCardGrid } from './statistics-card-grid';
 import {
   calculateMaxDrawdown,
+  calculateOperationalFrequency,
   calculateRiskRewardRatio,
   calculateStatistics,
   calculateWinRate,
   getTradeOutcome,
   isValidStatTrade,
+  MIN_TRADES_PER_WEEK,
 } from '@/lib/calculations';
 
 interface AdvancedStatsGridProps {
@@ -25,6 +31,7 @@ interface AdvancedStatsGridProps {
   extended?: boolean;
 }
 
+const OPERATIONAL_CONSISTENCY_TARGET = 70;
 const WEEKDAY_NAMES = [
   'Domenica',
   'Lunedì',
@@ -34,12 +41,34 @@ const WEEKDAY_NAMES = [
   'Venerdì',
   'Sabato',
 ] as const;
+const MONTH_NAMES = [
+  'Gennaio',
+  'Febbraio',
+  'Marzo',
+  'Aprile',
+  'Maggio',
+  'Giugno',
+  'Luglio',
+  'Agosto',
+  'Settembre',
+  'Ottobre',
+  'Novembre',
+  'Dicembre',
+] as const;
+
+function formatSignedCurrency(value: number) {
+  const sign = value > 0 ? '+' : '';
+  return `${sign}${value.toLocaleString('it-IT', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })} USD`;
+}
 
 export function AdvancedStatsGrid({
   trades,
   extended = false,
 }: AdvancedStatsGridProps) {
-  const { streamerMode } = useStreamerMode();
+  const { streamerMode, sundayWeekStart } = useStreamerMode();
   const data = useMemo(() => {
     const validTrades = trades.filter(isValidStatTrade);
     const winningTrades = validTrades.filter((trade) => getTradeOutcome(trade) === 'win');
@@ -49,43 +78,58 @@ export function AdvancedStatsGrid({
     const shortTrades = validTrades.filter((trade) => trade.direction === 'short').length;
     const tradesByDay = new Map<string, number>();
     const setupStats = new Map<string, { trades: number; wins: number; losses: number }>();
+    const operatingWindowStats = new Map<OperatingWindowName, number>();
     const weekdayStats = new Map<
       number,
       { trades: number; wins: number; losses: number; pnl: number }
     >();
+    const monthStats = new Map<string, { trades: number; pnl: number }>();
 
     validTrades.forEach((trade) => {
       const date = trade.exitDate.split('T')[0];
       const netPnl = trade.pnl - trade.commission;
       tradesByDay.set(date, (tradesByDay.get(date) ?? 0) + 1);
-      const tradeDate = new Date(trade.exitDate);
+      const operatingWindow = getOperatingWindowName(trade);
+
+      if (operatingWindow) {
+        operatingWindowStats.set(
+          operatingWindow,
+          (operatingWindowStats.get(operatingWindow) ?? 0) + 1
+        );
+      }
+
+      const tradeDate = new Date(`${date}T12:00:00`);
 
       if (!Number.isNaN(tradeDate.getTime())) {
         const weekday = tradeDate.getDay();
-        const stats = weekdayStats.get(weekday) ?? {
+        const weekdayData = weekdayStats.get(weekday) ?? {
           trades: 0,
           wins: 0,
           losses: 0,
           pnl: 0,
         };
-        stats.trades += 1;
-        stats.pnl += netPnl;
         const outcome = getTradeOutcome(trade);
-        if (outcome === 'win') stats.wins += 1;
-        if (outcome === 'loss') stats.losses += 1;
-        weekdayStats.set(weekday, stats);
+        weekdayData.trades += 1;
+        weekdayData.pnl += netPnl;
+        if (outcome === 'win') weekdayData.wins += 1;
+        if (outcome === 'loss') weekdayData.losses += 1;
+        weekdayStats.set(weekday, weekdayData);
+
+        const monthKey = date.slice(0, 7);
+        const monthData = monthStats.get(monthKey) ?? { trades: 0, pnl: 0 };
+        monthData.trades += 1;
+        monthData.pnl += netPnl;
+        monthStats.set(monthKey, monthData);
       }
 
       const rawSetup = trade.strategy.trim();
-      const setup = isValidTradeSetup(rawSetup) ? rawSetup : rawSetup ? 'Legacy' : '';
-      if (setup) {
-        const stats = setupStats.get(setup) ?? { trades: 0, wins: 0, losses: 0 };
-        stats.trades += 1;
-        const outcome = getTradeOutcome(trade);
-        if (outcome === 'win') stats.wins += 1;
-        if (outcome === 'loss') stats.losses += 1;
-        setupStats.set(setup, stats);
-      }
+      const setup = isValidTradeSetup(rawSetup) ? rawSetup : 'Senza Setup';
+      const stats = setupStats.get(setup) ?? { trades: 0, wins: 0, losses: 0 };
+      stats.trades += 1;
+      const outcome = getTradeOutcome(trade);
+      if (outcome === 'win') stats.wins += 1;
+      if (outcome === 'loss') stats.losses += 1;
+      setupStats.set(setup, stats);
 
     });
 
@@ -115,20 +159,95 @@ export function AdvancedStatsGrid({
       },
       { name: null, trades: 0, winRate: -1 }
     );
-    const weekdayPerformance = Array.from(weekdayStats.entries()).map(
-      ([weekday, stats]) => ({
+    const mostUsedOperatingWindow = Array.from(
+      operatingWindowStats.entries()
+    ).sort((a, b) => b[1] - a[1])[0];
+    const timedTrades = Array.from(operatingWindowStats.values()).reduce(
+      (sum, count) => sum + count,
+      0
+    );
+    const operationalConsistency = timedTrades > 0
+      ? ((mostUsedOperatingWindow?.[1] ?? 0) / timedTrades) * 100
+      : 0;
+    const bestWeekday = Array.from(weekdayStats.entries())
+      .map(([weekday, stats]) => ({
         name: WEEKDAY_NAMES[weekday],
         trades: stats.trades,
         winRate: calculateWinRate(stats.wins, stats.losses),
         pnl: stats.pnl,
-      })
-    );
-    const bestWeekday = [...weekdayPerformance].sort(
-      (a, b) =>
-        b.winRate - a.winRate ||
-        b.trades - a.trades ||
-        b.pnl - a.pnl
+      }))
+      .sort(
+        (a, b) =>
+          b.winRate - a.winRate ||
+          b.trades - a.trades ||
+          b.pnl - a.pnl
+      )[0];
+    const worstWeekday = Array.from(weekdayStats.entries())
+      .map(([weekday, stats]) => ({
+        name: WEEKDAY_NAMES[weekday],
+        trades: stats.trades,
+        winRate: calculateWinRate(stats.wins, stats.losses),
+        pnl: stats.pnl,
+      }))
+      .sort(
+        (a, b) =>
+          a.winRate - b.winRate ||
+          b.trades - a.trades ||
+          a.pnl - b.pnl
+      )[0];
+    const bestMonthEntry = Array.from(monthStats.entries()).sort(
+      (a, b) => b[1].pnl - a[1].pnl || b[1].trades - a[1].trades
     )[0];
+    const worstMonthEntry = Array.from(monthStats.entries()).sort(
+      (a, b) => a[1].pnl - b[1].pnl || b[1].trades - a[1].trades
+    )[0];
+    const bestMonth = bestMonthEntry
+      ? {
+          name: (() => {
+            const month = Number(bestMonthEntry[0].split('-')[1]);
+            return MONTH_NAMES[month - 1];
+          })(),
+          trades: bestMonthEntry[1].trades,
+          pnl: bestMonthEntry[1].pnl,
+        }
+      : null;
+    const worstMonth = worstMonthEntry
+      ? {
+          name: (() => {
+            const month = Number(worstMonthEntry[0].split('-')[1]);
+            return MONTH_NAMES[month - 1];
+          })(),
+          trades: worstMonthEntry[1].trades,
+          pnl: worstMonthEntry[1].pnl,
+        }
+      : null;
+    const operationalFrequency = calculateOperationalFrequency(
+      validTrades,
+      sundayWeekStart ? 0 : 1
+    );
+    const sortedValidTrades = [...validTrades].sort(
+      (a, b) =>
+        new Date(a.exitDate).getTime() - new Date(b.exitDate).getTime()
+    );
+    let currentWinningProfit = 0;
+    let currentWinningTrades = 0;
+    let maxConsecutiveProfit = 0;
+    let maxConsecutiveProfitTrades = 0;
+
+    sortedValidTrades.forEach((trade) => {
+      if (getTradeOutcome(trade) === 'win') {
+        currentWinningProfit += trade.pnl - trade.commission;
+        currentWinningTrades += 1;
+
+        if (currentWinningProfit > maxConsecutiveProfit) {
+          maxConsecutiveProfit = currentWinningProfit;
+          maxConsecutiveProfitTrades = currentWinningTrades;
+        }
+      } else {
+        currentWinningProfit = 0;
+        currentWinningTrades = 0;
+      }
+    });
 
     return {
       avgWin: winningTrades.length ? grossWins / winningTrades.length : 0,
@@ -151,9 +270,19 @@ export function AdvancedStatsGrid({
       longestPositiveStreak: tradeStatistics.longestWinStreak,
       riskRewardRatio: calculateRiskRewardRatio(trades),
       maxDrawdown: calculateMaxDrawdown(trades),
+      mostUsedOperatingWindow: mostUsedOperatingWindow?.[0] ?? null,
+      mostUsedOperatingWindowTrades: mostUsedOperatingWindow?.[1] ?? 0,
+      timedTrades,
+      operationalConsistency,
       bestWeekday,
+      worstWeekday,
+      bestMonth,
+      worstMonth,
+      operationalFrequency,
+      maxConsecutiveProfit,
+      maxConsecutiveProfitTrades,
     };
-  }, [trades]);
+  }, [sundayWeekStart, trades]);
 
   const formatCurrency = (value: number) =>
     `${value.toLocaleString('it-IT', {
@@ -162,6 +291,10 @@ export function AdvancedStatsGrid({
     })} USD`;
   const riskRewardPresentation = getRiskRewardCardPresentation(
     data.riskRewardRatio
+  );
+  const operationalConsistencyProgress = Math.min(
+    (data.operationalConsistency / OPERATIONAL_CONSISTENCY_TARGET) * 100,
+    100
   );
 
   return (
@@ -199,31 +332,45 @@ export function AdvancedStatsGrid({
       <Card className="self-start rounded-2xl border border-border bg-card/95 py-0 shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
         <CardContent className="flex min-h-[112px] min-w-0 flex-col justify-center p-3.5 md:min-h-[148px] md:p-4">
           <p className="font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground md:tracking-[0.18em]">
-            Serie attuale
+            {extended ? 'Serie massima' : 'Serie attuale'}
           </p>
 
           <p
             className={`mt-2 font-mono text-xl font-bold tracking-tight md:mt-3 md:text-2xl ${
-              data.currentStreakType === 'loss' ? 'text-loss' : 'text-profit'
+              !extended && data.currentStreakType === 'loss'
+                ? 'text-loss'
+                : 'text-profit'
             }`}
           >
-            {data.currentStreak}{' '}
-            {data.currentStreakType === 'loss' ? 'loss' : 'win'}
-            {data.currentStreakType === 'win' && data.currentStreak >= 3 && ' 🔥'}
+            {extended ? data.longestPositiveStreak : data.currentStreak}{' '}
+            {extended || data.currentStreakType !== 'loss' ? 'win' : 'loss'}
+            {(extended
+              ? data.longestPositiveStreak >= 3
+              : data.currentStreakType === 'win' && data.currentStreak >= 3) &&
+              ' 🔥'}
           </p>
 
           <p className="mt-1 font-mono text-[11px] text-muted-foreground">
-            Migliore: {data.longestPositiveStreak} win consecutive
+            {extended
+              ? 'Massimo annuale di win consecutive'
+              : `Migliore: ${data.longestPositiveStreak} win consecutive`}
           </p>
 
           <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-secondary md:mt-4">
             <div
               className={`h-full rounded-full transition-all ${
-                data.currentStreakType === 'loss'
+                !extended && data.currentStreakType === 'loss'
                   ? 'bg-loss/80'
                   : 'bg-profit/80'
               }`}
-              style={{ width: data.currentStreak > 0 ? '100%' : '0%' }}
+              style={{
+                width:
+                  (extended
+                    ? data.longestPositiveStreak
+                    : data.currentStreak) > 0
+                    ? '100%'
+                    : '0%',
+              }}
             />
           </div>
         </CardContent>
@@ -398,17 +545,159 @@ export function AdvancedStatsGrid({
           />
 
           <CompactAnalysisCard
-            title="Giorno più performante"
+            title="Costanza Operativa"
+            value={data.mostUsedOperatingWindow ?? '—'}
+            subtitle={
+              data.mostUsedOperatingWindow
+                ? `${data.mostUsedOperatingWindowTrades} / ${
+                    data.timedTrades
+                  } trade - ${data.operationalConsistency.toFixed(0)}% dei trade`
+                : 'Nessun orario registrato'
+            }
+            tone={
+              data.mostUsedOperatingWindow &&
+              data.operationalConsistency >= OPERATIONAL_CONSISTENCY_TARGET
+                ? 'profit'
+                : data.mostUsedOperatingWindow
+                  ? 'loss'
+                  : 'neutral'
+            }
+            progress={operationalConsistencyProgress}
+            hasData={data.mostUsedOperatingWindow !== null}
+            prominentValue
+          />
+
+          <CompactAnalysisCard
+            title="Giorno operativo migliore"
             value={data.bestWeekday?.name ?? '—'}
             subtitle={
               data.bestWeekday
                 ? `${data.bestWeekday.winRate.toFixed(0)}% WR · ${
                     data.bestWeekday.trades
-                  } trade`
+                  } trade · ${
+                    streamerMode
+                      ? '******'
+                      : formatSignedCurrency(data.bestWeekday.pnl)
+                  }`
                 : 'Nessun trade registrato'
             }
-            tone="profit"
+            tone={
+              !data.bestWeekday
+                ? 'neutral'
+                : data.bestWeekday.pnl < 0
+                  ? 'loss'
+                  : 'profit'
+            }
             progress={data.bestWeekday?.winRate ?? 0}
+            hasData={Boolean(data.bestWeekday)}
+            prominentValue
+          />
+
+          <CompactAnalysisCard
+            title="Profitto massimo realizzato di fila"
+            value={
+              data.maxConsecutiveProfitTrades === 0
+                ? '—'
+                : streamerMode
+                  ? '******'
+                  : formatCurrency(data.maxConsecutiveProfit)
+            }
+            subtitle={
+              data.maxConsecutiveProfitTrades > 0
+                ? `${data.maxConsecutiveProfitTrades} win consecutive`
+                : 'Nessuna serie positiva'
+            }
+            tone={data.maxConsecutiveProfitTrades > 0 ? 'profit' : 'neutral'}
+            hasData={data.maxConsecutiveProfitTrades > 0}
+          />
+
+          <CompactAnalysisCard
+            title="Mese migliore"
+            value={data.bestMonth?.name ?? '—'}
+            subtitle={
+              data.bestMonth
+                ? `${streamerMode ? '******' : formatCurrency(
+                    data.bestMonth.pnl
+                  )} · ${data.bestMonth.trades} trade`
+                : 'Nessun mese disponibile'
+            }
+            tone={
+              data.bestMonth
+                ? data.bestMonth.pnl >= 0
+                  ? 'profit'
+                  : 'loss'
+                : 'neutral'
+            }
+            hasData={data.bestMonth !== null}
+            prominentValue
+          />
+
+          <CompactAnalysisCard
+            title="Mese peggiore"
+            value={data.worstMonth?.name ?? '—'}
+            subtitle={
+              data.worstMonth
+                ? `${streamerMode ? '******' : formatCurrency(
+                    data.worstMonth.pnl
+                  )} · ${data.worstMonth.trades} trade`
+                : 'Nessun mese disponibile'
+            }
+            tone={
+              data.worstMonth
+                ? data.worstMonth.pnl < 0
+                  ? 'loss'
+                  : 'profit'
+                : 'neutral'
+            }
+            hasData={data.worstMonth !== null}
+            prominentValue
+          />
+
+          <CompactAnalysisCard
+            title="Frequenza operativa"
+            value={
+              data.operationalFrequency.totalWeeks > 0
+                ? `${data.operationalFrequency.weeksWithMinimumTrades}/${data.operationalFrequency.totalWeeks} settimane`
+                : '—'
+            }
+            subtitle={`Settimane con almeno ${MIN_TRADES_PER_WEEK} trade`}
+            tone={
+              data.operationalFrequency.totalWeeks === 0
+                ? 'neutral'
+                : data.operationalFrequency.score > 50
+                  ? 'profit'
+                  : 'loss'
+            }
+            progress={data.operationalFrequency.score}
+            hasData={data.operationalFrequency.totalWeeks > 0}
+          />
+
+          <CompactAnalysisCard
+            title="Giorno operativo peggiore"
+            value={data.worstWeekday?.name ?? '—'}
+            subtitle={
+              data.worstWeekday
+                ? `${data.worstWeekday.winRate.toFixed(0)}% WR · ${
+                    data.worstWeekday.trades
+                  } trade · ${
+                    streamerMode
+                      ? '******'
+                      : formatSignedCurrency(data.worstWeekday.pnl)
+                  }`
+                : 'Nessun trade registrato'
+            }
+            tone={
+              !data.worstWeekday
+                ? 'neutral'
+                : data.worstWeekday.pnl < 0
+                  ? 'loss'
+                  : 'profit'
+            }
+            progress={
+              data.worstWeekday ? 100 : 0
+            }
+            hasData={Boolean(data.worstWeekday)}
+            prominentValue
           />
         </>
       )}
@@ -424,6 +713,7 @@ function CompactAnalysisCard({
   tone,
   progress,
   hasData,
+  prominentValue = false,
 }: {
   title: string;
   value: string;
@@ -431,6 +721,7 @@ function CompactAnalysisCard({
   tone: 'profit' | 'loss' | 'neutral';
   progress?: number;
   hasData?: boolean;
+  prominentValue?: boolean;
 }) {
   const indicatorWidth = progress === undefined
     ? hasData
@@ -445,7 +736,9 @@ function CompactAnalysisCard({
           {title}
         </p>
         <p
-          className={`mt-2 break-words font-mono text-lg font-bold tracking-tight md:mt-3 md:text-xl ${
+          className={`mt-2 break-words font-mono font-bold tracking-tight md:mt-3 ${
+            prominentValue ? 'text-xl md:text-2xl' : 'text-lg md:text-xl'
+          } ${
             tone === 'profit'
               ? 'text-profit'
               : tone === 'loss'

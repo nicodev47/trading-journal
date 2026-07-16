@@ -52,9 +52,14 @@ import {
   MIN_TRADES_PER_WEEK,
 } from '@/lib/calculations';
 import { formatMonthYear } from '@/lib/date-utils';
+import {
+  getOperatingWindowName,
+  type OperatingWindowName,
+} from '@/lib/operating-windows';
 
 interface AnalysisDiagnosticsProps {
   trades: Trade[];
+  onUpdateTrade: (id: string, updates: Partial<Trade>) => void;
 }
 
 type TradeGroupDialogState = {
@@ -64,6 +69,7 @@ type TradeGroupDialogState = {
 };
 
 const ECLIPSE_SCORE_MAX_RISK_REWARD = 1.2;
+const ECLIPSE_SCORE_TARGET_SESSION_CONSISTENCY = 0.7;
 
 type ChartClickState = {
   activePayload?: Array<{
@@ -80,7 +86,7 @@ type TradeLogFilters = {
   setup: string;
   tag: string;
   favoritesOnly: 'yes' | 'no';
-  displayOrder: 'latest' | 'earliest' | 'profit-high' | 'profit-low' | 'time';
+  displayOrder: 'latest' | 'earliest' | 'profit-high' | 'profit-low';
   dateFrom: string;
   dateTo: string;
 };
@@ -192,45 +198,9 @@ function getTradeTime(trade: Trade) {
   return time.slice(0, 5) || '—';
 }
 
-function getTradeTimeMinutes(trade: Trade) {
-  const [hours, minutes] = getTradeTime(trade).split(':').map(Number);
-
-  return Number.isFinite(hours) && Number.isFinite(minutes)
-    ? hours * 60 + minutes
-    : Number.MAX_SAFE_INTEGER;
-}
-
-function getSessionWindow(trade: Trade) {
-  const time = getTradeTime(trade);
-  const [hours, minutes] = time.split(':').map(Number);
-
-  if (!Number.isFinite(hours) || !Number.isFinite(minutes)) {
-    return 'Nessun dato';
-  }
-
-  const totalMinutes = hours * 60 + minutes;
-
-  if (totalMinutes >= 15 * 60 + 30 && totalMinutes <= 15 * 60 + 50) {
-    return 'Inizio sessione';
-  }
-
-  if (totalMinutes <= 17 * 60) {
-    return 'Metà sessione';
-  }
-
-  return 'Fine sessione';
-}
-
-function getSessionWindowScore(label: string) {
-  if (label === 'Inizio sessione') return 100;
-  if (label === 'Metà sessione') return 60;
-  if (label === 'Fine sessione') return 25;
-  return 0;
-}
-
 function getEclipseMetricCardLabel(metric: string) {
   if (metric === 'Freq. operativa') return 'Frequenza operativa';
-  if (metric === 'Ses. operativa') return 'Sessione operativa';
+  if (metric === 'Costanza operativa') return 'Costanza Operativa';
   if (metric === 'Risk/Reward') return 'Risk-to-Reward Ratio';
   return metric;
 }
@@ -242,7 +212,7 @@ function getTradeDateKey(trade: Trade) {
 function getSetupName(trade: Trade) {
   const setup = trade.strategy?.trim();
 
-  return isValidTradeSetup(setup) ? setup : 'Legacy';
+  return isValidTradeSetup(setup) ? setup : 'Senza Setup';
 }
 
 function getTagLabel(value: string) {
@@ -500,7 +470,7 @@ function EclipseScoreAngleTick({
     nextAnchor = 'start';
   }
 
-  if (label === 'Ses. operativa') {
+  if (label === 'Costanza operativa') {
     nextX -= 26;
     nextAnchor = 'end';
   }
@@ -558,7 +528,10 @@ function CumulativePnlTooltip({
   );
 }
 
-export function AnalysisDiagnostics({ trades }: AnalysisDiagnosticsProps) {
+export function AnalysisDiagnostics({
+  trades,
+  onUpdateTrade,
+}: AnalysisDiagnosticsProps) {
   const { streamerMode, sundayWeekStart } = useStreamerMode();
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
   const [tradeGroupDialog, setTradeGroupDialog] =
@@ -673,22 +646,45 @@ export function AnalysisDiagnostics({ trades }: AnalysisDiagnosticsProps) {
       sundayWeekStart ? 0 : 1
     );
     const frequencyScore = operationalFrequency.score;
-    const sessionStats = new Map<string, { trades: number; totalPnl: number }>();
+    const sessionStats = new Map<
+      OperatingWindowName,
+      { trades: number; totalPnl: number }
+    >();
 
     validStatTrades.forEach((trade) => {
-      const label = getSessionWindow(trade);
+      const label = getOperatingWindowName(trade);
+      if (!label) return;
+
       const current = sessionStats.get(label) ?? { trades: 0, totalPnl: 0 };
       current.trades += 1;
       current.totalPnl += netPnl(trade);
       sessionStats.set(label, current);
     });
 
-    const bestSessionWindow =
+    const bestSessionEntry =
       Array.from(sessionStats.entries()).sort(
-        (a, b) => b[1].totalPnl - a[1].totalPnl || b[1].trades - a[1].trades
-      )[0]?.[0] ?? 'Nessun dato';
-    const hasSessionData = bestSessionWindow !== 'Nessun dato';
-    const sessionWindowScore = getSessionWindowScore(bestSessionWindow);
+        (a, b) =>
+          b[1].trades - a[1].trades ||
+          b[1].totalPnl - a[1].totalPnl
+      )[0];
+    const bestSessionWindow = bestSessionEntry?.[0] ?? null;
+    const bestSessionTradeCount = bestSessionEntry?.[1].trades ?? 0;
+    const sessionTradeCount = Array.from(sessionStats.values()).reduce(
+      (sum, session) => sum + session.trades,
+      0
+    );
+    const hasSessionData =
+      bestSessionWindow !== null && sessionTradeCount > 0;
+    const sessionConsistency = hasSessionData
+      ? bestSessionTradeCount / sessionTradeCount
+      : 0;
+    const sessionWindowScore = hasSessionData
+      ? normalizeScore(
+          (sessionConsistency /
+            ECLIPSE_SCORE_TARGET_SESSION_CONSISTENCY) *
+            100
+        )
+      : 0;
     const eclipseScoreComponents = [
       winRateScore,
       riskRewardScore,
@@ -724,15 +720,22 @@ export function AnalysisDiagnostics({ trades }: AnalysisDiagnosticsProps) {
           ? `Settimane con almeno ${MIN_TRADES_PER_WEEK} trade`
           : 'Nessun dato disponibile',
         tooltipValue: `${operationalFrequency.weeksWithMinimumTrades}/${operationalFrequency.totalWeeks} settimane con almeno ${MIN_TRADES_PER_WEEK} trade statistici validi`,
-        targetValue: `Almeno ${MIN_TRADES_PER_WEEK} trade statistici validi a settimana`,
+        targetValue: `Almeno ${MIN_TRADES_PER_WEEK} trade a settimana`,
       },
       {
-        metric: 'Ses. operativa',
+        metric: 'Costanza operativa',
         normalizedScore: sessionWindowScore,
-        displayValue: hasSessionData ? bestSessionWindow : '—',
+        displayValue: bestSessionWindow ?? '—',
         description: hasSessionData
-          ? 'Fascia operativa più performante'
+          ? 'Fascia con la maggiore concentrazione di trade'
           : 'Nessun dato disponibile',
+        tooltipValue: hasSessionData
+          ? `${Math.round(
+              sessionConsistency * 100
+            )}% dei trade in ${bestSessionWindow} (${bestSessionTradeCount}/${sessionTradeCount})`
+          : undefined,
+        targetValue:
+          'Almeno il 70% dei trade nella fascia più utilizzata',
       },
     ];
     const dailyPnlMap = new Map<string, number>();
@@ -869,17 +872,17 @@ export function AnalysisDiagnostics({ trades }: AnalysisDiagnosticsProps) {
   );
   const availableSetups = useMemo(
     () => {
-      const hasLegacySetup = data.tradeLog.some((trade) => {
+      const hasTradesWithoutSetup = data.tradeLog.some((trade) => {
         const setup = trade.strategy?.trim();
 
-        return Boolean(setup) && !isValidTradeSetup(setup);
+        return !isValidTradeSetup(setup);
       });
 
       return [
         ...VALID_TRADE_SETUPS.filter(setup =>
           data.tradeLog.some(trade => trade.strategy?.trim() === setup)
         ),
-        ...(hasLegacySetup ? ['Legacy'] : []),
+        ...(hasTradesWithoutSetup ? ['Senza Setup'] : []),
       ];
     },
     [data.tradeLog]
@@ -974,11 +977,6 @@ export function AnalysisDiagnostics({ trades }: AnalysisDiagnosticsProps) {
 
       if (tradeLogFilters.displayOrder === 'profit-low') {
         return netPnl(a) - netPnl(b) ||
-          getTradeSortTime(b) - getTradeSortTime(a);
-      }
-
-      if (tradeLogFilters.displayOrder === 'time') {
-        return getTradeTimeMinutes(a) - getTradeTimeMinutes(b) ||
           getTradeSortTime(b) - getTradeSortTime(a);
       }
 
@@ -1533,7 +1531,7 @@ export function AnalysisDiagnostics({ trades }: AnalysisDiagnosticsProps) {
                   : data.eclipseScore.toFixed(1)}
               </p>
               <p className="mt-1 font-sans text-xs text-muted-foreground">
-                Basato su winrate, risk-to-reward ratio, frequenza operativa e timing.
+                Basato su winrate, risk-to-reward ratio, frequenza e costanza operativa.
               </p>
             </div>
             <div className="mt-4 grid grid-cols-2 gap-2 lg:grid-cols-4">
@@ -2015,7 +2013,6 @@ export function AnalysisDiagnostics({ trades }: AnalysisDiagnosticsProps) {
                   <option value="earliest">Trade meno recente</option>
                   <option value="profit-high">Profitto più alto</option>
                   <option value="profit-low">Profitto più basso</option>
-                  <option value="time">Orario</option>
                 </select>
               </FilterField>
 
@@ -2250,6 +2247,14 @@ export function AnalysisDiagnostics({ trades }: AnalysisDiagnosticsProps) {
       <TradeDetailDialog
         trade={selectedTrade}
         streamerMode={streamerMode}
+        onUpdateTrade={(id, updates) => {
+          onUpdateTrade(id, updates);
+          setSelectedTrade((currentTrade) =>
+            currentTrade?.id === id
+              ? { ...currentTrade, ...updates }
+              : currentTrade
+          );
+        }}
         onClose={() => {
           setSelectedTrade(null);
           setReturnToTradeGroup(false);

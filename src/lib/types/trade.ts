@@ -77,6 +77,7 @@ export interface JournalState {
   tagsInitialized?: boolean;
   strategies: string[];
   customTags: string[];
+  tagColors: Record<string, string>;
   weeklyPlans: WeeklyPlan[];
   settings: {
     currency: string;
@@ -121,7 +122,7 @@ export const FOREX_PAIRS = ['MNQ', 'NQ'] as const;
 export const TRADE_TAGS = [
   { value: 'early_entry', emoji: '⏳', label: 'Entrata in Anticipo' },
   { value: 'late_entry', emoji: '🥶', label: 'Entrata in Ritardo' },
-  { value: 'fomo', emoji: '⚡', label: 'FOMO' },
+  { value: 'fomo', emoji: '🚨', label: 'FOMO' },
 ] as const;
 
 export const CUSTOM_TAG_PREFIX = 'custom:';

@@ -15,6 +15,8 @@ export interface RiskRewardCardPresentation {
   tone: 'profit' | 'loss' | 'empty';
 }
 
+const MAX_RISK_REWARD_PROGRESS = 1.2;
+
 export function getRiskRewardCardPresentation(
   result: RiskRewardRatioResult
 ): RiskRewardCardPresentation {
@@ -23,7 +25,10 @@ export function getRiskRewardCardPresentation(
     description: 'Rapporto Rischio / Rendimento',
     progress: result.value === null
       ? 0
-      : Math.min((result.value / 3) * 100, 100),
+      : Math.min(
+          (result.value / MAX_RISK_REWARD_PROGRESS) * 100,
+          100
+        ),
     tone:
       result.value === null
         ? 'empty'
@@ -65,25 +70,45 @@ export function RiskRewardCard({
           Risk-to-Reward Ratio
         </span>
 
-        <div className="grid min-w-0 grid-cols-[minmax(3.25rem,1fr)_minmax(8rem,10rem)] items-center gap-3 md:grid-cols-[minmax(3.25rem,1fr)_10rem]">
+        <div
+          className={cn(
+            'min-w-0',
+            !isAnalysis &&
+              'grid grid-cols-[minmax(3.25rem,1fr)_minmax(8rem,10rem)] items-center gap-3 md:grid-cols-[minmax(3.25rem,1fr)_10rem]'
+          )}
+        >
           <span className="min-w-0 font-mono text-lg font-semibold tracking-tight text-foreground md:text-xl">
             {value}
           </span>
 
+          {!isAnalysis && (
+            <Progress
+              value={progress}
+              className="h-1.5 w-full rounded-full bg-secondary"
+              indicatorClassName={cn(
+                tone === 'profit' && 'bg-profit',
+                tone === 'loss' && 'bg-loss',
+                tone === 'empty' && 'bg-transparent'
+              )}
+            />
+          )}
+        </div>
+
+        <span className="font-mono text-[11px] text-muted-foreground">
+          {description}
+        </span>
+
+        {isAnalysis && (
           <Progress
             value={progress}
-            className="h-1.5 w-full rounded-full bg-secondary"
+            className="mt-1 h-1.5 w-full rounded-full bg-secondary"
             indicatorClassName={cn(
               tone === 'profit' && 'bg-profit',
               tone === 'loss' && 'bg-loss',
               tone === 'empty' && 'bg-transparent'
             )}
           />
-        </div>
-
-        <span className="font-mono text-[11px] text-muted-foreground">
-          {description}
-        </span>
+        )}
       </CardContent>
     </Card>
   );

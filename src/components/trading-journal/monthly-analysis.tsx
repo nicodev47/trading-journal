@@ -1,7 +1,11 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  SlidersHorizontal,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -36,9 +40,12 @@ import {
   type Trade,
 } from '@/lib/types/trade';
 import { useStreamerMode } from '@/contexts/streamer-mode-context';
+import { getTagColor } from '@/lib/tag-colors';
 
 interface MonthlyAnalysisProps {
   trades: Trade[];
+  tagColors: Record<string, string>;
+  onUpdateTrade: (id: string, updates: Partial<Trade>) => void;
 }
 
 type TagAnalytics = {
@@ -50,6 +57,14 @@ type TagAnalytics = {
   percent: number;
   trades: Trade[];
 };
+
+type TagAnalyticsOrder =
+  | 'most-used'
+  | 'least-used'
+  | 'winrate-high'
+  | 'winrate-low'
+  | 'profit-high'
+  | 'profit-low';
 
 type TradeGroupDialogState = {
   title: string;
@@ -78,6 +93,7 @@ const MONTHS = [
 ];
 
 const MONTHLY_TRADES_PAGE_SIZE = 12;
+const TAG_ANALYTICS_PAGE_SIZE = 7;
 
 function netPnl(trade: Trade) {
   return trade.pnl - trade.commission;
@@ -163,6 +179,8 @@ function getBestSetup(trades: Trade[]) {
 
 export function MonthlyAnalysis({
   trades,
+  tagColors,
+  onUpdateTrade,
 }: MonthlyAnalysisProps) {
   const { streamerMode } = useStreamerMode();
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
@@ -172,6 +190,11 @@ export function MonthlyAnalysis({
   const [returnToTradeGroup, setReturnToTradeGroup] = useState(false);
   const [selectedMonthIndex, setSelectedMonthIndex] = useState<number | null>(null);
   const [monthlyTradesPage, setMonthlyTradesPage] = useState(1);
+  const [isTagAnalyticsFilterOpen, setIsTagAnalyticsFilterOpen] =
+    useState(false);
+  const [tagAnalyticsOrder, setTagAnalyticsOrder] =
+    useState<TagAnalyticsOrder>('most-used');
+  const [tagAnalyticsPage, setTagAnalyticsPage] = useState(1);
   const availableYears = useMemo(() => {
     const years = Array.from(
       new Set(trades.map((trade) => new Date(trade.exitDate).getFullYear()))
@@ -320,7 +343,7 @@ export function MonthlyAnalysis({
       });
     });
 
-    return Array.from(tagMap.entries())
+    const analytics = Array.from(tagMap.entries())
       .map(([value, stats]) => {
         const standardTag = TRADE_TAGS.find((tag) => tag.value === value);
         const label = standardTag
@@ -341,10 +364,50 @@ export function MonthlyAnalysis({
               ? (stats.trades.length / yearFilteredTrades.length) * 100
               : 0,
         };
-      })
-      .sort((a, b) => b.tradeCount - a.tradeCount)
-      .slice(0, 6);
-  }, [yearFilteredTrades]);
+      });
+
+    return analytics.sort((a, b) => {
+        switch (tagAnalyticsOrder) {
+          case 'least-used':
+            return a.tradeCount - b.tradeCount;
+          case 'winrate-high':
+            return b.winRate - a.winRate;
+          case 'winrate-low':
+            return a.winRate - b.winRate;
+          case 'profit-high':
+            return b.totalPnl - a.totalPnl;
+          case 'profit-low':
+            return a.totalPnl - b.totalPnl;
+          case 'most-used':
+          default:
+            return b.tradeCount - a.tradeCount;
+        }
+      });
+  }, [tagAnalyticsOrder, yearFilteredTrades]);
+  const tagAnalyticsTotalPages = Math.max(
+    1,
+    Math.ceil(tagAnalytics.length / TAG_ANALYTICS_PAGE_SIZE)
+  );
+  const tagAnalyticsStartIndex =
+    (tagAnalyticsPage - 1) * TAG_ANALYTICS_PAGE_SIZE;
+  const visibleTagAnalytics = tagAnalytics.slice(
+    tagAnalyticsStartIndex,
+    tagAnalyticsStartIndex + TAG_ANALYTICS_PAGE_SIZE
+  );
+  const tagAnalyticsPageNumbers = Array.from(
+    { length: tagAnalyticsTotalPages },
+    (_, index) => index + 1
+  );
+
+  useEffect(() => {
+    setTagAnalyticsPage(1);
+  }, [selectedYear, tagAnalyticsOrder]);
+
+  useEffect(() => {
+    if (tagAnalyticsPage > tagAnalyticsTotalPages) {
+      setTagAnalyticsPage(tagAnalyticsTotalPages);
+    }
+  }, [tagAnalyticsPage, tagAnalyticsTotalPages]);
 
   const openTradeGroup = (
     title: string,
@@ -427,7 +490,6 @@ export function MonthlyAnalysis({
               { label: `${yearWins} win`, tone: 'profit' },
               { label: `${yearLosses} loss`, tone: 'loss' },
             ]}
-            progress={yearWinRate}
           />
           <SummaryBox
             title="Trade totali"
@@ -721,24 +783,68 @@ export function MonthlyAnalysis({
       </div>
 
       <div className="mb-4">
-        <AnalysisDiagnostics trades={yearFilteredTrades} />
+        <AnalysisDiagnostics
+          trades={yearFilteredTrades}
+          onUpdateTrade={onUpdateTrade}
+        />
       </div>
 
       <div className="mb-4">
         <div className="rounded-2xl border border-border bg-card/95 p-3.5 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
-          <div className="mb-4">
+          <div className="mb-4 flex items-center justify-between gap-3">
             <div className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
               TAG ANALYTICS
             </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-8 gap-2 rounded-lg border-border bg-background/50 px-3 font-sans text-xs font-semibold text-muted-foreground hover:bg-secondary hover:text-foreground"
+              onClick={() =>
+                setIsTagAnalyticsFilterOpen((isOpen) => !isOpen)
+              }
+            >
+              <SlidersHorizontal className="size-4" />
+              Filtri
+            </Button>
           </div>
 
-          <div className="space-y-3">
-            {tagAnalytics.length > 0 ? (
-              tagAnalytics.map((tag) => (
-                <div
-                  key={tag.value}
-                  className="space-y-2 rounded-xl p-2 transition-colors hover:bg-secondary/10"
+          {isTagAnalyticsFilterOpen && (
+            <div className="mb-4 rounded-xl border border-border bg-background/25 p-3">
+              <label className="grid gap-1.5">
+                <span className="font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                  Ordine di visualizzazione
+                </span>
+                <select
+                  value={tagAnalyticsOrder}
+                  onChange={(event) =>
+                    setTagAnalyticsOrder(
+                      event.target.value as TagAnalyticsOrder
+                    )
+                  }
+                  className="ej-filter-select h-9 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-profit/60"
                 >
+                  <option value="most-used">Più utilizzato</option>
+                  <option value="least-used">Meno utilizzato</option>
+                  <option value="winrate-high">Winrate più alto</option>
+                  <option value="winrate-low">Winrate più basso</option>
+                  <option value="profit-high">Profitto più alto</option>
+                  <option value="profit-low">Profitto più basso</option>
+                </select>
+              </label>
+            </div>
+          )}
+
+          <div className="space-y-3">
+            {visibleTagAnalytics.length > 0 ? (
+              visibleTagAnalytics.map((tag) => {
+                const tagColor = getTagColor(tag.value, tagColors);
+
+                return (
+                  <div
+                    key={tag.value}
+                    className="space-y-2 rounded-xl p-2 transition-colors hover:bg-secondary/10"
+                  >
                   <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 font-mono text-xs sm:grid-cols-[minmax(0,1fr)_auto_auto_auto_auto] sm:gap-3">
                     <span className="truncate text-foreground">{tag.label}</span>
                     <span className="text-muted-foreground">
@@ -775,18 +881,71 @@ export function MonthlyAnalysis({
                   </div>
                   <div className="h-2 overflow-hidden rounded-full bg-secondary">
                     <div
-                      className="h-full rounded-full bg-gradient-to-r from-teal-700 to-profit transition-all duration-200 hover:brightness-110 hover:drop-shadow-[0_0_6px_rgba(45,212,191,0.45)]"
-                      style={{ width: `${tag.percent}%` }}
+                      className="h-full rounded-full transition-all duration-200 hover:brightness-110"
+                      style={{
+                        width: `${tag.percent}%`,
+                        backgroundColor: tagColor,
+                      }}
                     />
                   </div>
-                </div>
-              ))
+                  </div>
+                );
+              })
             ) : (
               <div className="rounded-xl border border-border bg-background/50 p-4 font-mono text-xs text-muted-foreground">
                 Nessun tag registrato per questo anno.
               </div>
             )}
           </div>
+
+          {tagAnalyticsTotalPages > 1 && (
+            <div className="mt-4 flex flex-wrap items-center justify-end gap-1.5">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 min-w-8 rounded-lg border border-border bg-background/50 px-2 font-mono text-xs text-muted-foreground hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                disabled={tagAnalyticsPage === 1}
+                onClick={() =>
+                  setTagAnalyticsPage((page) => Math.max(1, page - 1))
+                }
+              >
+                &lt;
+              </Button>
+
+              {tagAnalyticsPageNumbers.map((page) => (
+                <Button
+                  key={page}
+                  type="button"
+                  variant={page === tagAnalyticsPage ? 'default' : 'outline'}
+                  size="sm"
+                  className={
+                    page === tagAnalyticsPage
+                      ? 'h-8 min-w-8 rounded-lg border border-profit bg-profit px-2 font-mono text-xs font-bold text-background hover:bg-profit hover:text-background'
+                      : 'h-8 min-w-8 rounded-lg border border-border bg-background/50 px-2 font-mono text-xs text-muted-foreground hover:bg-secondary hover:text-foreground'
+                  }
+                  onClick={() => setTagAnalyticsPage(page)}
+                >
+                  {page}
+                </Button>
+              ))}
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 min-w-8 rounded-lg border border-border bg-background/50 px-2 font-mono text-xs text-muted-foreground hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                disabled={tagAnalyticsPage === tagAnalyticsTotalPages}
+                onClick={() =>
+                  setTagAnalyticsPage((page) =>
+                    Math.min(tagAnalyticsTotalPages, page + 1)
+                  )
+                }
+              >
+                &gt;
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -1105,6 +1264,14 @@ export function MonthlyAnalysis({
       <TradeDetailDialog
         trade={selectedTrade}
         streamerMode={streamerMode}
+        onUpdateTrade={(id, updates) => {
+          onUpdateTrade(id, updates);
+          setSelectedTrade((currentTrade) =>
+            currentTrade?.id === id
+              ? { ...currentTrade, ...updates }
+              : currentTrade
+          );
+        }}
         onClose={() => {
           setSelectedTrade(null);
           setReturnToTradeGroup(false);

@@ -230,14 +230,17 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
     tags,
     strategies,
     customTags,
+    tagColors,
     weeklyPlans,
     isLoaded,
     addTrade,
+    updateTrade,
     deleteTrade,
     addStrategy,
     removeStrategy,
     removeTag,
     addCustomTag,
+    updateTagColor,
     saveWeeklyPlan,
     getWeeklyPlan,
     exportData,
@@ -794,6 +797,8 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
         ) : (
           <MonthlyAnalysis
             trades={visibleTrades}
+            tagColors={tagColors}
+            onUpdateTrade={updateTrade}
           />
         )}
       </main>
@@ -834,9 +839,11 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
           strategies={strategies}
           availableStandardTags={tags}
           customTags={customTags}
+          tagColors={tagColors}
           onAddStrategy={addStrategy}
           onRemoveStrategy={removeStrategy}
           onAddCustomTag={addCustomTag}
+          onUpdateTagColor={updateTagColor}
           onRemoveTag={removeTag}
         />
       )}
@@ -855,6 +862,14 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
       <TradeDetailDialog
         trade={selectedTrade}
         streamerMode={streamerMode}
+        onUpdateTrade={(id, updates) => {
+          updateTrade(id, updates);
+          setSelectedTrade((currentTrade) =>
+            currentTrade?.id === id
+              ? { ...currentTrade, ...updates }
+              : currentTrade
+          );
+        }}
         onClose={() => {
           setSelectedTrade(null);
           setReturnToTradeGroup(false);

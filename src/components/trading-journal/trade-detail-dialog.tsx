@@ -1,11 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ArrowLeft, ExternalLink, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -16,6 +15,7 @@ import { cn } from '@/lib/utils';
 import {
   CUSTOM_TAG_PREFIX,
   TRADE_TAGS,
+  VALID_TRADE_SETUPS,
   type ScreenshotData,
   type Trade,
 } from '@/lib/types/trade';
@@ -24,6 +24,7 @@ interface TradeDetailDialogProps {
   trade: Trade | null;
   streamerMode: boolean;
   onClose: () => void;
+  onUpdateTrade?: (id: string, updates: Partial<Trade>) => void;
   showBackButton?: boolean;
   onBack?: () => void;
 }
@@ -237,17 +238,50 @@ export function TradeDetailDialog({
   trade,
   streamerMode,
   onClose,
+  onUpdateTrade,
   showBackButton = false,
   onBack,
 }: TradeDetailDialogProps) {
+  const [setupDraft, setSetupDraft] = useState('');
+  const [savedSetup, setSavedSetup] = useState('');
+
+  useEffect(() => {
+    const setup = trade?.strategy?.trim() ?? '';
+    setSetupDraft(setup);
+    setSavedSetup(setup);
+  }, [trade?.id, trade?.strategy]);
+
   if (!trade) return null;
 
   const date = getTradeDate(trade);
   const screenshots = normalizeScreenshots(trade);
   const tags = trade.tags ?? [];
+  const canEditSetup = Boolean(onUpdateTrade && !trade.strategy?.trim());
+  const normalizedSetupDraft = setupDraft.trim();
+  const isSetupDirty =
+    canEditSetup &&
+    normalizedSetupDraft.length > 0 &&
+    normalizedSetupDraft !== savedSetup;
+
+  const saveSetup = () => {
+    if (!onUpdateTrade || !isSetupDirty) return;
+
+    onUpdateTrade(trade.id, { strategy: normalizedSetupDraft });
+    setSavedSetup(normalizedSetupDraft);
+  };
+
+  const handleClose = () => {
+    saveSetup();
+    onClose();
+  };
+
+  const handleBack = () => {
+    saveSetup();
+    onBack?.();
+  };
 
   return (
-    <Dialog open onOpenChange={(open) => !open && onClose()}>
+    <Dialog open onOpenChange={(open) => !open && handleClose()}>
       <DialogContent className="max-h-[92dvh] w-[calc(100vw-1.75rem)] max-w-4xl gap-0 overflow-hidden border-border bg-card p-0 sm:max-h-[88vh] sm:w-[94vw]">
         <DialogHeader className="border-b border-border px-4 py-3.5 pr-12 text-left sm:px-6 sm:py-4">
           <div className="flex flex-wrap items-center gap-2">
@@ -257,7 +291,7 @@ export function TradeDetailDialog({
                 variant="ghost"
                 size="icon"
                 className="h-10 w-10 rounded-xl border border-border bg-background/60 text-muted-foreground hover:border-border hover:bg-secondary/70 hover:text-foreground focus-visible:ring-1 focus-visible:ring-profit/50"
-                onClick={onBack}
+                onClick={handleBack}
                 aria-label="Torna alla lista trade"
               >
                 <ArrowLeft className="h-4 w-4" />
@@ -300,7 +334,22 @@ export function TradeDetailDialog({
               <span className="capitalize">{trade.direction || '—'}</span>
             </DetailCard>
             <DetailCard label="Setup">
-              {trade.strategy?.trim() || '—'}
+              {canEditSetup ? (
+                <select
+                  value={setupDraft}
+                  onChange={(event) => setSetupDraft(event.target.value)}
+                  className="ej-filter-select h-9 w-full rounded-lg border border-border bg-background/70 px-3 font-mono text-xs text-foreground outline-none transition-colors focus:border-profit/60"
+                >
+                  <option value="">Seleziona setup</option>
+                  {VALID_TRADE_SETUPS.map((setup) => (
+                    <option key={setup} value={setup}>
+                      {setup}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                trade.strategy?.trim() || '—'
+              )}
             </DetailCard>
             <DetailCard label="Orario">{getTradeTime(trade)}</DetailCard>
             <DetailCard label="Asset">
@@ -352,11 +401,24 @@ export function TradeDetailDialog({
         </div>
 
         <DialogFooter className="border-t border-border px-4 py-3.5 sm:px-6 sm:py-4 max-sm:[&_button]:w-full">
-          <DialogClose asChild>
-            <Button type="button" variant="outline" className="rounded-[10px]">
-              Chiudi
+          {canEditSetup && (
+            <Button
+              type="button"
+              onClick={saveSetup}
+              disabled={!isSetupDirty}
+              className="rounded-[10px] bg-profit text-background hover:bg-profit/90"
+            >
+              Salva
             </Button>
-          </DialogClose>
+          )}
+          <Button
+            type="button"
+            variant="outline"
+            className="rounded-[10px]"
+            onClick={handleClose}
+          >
+            Chiudi
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

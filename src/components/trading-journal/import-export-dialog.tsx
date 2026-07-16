@@ -525,8 +525,9 @@ export function ImportExportDialog({
                           Modalità Streamer attiva
                         </p>
                         <p className="mt-1 font-sans text-xs leading-relaxed text-violet-100/70">
-                          Il file JSON contiene i valori reali per preservare il backup:
-                          condividilo solo se appropriato.
+                          Attenzione! I dati che stai per esportare hanno la modalità
+                          Streamer attiva: i tuoi profitti e le tue perdite sono
+                          censurati.
                         </p>
                       </div>
                     </div>
