@@ -6,6 +6,19 @@ import { getBestOperatingWindow } from '@/lib/operating-windows';
 import { isValidTradeSetup, type Trade } from '@/lib/types/trade';
 import { useStreamerMode } from '@/contexts/streamer-mode-context';
 import { cn } from '@/lib/utils';
+import {
+  getRiskRewardCardPresentation,
+  RiskRewardCard,
+} from './profit-factor-card';
+import { StatisticsCardGrid } from './statistics-card-grid';
+import {
+  calculateMaxDrawdown,
+  calculateRiskRewardRatio,
+  calculateStatistics,
+  calculateWinRate,
+  getTradeOutcome,
+  isValidStatTrade,
+} from '@/lib/calculations';
 
 interface AdvancedStatsGridProps {
   trades: Trade[];
@@ -28,22 +41,22 @@ export function AdvancedStatsGrid({
 }: AdvancedStatsGridProps) {
   const { streamerMode } = useStreamerMode();
   const data = useMemo(() => {
-    const winningTrades = trades.filter((trade) => trade.pnl > 0);
-    const losingTrades = trades.filter((trade) => trade.pnl < 0);
-    const longTrades = trades.filter((trade) => trade.direction === 'long').length;
-    const shortTrades = trades.filter((trade) => trade.direction === 'short').length;
-    const pnlByDay = new Map<string, number>();
+    const validTrades = trades.filter(isValidStatTrade);
+    const winningTrades = validTrades.filter((trade) => getTradeOutcome(trade) === 'win');
+    const losingTrades = validTrades.filter((trade) => getTradeOutcome(trade) === 'loss');
+    const tradeStatistics = calculateStatistics(trades);
+    const longTrades = validTrades.filter((trade) => trade.direction === 'long').length;
+    const shortTrades = validTrades.filter((trade) => trade.direction === 'short').length;
     const tradesByDay = new Map<string, number>();
-    const setupStats = new Map<string, { trades: number; wins: number }>();
+    const setupStats = new Map<string, { trades: number; wins: number; losses: number }>();
     const weekdayStats = new Map<
       number,
-      { trades: number; wins: number; pnl: number }
+      { trades: number; wins: number; losses: number; pnl: number }
     >();
 
-    trades.forEach((trade) => {
+    validTrades.forEach((trade) => {
       const date = trade.exitDate.split('T')[0];
       const netPnl = trade.pnl - trade.commission;
-      pnlByDay.set(date, (pnlByDay.get(date) ?? 0) + trade.pnl);
       tradesByDay.set(date, (tradesByDay.get(date) ?? 0) + 1);
       const tradeDate = new Date(trade.exitDate);
 
@@ -52,20 +65,25 @@ export function AdvancedStatsGrid({
         const stats = weekdayStats.get(weekday) ?? {
           trades: 0,
           wins: 0,
+          losses: 0,
           pnl: 0,
         };
         stats.trades += 1;
         stats.pnl += netPnl;
-        if (netPnl > 0) stats.wins += 1;
+        const outcome = getTradeOutcome(trade);
+        if (outcome === 'win') stats.wins += 1;
+        if (outcome === 'loss') stats.losses += 1;
         weekdayStats.set(weekday, stats);
       }
 
       const rawSetup = trade.strategy.trim();
       const setup = isValidTradeSetup(rawSetup) ? rawSetup : rawSetup ? 'Legacy' : '';
       if (setup) {
-        const stats = setupStats.get(setup) ?? { trades: 0, wins: 0 };
+        const stats = setupStats.get(setup) ?? { trades: 0, wins: 0, losses: 0 };
         stats.trades += 1;
-        if (trade.pnl > 0) stats.wins += 1;
+        const outcome = getTradeOutcome(trade);
+        if (outcome === 'win') stats.wins += 1;
+        if (outcome === 'loss') stats.losses += 1;
         setupStats.set(setup, stats);
       }
 
@@ -76,19 +94,15 @@ export function AdvancedStatsGrid({
       losingTrades.reduce((sum, trade) => sum + trade.pnl, 0)
     );
 
-    let currentStreak = 0;
-    let currentStreakType: 'win' | 'loss' | 'none' = 'none';
-    let positiveStreak = 0;
-    let longestPositiveStreak = 0;
     const tradingDays = tradesByDay.size;
-    const bestOperatingWindow = getBestOperatingWindow(trades);
+    const bestOperatingWindow = getBestOperatingWindow(validTrades);
     const bestSetup = Array.from(setupStats.entries()).reduce<{
       name: string | null;
       trades: number;
       winRate: number;
     }>(
       (best, [name, stats]) => {
-        const winRate = (stats.wins / stats.trades) * 100;
+        const winRate = calculateWinRate(stats.wins, stats.losses);
 
         if (
           winRate > best.winRate ||
@@ -101,20 +115,11 @@ export function AdvancedStatsGrid({
       },
       { name: null, trades: 0, winRate: -1 }
     );
-    const sortedDailyPnl = Array.from(pnlByDay.entries()).sort(
-      ([dateA], [dateB]) => dateA.localeCompare(dateB)
-    );
-    const longTradeList = trades.filter(
-      (trade) => trade.direction === 'long'
-    );
-    const shortTradeList = trades.filter(
-      (trade) => trade.direction === 'short'
-    );
     const weekdayPerformance = Array.from(weekdayStats.entries()).map(
       ([weekday, stats]) => ({
         name: WEEKDAY_NAMES[weekday],
         trades: stats.trades,
-        winRate: (stats.wins / stats.trades) * 100,
+        winRate: calculateWinRate(stats.wins, stats.losses),
         pnl: stats.pnl,
       })
     );
@@ -125,57 +130,27 @@ export function AdvancedStatsGrid({
         b.pnl - a.pnl
     )[0];
 
-    for (const [, pnl] of sortedDailyPnl) {
-      if (pnl > 0) {
-        positiveStreak += 1;
-        longestPositiveStreak = Math.max(
-          longestPositiveStreak,
-          positiveStreak
-        );
-
-        if (currentStreakType === 'win') {
-          currentStreak += 1;
-        } else {
-          currentStreak = 1;
-          currentStreakType = 'win';
-        }
-      } else if (pnl < 0) {
-        positiveStreak = 0;
-
-        if (currentStreakType === 'loss') {
-          currentStreak += 1;
-        } else {
-          currentStreak = 1;
-          currentStreakType = 'loss';
-        }
-      }
-    }
-
     return {
       avgWin: winningTrades.length ? grossWins / winningTrades.length : 0,
       avgLoss: losingTrades.length ? grossLosses / losingTrades.length : 0,
       winningTrades: winningTrades.length,
       losingTrades: losingTrades.length,
+      totalTrades: validTrades.length,
       longTrades,
       shortTrades,
       tradingDays,
       bestOperatingWindow,
       bestSetup,
-      currentStreak,
-      currentStreakType,
-      longestPositiveStreak,
-      longWinRate: longTradeList.length
-        ? (longTradeList.filter((trade) => trade.pnl - trade.commission > 0)
-            .length /
-            longTradeList.length) *
-          100
-        : 0,
-      shortWinRate: shortTradeList.length
-        ? (shortTradeList.filter((trade) => trade.pnl - trade.commission > 0)
-            .length /
-            shortTradeList.length) *
-          100
-        : 0,
+      currentStreak: tradeStatistics.currentStreak,
+      currentStreakType:
+        tradeStatistics.streakType === 'winning'
+          ? 'win'
+          : tradeStatistics.streakType === 'losing'
+            ? 'loss'
+            : 'none',
+      longestPositiveStreak: tradeStatistics.longestWinStreak,
+      riskRewardRatio: calculateRiskRewardRatio(trades),
+      maxDrawdown: calculateMaxDrawdown(trades),
       bestWeekday,
     };
   }, [trades]);
@@ -185,11 +160,14 @@ export function AdvancedStatsGrid({
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     })} USD`;
+  const riskRewardPresentation = getRiskRewardCardPresentation(
+    data.riskRewardRatio
+  );
 
   return (
-    <div
+    <StatisticsCardGrid
       className={cn(
-        'grid grid-cols-1 items-start gap-3 py-3 md:grid-cols-2 md:gap-4 md:py-4 xl:grid-cols-3',
+        'items-start py-3 md:py-4',
         extended && '[&_[data-slot=card-content]]:!min-h-[124px]'
       )}
     >
@@ -205,7 +183,8 @@ export function AdvancedStatsGrid({
           </p>
 
           <p className="mt-1 font-mono text-[11px] text-muted-foreground">
-            {trades.length} {trades.length === 1 ? 'trade eseguito' : 'trade eseguiti'}
+            {data.totalTrades}{' '}
+            {data.totalTrades === 1 ? 'trade eseguito' : 'trade eseguiti'}
           </p>
 
           <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-secondary md:mt-4">
@@ -234,7 +213,7 @@ export function AdvancedStatsGrid({
           </p>
 
           <p className="mt-1 font-mono text-[11px] text-muted-foreground">
-            Migliore: {data.longestPositiveStreak} win
+            Migliore: {data.longestPositiveStreak} win consecutive
           </p>
 
           <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-secondary md:mt-4">
@@ -325,7 +304,7 @@ export function AdvancedStatsGrid({
             Setup migliore
           </p>
 
-          <p className="mt-2 truncate font-mono text-xl font-bold tracking-tight text-profit md:mt-3 md:text-2xl">
+          <p className="mt-2 break-words font-mono text-xl font-bold tracking-tight text-profit md:mt-3 md:text-2xl">
             {data.bestSetup.name ?? '—'}
           </p>
 
@@ -393,20 +372,29 @@ export function AdvancedStatsGrid({
 
       {extended && (
         <>
-          <CompactAnalysisCard
-            title="Winrate Long"
-            value={data.longTrades ? `${data.longWinRate.toFixed(0)}%` : '—'}
-            subtitle={`${data.longTrades} trade long`}
-            tone="profit"
-            progress={data.longTrades > 0 ? data.longWinRate : 0}
+          <RiskRewardCard
+            {...riskRewardPresentation}
+            surface="analysis"
           />
 
           <CompactAnalysisCard
-            title="Winrate Short"
-            value={data.shortTrades ? `${data.shortWinRate.toFixed(0)}%` : '—'}
-            subtitle={`${data.shortTrades} trade short`}
-            tone={data.shortWinRate >= 50 ? 'profit' : 'loss'}
-            progress={data.shortTrades > 0 ? data.shortWinRate : 0}
+            title="Drawdown massimo"
+            value={
+              data.maxDrawdown === null
+                ? '—'
+                : streamerMode
+                  ? '******'
+                  : formatCurrency(data.maxDrawdown)
+            }
+            subtitle={
+              data.maxDrawdown === null
+                ? 'Nessun dato disponibile'
+                : data.maxDrawdown === 0
+                  ? 'Nessun drawdown registrato'
+                  : 'Perdita massima'
+            }
+            tone={data.maxDrawdown !== null && data.maxDrawdown < 0 ? 'loss' : 'neutral'}
+            hasData={data.maxDrawdown !== null}
           />
 
           <CompactAnalysisCard
@@ -425,7 +413,7 @@ export function AdvancedStatsGrid({
         </>
       )}
 
-    </div>
+    </StatisticsCardGrid>
   );
 }
 
@@ -435,13 +423,21 @@ function CompactAnalysisCard({
   subtitle,
   tone,
   progress,
+  hasData,
 }: {
   title: string;
   value: string;
   subtitle: string;
-  tone: 'profit' | 'loss';
-  progress: number;
+  tone: 'profit' | 'loss' | 'neutral';
+  progress?: number;
+  hasData?: boolean;
 }) {
+  const indicatorWidth = progress === undefined
+    ? hasData
+      ? 100
+      : 0
+    : Math.min(Math.max(progress, 0), 100);
+
   return (
     <Card className="self-start rounded-2xl border border-border bg-card/95 py-0 shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
       <CardContent className="flex min-h-[104px] min-w-0 flex-col justify-center p-3.5 md:min-h-[124px] md:p-4">
@@ -449,8 +445,14 @@ function CompactAnalysisCard({
           {title}
         </p>
         <p
-          className={`mt-2 truncate font-mono text-lg font-bold tracking-tight md:mt-3 md:text-xl ${
-            tone === 'profit' ? 'text-profit' : 'text-loss'
+          className={`mt-2 break-words font-mono text-lg font-bold tracking-tight md:mt-3 md:text-xl ${
+            tone === 'profit'
+              ? 'text-profit'
+              : tone === 'loss'
+                ? 'text-loss'
+                : hasData === false
+                  ? 'text-muted-foreground'
+                  : 'text-foreground'
           }`}
         >
           {value}
@@ -461,9 +463,13 @@ function CompactAnalysisCard({
         <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-secondary">
           <div
             className={`h-full rounded-full transition-all ${
-              tone === 'profit' ? 'bg-profit/80' : 'bg-loss/80'
+              tone === 'profit'
+                ? 'bg-profit/80'
+                : tone === 'loss'
+                  ? 'bg-loss/80'
+                  : 'bg-muted-foreground/40'
             }`}
-            style={{ width: `${Math.min(Math.max(progress, 0), 100)}%` }}
+            style={{ width: `${indicatorWidth}%` }}
           />
         </div>
       </CardContent>

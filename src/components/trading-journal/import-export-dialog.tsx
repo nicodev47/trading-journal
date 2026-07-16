@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, type ChangeEvent, type DragEvent } from 'react';
-import { Download, FileJson, Upload } from 'lucide-react';
+import { Download, Eye, FileJson, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,16 +16,17 @@ import {
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import {
-  getDefaultExportBaseName,
+  getGuidedExportBaseName,
   normalizeExportFileName,
+  type GuidedExportTarget,
 } from '@/lib/export-filename';
+import { parseJournalExport } from '@/lib/journal-export';
 import {
   SYSTEM_WORKSPACES,
   type JournalWorkspace,
   type JournalWorkspaceMeta,
   type SystemJournalWorkspace,
 } from '@/hooks/use-trades';
-import type { Trade } from '@/lib/types/trade';
 import { useStreamerMode } from '@/contexts/streamer-mode-context';
 
 interface ImportExportDialogProps {
@@ -35,13 +36,54 @@ interface ImportExportDialogProps {
   activeWorkspace: JournalWorkspace;
   workspaceOptions?: JournalWorkspaceMeta[];
   exportData?: string;
-  exportTrades?: Trade[];
   getWorkspaceExportData?: (workspace: JournalWorkspace) => string;
-  getWorkspaceTrades?: (workspace: JournalWorkspace) => Trade[];
+  getFullBackupExportData?: () => string;
   workspaceHasData?: (workspace: JournalWorkspace) => boolean;
   onImport?: (data: string, workspace: JournalWorkspace) => boolean;
   onAppendImport?: (data: string, workspace: JournalWorkspace) => boolean;
+  onFullBackupImport?: (data: string) => boolean;
 }
+
+type ExportSelection = GuidedExportTarget;
+
+const EXPORT_OPTIONS: Array<{
+  id: ExportSelection;
+  title: string;
+  description: string;
+  emoji: string;
+}> = [
+  {
+    id: 'personal',
+    title: 'Personale',
+    description: 'Esporta i trade e i dati dello spazio Personale.',
+    emoji: '👤',
+  },
+  {
+    id: 'backtest',
+    title: 'Backtest',
+    description: 'Esporta i trade e i dati dello spazio Backtest.',
+    emoji: '⚙️',
+  },
+  {
+    id: 'student',
+    title: 'Preview',
+    description: 'Esporta i dati attualmente presenti in Preview.',
+    emoji: '👁️',
+  },
+];
+
+const getDefaultExportSelection = (
+  activeWorkspace: JournalWorkspace,
+  previewHasData: boolean
+): ExportSelection => {
+  if (activeWorkspace === 'student') {
+    return previewHasData ? 'student' : 'personal';
+  }
+
+  return activeWorkspace === 'personal' || activeWorkspace === 'backtest'
+    ? activeWorkspace
+    : 'personal';
+};
 
 const getWorkspaceLabel = (
   workspace: JournalWorkspace,
@@ -92,26 +134,40 @@ export function ImportExportDialog({
   mode,
   activeWorkspace,
   exportData,
-  exportTrades = [],
   getWorkspaceExportData,
-  getWorkspaceTrades,
+  getFullBackupExportData,
   workspaceHasData,
   onImport,
   onAppendImport,
+  onFullBackupImport,
+  workspaceOptions: providedWorkspaceOptions,
 }: ImportExportDialogProps) {
   const { streamerMode } = useStreamerMode();
-  const workspaceOptions = SYSTEM_WORKSPACES;
+  const workspaceOptions = providedWorkspaceOptions ?? SYSTEM_WORKSPACES;
+  const importWorkspaceOptions = SYSTEM_WORKSPACES;
+  const previewHasData = workspaceHasData?.('student') ?? false;
+  const [exportStep, setExportStep] = useState<1 | 2>(1);
+  const [selectedExportTarget, setSelectedExportTarget] =
+    useState<ExportSelection>(() =>
+      getDefaultExportSelection(activeWorkspace, previewHasData)
+    );
   const [exportFileName, setExportFileName] = useState(() =>
-    getDefaultExportBaseName(activeWorkspace, exportTrades)
+    getGuidedExportBaseName(
+      getDefaultExportSelection(activeWorkspace, previewHasData)
+    )
   );
   const [selectedWorkspace, setSelectedWorkspace] =
     useState<JournalWorkspace>(() => getSupportedImportWorkspace(activeWorkspace));
   const [selectedFileName, setSelectedFileName] = useState('');
   const [pendingImportData, setPendingImportData] = useState<string | null>(null);
+  const [pendingImportKind, setPendingImportKind] =
+    useState<'workspace' | 'full-backup' | null>(null);
   const [importError, setImportError] = useState('');
   const [isAppendConfirmOpen, setIsAppendConfirmOpen] = useState(false);
   const [isOverwriteConfirmOpen, setIsOverwriteConfirmOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [isBackupNameOpen, setIsBackupNameOpen] = useState(false);
+  const [backupFileName, setBackupFileName] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const selectedWorkspaceLabel = getWorkspaceLabel(selectedWorkspace, workspaceOptions);
   const selectedWorkspaceDisplayLabel = getWorkspaceDisplayLabel(
@@ -121,55 +177,74 @@ export function ImportExportDialog({
   const selectedWorkspaceExportData =
     getWorkspaceExportData?.(selectedWorkspace) ||
     (selectedWorkspace === activeWorkspace ? exportData : undefined);
-  const selectedWorkspaceTrades =
-    getWorkspaceTrades?.(selectedWorkspace) ||
-    (selectedWorkspace === activeWorkspace ? exportTrades : []);
   const selectedWorkspaceHasData = workspaceHasData
     ? workspaceHasData(selectedWorkspace)
     : hasImportableWorkspaceTrades(selectedWorkspaceExportData);
-  const canAppendImport = selectedWorkspaceHasData && !!onAppendImport;
+  const canAppendImport =
+    pendingImportKind !== 'full-backup' &&
+    selectedWorkspaceHasData &&
+    !!onAppendImport;
+  const selectedExportLabel = selectedExportTarget === 'full-backup'
+    ? 'Backup completo'
+    : getWorkspaceLabel(selectedExportTarget, workspaceOptions);
+  const selectedExportData = selectedExportTarget === 'full-backup'
+    ? getFullBackupExportData?.()
+    : getWorkspaceExportData?.(selectedExportTarget) ||
+      (selectedExportTarget === activeWorkspace ? exportData : undefined);
+  const suggestedExportFileName = getGuidedExportBaseName(selectedExportTarget);
 
   useEffect(() => {
     if (!isOpen) return;
 
-    setExportFileName(getDefaultExportBaseName(activeWorkspace, exportTrades));
+    const defaultExportTarget = getDefaultExportSelection(
+      activeWorkspace,
+      workspaceHasData?.('student') ?? false
+    );
+
+    setExportStep(1);
+    setSelectedExportTarget(defaultExportTarget);
+    setExportFileName(getGuidedExportBaseName(defaultExportTarget));
     setSelectedWorkspace(getSupportedImportWorkspace(activeWorkspace));
     setSelectedFileName('');
     setPendingImportData(null);
+    setPendingImportKind(null);
     setImportError('');
     setIsAppendConfirmOpen(false);
     setIsOverwriteConfirmOpen(false);
     setIsDragging(false);
-  }, [activeWorkspace, exportTrades, isOpen, mode]);
+    setIsBackupNameOpen(false);
+    setBackupFileName('');
+  }, [activeWorkspace, isOpen, mode, workspaceHasData]);
 
   const handleClose = () => {
+    const defaultExportTarget = getDefaultExportSelection(
+      activeWorkspace,
+      workspaceHasData?.('student') ?? false
+    );
+
+    setExportStep(1);
+    setSelectedExportTarget(defaultExportTarget);
+    setExportFileName(getGuidedExportBaseName(defaultExportTarget));
     setSelectedWorkspace(getSupportedImportWorkspace(activeWorkspace));
     setSelectedFileName('');
     setPendingImportData(null);
+    setPendingImportKind(null);
     setImportError('');
     setIsAppendConfirmOpen(false);
     setIsOverwriteConfirmOpen(false);
     setIsDragging(false);
+    setIsBackupNameOpen(false);
+    setBackupFileName('');
     onClose();
   };
 
-  const downloadCurrentWorkspaceBackup = () => {
-    if (!selectedWorkspaceExportData) return;
-
-    const blob = new Blob([selectedWorkspaceExportData], { type: 'application/json' });
+  const downloadJson = (data: string, fileName: string) => {
+    const blob = new Blob([data], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
-    const fallbackBaseName = getDefaultExportBaseName(
-      selectedWorkspace,
-      selectedWorkspaceTrades,
-      selectedWorkspaceLabel
-    );
 
     anchor.href = url;
-    anchor.download = normalizeExportFileName(
-      fallbackBaseName,
-      fallbackBaseName
-    );
+    anchor.download = fileName;
     document.body.appendChild(anchor);
     anchor.click();
     document.body.removeChild(anchor);
@@ -177,21 +252,12 @@ export function ImportExportDialog({
   };
 
   const handleDownload = () => {
-    if (!exportData) return;
+    if (!selectedExportData) return;
 
-    const blob = new Blob([exportData], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-
-    anchor.href = url;
-    anchor.download = normalizeExportFileName(
-      exportFileName,
-      getDefaultExportBaseName(activeWorkspace, exportTrades)
+    downloadJson(
+      selectedExportData,
+      normalizeExportFileName(exportFileName, suggestedExportFileName)
     );
-    document.body.appendChild(anchor);
-    anchor.click();
-    document.body.removeChild(anchor);
-    URL.revokeObjectURL(url);
 
     toast.success('Dati esportati correttamente');
     handleClose();
@@ -203,11 +269,42 @@ export function ImportExportDialog({
       return;
     }
 
-    downloadCurrentWorkspaceBackup();
+    setBackupFileName(getGuidedExportBaseName(selectedWorkspace));
+    setIsOverwriteConfirmOpen(false);
+    setIsBackupNameOpen(true);
+  };
+
+  const confirmBackupDownload = () => {
+    if (!selectedWorkspaceExportData) return;
+
+    const fallback = getGuidedExportBaseName(selectedWorkspace);
+    downloadJson(
+      selectedWorkspaceExportData,
+      normalizeExportFileName(backupFileName, fallback)
+    );
+    setBackupFileName(fallback);
+    setIsBackupNameOpen(false);
+    setIsOverwriteConfirmOpen(true);
     toast.success(`Backup ${selectedWorkspaceLabel} esportato`);
   };
 
   const importDirectly = (data: string) => {
+    if (pendingImportKind === 'full-backup') {
+      if (!onFullBackupImport) return false;
+
+      const success = onFullBackupImport(data);
+
+      if (!success) {
+        setImportError('Il backup completo non può essere ripristinato.');
+        toast.error('Ripristino non riuscito');
+        return false;
+      }
+
+      toast.success('Backup completo ripristinato');
+      handleClose();
+      return true;
+    }
+
     if (!onImport) return false;
 
     const success = onImport(data, selectedWorkspace);
@@ -226,6 +323,7 @@ export function ImportExportDialog({
   const prepareImport = (file: File) => {
     setSelectedFileName(file.name);
     setPendingImportData(null);
+    setPendingImportKind(null);
     setImportError('');
 
     if (!file.name.toLowerCase().endsWith('.json') && file.type !== 'application/json') {
@@ -240,18 +338,14 @@ export function ImportExportDialog({
       const text = typeof event.target?.result === 'string' ? event.target.result : '';
 
       try {
-        const parsed: unknown = JSON.parse(text);
-        const isValidJournal =
-          typeof parsed === 'object' &&
-          parsed !== null &&
-          'trades' in parsed &&
-          Array.isArray(parsed.trades);
+        const parsed = parseJournalExport(text);
 
-        if (!isValidJournal) {
+        if (!parsed) {
           throw new Error('Invalid journal structure');
         }
 
         setPendingImportData(text);
+        setPendingImportKind(parsed.kind);
       } catch {
         setImportError('Il JSON selezionato non contiene dati validi del calendario.');
         toast.error('Formato dati non valido');
@@ -307,7 +401,12 @@ export function ImportExportDialog({
   };
 
   const handleAppendImport = () => {
-    if (!pendingImportData || !onAppendImport || !canAppendImport) return;
+    if (
+      pendingImportKind !== 'workspace' ||
+      !pendingImportData ||
+      !onAppendImport ||
+      !canAppendImport
+    ) return;
 
     const success = onAppendImport(pendingImportData, selectedWorkspace);
 
@@ -330,7 +429,7 @@ export function ImportExportDialog({
             {mode === 'export' ? (
               <>
                 <Download className="size-4 text-profit" />
-                Esporta dati
+                {exportStep === 1 ? 'Esporta dati' : 'Salva esportazione'}
               </>
             ) : (
               <>
@@ -341,73 +440,137 @@ export function ImportExportDialog({
           </DialogTitle>
           <DialogDescription className="font-sans text-sm">
             {mode === 'export'
-              ? 'Scegli il nome del file JSON da scaricare.'
+              ? exportStep === 1
+                ? 'Scegli quali dati vuoi includere nel file JSON.'
+                : selectedExportTarget === 'full-backup'
+                  ? 'Stai creando un backup completo di EclipseJournal.'
+                  : `Stai esportando i dati di ${selectedExportLabel}.`
               : pendingImportData
-                ? 'Scegli come importare i dati del file JSON.'
+                ? pendingImportKind === 'full-backup'
+                  ? 'Il file contiene un backup completo di EclipseJournal.'
+                  : 'Scegli come importare i dati del file JSON.'
                 : 'Seleziona un file JSON esportato dal calendario.'}
           </DialogDescription>
         </DialogHeader>
 
         {mode === 'export' ? (
-          <>
-            <div className="ej-scrollbar max-h-[calc(92dvh-8rem)] space-y-3 overflow-y-auto px-4 py-4 sm:px-5 sm:py-5">
-              {streamerMode && (
-                <div className="rounded-xl border border-violet-400/35 bg-violet-500/10 p-3.5">
-                  <div className="flex items-start gap-3">
-                    <span className="text-lg leading-none" aria-hidden="true">
-                      🙈
-                    </span>
-                    <div>
-                      <p className="font-sans text-sm font-semibold text-violet-200">
-                        Modalità Streamer attiva
-                      </p>
-                      <p className="mt-1 font-sans text-xs leading-relaxed text-violet-100/70">
-                        Nelle schermate profitti e perdite sono censurati con ******.
-                        Il file JSON esportato contiene invece i valori reali per
-                        preservare il backup: condividilo solo se appropriato.
-                      </p>
+          exportStep === 1 ? (
+            <>
+              <div className="ej-scrollbar max-h-[calc(92dvh-9rem)] overflow-y-auto px-4 py-4 sm:px-5 sm:py-5">
+                <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                  {EXPORT_OPTIONS.filter(
+                    (option) => option.id !== 'student' || previewHasData
+                  ).map((option) => {
+                    const isSelected = selectedExportTarget === option.id;
+
+                    return (
+                      <button
+                        key={option.id}
+                        type="button"
+                        aria-pressed={isSelected}
+                        onClick={() => {
+                          setSelectedExportTarget(option.id);
+                          setExportFileName(getGuidedExportBaseName(option.id));
+                        }}
+                        className={cn(
+                          'min-h-[112px] rounded-xl border p-3.5 text-left transition-colors outline-none focus-visible:ring-1 focus-visible:ring-profit/70',
+                          isSelected
+                            ? 'border-profit bg-profit/10 shadow-[0_0_0_1px_rgba(45,212,191,0.16)]'
+                            : 'border-border bg-background/35 hover:border-profit/45 hover:bg-profit/5'
+                        )}
+                      >
+                        <span className="flex items-center gap-2">
+                          <span className="text-lg" aria-hidden="true">{option.emoji}</span>
+                          <span className={cn(
+                            'font-sans text-sm font-semibold',
+                            isSelected ? 'text-profit' : 'text-foreground'
+                          )}>
+                            {option.title}
+                          </span>
+                        </span>
+                        <span className="mt-2 block font-sans text-xs leading-relaxed text-muted-foreground">
+                          {option.description}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <DialogFooter className="border-t border-border bg-background/25 px-4 py-3.5 max-sm:[&_button]:w-full sm:px-5 sm:py-4">
+                <Button type="button" variant="outline" onClick={handleClose}>
+                  Annulla
+                </Button>
+                <Button
+                  type="button"
+                  disabled={!selectedExportData}
+                  onClick={() => {
+                    setExportFileName(suggestedExportFileName);
+                    setExportStep(2);
+                  }}
+                >
+                  Continua
+                </Button>
+              </DialogFooter>
+            </>
+          ) : (
+            <>
+              <div className="ej-scrollbar max-h-[calc(92dvh-9rem)] space-y-3 overflow-y-auto px-4 py-4 sm:px-5 sm:py-5">
+                {streamerMode && (
+                  <div className="rounded-xl border border-violet-400/35 bg-violet-500/10 p-3.5">
+                    <div className="flex items-start gap-3">
+                      <span className="text-lg leading-none" aria-hidden="true">🙈</span>
+                      <div>
+                        <p className="font-sans text-sm font-semibold text-violet-200">
+                          Modalità Streamer attiva
+                        </p>
+                        <p className="mt-1 font-sans text-xs leading-relaxed text-violet-100/70">
+                          Il file JSON contiene i valori reali per preservare il backup:
+                          condividilo solo se appropriato.
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              <Label htmlFor="export-file-name" className="font-mono text-xs uppercase tracking-wider">
-                Nome file
-              </Label>
-              <Input
-                id="export-file-name"
-                value={exportFileName}
-                onChange={event => setExportFileName(event.target.value)}
-                onKeyDown={event => {
-                  if (event.key === 'Enter') {
-                    event.preventDefault();
-                    handleDownload();
-                  }
-                }}
-                className="h-10 border-border bg-background/70 font-mono text-sm"
-                autoFocus
-              />
-              <p className="font-sans text-xs text-muted-foreground">
-                Il file verrà salvato come{' '}
-                <span className="font-mono text-foreground">
-                  {normalizeExportFileName(
-                    exportFileName,
-                    getDefaultExportBaseName(activeWorkspace, exportTrades)
-                  )}
-                </span>
-              </p>
-            </div>
+                <Label htmlFor="export-file-name" className="font-mono text-xs uppercase tracking-wider">
+                  Nome del file
+                </Label>
+                <Input
+                  id="export-file-name"
+                  value={exportFileName}
+                  onChange={event => setExportFileName(event.target.value)}
+                  onBlur={() => {
+                    if (!exportFileName.trim()) setExportFileName(suggestedExportFileName);
+                  }}
+                  onKeyDown={event => {
+                    if (event.key === 'Enter') {
+                      event.preventDefault();
+                      handleDownload();
+                    }
+                  }}
+                  className="h-10 border-border bg-background/70 font-mono text-sm"
+                  autoFocus
+                />
+                <p className="font-sans text-xs text-muted-foreground">
+                  Il file verrà salvato come{' '}
+                  <span className="break-all font-mono text-foreground">
+                    {normalizeExportFileName(exportFileName, suggestedExportFileName)}
+                  </span>
+                </p>
+              </div>
 
-            <DialogFooter className="border-t border-border bg-background/25 px-4 py-3.5 sm:px-5 sm:py-4">
-              <Button type="button" variant="outline" onClick={handleClose}>
-                Annulla
-              </Button>
-              <Button type="button" onClick={handleDownload} className="gap-2">
-                <Download className="size-4" />
-                Esporta
-              </Button>
-            </DialogFooter>
-          </>
+              <DialogFooter className="border-t border-border bg-background/25 px-4 py-3.5 max-sm:[&_button]:w-full sm:px-5 sm:py-4">
+                <Button type="button" variant="outline" onClick={() => setExportStep(1)}>
+                  Indietro
+                </Button>
+                <Button type="button" onClick={handleDownload} className="gap-2">
+                  <Download className="size-4" />
+                  Scarica file
+                </Button>
+              </DialogFooter>
+            </>
+          )
         ) : pendingImportData ? (
           <>
             <div className="ej-scrollbar max-h-[calc(92dvh-9rem)] space-y-4 overflow-y-auto px-4 py-4 sm:px-5 sm:py-5">
@@ -418,50 +581,83 @@ export function ImportExportDialog({
                     {selectedFileName}
                   </span>
                   <span className="mt-0.5 block font-sans text-xs text-muted-foreground">
-                    Importa in {selectedWorkspaceDisplayLabel}
+                    {pendingImportKind === 'full-backup'
+                      ? 'Backup completo rilevato'
+                      : `Importa in ${selectedWorkspaceDisplayLabel}`}
                   </span>
                 </div>
               </div>
 
-              <div className="rounded-xl border border-border bg-background/35 p-4">
-                <p className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                  Importa in
-                </p>
-                <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                  {workspaceOptions.map((workspace) => {
-                    const isSelected = selectedWorkspace === workspace.id;
-                    const workspaceDisplayLabel = getWorkspaceDisplayLabel(
-                      workspace.id,
-                      workspaceOptions
-                    );
+              {pendingImportKind === 'workspace' && (
+                <div className="rounded-xl border border-border bg-background/35 p-4">
+                  <p className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                    Importa in
+                  </p>
+                  <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    {importWorkspaceOptions.map((workspace) => {
+                      const isSelected = selectedWorkspace === workspace.id;
+                      const workspaceDisplayLabel = getWorkspaceDisplayLabel(
+                        workspace.id,
+                        importWorkspaceOptions
+                      );
 
-                    return (
-                      <button
-                        key={workspace.id}
-                        type="button"
-                        onClick={() => {
-                          setSelectedWorkspace(workspace.id);
-                          setIsAppendConfirmOpen(false);
-                          setIsOverwriteConfirmOpen(false);
-                        }}
-                        className={cn(
-                          'min-w-0 rounded-lg border px-3 py-2 text-left font-sans text-sm font-semibold transition-colors outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-profit/60',
-                          isSelected
-                            ? 'border-profit bg-profit/10 text-profit'
-                            : 'border-border bg-background/50 text-muted-foreground hover:border-profit/45 hover:bg-profit/5 hover:text-foreground'
-                        )}
-                      >
-                        <span className="block truncate">
-                          {workspaceDisplayLabel}
-                        </span>
-                      </button>
-                    );
-                  })}
+                      return (
+                        <button
+                          key={workspace.id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedWorkspace(workspace.id);
+                            setIsAppendConfirmOpen(false);
+                            setIsOverwriteConfirmOpen(false);
+                          }}
+                          className={cn(
+                            'min-w-0 rounded-lg border px-3 py-2 text-left font-sans text-sm font-semibold transition-colors outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-profit/60',
+                            isSelected
+                              ? 'border-profit bg-profit/10 text-profit'
+                              : 'border-border bg-background/50 text-muted-foreground hover:border-profit/45 hover:bg-profit/5 hover:text-foreground'
+                          )}
+                        >
+                          <span className="block truncate">
+                            {workspaceDisplayLabel}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {pendingImportKind === 'workspace' &&
+                selectedWorkspace === 'student' && (
+                  <div className="flex gap-3 rounded-xl border border-profit/25 bg-profit/[0.06] p-4">
+                    <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-profit/25 bg-profit/10 text-profit">
+                      <Eye className="size-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-sans text-sm font-semibold text-foreground">
+                        Cos’è Preview?
+                      </p>
+                      <p className="mt-1 font-sans text-xs leading-relaxed text-muted-foreground">
+                        Preview è uno spazio aggiuntivo dove puoi visualizzare
+                        rapidamente i dati di un file importato, mantenendoli
+                        separati dal journal Personale e dal Backtest.
+                      </p>
+                    </div>
+                  </div>
+                )}
 
               <div className="rounded-xl border border-border bg-background/35 p-4">
-                {!selectedWorkspaceHasData ? (
+                {pendingImportKind === 'full-backup' ? (
+                  <div className="space-y-2 font-sans text-sm">
+                    <p className="font-semibold text-foreground">
+                      Ripristino completo del journal
+                    </p>
+                    <p className="leading-relaxed text-muted-foreground">
+                      Verranno ripristinati gli spazi di lavoro inclusi nel backup.
+                      L’operazione partirà soltanto dopo la tua conferma.
+                    </p>
+                  </div>
+                ) : !selectedWorkspaceHasData ? (
                   <div className="space-y-2 font-sans text-sm">
                     <p className="text-foreground">
                       {selectedWorkspaceLabel} non contiene ancora dati.
@@ -507,7 +703,7 @@ export function ImportExportDialog({
                     {selectedWorkspaceLabel}.
                   </p>
                 )}
-                {selectedWorkspaceHasData && (
+                {pendingImportKind === 'workspace' && selectedWorkspaceHasData && (
                   <p className="mt-2 font-sans text-sm text-muted-foreground">
                     Prima di sovrascrivere, ti consigliamo di esportare un backup
                     dei dati attuali.
@@ -515,7 +711,7 @@ export function ImportExportDialog({
                 )}
               </div>
 
-              {selectedWorkspaceHasData && (
+              {pendingImportKind === 'workspace' && selectedWorkspaceHasData && (
                 <div className="rounded-xl border border-profit/30 bg-profit/10 p-3.5">
                   <p className="font-sans text-xs leading-relaxed text-muted-foreground">
                     L’import modifica solo lo spazio di lavoro selezionato.
@@ -535,7 +731,16 @@ export function ImportExportDialog({
               <Button type="button" variant="outline" onClick={handleClose}>
                 Annulla
               </Button>
-              {canAppendImport && (
+              {pendingImportKind === 'full-backup' ? (
+                <Button
+                  type="button"
+                  onClick={() => setIsOverwriteConfirmOpen(true)}
+                  className="gap-2 bg-loss text-white hover:bg-loss/90"
+                >
+                  <Upload className="size-4" />
+                  Ripristina backup completo
+                </Button>
+              ) : canAppendImport && (
                 <Button
                   type="button"
                   onClick={() => setIsAppendConfirmOpen(true)}
@@ -545,7 +750,7 @@ export function ImportExportDialog({
                   Aggiungi ai dati attuali
                 </Button>
               )}
-              {selectedWorkspaceHasData ? (
+              {pendingImportKind === 'workspace' && (selectedWorkspaceHasData ? (
                 <Button
                   type="button"
                   onClick={() => setIsOverwriteConfirmOpen(true)}
@@ -563,7 +768,7 @@ export function ImportExportDialog({
                   <Upload className="size-4" />
                   Importa dati
                 </Button>
-              )}
+              ))}
             </DialogFooter>
           </>
         ) : (
@@ -676,26 +881,32 @@ export function ImportExportDialog({
         <DialogContent className="max-h-[92dvh] w-[calc(100vw-1.75rem)] max-w-[500px] overflow-hidden rounded-2xl border border-border bg-card p-0 shadow-[0_20px_48px_rgba(0,0,0,0.36)] outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0">
           <DialogHeader className="border-b border-border px-4 py-3.5 sm:px-5 sm:py-4">
             <DialogTitle className="font-mono text-base text-loss">
-              Prima di sovrascrivere
+              {pendingImportKind === 'full-backup'
+                ? 'Ripristina backup completo?'
+                : 'Prima di sovrascrivere'}
             </DialogTitle>
             <DialogDescription className="font-sans text-sm">
-              La sovrascrittura sostituirà i dati attuali di questo spazio di
-              lavoro con quelli del file importato.
+              {pendingImportKind === 'full-backup'
+                ? 'Il ripristino sostituirà i dati degli spazi inclusi nel backup.'
+                : 'La sovrascrittura sostituirà i dati attuali di questo spazio di lavoro con quelli del file importato.'}
             </DialogDescription>
           </DialogHeader>
 
           <div className="ej-scrollbar max-h-[calc(92dvh-9rem)] space-y-3 overflow-y-auto px-4 py-4 sm:px-5 sm:py-5">
             <div className="rounded-xl border border-loss/30 bg-loss/10 p-4">
               <p className="font-sans text-sm leading-relaxed text-foreground">
-                Prima di continuare, ti consigliamo di esportare un backup dei
-                dati attuali.
+                {pendingImportKind === 'full-backup'
+                  ? 'Questa operazione può sostituire più spazi di lavoro. Verifica di aver scelto il file corretto prima di continuare.'
+                  : 'Prima di continuare, ti consigliamo di esportare un backup dei dati attuali.'}
               </p>
             </div>
 
-            <p className="font-sans text-xs leading-relaxed text-muted-foreground">
-              Il backup esportato riguarda i dati attuali di{' '}
-              {selectedWorkspaceLabel} e non importa ancora nulla.
-            </p>
+            {pendingImportKind === 'workspace' && (
+              <p className="font-sans text-xs leading-relaxed text-muted-foreground">
+                Il backup esportato riguarda i dati attuali di{' '}
+                {selectedWorkspaceLabel} e non importa ancora nulla.
+              </p>
+            )}
           </div>
 
           <DialogFooter className="border-t border-border bg-background/25 px-4 py-3.5 max-sm:[&_button]:w-full sm:px-5 sm:py-4">
@@ -706,21 +917,95 @@ export function ImportExportDialog({
             >
               Annulla
             </Button>
-            <Button
-              type="button"
-              onClick={handleBackupDownload}
-              className="gap-2 bg-profit text-background hover:bg-profit/90 hover:text-background"
-            >
-              <Download className="size-4" />
-              Esporta backup
-            </Button>
+            {pendingImportKind === 'workspace' && (
+              <Button
+                type="button"
+                onClick={handleBackupDownload}
+                className="gap-2 bg-profit text-background hover:bg-profit/90 hover:text-background"
+              >
+                <Download className="size-4" />
+                Esporta backup
+              </Button>
+            )}
             <Button
               type="button"
               onClick={handleReplaceImport}
               className="gap-2 bg-loss text-white hover:bg-loss/90"
             >
               <Upload className="size-4" />
-              Sovrascrivi direttamente
+              {pendingImportKind === 'full-backup'
+                ? 'Conferma ripristino'
+                : 'Sovrascrivi direttamente'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={isBackupNameOpen}
+        onOpenChange={(open) => {
+          setIsBackupNameOpen(open);
+          if (!open) setIsOverwriteConfirmOpen(true);
+        }}
+      >
+        <DialogContent className="max-h-[92dvh] w-[calc(100vw-1.75rem)] max-w-[500px] overflow-hidden rounded-2xl border border-border bg-card p-0 shadow-[0_20px_48px_rgba(0,0,0,0.36)] outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0">
+          <DialogHeader className="border-b border-border px-4 py-3.5 sm:px-5 sm:py-4">
+            <DialogTitle className="flex items-center gap-2 font-mono text-base">
+              <Download className="size-4 text-profit" />
+              Salva esportazione
+            </DialogTitle>
+            <DialogDescription className="font-sans text-sm">
+              Stai esportando i dati di {selectedWorkspaceLabel}.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3 px-4 py-4 sm:px-5 sm:py-5">
+            <Label htmlFor="backup-file-name" className="font-mono text-xs uppercase tracking-wider">
+              Nome del file
+            </Label>
+            <Input
+              id="backup-file-name"
+              value={backupFileName}
+              onChange={(event) => setBackupFileName(event.target.value)}
+              onBlur={() => {
+                if (!backupFileName.trim()) {
+                  setBackupFileName(getGuidedExportBaseName(selectedWorkspace));
+                }
+              }}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  event.preventDefault();
+                  confirmBackupDownload();
+                }
+              }}
+              className="h-10 border-border bg-background/70 font-mono text-sm"
+              autoFocus
+            />
+            <p className="font-sans text-xs text-muted-foreground">
+              Il file verrà salvato come{' '}
+              <span className="break-all font-mono text-foreground">
+                {normalizeExportFileName(
+                  backupFileName,
+                  getGuidedExportBaseName(selectedWorkspace)
+                )}
+              </span>
+            </p>
+          </div>
+
+          <DialogFooter className="border-t border-border bg-background/25 px-4 py-3.5 max-sm:[&_button]:w-full sm:px-5 sm:py-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setIsBackupNameOpen(false);
+                setIsOverwriteConfirmOpen(true);
+              }}
+            >
+              Indietro
+            </Button>
+            <Button type="button" onClick={confirmBackupDownload} className="gap-2">
+              <Download className="size-4" />
+              Scarica file
             </Button>
           </DialogFooter>
         </DialogContent>

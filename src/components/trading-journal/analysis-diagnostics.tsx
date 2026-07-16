@@ -20,7 +20,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { SlidersHorizontal } from 'lucide-react';
+import { ChevronLeft, ChevronRight, SlidersHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -41,6 +41,17 @@ import {
   type Trade,
 } from '@/lib/types/trade';
 import { cn } from '@/lib/utils';
+import {
+  calculateEclipseScore,
+  calculateOperationalFrequency,
+  calculateRiskRewardRatio,
+  calculateTradeWinRate,
+  formatRiskRewardRatio,
+  getTradeOutcome,
+  isValidStatTrade,
+  MIN_TRADES_PER_WEEK,
+} from '@/lib/calculations';
+import { formatMonthYear } from '@/lib/date-utils';
 
 interface AnalysisDiagnosticsProps {
   trades: Trade[];
@@ -51,6 +62,8 @@ type TradeGroupDialogState = {
   subtitle?: string;
   trades: Trade[];
 };
+
+const ECLIPSE_SCORE_MAX_RISK_REWARD = 1.2;
 
 type ChartClickState = {
   activePayload?: Array<{
@@ -66,6 +79,8 @@ type TradeLogFilters = {
   asset: 'all' | 'NQ' | 'MNQ';
   setup: string;
   tag: string;
+  favoritesOnly: 'yes' | 'no';
+  displayOrder: 'latest' | 'earliest' | 'profit-high' | 'profit-low' | 'time';
   dateFrom: string;
   dateTo: string;
 };
@@ -76,6 +91,8 @@ const DEFAULT_TRADE_LOG_FILTERS: TradeLogFilters = {
   asset: 'all',
   setup: 'all',
   tag: 'all',
+  favoritesOnly: 'no',
+  displayOrder: 'latest',
   dateFrom: '',
   dateTo: '',
 };
@@ -175,6 +192,14 @@ function getTradeTime(trade: Trade) {
   return time.slice(0, 5) || '—';
 }
 
+function getTradeTimeMinutes(trade: Trade) {
+  const [hours, minutes] = getTradeTime(trade).split(':').map(Number);
+
+  return Number.isFinite(hours) && Number.isFinite(minutes)
+    ? hours * 60 + minutes
+    : Number.MAX_SAFE_INTEGER;
+}
+
 function getSessionWindow(trade: Trade) {
   const time = getTradeTime(trade);
   const [hours, minutes] = time.split(':').map(Number);
@@ -206,37 +231,12 @@ function getSessionWindowScore(label: string) {
 function getEclipseMetricCardLabel(metric: string) {
   if (metric === 'Freq. operativa') return 'Frequenza operativa';
   if (metric === 'Ses. operativa') return 'Sessione operativa';
+  if (metric === 'Risk/Reward') return 'Risk-to-Reward Ratio';
   return metric;
 }
 
 function getTradeDateKey(trade: Trade) {
   return trade.exitDate.split('T')[0] || trade.entryDate.split('T')[0] || '';
-}
-
-function formatLocalDateKey(date: Date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-
-  return `${year}-${month}-${day}`;
-}
-
-function getWeekStart(date: Date) {
-  const monday = new Date(date);
-  const day = monday.getDay();
-  const offset = day === 0 ? -6 : 1 - day;
-  monday.setDate(monday.getDate() + offset);
-  monday.setHours(0, 0, 0, 0);
-
-  return monday;
-}
-
-function getWeekEnd(weekStart: Date) {
-  const weekEnd = new Date(weekStart);
-  weekEnd.setDate(weekStart.getDate() + 6);
-  weekEnd.setHours(23, 59, 59, 999);
-
-  return weekEnd;
 }
 
 function getSetupName(trade: Trade) {
@@ -399,12 +399,11 @@ function EclipseScoreTooltip({
   payload?: Array<{
     payload?: {
       metric?: string;
-      value?: number;
-      rawValue?: string;
+      normalizedScore?: number;
+      displayValue?: string;
+      description?: string;
       tooltipValue?: string;
       targetValue?: string;
-      displayScore?: string;
-      evaluation?: string;
     };
   }>;
 }) {
@@ -417,12 +416,12 @@ function EclipseScoreTooltip({
         {item.metric ? getEclipseMetricCardLabel(item.metric) : '—'}
       </p>
       <p className="mt-1 text-[11px] font-semibold text-teal-200">
-        Score: {item.displayScore ?? `${Math.round(item.value ?? 0)} / 100`} ·{' '}
-        {item.evaluation ?? getScoreEvaluation(item.value ?? 0)}
+        Score: {Math.round(item.normalizedScore ?? 0)} / 100 ·{' '}
+        {getScoreEvaluation(item.normalizedScore ?? 0)}
       </p>
-      {item.rawValue && (
+      {item.displayValue && (
         <p className="mt-1 text-[11px] text-slate-200">
-          Valore reale: {item.tooltipValue ?? item.rawValue}
+          Valore reale: {item.tooltipValue ?? item.displayValue}
         </p>
       )}
       {item.targetValue && (
@@ -430,6 +429,50 @@ function EclipseScoreTooltip({
           Target Eclipse: {item.targetValue}
         </p>
       )}
+    </div>
+  );
+}
+
+function MonthChartSelector({
+  label,
+  canGoPrevious,
+  canGoNext,
+  onPrevious,
+  onNext,
+}: {
+  label: string;
+  canGoPrevious: boolean;
+  canGoNext: boolean;
+  onPrevious: () => void;
+  onNext: () => void;
+}) {
+  return (
+    <div className="flex shrink-0 items-center gap-2">
+      <Button
+        type="button"
+        variant="outline"
+        size="icon"
+        className="size-8"
+        disabled={!canGoPrevious}
+        onClick={onPrevious}
+        aria-label="Mese precedente"
+      >
+        <ChevronLeft className="size-4" />
+      </Button>
+      <span className="min-w-[112px] rounded-md border border-border bg-card px-3 py-2 text-center font-mono text-xs font-semibold capitalize text-foreground">
+        {label}
+      </span>
+      <Button
+        type="button"
+        variant="outline"
+        size="icon"
+        className="size-8"
+        disabled={!canGoNext}
+        onClick={onNext}
+        aria-label="Mese successivo"
+      >
+        <ChevronRight className="size-4" />
+      </Button>
     </div>
   );
 }
@@ -452,7 +495,7 @@ function EclipseScoreAngleTick({
     nextY -= 12;
   }
 
-  if (label === 'Profit Factor') {
+  if (label === 'Risk/Reward') {
     nextX += 22;
     nextAnchor = 'start';
   }
@@ -516,7 +559,7 @@ function CumulativePnlTooltip({
 }
 
 export function AnalysisDiagnostics({ trades }: AnalysisDiagnosticsProps) {
-  const { streamerMode } = useStreamerMode();
+  const { streamerMode, sundayWeekStart } = useStreamerMode();
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
   const [tradeGroupDialog, setTradeGroupDialog] =
     useState<TradeGroupDialogState | null>(null);
@@ -530,11 +573,12 @@ export function AnalysisDiagnostics({ trades }: AnalysisDiagnosticsProps) {
   const [currentPage, setCurrentPage] = useState(1);
 
   const data = useMemo(() => {
+    const validStatTrades = trades.filter(isValidStatTrade);
     const weekdayStats = WEEKDAYS.map((weekday) => {
-      const dayTrades = trades.filter(
+      const dayTrades = validStatTrades.filter(
         (trade) => getTradeDate(trade)?.getDay() === weekday.dayIndex
       );
-      const wins = dayTrades.filter((trade) => netPnl(trade) > 0).length;
+      const wins = dayTrades.filter((trade) => getTradeOutcome(trade) === 'win').length;
 
       return {
         ...weekday,
@@ -543,7 +587,7 @@ export function AnalysisDiagnostics({ trades }: AnalysisDiagnosticsProps) {
           (sum, trade) => sum + netPnl(trade),
           0
         ),
-        winRate: dayTrades.length ? (wins / dayTrades.length) * 100 : 0,
+        winRate: calculateTradeWinRate(dayTrades),
       };
     });
 
@@ -552,7 +596,7 @@ export function AnalysisDiagnostics({ trades }: AnalysisDiagnosticsProps) {
       { trades: Trade[]; wins: number; totalPnl: number }
     >();
 
-    trades.forEach((trade) => {
+    validStatTrades.forEach((trade) => {
       const setup = getSetupName(trade);
       const current = setupMap.get(setup) ?? {
         trades: [],
@@ -561,24 +605,24 @@ export function AnalysisDiagnostics({ trades }: AnalysisDiagnosticsProps) {
       };
       current.trades.push(trade);
       current.totalPnl += netPnl(trade);
-      if (netPnl(trade) > 0) current.wins += 1;
+      if (getTradeOutcome(trade) === 'win') current.wins += 1;
       setupMap.set(setup, current);
     });
 
     const setupStats: SetupStats[] = Array.from(setupMap.entries())
       .map(([setup, stats]) => {
         const winningValues = stats.trades
-          .map(netPnl)
-          .filter((value) => value > 0);
+          .filter((trade) => getTradeOutcome(trade) === 'win')
+          .map(netPnl);
         const losingValues = stats.trades
-          .map(netPnl)
-          .filter((value) => value < 0);
+          .filter((trade) => getTradeOutcome(trade) === 'loss')
+          .map(netPnl);
 
         return {
           setup,
           trades: stats.trades.length,
           wins: stats.wins,
-          winRate: (stats.wins / stats.trades.length) * 100,
+          winRate: calculateTradeWinRate(stats.trades),
           avgWin: winningValues.length
             ? winningValues.reduce((sum, value) => sum + value, 0) /
               winningValues.length
@@ -596,19 +640,13 @@ export function AnalysisDiagnostics({ trades }: AnalysisDiagnosticsProps) {
       );
 
     const directionStats = (['long', 'short'] as const).map((direction) => {
-      const directionTrades = trades.filter(
+      const directionTrades = validStatTrades.filter(
         (trade) => trade.direction === direction
       );
-      const winningDirectionTrades = directionTrades.filter(
-        (trade) => netPnl(trade) > 0
-      ).length;
-
       return {
         direction: direction === 'long' ? 'Long' : 'Short',
         trades: directionTrades.length,
-        winRate: directionTrades.length
-          ? (winningDirectionTrades / directionTrades.length) * 100
-          : 0,
+        winRate: calculateTradeWinRate(directionTrades),
         totalPnl: directionTrades.reduce(
           (sum, trade) => sum + netPnl(trade),
           0
@@ -620,72 +658,24 @@ export function AnalysisDiagnostics({ trades }: AnalysisDiagnosticsProps) {
     const tradeLog = [...trades].sort(
       (a, b) => getTradeSortTime(b) - getTradeSortTime(a)
     );
-    const winningTrades = trades.filter((trade) => netPnl(trade) > 0);
-    const losingTrades = trades.filter((trade) => netPnl(trade) < 0);
-    const grossWins = winningTrades.reduce(
-      (sum, trade) => sum + netPnl(trade),
-      0
-    );
-    const grossLosses = Math.abs(
-      losingTrades.reduce((sum, trade) => sum + netPnl(trade), 0)
-    );
-    const winRate =
-      trades.length > 0 ? (winningTrades.length / trades.length) * 100 : 0;
-    const winRateScore = trades.length
+    const winRate = calculateTradeWinRate(validStatTrades);
+    const winRateScore = validStatTrades.length
       ? normalizeScore((winRate / 80) * 100)
       : 0;
-    const profitFactor =
-      grossLosses > 0 ? grossWins / grossLosses : grossWins > 0 ? Infinity : 0;
-    const profitFactorScore =
-      profitFactor === Infinity
-        ? 100
-        : normalizeScore((profitFactor / 4.8) * 100);
-    const weekTradeCounts = new Map<string, number>();
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const validTradeDates = trades
-      .map(getTradeDate)
-      .filter((date): date is Date => Boolean(date))
-      .sort((a, b) => a.getTime() - b.getTime());
-
-    validTradeDates.forEach((tradeDate) => {
-      const weekKey = formatLocalDateKey(getWeekStart(tradeDate));
-      weekTradeCounts.set(weekKey, (weekTradeCounts.get(weekKey) ?? 0) + 1);
-    });
-
-    const completeOperationalWeeks: number[] = [];
-    const firstTradeDate = validTradeDates[0];
-    const lastTradeDate = validTradeDates[validTradeDates.length - 1];
-
-    if (firstTradeDate && lastTradeDate) {
-      const cursor = getWeekStart(firstTradeDate);
-      const lastWeekStart = getWeekStart(lastTradeDate);
-
-      while (cursor <= lastWeekStart) {
-        const weekEnd = getWeekEnd(cursor);
-
-        if (weekEnd < today) {
-          completeOperationalWeeks.push(
-            weekTradeCounts.get(formatLocalDateKey(cursor)) ?? 0
-          );
-        }
-
-        cursor.setDate(cursor.getDate() + 7);
-      }
-    }
-
-    const goodWeeks = completeOperationalWeeks.filter((count) => count >= 4).length;
-    const hasCompleteOperationalWeeks = completeOperationalWeeks.length > 0;
-    const frequencyCompliance =
-      hasCompleteOperationalWeeks
-        ? goodWeeks / completeOperationalWeeks.length
-        : 0;
-    const frequencyScore = hasCompleteOperationalWeeks
-      ? normalizeScore((frequencyCompliance / 0.8) * 100)
-      : 0;
+    const riskRewardRatio = calculateRiskRewardRatio(validStatTrades).value;
+    const riskRewardScore = riskRewardRatio === null
+      ? 0
+      : normalizeScore(
+          (riskRewardRatio / ECLIPSE_SCORE_MAX_RISK_REWARD) * 100
+        );
+    const operationalFrequency = calculateOperationalFrequency(
+      validStatTrades,
+      sundayWeekStart ? 0 : 1
+    );
+    const frequencyScore = operationalFrequency.score;
     const sessionStats = new Map<string, { trades: number; totalPnl: number }>();
 
-    trades.forEach((trade) => {
+    validStatTrades.forEach((trade) => {
       const label = getSessionWindow(trade);
       const current = sessionStats.get(label) ?? { trades: 0, totalPnl: 0 };
       current.trades += 1;
@@ -697,61 +687,57 @@ export function AnalysisDiagnostics({ trades }: AnalysisDiagnosticsProps) {
       Array.from(sessionStats.entries()).sort(
         (a, b) => b[1].totalPnl - a[1].totalPnl || b[1].trades - a[1].trades
       )[0]?.[0] ?? 'Nessun dato';
+    const hasSessionData = bestSessionWindow !== 'Nessun dato';
     const sessionWindowScore = getSessionWindowScore(bestSessionWindow);
     const eclipseScoreComponents = [
       winRateScore,
-      profitFactorScore,
+      riskRewardScore,
+      frequencyScore,
       sessionWindowScore,
-      ...(hasCompleteOperationalWeeks ? [frequencyScore] : []),
     ];
-    const eclipseScore = trades.length
-      ? Number(
-          (
-            eclipseScoreComponents.reduce((sum, score) => sum + score, 0) /
-            eclipseScoreComponents.length
-          ).toFixed(1)
-        )
+    const eclipseScore = validStatTrades.length
+      ? calculateEclipseScore(eclipseScoreComponents)
       : null;
     const eclipseRadarData = [
       {
         metric: 'Winrate',
-        value: winRateScore,
-        rawValue: `${winRate.toFixed(1)}%`,
+        normalizedScore: winRateScore,
+        displayValue: validStatTrades.length ? formatPercent(winRate) : '—',
+        description: validStatTrades.length
+          ? 'Percentuale trade vincenti'
+          : 'Nessun dato disponibile',
       },
       {
-        metric: 'Profit Factor',
-        value: profitFactorScore,
-        rawValue:
-          profitFactor === Infinity
-            ? 'Nessuna loss registrata'
-            : profitFactor.toFixed(2),
+        metric: 'Risk/Reward',
+        normalizedScore: riskRewardScore,
+        displayValue: formatRiskRewardRatio(riskRewardRatio),
+        description: 'Rapporto Rischio / Rendimento',
+        targetValue: ECLIPSE_SCORE_MAX_RISK_REWARD.toFixed(2),
       },
       {
         metric: 'Freq. operativa',
-        value: frequencyScore,
-        rawValue: hasCompleteOperationalWeeks
-          ? `${goodWeeks}/${completeOperationalWeeks.length} settimane con almeno 4 trade`
-          : 'Campione settimanale non ancora disponibile',
-        tooltipValue: hasCompleteOperationalWeeks
-          ? `${goodWeeks}/${completeOperationalWeeks.length} settimane complete con almeno 4 trade`
-          : 'Non ci sono settimane complete da valutare',
-        targetValue: '80% settimane complete con almeno 4 trade',
-        displayScore: hasCompleteOperationalWeeks
-          ? undefined
+        normalizedScore: frequencyScore,
+        displayValue: operationalFrequency.totalWeeks > 0
+          ? `${operationalFrequency.weeksWithMinimumTrades}/${operationalFrequency.totalWeeks} settimane`
           : '—',
-        evaluation: hasCompleteOperationalWeeks
-          ? undefined
-          : 'Campione non disponibile',
+        description: operationalFrequency.totalWeeks > 0
+          ? `Settimane con almeno ${MIN_TRADES_PER_WEEK} trade`
+          : 'Nessun dato disponibile',
+        tooltipValue: `${operationalFrequency.weeksWithMinimumTrades}/${operationalFrequency.totalWeeks} settimane con almeno ${MIN_TRADES_PER_WEEK} trade statistici validi`,
+        targetValue: `Almeno ${MIN_TRADES_PER_WEEK} trade statistici validi a settimana`,
       },
       {
         metric: 'Ses. operativa',
-        value: sessionWindowScore,
-        rawValue: bestSessionWindow,
+        normalizedScore: sessionWindowScore,
+        displayValue: hasSessionData ? bestSessionWindow : '—',
+        description: hasSessionData
+          ? 'Fascia operativa più performante'
+          : 'Nessun dato disponibile',
       },
     ];
     const dailyPnlMap = new Map<string, number>();
 
-    trades.forEach((trade) => {
+    validStatTrades.forEach((trade) => {
       const dateKey =
         trade.exitDate.split('T')[0] || trade.entryDate.split('T')[0] || '';
 
@@ -787,7 +773,9 @@ export function AnalysisDiagnostics({ trades }: AnalysisDiagnosticsProps) {
         name: setup.setup,
         value: setup.trades,
         percentage:
-          trades.length > 0 ? (setup.trades / trades.length) * 100 : 0,
+          validStatTrades.length > 0
+            ? (setup.trades / validStatTrades.length) * 100
+            : 0,
       })),
       directionStats,
       tradeLog,
@@ -795,8 +783,85 @@ export function AnalysisDiagnostics({ trades }: AnalysisDiagnosticsProps) {
       eclipseScore,
       dailyPnlData,
       finalCumulativePnl,
+      totalTrades: validStatTrades.length,
     };
-  }, [trades]);
+  }, [sundayWeekStart, trades]);
+
+  const availableDailyPnlMonths = useMemo(
+    () =>
+      Array.from(
+        new Set(data.dailyPnlData.map((item) => item.date.slice(0, 7)))
+      ).sort(),
+    [data.dailyPnlData]
+  );
+  const [selectedCumulativePnlMonth, setSelectedCumulativePnlMonth] = useState<
+    string | null
+  >(null);
+  const [selectedNetPnlMonth, setSelectedNetPnlMonth] = useState<string | null>(
+    null
+  );
+  const latestDailyPnlMonth =
+    availableDailyPnlMonths[availableDailyPnlMonths.length - 1] ?? null;
+  const activeCumulativePnlMonth =
+    selectedCumulativePnlMonth &&
+    availableDailyPnlMonths.includes(selectedCumulativePnlMonth)
+      ? selectedCumulativePnlMonth
+      : latestDailyPnlMonth;
+  const activeNetPnlMonth =
+    selectedNetPnlMonth &&
+    availableDailyPnlMonths.includes(selectedNetPnlMonth)
+      ? selectedNetPnlMonth
+      : latestDailyPnlMonth;
+  const activeCumulativePnlMonthIndex = activeCumulativePnlMonth
+    ? availableDailyPnlMonths.indexOf(activeCumulativePnlMonth)
+    : -1;
+  const activeNetPnlMonthIndex = activeNetPnlMonth
+    ? availableDailyPnlMonths.indexOf(activeNetPnlMonth)
+    : -1;
+  const cumulativeMonthlyPnlData = useMemo(() => {
+    let cumulativePnl = 0;
+
+    const monthlyData = data.dailyPnlData
+      .filter((item) => item.date.startsWith(activeCumulativePnlMonth ?? ''))
+      .map((item) => {
+        cumulativePnl += item.dailyPnl;
+
+        return {
+          ...item,
+          cumulativePnl,
+        };
+      });
+
+    if (monthlyData.length === 1) {
+      return [
+        {
+          date: '',
+          dateLabel: `01/${monthlyData[0].date.slice(5, 7)}`,
+          dailyPnl: 0,
+          cumulativePnl: 0,
+        },
+        ...monthlyData,
+      ];
+    }
+
+    return monthlyData;
+  }, [activeCumulativePnlMonth, data.dailyPnlData]);
+  const netMonthlyPnlData = useMemo(
+    () =>
+      data.dailyPnlData.filter((item) =>
+        item.date.startsWith(activeNetPnlMonth ?? '')
+      ),
+    [activeNetPnlMonth, data.dailyPnlData]
+  );
+  const monthlyFinalCumulativePnl =
+    cumulativeMonthlyPnlData[cumulativeMonthlyPnlData.length - 1]
+      ?.cumulativePnl ?? 0;
+  const activeCumulativePnlMonthLabel = activeCumulativePnlMonth
+    ? formatMonthYear(new Date(`${activeCumulativePnlMonth}-01T00:00:00`))
+    : 'Nessun mese';
+  const activeNetPnlMonthLabel = activeNetPnlMonth
+    ? formatMonthYear(new Date(`${activeNetPnlMonth}-01T00:00:00`))
+    : 'Nessun mese';
 
   const maxDirectionTrades = Math.max(
     ...data.directionStats.map((item) => item.trades),
@@ -836,12 +901,13 @@ export function AnalysisDiagnostics({ trades }: AnalysisDiagnosticsProps) {
     tradeLogFilters.asset !== 'all' ||
     tradeLogFilters.setup !== 'all' ||
     tradeLogFilters.tag !== 'all' ||
+    tradeLogFilters.favoritesOnly !== 'no' ||
+    tradeLogFilters.displayOrder !== 'latest' ||
     tradeLogFilters.dateFrom !== '' ||
     tradeLogFilters.dateTo !== '';
   const filteredTradeLog = useMemo(() => {
-    return data.tradeLog
-      .filter((trade) => {
-        const pnl = netPnl(trade);
+    const filteredTrades = data.tradeLog.filter((trade) => {
+        const outcome = getTradeOutcome(trade);
         const dateKey =
           trade.exitDate.split('T')[0] || trade.entryDate.split('T')[0] || '';
 
@@ -852,11 +918,11 @@ export function AnalysisDiagnostics({ trades }: AnalysisDiagnosticsProps) {
           return false;
         }
 
-        if (tradeLogFilters.result === 'profit' && pnl <= 0) {
+        if (tradeLogFilters.result === 'profit' && outcome !== 'win') {
           return false;
         }
 
-        if (tradeLogFilters.result === 'loss' && pnl >= 0) {
+        if (tradeLogFilters.result === 'loss' && outcome !== 'loss') {
           return false;
         }
 
@@ -881,6 +947,10 @@ export function AnalysisDiagnostics({ trades }: AnalysisDiagnosticsProps) {
           return false;
         }
 
+        if (tradeLogFilters.favoritesOnly === 'yes' && !trade.isFavorite) {
+          return false;
+        }
+
         if (tradeLogFilters.dateFrom && dateKey < tradeLogFilters.dateFrom) {
           return false;
         }
@@ -890,8 +960,30 @@ export function AnalysisDiagnostics({ trades }: AnalysisDiagnosticsProps) {
         }
 
         return true;
-      })
-      .sort((a, b) => getTradeSortTime(b) - getTradeSortTime(a));
+      });
+
+    return filteredTrades.sort((a, b) => {
+      if (tradeLogFilters.displayOrder === 'earliest') {
+        return getTradeSortTime(a) - getTradeSortTime(b);
+      }
+
+      if (tradeLogFilters.displayOrder === 'profit-high') {
+        return netPnl(b) - netPnl(a) ||
+          getTradeSortTime(b) - getTradeSortTime(a);
+      }
+
+      if (tradeLogFilters.displayOrder === 'profit-low') {
+        return netPnl(a) - netPnl(b) ||
+          getTradeSortTime(b) - getTradeSortTime(a);
+      }
+
+      if (tradeLogFilters.displayOrder === 'time') {
+        return getTradeTimeMinutes(a) - getTradeTimeMinutes(b) ||
+          getTradeSortTime(b) - getTradeSortTime(a);
+      }
+
+      return getTradeSortTime(b) - getTradeSortTime(a);
+    });
   }, [data.tradeLog, tradeLogFilters]);
   const totalTradeLogPages = Math.max(
     1,
@@ -935,19 +1027,19 @@ export function AnalysisDiagnostics({ trades }: AnalysisDiagnosticsProps) {
   }, [currentPage, totalTradeLogPages]);
 
   const cumulativeColor =
-    data.finalCumulativePnl >= 0 ? '#00f0a8' : '#ff4d70';
+    monthlyFinalCumulativePnl >= 0 ? '#00f0a8' : '#ff4d70';
   const cumulativeGradientId =
-    data.finalCumulativePnl >= 0
+    monthlyFinalCumulativePnl >= 0
       ? 'cumulativePnlProfitGradient'
       : 'cumulativePnlLossGradient';
   const maxPositiveDailyPnl = Math.max(
-    ...data.dailyPnlData
+    ...netMonthlyPnlData
       .map((day) => day.dailyPnl)
       .filter((value) => value > 0),
     0
   );
   const minNegativeDailyPnl = Math.min(
-    ...data.dailyPnlData
+    ...netMonthlyPnlData
       .map((day) => day.dailyPnl)
       .filter((value) => value < 0),
     0
@@ -1020,7 +1112,10 @@ export function AnalysisDiagnostics({ trades }: AnalysisDiagnosticsProps) {
   };
 
   const getTradesByDate = (dateKey: string) =>
-    trades.filter((trade) => getTradeDateKey(trade) === dateKey);
+    trades.filter(
+      (trade) =>
+        isValidStatTrade(trade) && getTradeDateKey(trade) === dateKey
+    );
 
   const openDailyTradeGroup = (
     dateKey: string,
@@ -1039,7 +1134,9 @@ export function AnalysisDiagnostics({ trades }: AnalysisDiagnosticsProps) {
     openTradeGroup(
       `Setup: ${setup}`,
       'Tutti i trade associati a questo setup.',
-      trades.filter((trade) => getSetupName(trade) === setup)
+      trades.filter(
+        (trade) => isValidStatTrade(trade) && getSetupName(trade) === setup
+      )
     );
   };
 
@@ -1048,7 +1145,9 @@ export function AnalysisDiagnostics({ trades }: AnalysisDiagnosticsProps) {
     openTradeGroup(
       `Trade ${directionLabel}`,
       'Tutte le operazioni filtrate per direzione.',
-      trades.filter((trade) => trade.direction === direction)
+      trades.filter(
+        (trade) => isValidStatTrade(trade) && trade.direction === direction
+      )
     );
   };
 
@@ -1073,7 +1172,9 @@ export function AnalysisDiagnostics({ trades }: AnalysisDiagnosticsProps) {
                   `Trade del ${day.label}`,
                   'Tutte le operazioni eseguite in questo giorno della settimana.',
                   trades.filter(
-                    (trade) => getTradeDate(trade)?.getDay() === day.dayIndex
+                    (trade) =>
+                      isValidStatTrade(trade) &&
+                      getTradeDate(trade)?.getDay() === day.dayIndex
                   )
                 )
               }
@@ -1229,7 +1330,7 @@ export function AnalysisDiagnostics({ trades }: AnalysisDiagnosticsProps) {
               Long vs Short
             </h3>
 
-            {trades.length === 0 ? (
+            {data.totalTrades === 0 ? (
               <div className="mt-4">
                 <EmptyState>Nessun trade disponibile.</EmptyState>
               </div>
@@ -1352,14 +1453,9 @@ export function AnalysisDiagnostics({ trades }: AnalysisDiagnosticsProps) {
       <div className="space-y-4">
         <div className="grid grid-cols-1">
           <div className="rounded-2xl border border-border bg-card/95 p-4 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
-            <div className="flex items-center justify-between gap-3">
-              <h2 className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                ECLIPSE SCORE
-              </h2>
-              <span className="rounded-full border border-teal-300/25 bg-teal-300/10 px-2 py-0.5 font-mono text-[9px] font-semibold tracking-[0.14em] text-teal-200">
-                BETA
-              </span>
-            </div>
+            <h2 className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+              ECLIPSE SCORE
+            </h2>
 
             {data.eclipseScore === null ? (
               <div className="mt-4">
@@ -1409,7 +1505,7 @@ export function AnalysisDiagnostics({ trades }: AnalysisDiagnosticsProps) {
                       tickCount={5}
                     />
                     <Radar
-                      dataKey="value"
+                      dataKey="normalizedScore"
                       stroke="#00f0a8"
                       strokeWidth={2}
                       fill="url(#eclipseScoreFill)"
@@ -1437,39 +1533,62 @@ export function AnalysisDiagnostics({ trades }: AnalysisDiagnosticsProps) {
                   : data.eclipseScore.toFixed(1)}
               </p>
               <p className="mt-1 font-sans text-xs text-muted-foreground">
-                Basato su winrate, profit factor, frequenza operativa e timing.
+                Basato su winrate, risk-to-reward ratio, frequenza operativa e timing.
               </p>
             </div>
-            {data.eclipseScore !== null && (
-              <div className="mt-4 grid grid-cols-2 gap-2 lg:grid-cols-4">
-                {data.eclipseRadarData.map((metric) => (
-                  <div
-                    key={metric.metric}
-                    className="rounded-xl border border-border bg-background/35 p-3"
-                  >
-                    <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-muted-foreground">
-                      {getEclipseMetricCardLabel(metric.metric)}
-                    </p>
-                    <p className="mt-2 font-mono text-sm font-semibold text-foreground">
-                      {metric.displayScore ?? `${Math.round(metric.value)} / 100`}
-                    </p>
-                    <p className="mt-1 truncate font-mono text-[10px] text-muted-foreground">
-                      {metric.rawValue}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            )}
+            <div className="mt-4 grid grid-cols-2 gap-2 lg:grid-cols-4">
+              {data.eclipseRadarData.map((metric) => (
+                <div
+                  key={metric.metric}
+                  className="min-w-0 rounded-xl border border-border bg-background/35 p-3"
+                >
+                  <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-muted-foreground">
+                    {getEclipseMetricCardLabel(metric.metric)}
+                  </p>
+                  <p className="mt-2 break-words font-mono text-sm font-semibold leading-tight text-foreground">
+                    {metric.displayValue}
+                  </p>
+                  <p className="mt-1 break-words font-mono text-[10px] leading-snug text-muted-foreground">
+                    {metric.description}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-          <div className="rounded-2xl border border-border bg-card/95 p-4 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
-            <h2 className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-              P&amp;L CUMULATIVO GIORNALIERO
-            </h2>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="min-w-0 rounded-2xl border border-border bg-card/95 p-4 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h2 className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                P&amp;L CUMULATIVO GIORNALIERO
+              </h2>
+              <MonthChartSelector
+                label={activeCumulativePnlMonthLabel}
+                canGoPrevious={activeCumulativePnlMonthIndex > 0}
+                canGoNext={
+                  activeCumulativePnlMonthIndex >= 0 &&
+                  activeCumulativePnlMonthIndex <
+                    availableDailyPnlMonths.length - 1
+                }
+                onPrevious={() =>
+                  setSelectedCumulativePnlMonth(
+                    availableDailyPnlMonths[
+                      activeCumulativePnlMonthIndex - 1
+                    ]
+                  )
+                }
+                onNext={() =>
+                  setSelectedCumulativePnlMonth(
+                    availableDailyPnlMonths[
+                      activeCumulativePnlMonthIndex + 1
+                    ]
+                  )
+                }
+              />
+            </div>
 
-            {data.dailyPnlData.length === 0 ? (
+            {cumulativeMonthlyPnlData.length === 0 ? (
               <div className="mt-4">
                 <EmptyState>Nessun dato disponibile.</EmptyState>
               </div>
@@ -1477,7 +1596,7 @@ export function AnalysisDiagnostics({ trades }: AnalysisDiagnosticsProps) {
               <div className="mt-4 h-[320px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart
-                    data={data.dailyPnlData}
+                    data={cumulativeMonthlyPnlData}
                     margin={{ top: 10, right: 10, left: 28, bottom: 0 }}
                     onClick={(state: ChartClickState) => {
                       const dateKey = state.activePayload?.[0]?.payload?.date;
@@ -1560,12 +1679,32 @@ export function AnalysisDiagnostics({ trades }: AnalysisDiagnosticsProps) {
             )}
           </div>
 
-          <div className="rounded-2xl border border-border bg-card/95 p-4 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
-            <h2 className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-              P&amp;L NETTO GIORNALIERO
-            </h2>
+          <div className="min-w-0 rounded-2xl border border-border bg-card/95 p-4 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h2 className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                P&amp;L NETTO GIORNALIERO
+              </h2>
+              <MonthChartSelector
+                label={activeNetPnlMonthLabel}
+                canGoPrevious={activeNetPnlMonthIndex > 0}
+                canGoNext={
+                  activeNetPnlMonthIndex >= 0 &&
+                  activeNetPnlMonthIndex < availableDailyPnlMonths.length - 1
+                }
+                onPrevious={() =>
+                  setSelectedNetPnlMonth(
+                    availableDailyPnlMonths[activeNetPnlMonthIndex - 1]
+                  )
+                }
+                onNext={() =>
+                  setSelectedNetPnlMonth(
+                    availableDailyPnlMonths[activeNetPnlMonthIndex + 1]
+                  )
+                }
+              />
+            </div>
 
-            {data.dailyPnlData.length === 0 ? (
+            {netMonthlyPnlData.length === 0 ? (
               <div className="mt-4">
                 <EmptyState>Nessun dato disponibile.</EmptyState>
               </div>
@@ -1573,11 +1712,11 @@ export function AnalysisDiagnostics({ trades }: AnalysisDiagnosticsProps) {
               <div className="mt-4 h-[320px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
-                    data={data.dailyPnlData}
+                    data={netMonthlyPnlData}
                     margin={{ top: 10, right: 10, left: 28, bottom: 0 }}
                   >
                     <defs>
-                      {data.dailyPnlData.map((item) => {
+                      {netMonthlyPnlData.map((item) => {
                         const colors = getDailyPnlGradientColors(item.dailyPnl);
 
                         return (
@@ -1636,7 +1775,7 @@ export function AnalysisDiagnostics({ trades }: AnalysisDiagnosticsProps) {
                         }
                       }}
                     >
-                      {data.dailyPnlData.map((item) => (
+                      {netMonthlyPnlData.map((item) => (
                         <Cell
                           key={item.date}
                           fill={
@@ -1761,7 +1900,7 @@ export function AnalysisDiagnostics({ trades }: AnalysisDiagnosticsProps) {
                       direction: event.target.value as TradeLogFilters['direction'],
                     }))
                   }
-                  className="h-9 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-profit/60"
+                  className="ej-filter-select h-9 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-profit/60"
                 >
                   <option value="all">Tutti</option>
                   <option value="long">Long</option>
@@ -1778,7 +1917,7 @@ export function AnalysisDiagnostics({ trades }: AnalysisDiagnosticsProps) {
                       result: event.target.value as TradeLogFilters['result'],
                     }))
                   }
-                  className="h-9 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-profit/60"
+                  className="ej-filter-select h-9 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-profit/60"
                 >
                   <option value="all">Tutti</option>
                   <option value="profit">Profit</option>
@@ -1795,7 +1934,7 @@ export function AnalysisDiagnostics({ trades }: AnalysisDiagnosticsProps) {
                       asset: event.target.value as TradeLogFilters['asset'],
                     }))
                   }
-                  className="h-9 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-profit/60"
+                  className="ej-filter-select h-9 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-profit/60"
                 >
                   <option value="all">Tutti</option>
                   <option value="NQ">NQ</option>
@@ -1804,58 +1943,85 @@ export function AnalysisDiagnostics({ trades }: AnalysisDiagnosticsProps) {
               </FilterField>
 
               <FilterField label="Setup">
-                <Select
+                <select
                   value={tradeLogFilters.setup}
-                  onValueChange={(value) => {
-                    setCurrentPage(1);
+                  onChange={(event) =>
                     setTradeLogFilters((filters) => ({
                       ...filters,
-                      setup: value,
-                    }));
-                  }}
+                      setup: event.target.value,
+                    }))
+                  }
+                  className="ej-filter-select h-9 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-profit/60"
                 >
-                  <SelectTrigger className="h-11 w-full rounded-lg border-border bg-background/50 font-sans text-xs font-semibold text-foreground hover:bg-secondary/40 focus-visible:border-profit/60">
-                    <SelectValue placeholder="Tutti" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Tutti</SelectItem>
-                    {availableSetups.map((setup) => (
-                      <SelectItem key={setup} value={setup}>
-                        {setup}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  <option value="all">Tutti</option>
+                  {availableSetups.map((setup) => (
+                    <option key={setup} value={setup}>
+                      {setup}
+                    </option>
+                  ))}
+                </select>
               </FilterField>
 
               <FilterField label="Tag">
-                <Select
+                <select
                   value={tradeLogFilters.tag}
-                  onValueChange={(value) => {
-                    setCurrentPage(1);
+                  onChange={(event) =>
                     setTradeLogFilters((filters) => ({
                       ...filters,
-                      tag: value,
-                    }));
-                  }}
+                      tag: event.target.value,
+                    }))
+                  }
+                  className="ej-filter-select h-9 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-profit/60"
                 >
-                  <SelectTrigger className="h-11 w-full rounded-lg border-border bg-background/50 font-sans text-xs font-semibold text-foreground hover:bg-secondary/40 focus-visible:border-profit/60">
-                    <SelectValue placeholder="Tutti" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Tutti</SelectItem>
-                    {availableTags.map((tag) => (
-                      <SelectItem key={tag} value={tag}>
-                        {getTagLabel(tag)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  <option value="all">Tutti</option>
+                  {availableTags.map((tag) => (
+                    <option key={tag} value={tag}>
+                      {getTagLabel(tag)}
+                    </option>
+                  ))}
+                </select>
+              </FilterField>
+
+              <FilterField label="Mostra solo Preferiti">
+                <select
+                  value={tradeLogFilters.favoritesOnly}
+                  onChange={(event) =>
+                    setTradeLogFilters((filters) => ({
+                      ...filters,
+                      favoritesOnly: event.target
+                        .value as TradeLogFilters['favoritesOnly'],
+                    }))
+                  }
+                  className="ej-filter-select h-9 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-profit/60"
+                >
+                  <option value="no">No</option>
+                  <option value="yes">Sì</option>
+                </select>
+              </FilterField>
+
+              <FilterField label="Ordine di Visualizzazione">
+                <select
+                  value={tradeLogFilters.displayOrder}
+                  onChange={(event) =>
+                    setTradeLogFilters((filters) => ({
+                      ...filters,
+                      displayOrder: event.target
+                        .value as TradeLogFilters['displayOrder'],
+                    }))
+                  }
+                  className="ej-filter-select h-9 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-profit/60"
+                >
+                  <option value="latest">Trade più recente</option>
+                  <option value="earliest">Trade meno recente</option>
+                  <option value="profit-high">Profitto più alto</option>
+                  <option value="profit-low">Profitto più basso</option>
+                  <option value="time">Orario</option>
+                </select>
               </FilterField>
 
               <div className="grid grid-cols-2 gap-2">
                 <FilterField label="Da">
-                  <Input
+                  <input
                     type="date"
                     value={tradeLogFilters.dateFrom}
                     onChange={(event) =>
@@ -1864,11 +2030,11 @@ export function AnalysisDiagnostics({ trades }: AnalysisDiagnosticsProps) {
                         dateFrom: event.target.value,
                       }))
                     }
-                    className="h-9 border-border bg-background/60 font-sans text-xs"
+                    className="ej-date-input-no-indicator h-9 min-w-0 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-profit/60"
                   />
                 </FilterField>
                 <FilterField label="A">
-                  <Input
+                  <input
                     type="date"
                     value={tradeLogFilters.dateTo}
                     onChange={(event) =>
@@ -1877,7 +2043,7 @@ export function AnalysisDiagnostics({ trades }: AnalysisDiagnosticsProps) {
                         dateTo: event.target.value,
                       }))
                     }
-                    className="h-9 border-border bg-background/60 font-sans text-xs"
+                    className="ej-date-input-no-indicator h-9 min-w-0 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-profit/60"
                   />
                 </FilterField>
               </div>
@@ -2029,7 +2195,7 @@ export function AnalysisDiagnostics({ trades }: AnalysisDiagnosticsProps) {
               )}
 
               {isPaginationMode && (
-                <div className="flex flex-wrap items-center justify-end gap-1.5">
+                <div className="mr-2 flex flex-wrap items-center justify-end gap-1.5 sm:mr-3">
                   <Button
                     type="button"
                     variant="outline"

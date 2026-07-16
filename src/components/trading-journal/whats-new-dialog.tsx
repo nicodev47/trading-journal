@@ -14,52 +14,40 @@ interface WhatsNewDialogProps {
 
 const updates = [
   {
-    icon: "📥",
-    title: "Import migliorato",
+    icon: "➕",
+    title: "Inserimento trade Breakeven / Missed",
     description:
-      "Scelta della destinazione, aggiunta ai dati attuali, sovrascrittura sicura e conferme dedicate per lavorare con più controllo sui file JSON.",
+      "Ora è possibile registrare trade con P&L pari a 0 USD. Questo permette di tracciare anche i trade chiusi in pari o i trade mancati, ottenendo statistiche e analisi più realistiche.",
+  },
+  {
+    icon: "📥",
+    title: "Import / Export migliorati",
+    description:
+      "L'anteprima dei dati è ora integrata direttamente nel flusso di Importa. Anche il processo di esportazione è stato ottimizzato, rendendo Import ed Export più semplici, intuitivi e affidabili.",
   },
   {
     icon: "⚙️",
     title: "Nuove impostazioni calendario",
     description:
-      "Puoi scegliere la settimana che inizia di domenica e decidere se mostrare setup e tag nelle celle del calendario.",
+      "Ora puoi scegliere se mostrare nel calendario i tag e il tipo di setup dei trade. Puoi anche includere o escludere dalla visualizzazione i trade con P&L pari a 0 USD, senza modificare i dati salvati.",
   },
   {
-    icon: "🗓️",
-    title: "Calendario ed Execution Map",
+    icon: "⚖️",
+    title: "Risk-to-Reward Ratio",
     description:
-      "Calendario ed Execution Map sono più coerenti, puliti e leggibili durante l’analisi delle sessioni operative.",
+      "Il Risk-to-Reward Ratio sostituisce il Profit Factor e confronta la media dei trade vincenti con quella dei trade perdenti, fornendo un dato più rilevante per valutare l'efficacia della strategia.",
   },
   {
     icon: "🧭",
-    title: "Menu Vai a",
+    title: "Tutorial Migliorato",
     description:
-      "Nel selettore mese/anno puoi raggiungere rapidamente primo trade, ultimo trade o giorno corrente del workspace attivo.",
-  },
-  {
-    icon: "📷",
-    title: "Share Profilo trader",
-    description:
-      "Nuova preview condivisibile del profilo trader con salvataggio come immagine e dati coerenti con il profilo reale.",
-  },
-  {
-    icon: "🏷️",
-    title: "Tag migliorati",
-    description:
-      "La gestione dei tag è stata rifinita per renderli più chiari e consistenti tra inserimento, calendario e analisi.",
-  },
-  {
-    icon: "🎓",
-    title: "Tutorial rifinito",
-    description:
-      "Il tutorial è stato aggiornato con testi più chiari e passaggi più coerenti con le nuove funzioni.",
+      "Il tutorial guidato è ora più completo e accompagna passo dopo passo tra statistiche principali, dati dettagliati, curva Equity e sezione Analisi.",
   },
   {
     icon: "🛠️",
-    title: "Fix e ottimizzazioni",
+    title: "Bug Fix & Improvements",
     description:
-      "Risolti bug UI e problemi generali, con ottimizzazioni per stabilità, modali e usabilità quotidiana.",
+      "• Risolti numerosi bug minori. • Migliorata la stabilità generale. • Ottimizzazioni dell'interfaccia e dell'esperienza utente. • Miglioramenti generali delle prestazioni.",
   },
 ];
 
@@ -74,10 +62,10 @@ export function WhatsNewDialog({ open, onOpenChange }: WhatsNewDialogProps) {
           <div className="flex items-start justify-between gap-4">
             <div>
               <DialogTitle className="text-lg text-foreground sm:text-xl">
-                Novità EclipseJournal v0.4
+                🚀 EclipseJournal v0.5
               </DialogTitle>
               <DialogDescription className="mt-1 text-sm text-muted-foreground">
-                EclipseJournal v0.4 è fuori ora! Questo aggiornamento migliora import, calendario, navigazione rapida, share del profilo e stabilità generale.
+                Versione: v0.5
               </DialogDescription>
             </div>
             <button
@@ -93,7 +81,7 @@ export function WhatsNewDialog({ open, onOpenChange }: WhatsNewDialogProps) {
 
         <div className="p-4 sm:p-5">
           <h2 className="mb-4 font-mono text-xs font-semibold uppercase tracking-[0.16em] text-violet-200">
-            Novità principali
+            ✨ Nuove funzionalità
           </h2>
           <div className="grid gap-3 sm:grid-cols-2">
             {updates.map((update) => (

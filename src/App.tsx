@@ -12,6 +12,7 @@ import { ImportExportDialog } from '@/components/trading-journal/import-export-d
 import {
   useJournalWorkspaces,
   useTrades,
+  hasStoredWorkspaceContent,
   type JournalWorkspace,
 } from '@/hooks/use-trades';
 import { Toaster } from '@/components/ui/sonner';
@@ -24,7 +25,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import type { Trade } from '@/lib/types/trade';
+import type { JournalState, Trade } from '@/lib/types/trade';
 import { AdvancedStatsGrid } from '@/components/trading-journal/advanced-stats-grid';
 import { ProfileDialog } from '@/components/trading-journal/profile-dialog';
 import { toast } from 'sonner';
@@ -45,9 +46,16 @@ import {
   isValidTutorialTradeSet,
   TUTORIAL_SEEN_KEY,
 } from '@/components/trading-journal/tutorial/tutorial-constants';
+import { hasWorkspaceContent } from '@/lib/workspace-content';
+import {
+  createFullBackupExportData,
+  createWorkspaceExportData,
+  getAppendImportTargetMonth,
+  parseJournalExport,
+} from '@/lib/journal-export';
 
 const UPDATE_BANNER_KEY =
-  'dismissedUpdateBanner_eclipsejournal_v04';
+  'dismissedUpdateBanner_eclipsejournal_v05';
 const BACKTEST_STORAGE_KEY = 'eclipse-trading-journal-data-backtest';
 
 type TradeGroupDialogState = {
@@ -169,7 +177,7 @@ const getBacktestHasTrades = () => {
 
 function AppContent() {
  const { streamerMode } = useStreamerMode();
- const { workspaces } = useJournalWorkspaces();
+ const { workspaces, restoreCustomWorkspaces } = useJournalWorkspaces();
  const [activeWorkspace, setActiveWorkspace] = useState<JournalWorkspace>('personal');
 const [activeView, setActiveView] = useState<'calendar' | 'monthly'>('calendar');
 const [isHelpOpen, setIsHelpOpen] = useState(false);
@@ -245,6 +253,8 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
   const [selectedWeek, setSelectedWeek] = useState<{ weekKey: string; weekLabel: string } | null>(null);
   const [importExportMode, setImportExportMode] = useState<'import' | 'export' | null>(null);
   const showBacktestResetButton = activeWorkspace === 'backtest' && backtestHasData;
+  const previewHasContent = hasWorkspaceContent(getWorkspaceData('student'));
+  const showPreviewWorkspace = previewHasContent;
   const visibleTrades = isTutorialActive ? tutorialTrades : trades;
 
   useEffect(() => {
@@ -261,6 +271,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
       'workspace-tabs',
       'import-export-buttons',
       'stats-grid',
+      'detailed-stats-equity',
       'profile-button',
       'help-button',
     ]);
@@ -441,9 +452,15 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
   }, [activeWorkspace, saveWeeklyPlan]);
 
   const handleWorkspaceChange = (workspace: JournalWorkspace) => {
+    const targetWorkspace =
+      workspace === 'student' &&
+      !isTutorialActive &&
+      !hasWorkspaceContent(getWorkspaceData('student'))
+        ? 'personal'
+        : workspace;
     const targetMonth = getWorkspaceNavigationTargetMonth(
-      workspace,
-      getWorkspaceData(workspace).trades
+      targetWorkspace,
+      getWorkspaceData(targetWorkspace).trades
     );
 
     setSelectedDate(null);
@@ -454,57 +471,131 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
     setBacktestHasData(getBacktestHasData());
     setBacktestHasTrades(getBacktestHasTrades());
     setImportTargetMonth(targetMonth);
-    setActiveWorkspace(workspace);
+    setActiveWorkspace(targetWorkspace);
   };
 
+  useEffect(() => {
+    if (
+      isTutorialActive ||
+      activeWorkspace !== 'student' ||
+      previewHasContent
+    ) {
+      return;
+    }
+
+    setSelectedDate(null);
+    setSelectedWeek(null);
+    setImportExportMode(null);
+    setIsResetPreviewConfirmOpen(false);
+    setActiveView('calendar');
+    setImportTargetMonth(new Date());
+    setActiveWorkspace('personal');
+  }, [activeWorkspace, isTutorialActive, previewHasContent]);
+
   const getWorkspaceExportData = useCallback((workspace: JournalWorkspace) => {
-    return JSON.stringify(getWorkspaceData(workspace), null, 2);
+    return createWorkspaceExportData(workspace, getWorkspaceData(workspace));
   }, [getWorkspaceData]);
 
-  const getWorkspaceTradesForExport = useCallback((workspace: JournalWorkspace) => {
-    return getWorkspaceData(workspace).trades;
-  }, [getWorkspaceData]);
+  const getFullBackupExportData = useCallback(() => {
+    const workspaceData: Partial<Record<JournalWorkspace, JournalState>> = {};
+
+    workspaces.forEach((workspace) => {
+      const data = getWorkspaceData(workspace.id);
+
+      if (workspace.id !== 'student' || hasWorkspaceContent(data)) {
+        workspaceData[workspace.id] = data;
+      }
+    });
+
+    return createFullBackupExportData(workspaceData, workspaces);
+  }, [getWorkspaceData, workspaces]);
 
   const getWorkspaceHasImportData = useCallback((workspace: JournalWorkspace) => {
-    const data = getWorkspaceData(workspace);
-
-    return data.trades.length > 0;
+    return hasWorkspaceContent(getWorkspaceData(workspace));
   }, [getWorkspaceData]);
 
+  const completeImportNavigation = (
+    data: string,
+    workspace: JournalWorkspace
+  ) => {
+    if (workspace === 'backtest') {
+      setBacktestHasData(getBacktestHasData());
+      setBacktestHasTrades(getBacktestHasTrades());
+    }
+
+    if (workspace === 'student' && !hasStoredWorkspaceContent('student')) {
+      if (activeWorkspace === 'student') {
+        handleWorkspaceChange('personal');
+        setActiveView('calendar');
+        setImportTargetMonth(new Date());
+      }
+      return;
+    }
+
+    handleWorkspaceChange(workspace);
+    setActiveView('calendar');
+    setImportTargetMonth(getEarliestImportedTradeMonth(data));
+  };
+
   const handleImportData = (data: string, workspace: JournalWorkspace) => {
-    const targetMonth = getEarliestImportedTradeMonth(data);
     const success = importData(data, workspace);
 
     if (success) {
-      if (workspace === 'backtest') {
-        setBacktestHasData(getBacktestHasData());
-        setBacktestHasTrades(getBacktestHasTrades());
-      }
-
-      handleWorkspaceChange(workspace);
-      setActiveView('calendar');
-      setImportTargetMonth(targetMonth);
+      completeImportNavigation(data, workspace);
     }
 
     return success;
   };
 
   const handleAppendImportData = (data: string, workspace: JournalWorkspace) => {
-    const targetMonth = getEarliestImportedTradeMonth(data);
+    const targetMonth = getAppendImportTargetMonth(
+      data,
+      getWorkspaceData(workspace).trades
+    );
     const success = appendImportData(data, workspace);
 
     if (success) {
-      if (workspace === 'backtest') {
-        setBacktestHasData(getBacktestHasData());
-        setBacktestHasTrades(getBacktestHasTrades());
-      }
-
-      handleWorkspaceChange(workspace);
-      setActiveView('calendar');
+      completeImportNavigation(data, workspace);
       setImportTargetMonth(targetMonth);
     }
 
     return success;
+  };
+
+  const handleFullBackupImport = (data: string) => {
+    const parsed = parseJournalExport(data);
+    if (parsed?.kind !== 'full-backup') return false;
+
+    const restoredEntries = Object.entries(parsed.data.workspaces).filter(
+      ([workspace]) =>
+        workspace === 'personal' ||
+        workspace === 'backtest' ||
+        workspace === 'student' ||
+        workspace.startsWith('custom-')
+    );
+    const restoredWorkspaceIds = new Set(
+      restoredEntries.map(([workspace]) => workspace)
+    );
+
+    workspaces.forEach((workspace) => {
+      if (
+        (workspace.id === 'student' || workspace.type === 'custom') &&
+        !restoredWorkspaceIds.has(workspace.id)
+      ) {
+        clearWorkspaceData(workspace.id);
+      }
+    });
+
+    const success = restoredEntries.every(([workspace, journal]) =>
+      importData(JSON.stringify(journal), workspace as JournalWorkspace)
+    );
+
+    if (!success) return false;
+
+    restoreCustomWorkspaces(parsed.data.workspaceOptions);
+    setBacktestHasData(getBacktestHasData());
+    setBacktestHasTrades(getBacktestHasTrades());
+    return true;
   };
 
   const handleResetStudentJournal = () => {
@@ -522,8 +613,11 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
     setSelectedDate(null);
     setSelectedWeek(null);
     setImportExportMode(null);
-    clearAllData();
+    clearWorkspaceData('student');
     setIsResetPreviewConfirmOpen(false);
+    setActiveView('calendar');
+    setImportTargetMonth(new Date());
+    setActiveWorkspace('personal');
   };
 
   const handleResetBacktestJournal = () => {
@@ -613,7 +707,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
             <div className="flex min-w-0 flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-center">
               <div className="min-w-0 basis-full sm:basis-auto">
                 <p className="font-mono text-xs font-semibold text-violet-100 sm:text-sm">
-                  EclipseJournal v0.4 è fuori ora!
+                  EclipseJournal v0.5 è fuori ora!
                 </p>
                 <p className="font-sans text-[11px] text-violet-200/75">
                   Import migliorato, nuove impostazioni calendario, navigazione rapida e fix generali.
@@ -642,12 +736,15 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
       )}
 
       <NavHeader
-  activeView={activeView}
-  onViewChange={setActiveView}
-  onHelpClick={() => setIsHelpOpen(true)}
-  onProfileClick={handleOpenProfile}
-  
-/>
+        activeView={activeView}
+        pinnedForTutorial={
+          isTutorialActive &&
+          TUTORIAL_STEPS[tutorialStepIndex]?.target === 'analysis-section'
+        }
+        onViewChange={setActiveView}
+        onHelpClick={() => setIsHelpOpen(true)}
+        onProfileClick={handleOpenProfile}
+      />
 
       <main className="mx-auto w-full max-w-6xl flex-1 overflow-x-hidden px-3.5 py-2.5 sm:px-4 sm:py-3">
         {activeView === 'calendar' ? (
@@ -660,6 +757,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
     navigationTrades={isTutorialActive ? [] : trades}
     weeklyPlans={isTutorialActive ? [] : weeklyPlans}
     activeWorkspace={activeWorkspace}
+    showPreviewWorkspace={showPreviewWorkspace}
     showResetButton={!isTutorialActive && showBacktestResetButton}
     onWorkspaceChange={handleWorkspaceChange}
     onResetStudentJournal={handleResetStudentJournal}
@@ -676,13 +774,20 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
     tutorialDemoDateKey={isTutorialActive ? tutorialDemoDateKey : undefined}
   />
 
-  <AdvancedStatsGrid trades={visibleTrades} />
+  <div data-tutorial="detailed-stats-equity">
+    <div data-tutorial-part="detailed-stats">
+      <AdvancedStatsGrid trades={visibleTrades} />
+    </div>
 
-  <div className="pb-5 pt-3 sm:pb-6 sm:pt-4">
-    <EquityCurve
-      trades={visibleTrades}
-      onOpenTradeGroup={handleOpenTradeGroup}
-    />
+    <div
+      data-tutorial-part="equity"
+      className="pb-5 pt-3 sm:pb-6 sm:pt-4"
+    >
+      <EquityCurve
+        trades={visibleTrades}
+        onOpenTradeGroup={handleOpenTradeGroup}
+      />
+    </div>
   </div>
 </>
           </>
@@ -712,6 +817,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
       {selectedDate && (
         <DayEditorDialog
           isOpen={!!selectedDate}
+          isTutorialMode={isTutorialActive}
           onClose={handleCloseDayEditor}
           date={selectedDate}
           existingTrades={
@@ -784,13 +890,15 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
         activeWorkspace={activeWorkspace}
         workspaceOptions={workspaces}
         exportData={exportData()}
-        exportTrades={trades}
         getWorkspaceExportData={getWorkspaceExportData}
-        getWorkspaceTrades={getWorkspaceTradesForExport}
+        getFullBackupExportData={getFullBackupExportData}
         workspaceHasData={getWorkspaceHasImportData}
         onImport={importExportMode === 'import' ? handleImportData : undefined}
         onAppendImport={
           importExportMode === 'import' ? handleAppendImportData : undefined
+        }
+        onFullBackupImport={
+          importExportMode === 'import' ? handleFullBackupImport : undefined
         }
       />
 
@@ -952,7 +1060,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
                 <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
                   <div>
                     <h3 className="font-sans text-sm font-bold text-foreground">
-                      EclipseJournal v0.4 — Import, calendario e share
+                      EclipseJournal v0.5 — Import, calendario e share
                     </h3>
                     <p className="mt-1 font-sans text-xs leading-relaxed text-muted-foreground">
                       Scopri le novità dell’ultimo aggiornamento: import migliorato, nuove impostazioni calendario, navigazione rapida e share profilo.
@@ -982,13 +1090,12 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
                 },
                 {
                   icon: '👤',
-                  title: 'Personale / Backtest / Preview',
-                  description: 'Tre spazi separati per lavorare senza mischiare i dati.',
+                  title: 'Spazi di Lavoro',
+                  description: 'Due spazi separati per lavorare senza mischiare i dati.',
                   bullets: [
                     'Personale è il tuo journal principale.',
                     'Backtest serve per testare strategie senza toccare il journal reale.',
-                    'Preview serve per provare import, backup o modifiche temporanee.',
-                    'I tre archivi restano sempre separati.',
+                    'I due archivi restano sempre separati.',
                   ],
                 },
                 {

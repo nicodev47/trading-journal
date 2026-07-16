@@ -51,6 +51,7 @@ export interface DayData {
   totalPnl: number;
   totalPips: number;
   tradeCount: number;
+  validTradeCount: number;
 }
 
 export interface WeekData {

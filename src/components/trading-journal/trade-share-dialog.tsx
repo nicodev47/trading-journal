@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dialog';
 import { useStreamerMode } from '@/contexts/streamer-mode-context';
 import type { Trade } from '@/lib/types/trade';
+import { ShareCardPreview } from './share-card-preview';
 import { TradeShareCard } from './trade-share-card';
 
 interface TradeShareDialogProps {
@@ -161,20 +162,22 @@ export function TradeShareDialog({
         </DialogHeader>
 
         <div className="ej-scrollbar flex max-h-[calc(90vh-132px)] flex-col overflow-y-auto overscroll-contain p-3">
-          <div className="ej-scrollbar overflow-x-auto rounded-2xl border border-border bg-card/60 p-2.5">
-            <div className="mx-auto w-fit">
-              {trade && (
-                <div ref={cardRef}>
-                  <TradeShareCard
-                    trade={trade}
-                    date={date}
-                    handle={profileHandle}
-                    streamerMode={streamerMode}
-                    className="w-[840px]"
-                  />
-                </div>
-              )}
-            </div>
+          <div className="overflow-hidden rounded-2xl border border-border bg-card/60 p-2.5">
+            {trade && (
+              <ShareCardPreview
+                width={840}
+                height={472.5}
+                exportRef={cardRef}
+              >
+                <TradeShareCard
+                  trade={trade}
+                  date={date}
+                  handle={profileHandle}
+                  streamerMode={streamerMode}
+                  className="w-[840px]"
+                />
+              </ShareCardPreview>
+            )}
           </div>
         </div>
 

@@ -13,6 +13,7 @@ import { Plus, TrendingUp, TrendingDown, Star, Image } from 'lucide-react';
 import { formatDateTime } from '@/lib/date-utils';
 import { cn } from '@/lib/utils';
 import type { Trade } from '@/lib/types/trade';
+import { isValidStatTrade } from '@/lib/calculations';
 import { useStreamerMode } from '@/contexts/streamer-mode-context';
 
 interface TradeListProps {
@@ -33,8 +34,10 @@ export function TradeList({
   onEditTrade,
 }: TradeListProps) {
   const { streamerMode } = useStreamerMode();
-  const totalPnl = trades.reduce((sum, t) => sum + t.pnl - t.commission, 0);
-  const totalPips = trades.reduce((sum, t) => sum + t.pips, 0);
+  const statTrades = trades.filter(isValidStatTrade);
+  const totalPnl = statTrades
+    .reduce((sum, t) => sum + t.pnl - t.commission, 0);
+  const totalPips = statTrades.reduce((sum, t) => sum + t.pips, 0);
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>

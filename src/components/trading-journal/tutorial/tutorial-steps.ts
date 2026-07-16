@@ -25,7 +25,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     target: 'workspace-tabs',
     title: 'Spazi di lavoro',
     description:
-      'Gli spazi di lavoro servono a tenere separate le analisi.\n\nPersonale è il journal principale, dove tieni le operazioni reali.\nBacktest serve per analizzare le sessioni di backtest.\nPreview serve per controllare velocemente un journal esterno o un backup importato.',
+      'Gli spazi di lavoro servono a tenere separate le analisi.\n\nPersonale è il journal principale, dove tieni le operazioni reali.\nBacktest serve per analizzare le sessioni di backtest senza modificare i dati del journal principale.',
     cta: 'Avanti',
   },
   {
@@ -39,14 +39,21 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     target: 'stats-grid',
     title: 'Statistiche principali',
     description:
-      'Sotto al calendario trovi un riepilogo immediato delle tue performance.\n\nQueste card ti aiutano a leggere velocemente P&L, numero di trade, win rate, media dei risultati e altri dati utili per capire come sta andando il journal.',
+      'Sopra al calendario trovi un riepilogo immediato delle tue performance.\n\nQueste card ti aiutano a leggere velocemente P&L, numero di trade, win rate e rapporto rischio rendimento, in modo da avere sempre a portata di mano i tuoi dati principali.',
+    cta: 'Avanti',
+  },
+  {
+    target: 'detailed-stats-equity',
+    title: 'Statistiche dettagliate ed Equity',
+    description:
+      'Sotto al calendario trovi sei card con statistiche più dettagliate sulla tua operatività.\n\nInsieme alla curva Equity ti permettono di osservare serie, medie, setup, direzioni e andamento complessivo del journal con maggiore profondità.',
     cta: 'Avanti',
   },
   {
     target: 'analysis-section',
     title: 'Analisi',
     description:
-      'La sezione Analisi raccoglie grafici e dati più dettagliati sul tuo journal.\n\nScrollando troverai altre statistiche utili, come distribuzioni, tabella mensile ed Execution Map.\n\nPuoi cliccare sui grafici per visualizzare le statistiche e le operazioni collegate a quel dato.',
+      'La sezione Analisi raccoglie grafici e dati più dettagliati sul tuo journal.\n\nLa pagina scorrerà lentamente per mostrarti l’intera sezione: troverai distribuzioni, statistiche mensili, Execution Map e il Trade Log.\n\nPuoi cliccare sui grafici per visualizzare le statistiche e le operazioni collegate a quel dato.',
     cta: 'Vai ad Analisi',
   },
   {

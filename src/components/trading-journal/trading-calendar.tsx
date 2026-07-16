@@ -21,7 +21,10 @@ import {
   isCurrentMonth as checkCurrentMonth,
   isToday as checkIsToday,
 } from '@/lib/date-utils';
-import { getDayData } from '@/lib/calculations';
+import {
+  filterCalendarTrades,
+  getDayData,
+} from '@/lib/calculations';
 import { cn } from '@/lib/utils';
 import type { Trade, WeeklyPlan } from '@/lib/types/trade';
 import type { JournalWorkspace } from '@/hooks/use-trades';
@@ -32,6 +35,7 @@ interface TradingCalendarProps {
   navigationTrades?: Trade[];
   weeklyPlans: WeeklyPlan[];
   activeWorkspace: JournalWorkspace;
+  showPreviewWorkspace?: boolean;
   showResetButton?: boolean;
   onWorkspaceChange: (workspace: JournalWorkspace) => void;
   onResetStudentJournal: () => void;
@@ -88,6 +92,7 @@ export function TradingCalendar({
   navigationTrades = trades,
   weeklyPlans,
   activeWorkspace,
+  showPreviewWorkspace = false,
   showResetButton = false,
   onWorkspaceChange,
   onResetStudentJournal,
@@ -100,7 +105,19 @@ export function TradingCalendar({
   tutorialDemoDateKey,
 }: TradingCalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const { sundayWeekStart } = useStreamerMode();
+  const { sundayWeekStart, showZeroPnlTradesInCalendar } = useStreamerMode();
+  const calendarTrades = useMemo(
+    () => filterCalendarTrades(trades, showZeroPnlTradesInCalendar),
+    [showZeroPnlTradesInCalendar, trades]
+  );
+  const calendarNavigationTrades = useMemo(
+    () =>
+      filterCalendarTrades(
+        navigationTrades,
+        showZeroPnlTradesInCalendar
+      ),
+    [navigationTrades, showZeroPnlTradesInCalendar]
+  );
 
   useEffect(() => {
     if (!importTargetMonth) return;
@@ -116,12 +133,12 @@ export function TradingCalendar({
     ? SUNDAY_START_WEEKDAYS
     : WEEKDAYS;
   const firstTradeMonth = useMemo(
-    () => getTradeBoundaryMonth(navigationTrades, 'first'),
-    [navigationTrades]
+    () => getTradeBoundaryMonth(calendarNavigationTrades, 'first'),
+    [calendarNavigationTrades]
   );
   const lastTradeMonth = useMemo(
-    () => getTradeBoundaryMonth(navigationTrades, 'last'),
-    [navigationTrades]
+    () => getTradeBoundaryMonth(calendarNavigationTrades, 'last'),
+    [calendarNavigationTrades]
   );
 
   const { maxPnl, minPnl } = useMemo(() => {
@@ -129,19 +146,19 @@ export function TradingCalendar({
     let min = 0;
     const currentMonthKey = getDateKey(currentMonth).slice(0, 7);
 
-    trades.forEach((trade) => {
+    calendarTrades.forEach((trade) => {
       const dateKey = trade.exitDate.split('T')[0];
 
       if (!dateKey.startsWith(currentMonthKey)) return;
 
-      const dayData = getDayData(trades, dateKey);
+      const dayData = getDayData(calendarTrades, dateKey);
 
       if (dayData.totalPnl > max) max = dayData.totalPnl;
       if (dayData.totalPnl < min) min = dayData.totalPnl;
     });
 
     return { maxPnl: max, minPnl: min };
-  }, [trades, currentMonth]);
+  }, [calendarTrades, currentMonth]);
 
   const weekData = useMemo(() => {
     return weeks.map((week) => {
@@ -152,10 +169,10 @@ export function TradingCalendar({
         if (!checkCurrentMonth(day, currentMonth)) return;
 
         const dateKey = getDateKey(day);
-        const dayData = getDayData(trades, dateKey);
+        const dayData = getDayData(calendarTrades, dateKey);
 
         totalPnl += dayData.totalPnl;
-        tradeCount += dayData.tradeCount;
+        tradeCount += dayData.validTradeCount;
       });
 
       const startDate = week[0];
@@ -186,7 +203,7 @@ export function TradingCalendar({
         approach: weekPlan?.approach || '',
       };
     });
-  }, [weeks, trades, weeklyPlans, sundayWeekStart, currentMonth]);
+  }, [weeks, calendarTrades, weeklyPlans, sundayWeekStart, currentMonth]);
 
   const getWorkspaceButtonClass = (workspace: JournalWorkspace) => {
     const isActive = activeWorkspace === workspace;
@@ -233,15 +250,17 @@ export function TradingCalendar({
             ⚙️ Backtest
           </Button>
 
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className={getWorkspaceButtonClass('student')}
-            onClick={() => onWorkspaceChange('student')}
-          >
-            👁️ Preview
-          </Button>
+          {showPreviewWorkspace && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className={getWorkspaceButtonClass('student')}
+              onClick={() => onWorkspaceChange('student')}
+            >
+              👁️ Preview
+            </Button>
+          )}
 
           {activeWorkspace === 'backtest' && showResetButton && (
             <Button
@@ -256,7 +275,7 @@ export function TradingCalendar({
             </Button>
           )}
 
-          {activeWorkspace === 'student' && trades.length > 0 && (
+          {activeWorkspace === 'student' && showPreviewWorkspace && (
             <Button
               type="button"
               variant="outline"
@@ -353,7 +372,7 @@ export function TradingCalendar({
                 const dateKey = getDateKey(day);
                 const isDayCurrentMonth = checkCurrentMonth(day, currentMonth);
                 const dayData = isDayCurrentMonth
-                  ? getDayData(trades, dateKey)
+                  ? getDayData(calendarTrades, dateKey)
                   : null;
                 const hasTrades = (dayData?.tradeCount ?? 0) > 0;
 

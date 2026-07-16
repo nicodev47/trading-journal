@@ -20,6 +20,7 @@ import {
   getDateKey,
   getMonthDays,
 } from '@/lib/date-utils';
+import { isValidStatTrade } from '@/lib/calculations';
 
 interface ExecutionMapProps {
   trades: Trade[];
@@ -51,6 +52,7 @@ function netPnl(trade: Trade) {
 
 function getInitialMonth(trades: Trade[]) {
   const latestTrade = trades
+    .filter(isValidStatTrade)
     .map((trade) => new Date(trade.exitDate || trade.entryDate))
     .filter((date) => !Number.isNaN(date.getTime()))
     .sort((a, b) => b.getTime() - a.getTime())[0];
@@ -102,7 +104,7 @@ export function ExecutionMap({ trades }: ExecutionMapProps) {
   const dayDataByDate = useMemo(() => {
     const data = new Map<string, DayExecutionData>();
 
-    trades.forEach((trade) => {
+    trades.filter(isValidStatTrade).forEach((trade) => {
       const date = getTradeDateKey(trade);
 
       if (!date) return;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -15,10 +15,20 @@ import {
 import { EquityCurve } from '@/components/trading-journal/equity-curve';
 import { AdvancedStatsGrid } from '@/components/trading-journal/advanced-stats-grid';
 import { AnalysisDiagnostics } from '@/components/trading-journal/analysis-diagnostics';
+import { StatisticsCardGrid } from '@/components/trading-journal/statistics-card-grid';
 import { ExecutionMap } from '@/components/trading-journal/execution-map';
 import { TradeDetailDialog } from '@/components/trading-journal/trade-detail-dialog';
 import { TradeGroupDetailDialog } from '@/components/trading-journal/trade-group-detail-dialog';
-import { calculateStatistics } from '@/lib/calculations';
+import {
+  calculateStatistics,
+  calculateRiskRewardRatio,
+  calculateTradeWinRate,
+  calculateWinRate,
+  classifyPnl,
+  formatRiskRewardRatio,
+  getTradeOutcome,
+  isValidStatTrade,
+} from '@/lib/calculations';
 import { cn } from '@/lib/utils';
 import {
   CUSTOM_TAG_PREFIX,
@@ -67,6 +77,8 @@ const MONTHS = [
   'Dicembre',
 ];
 
+const MONTHLY_TRADES_PAGE_SIZE = 12;
+
 function netPnl(trade: Trade) {
   return trade.pnl - trade.commission;
 }
@@ -78,14 +90,12 @@ function formatCurrency(value: number) {
   })} USD`;
 }
 
-function formatPercent(value: number) {
-  return `${value.toFixed(1)}%`;
+function formatSignedCurrency(value: number) {
+  return `${value > 0 ? '+' : ''}${formatCurrency(value)}`;
 }
 
-function formatProfitFactor(value: number) {
-  if (!isFinite(value)) return '∞';
-  if (isNaN(value)) return '—';
-  return value.toFixed(2);
+function formatPercent(value: number) {
+  return `${value.toFixed(1)}%`;
 }
 
 function getTagLabel(value: string) {
@@ -117,17 +127,16 @@ function getTradeDateLabel(trade: Trade) {
 }
 
 function getBestSetup(trades: Trade[]) {
-  const setupStats = new Map<string, { trades: number; wins: number }>();
+  const setupStats = new Map<string, Trade[]>();
 
-  trades.forEach((trade) => {
+  trades.filter(isValidStatTrade).forEach((trade) => {
     const setup = trade.strategy?.trim();
 
     if (!setup) return;
 
-    const stats = setupStats.get(setup) ?? { trades: 0, wins: 0 };
-    stats.trades += 1;
-    if (netPnl(trade) > 0) stats.wins += 1;
-    setupStats.set(setup, stats);
+    const setupTrades = setupStats.get(setup) ?? [];
+    setupTrades.push(trade);
+    setupStats.set(setup, setupTrades);
   });
 
   return Array.from(setupStats.entries()).reduce<{
@@ -135,14 +144,15 @@ function getBestSetup(trades: Trade[]) {
     trades: number;
     winRate: number;
   }>(
-    (best, [name, stats]) => {
-      const winRate = (stats.wins / stats.trades) * 100;
+    (best, [name, setupTrades]) => {
+      const winRate = calculateTradeWinRate(setupTrades);
+      const tradeCount = setupTrades.length;
 
       if (
         winRate > best.winRate ||
-        (winRate === best.winRate && stats.trades > best.trades)
+        (winRate === best.winRate && tradeCount > best.trades)
       ) {
-        return { name, trades: stats.trades, winRate };
+        return { name, trades: tradeCount, winRate };
       }
 
       return best;
@@ -161,6 +171,7 @@ export function MonthlyAnalysis({
   const [isTradeGroupOpen, setIsTradeGroupOpen] = useState(false);
   const [returnToTradeGroup, setReturnToTradeGroup] = useState(false);
   const [selectedMonthIndex, setSelectedMonthIndex] = useState<number | null>(null);
+  const [monthlyTradesPage, setMonthlyTradesPage] = useState(1);
   const availableYears = useMemo(() => {
     const years = Array.from(
       new Set(trades.map((trade) => new Date(trade.exitDate).getFullYear()))
@@ -173,7 +184,7 @@ export function MonthlyAnalysis({
   const yearFilteredTrades = useMemo(() => {
     return trades.filter((trade) => {
       const tradeDate = new Date(trade.exitDate);
-      return tradeDate.getFullYear() === selectedYear;
+      return tradeDate.getFullYear() === selectedYear && isValidStatTrade(trade);
     });
   }, [selectedYear, trades]);
 
@@ -183,23 +194,23 @@ export function MonthlyAnalysis({
         const d = new Date(trade.exitDate);
         return d.getFullYear() === selectedYear && d.getMonth() === monthIndex;
       });
+      const validMonthTrades = monthTrades.filter(isValidStatTrade);
 
-      const totalPnl = monthTrades.reduce((sum, trade) => sum + netPnl(trade), 0);
-      const wins = monthTrades.filter((trade) => netPnl(trade) > 0);
-      const losses = monthTrades.filter((trade) => netPnl(trade) < 0);
-      const grossWins = wins.reduce((sum, trade) => sum + netPnl(trade), 0);
-      const grossLosses = Math.abs(losses.reduce((sum, trade) => sum + netPnl(trade), 0));
-      const winRate = monthTrades.length > 0 ? (wins.length / monthTrades.length) * 100 : 0;
-      const profitFactor = grossLosses > 0 ? grossWins / grossLosses : grossWins > 0 ? Infinity : 0;
+      const totalPnl = validMonthTrades.reduce((sum, trade) => sum + netPnl(trade), 0);
+      const wins = validMonthTrades.filter((trade) => getTradeOutcome(trade) === 'win');
+      const losses = validMonthTrades.filter((trade) => getTradeOutcome(trade) === 'loss');
+      const winRate = calculateWinRate(wins.length, losses.length);
+      const riskRewardRatio = calculateRiskRewardRatio(validMonthTrades).value;
 
       const tradesByDay = new Map<string, number>();
-      monthTrades.forEach((trade) => {
+      validMonthTrades.forEach((trade) => {
         const key = trade.exitDate.split('T')[0];
         tradesByDay.set(key, (tradesByDay.get(key) || 0) + netPnl(trade));
       });
       const dayValues = Array.from(tradesByDay.values());
-      const greenDays = dayValues.filter((value) => value > 0).length;
-      const dayWinRate = dayValues.length > 0 ? (greenDays / dayValues.length) * 100 : 0;
+      const greenDays = dayValues.filter((value) => classifyPnl(value) === 'win').length;
+      const redDays = dayValues.filter((value) => classifyPnl(value) === 'loss').length;
+      const dayWinRate = calculateWinRate(greenDays, redDays);
       const bestDay = dayValues.length ? Math.max(...dayValues) : 0;
       const worstDay = dayValues.length ? Math.min(...dayValues) : 0;
 
@@ -208,12 +219,12 @@ export function MonthlyAnalysis({
         monthIndex,
         monthTrades,
         totalPnl,
-        trades: monthTrades.length,
+        trades: validMonthTrades.length,
         wins: wins.length,
         losses: losses.length,
         winRate,
         dayWinRate,
-        profitFactor,
+        riskRewardRatio,
         bestDay,
         worstDay,
       };
@@ -224,12 +235,9 @@ export function MonthlyAnalysis({
   const yearTrades = months.reduce((sum, month) => sum + month.trades, 0);
   const yearWins = months.reduce((sum, month) => sum + month.wins, 0);
   const yearLosses = months.reduce((sum, month) => sum + month.losses, 0);
-  const yearWinRate = yearTrades > 0 ? (yearWins / yearTrades) * 100 : 0;
+  const yearWinRate = calculateWinRate(yearWins, yearLosses);
   const yearLongTrades = yearFilteredTrades.filter((trade) => trade.direction === 'long').length;
   const yearShortTrades = yearFilteredTrades.filter((trade) => trade.direction === 'short').length;
-  const grossWins = months.reduce((sum, month) => sum + Math.max(month.totalPnl, 0), 0);
-  const grossLosses = Math.abs(months.reduce((sum, month) => sum + Math.min(month.totalPnl, 0), 0));
-  const profitFactor = grossLosses > 0 ? grossWins / grossLosses : grossWins > 0 ? Infinity : 0;
   const maxAbsPnl = Math.max(...months.map((month) => Math.abs(month.totalPnl)), 1);
   const maxMonthlyTrades = Math.max(...months.map((month) => month.trades), 1);
   const selectedMonthDetail =
@@ -238,10 +246,11 @@ export function MonthlyAnalysis({
     if (!selectedMonthDetail) return null;
 
     const stats = calculateStatistics(selectedMonthDetail.monthTrades);
-    const longTrades = selectedMonthDetail.monthTrades.filter(
+    const validMonthTrades = selectedMonthDetail.monthTrades.filter(isValidStatTrade);
+    const longTrades = validMonthTrades.filter(
       (trade) => trade.direction === 'long'
     ).length;
-    const shortTrades = selectedMonthDetail.monthTrades.filter(
+    const shortTrades = validMonthTrades.filter(
       (trade) => trade.direction === 'short'
     ).length;
 
@@ -256,6 +265,34 @@ export function MonthlyAnalysis({
       ),
     };
   }, [selectedMonthDetail]);
+  const monthlyTradesTotalPages = Math.max(
+    1,
+    Math.ceil(
+      (selectedMonthStats?.sortedTrades.length ?? 0) /
+        MONTHLY_TRADES_PAGE_SIZE
+    )
+  );
+  const monthlyTradesStartIndex =
+    (monthlyTradesPage - 1) * MONTHLY_TRADES_PAGE_SIZE;
+  const visibleMonthlyTrades =
+    selectedMonthStats?.sortedTrades.slice(
+      monthlyTradesStartIndex,
+      monthlyTradesStartIndex + MONTHLY_TRADES_PAGE_SIZE
+    ) ?? [];
+  const monthlyTradesPageNumbers = Array.from(
+    { length: monthlyTradesTotalPages },
+    (_, index) => index + 1
+  );
+
+  useEffect(() => {
+    setMonthlyTradesPage(1);
+  }, [selectedMonthIndex]);
+
+  useEffect(() => {
+    if (monthlyTradesPage > monthlyTradesTotalPages) {
+      setMonthlyTradesPage(monthlyTradesTotalPages);
+    }
+  }, [monthlyTradesPage, monthlyTradesTotalPages]);
 
   const selectedYearIndex = availableYears.indexOf(selectedYear);
   const goPreviousYear = () => {
@@ -268,18 +305,17 @@ export function MonthlyAnalysis({
   };
 
   const tagAnalytics = useMemo<TagAnalytics[]>(() => {
-    const tagMap = new Map<string, { trades: Trade[]; totalPnl: number; wins: number }>();
+    const tagMap = new Map<string, { trades: Trade[]; totalPnl: number }>();
 
     yearFilteredTrades.forEach((trade) => {
       const uniqueTags = Array.from(new Set(trade.tags ?? []));
 
       uniqueTags.forEach((tag) => {
-        const current = tagMap.get(tag) || { trades: [], totalPnl: 0, wins: 0 };
+        const current = tagMap.get(tag) || { trades: [], totalPnl: 0 };
         const pnl = netPnl(trade);
 
         current.trades.push(trade);
         current.totalPnl += pnl;
-        current.wins += pnl > 0 ? 1 : 0;
         tagMap.set(tag, current);
       });
     });
@@ -299,10 +335,7 @@ export function MonthlyAnalysis({
           trades: stats.trades,
           tradeCount: stats.trades.length,
           totalPnl: stats.totalPnl,
-          winRate:
-            stats.trades.length > 0
-              ? (stats.wins / stats.trades.length) * 100
-              : 0,
+          winRate: calculateTradeWinRate(stats.trades),
           percent:
             yearFilteredTrades.length > 0
               ? (stats.trades.length / yearFilteredTrades.length) * 100
@@ -348,6 +381,7 @@ export function MonthlyAnalysis({
 
     if (!month || month.trades === 0) return;
 
+    setMonthlyTradesPage(1);
     setSelectedMonthIndex(monthIndex);
   };
 
@@ -376,8 +410,8 @@ export function MonthlyAnalysis({
         </div>
       </div>
 
-      <div data-tour-target="analysis-overview">
-        <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div>
+        <StatisticsCardGrid className="mb-4">
           <SummaryBox
             title="P&L annuale"
             value={streamerMode ? '******' : formatCurrency(yearTotal)}
@@ -387,7 +421,7 @@ export function MonthlyAnalysis({
           />
           <SummaryBox
             title="Win Rate"
-            value={formatPercent(yearWinRate)}
+            value={`${yearWinRate.toFixed(0)}%`}
             description="Percentuale trade vincenti"
             pills={[
               { label: `${yearWins} win`, tone: 'profit' },
@@ -404,17 +438,7 @@ export function MonthlyAnalysis({
               { label: `${yearShortTrades} short`, tone: 'loss' },
             ]}
           />
-          <SummaryBox
-            title="Profit factor"
-            value={!isFinite(profitFactor) ? '∞' : profitFactor.toFixed(2)}
-            description="Rapporto profitti / perdite"
-            progress={
-              Number.isFinite(profitFactor)
-                ? Math.min((profitFactor / 4.8) * 100, 100)
-                : 0
-            }
-          />
-        </div>
+        </StatisticsCardGrid>
 
         <div className="mb-4">
           <EquityCurve
@@ -614,7 +638,7 @@ export function MonthlyAnalysis({
           <span>Trade</span>
           <span>Win %</span>
           <span>% giorni positivi</span>
-          <span>Profit factor</span>
+          <span>Risk-to-Reward Ratio</span>
           <span>Giorno migliore</span>
           <span>Giorno peggiore</span>
           <span className="sr-only">Apri</span>
@@ -660,9 +684,19 @@ export function MonthlyAnalysis({
             <span>{month.trades || '—'}</span>
             <span>{month.trades ? formatPercent(month.winRate) : '—'}</span>
             <span>{month.trades ? formatPercent(month.dayWinRate) : '—'}</span>
-            <span>{month.trades ? (!isFinite(month.profitFactor) ? '∞' : month.profitFactor.toFixed(2)) : '—'}</span>
+            <span className="text-foreground">
+              {month.trades
+                ? formatRiskRewardRatio(month.riskRewardRatio)
+                : '-'}
+            </span>
             <span className={month.bestDay > 0 ? 'text-profit' : 'text-muted-foreground'}>{month.trades ? streamerMode ? '******' : formatCurrency(month.bestDay) : '—'}</span>
-            <span className={month.worstDay < 0 ? 'text-loss' : 'text-muted-foreground'}>{month.trades ? streamerMode ? '******' : formatCurrency(month.worstDay) : '—'}</span>
+            <span className={month.worstDay < 0 ? 'text-loss' : 'text-muted-foreground'}>
+              {month.trades && month.worstDay < 0
+                ? streamerMode
+                  ? '******'
+                  : formatCurrency(month.worstDay)
+                : '-'}
+            </span>
             <span className="flex justify-end">
               {isClickable && (
                 <Button
@@ -763,7 +797,10 @@ export function MonthlyAnalysis({
       <Dialog
         open={Boolean(selectedMonthDetail && selectedMonthStats)}
         onOpenChange={(open) => {
-          if (!open) setSelectedMonthIndex(null);
+          if (!open) {
+            setSelectedMonthIndex(null);
+            setMonthlyTradesPage(1);
+          }
         }}
       >
         {selectedMonthDetail && selectedMonthStats && (
@@ -806,8 +843,13 @@ export function MonthlyAnalysis({
                   tone={selectedMonthStats.stats.winRate >= 50 ? 'profit' : 'loss'}
                 />
                 <MonthlyMetric
-                  label="Profit factor"
-                  value={formatProfitFactor(selectedMonthStats.stats.profitFactor)}
+                  label="Risk-to-Reward Ratio"
+                  value={formatRiskRewardRatio(
+                    calculateRiskRewardRatio(
+                      selectedMonthStats.sortedTrades
+                    ).value
+                  )}
+                  detail="Rapporto Rischio / Rendimento"
                 />
                 <MonthlyMetric
                   label="Giorni operativi"
@@ -819,18 +861,22 @@ export function MonthlyAnalysis({
                   value={
                     streamerMode
                       ? '******'
-                      : formatCurrency(selectedMonthStats.stats.bestDay)
+                      : formatSignedCurrency(selectedMonthStats.stats.bestDay)
                   }
                   tone={selectedMonthStats.stats.bestDay > 0 ? 'profit' : 'default'}
                 />
                 <MonthlyMetric
                   label="Giorno peggiore"
                   value={
-                    streamerMode
-                      ? '******'
-                      : formatCurrency(selectedMonthStats.stats.worstDay)
+                    selectedMonthStats.stats.worstDay < 0
+                      ? streamerMode
+                        ? '******'
+                        : formatSignedCurrency(selectedMonthStats.stats.worstDay)
+                      : '-'
                   }
-                  tone={selectedMonthStats.stats.worstDay < 0 ? 'loss' : 'default'}
+                  tone={
+                    selectedMonthStats.stats.worstDay < 0 ? 'loss' : 'default'
+                  }
                 />
                 <MonthlyMetric
                   label="Setup migliore"
@@ -852,7 +898,7 @@ export function MonthlyAnalysis({
                   value={
                     streamerMode
                       ? '******'
-                      : formatCurrency(selectedMonthStats.stats.avgWin)
+                      : formatSignedCurrency(selectedMonthStats.stats.avgWin)
                   }
                   tone="profit"
                 />
@@ -861,7 +907,11 @@ export function MonthlyAnalysis({
                   value={
                     streamerMode
                       ? '******'
-                      : formatCurrency(selectedMonthStats.stats.avgLoss)
+                      : formatSignedCurrency(
+                          selectedMonthStats.stats.avgLoss > 0
+                            ? -selectedMonthStats.stats.avgLoss
+                            : 0
+                        )
                   }
                   tone="loss"
                 />
@@ -875,7 +925,7 @@ export function MonthlyAnalysis({
                 </div>
 
                 <div className="divide-y divide-border/70">
-                  {selectedMonthStats.sortedTrades.map((trade) => {
+                  {visibleMonthlyTrades.map((trade) => {
                     const pnl = netPnl(trade);
                     const note = trade.notes?.trim();
 
@@ -912,7 +962,7 @@ export function MonthlyAnalysis({
                             pnl === 0 && 'text-muted-foreground'
                           )}
                         >
-                          {streamerMode ? '******' : formatCurrency(pnl)}
+                          {streamerMode ? '******' : formatSignedCurrency(pnl)}
                         </div>
                         <div className="font-mono text-xs text-muted-foreground">
                           {trade.pair?.trim() || '—'}
@@ -969,6 +1019,74 @@ export function MonthlyAnalysis({
                       </div>
                     );
                   })}
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3">
+                  <span className="font-mono text-[10px] text-muted-foreground">
+                    Mostrati {monthlyTradesStartIndex + 1}-
+                    {Math.min(
+                      monthlyTradesStartIndex + MONTHLY_TRADES_PAGE_SIZE,
+                      selectedMonthStats.sortedTrades.length
+                    )}{' '}
+                    di {selectedMonthStats.sortedTrades.length} trade
+                  </span>
+
+                  {monthlyTradesTotalPages > 1 && (
+                    <div className="mr-2 flex flex-wrap items-center justify-end gap-1.5 sm:mr-3">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-8 min-w-8 rounded-lg border border-border bg-background/50 px-2 font-mono text-xs text-muted-foreground hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                        disabled={monthlyTradesPage === 1}
+                        onClick={() =>
+                          setMonthlyTradesPage((page) =>
+                            Math.max(1, page - 1)
+                          )
+                        }
+                      >
+                        &lt;
+                      </Button>
+
+                      {monthlyTradesPageNumbers.map((page) => (
+                        <Button
+                          key={page}
+                          type="button"
+                          variant={
+                            page === monthlyTradesPage && page !== 1
+                              ? 'default'
+                              : 'outline'
+                          }
+                          size="sm"
+                          className={
+                            page === monthlyTradesPage && page !== 1
+                              ? 'h-8 min-w-8 rounded-lg border border-profit bg-profit px-2 font-mono text-xs font-bold text-background hover:bg-profit hover:text-background'
+                              : 'h-8 min-w-8 rounded-lg border border-border bg-background/50 px-2 font-mono text-xs text-muted-foreground hover:bg-secondary hover:text-foreground'
+                          }
+                          onClick={() => setMonthlyTradesPage(page)}
+                        >
+                          {page}
+                        </Button>
+                      ))}
+
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-8 min-w-8 rounded-lg border border-border bg-background/50 px-2 font-mono text-xs text-muted-foreground hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                        disabled={
+                          monthlyTradesPage === monthlyTradesTotalPages
+                        }
+                        onClick={() =>
+                          setMonthlyTradesPage((page) =>
+                            Math.min(monthlyTradesTotalPages, page + 1)
+                          )
+                        }
+                      >
+                        &gt;
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </section>
             </div>
@@ -1041,7 +1159,7 @@ function SummaryBox({
       tone === 'profit' && 'border-profit/40 bg-profit/10 text-profit',
       tone === 'loss' && 'border-loss/40 bg-loss/10 text-loss',
       tone === 'default' &&
-        'border-border bg-background/70 text-muted-foreground'
+        'border-border bg-background/70 text-foreground'
     );
 
   return (

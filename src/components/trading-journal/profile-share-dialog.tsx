@@ -15,6 +15,7 @@ import {
   ProfileShareCard,
   type ProfileShareData,
 } from './profile-share-card';
+import { ShareCardPreview } from './share-card-preview';
 
 interface ProfileShareDialogProps {
   open: boolean;
@@ -137,16 +138,18 @@ export function ProfileShareDialog({
         </DialogHeader>
 
         <div className="ej-scrollbar flex max-h-[calc(90vh-132px)] flex-col overflow-y-auto overscroll-contain p-3">
-          <div className="ej-scrollbar overflow-x-auto rounded-2xl border border-border bg-card/60 p-2.5">
-            <div className="mx-auto w-fit">
-              <div ref={cardRef}>
-                <ProfileShareCard
-                  profile={profile}
-                  streamerMode={streamerMode}
-                  className="w-[760px]"
-                />
-              </div>
-            </div>
+          <div className="overflow-hidden rounded-2xl border border-border bg-card/60 p-2.5">
+            <ShareCardPreview
+              width={760}
+              height={760}
+              exportRef={cardRef}
+            >
+              <ProfileShareCard
+                profile={profile}
+                streamerMode={streamerMode}
+                className="w-[760px]"
+              />
+            </ShareCardPreview>
           </div>
         </div>
 

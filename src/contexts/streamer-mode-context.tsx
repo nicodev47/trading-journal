@@ -18,6 +18,8 @@ const CALENDAR_SETUP_VISIBILITY_KEY =
   'eclipsejournal_calendar_show_setup';
 const CALENDAR_TAG_VISIBILITY_KEY =
   'eclipsejournal_calendar_show_tags';
+const CALENDAR_ZERO_PNL_VISIBILITY_KEY =
+  'eclipsejournal_calendar_show_zero_pnl_trades';
 
 interface StreamerModeContextValue {
   streamerMode: boolean;
@@ -29,6 +31,8 @@ interface StreamerModeContextValue {
   setShowCalendarSetup: (enabled: boolean) => void;
   showCalendarTags: boolean;
   setShowCalendarTags: (enabled: boolean) => void;
+  showZeroPnlTradesInCalendar: boolean;
+  setShowZeroPnlTradesInCalendar: (enabled: boolean) => void;
 }
 
 const StreamerModeContext = createContext<StreamerModeContextValue | null>(null);
@@ -47,9 +51,13 @@ export function StreamerModeProvider({ children }: { children: ReactNode }) {
 
       if (stored !== null) return stored === 'true';
 
-      return localStorage.getItem(LEGACY_WEEKEND_EDGE_CALENDAR_KEY) === 'true';
+      const legacyStored = localStorage.getItem(
+        LEGACY_WEEKEND_EDGE_CALENDAR_KEY
+      );
+
+      return legacyStored === null ? true : legacyStored === 'true';
     } catch {
-      return false;
+      return true;
     }
   });
   const [showCalendarSetup, setShowCalendarSetupState] = useState(() => {
@@ -66,6 +74,16 @@ export function StreamerModeProvider({ children }: { children: ReactNode }) {
       return false;
     }
   });
+  const [showZeroPnlTradesInCalendar, setShowZeroPnlTradesInCalendarState] =
+    useState(() => {
+      try {
+        const stored = localStorage.getItem(CALENDAR_ZERO_PNL_VISIBILITY_KEY);
+
+        return stored === null ? true : stored === 'true';
+      } catch {
+        return true;
+      }
+    });
 
   useEffect(() => {
     try {
@@ -108,6 +126,17 @@ export function StreamerModeProvider({ children }: { children: ReactNode }) {
     }
   }, [showCalendarTags]);
 
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        CALENDAR_ZERO_PNL_VISIBILITY_KEY,
+        String(showZeroPnlTradesInCalendar)
+      );
+    } catch {
+      // The preference remains active for the current session.
+    }
+  }, [showZeroPnlTradesInCalendar]);
+
   const value = useMemo(
     () => ({
       streamerMode,
@@ -119,8 +148,16 @@ export function StreamerModeProvider({ children }: { children: ReactNode }) {
       setShowCalendarSetup: setShowCalendarSetupState,
       showCalendarTags,
       setShowCalendarTags: setShowCalendarTagsState,
+      showZeroPnlTradesInCalendar,
+      setShowZeroPnlTradesInCalendar: setShowZeroPnlTradesInCalendarState,
     }),
-    [streamerMode, sundayWeekStart, showCalendarSetup, showCalendarTags]
+    [
+      streamerMode,
+      sundayWeekStart,
+      showCalendarSetup,
+      showCalendarTags,
+      showZeroPnlTradesInCalendar,
+    ]
   );
 
   return (

@@ -9,6 +9,7 @@ import {
   type JournalState,
   type WeeklyPlan,
 } from '@/lib/types/trade';
+import { hasWorkspaceContent } from '@/lib/workspace-content';
 
 const STORAGE_KEY_PREFIX = 'eclipse-trading-journal-data';
 const WORKSPACES_STORAGE_KEY = 'eclipse-trading-journal-workspaces';
@@ -26,7 +27,10 @@ export interface JournalWorkspaceMeta {
 }
 
 type LegacyTrade = Partial<Trade> & { mistakes?: string[] };
-type LegacyJournalState = Partial<JournalState> & { customMistakes?: string[] };
+type LegacyJournalState = Partial<JournalState> & {
+  customMistakes?: string[];
+  exportMetadata?: unknown;
+};
 
 export const SYSTEM_WORKSPACES: JournalWorkspaceMeta[] = [
   { id: 'personal', name: 'Personale', type: 'system' },
@@ -80,10 +84,13 @@ const parseImportedJournal = (jsonString: string): JournalState | null => {
       : Array.isArray(data.tags) && data.tags.length > 0
         ? data.tags
         : DEFAULT_AVAILABLE_TAGS;
+    const journalData = { ...data };
+
+    delete journalData.exportMetadata;
 
     return {
       ...initialState,
-      ...data,
+      ...journalData,
       trades,
       missedTrades: Array.isArray(data.missedTrades)
         ? (data.missedTrades as MissedTrade[])
@@ -105,6 +112,19 @@ const parseImportedJournal = (jsonString: string): JournalState | null => {
 
 const getWorkspaceStorageKey = (workspace: JournalWorkspace) =>
   `${STORAGE_KEY_PREFIX}-${workspace}`;
+
+export const hasStoredWorkspaceContent = (
+  workspace: JournalWorkspace
+): boolean => {
+  try {
+    const stored = localStorage.getItem(getWorkspaceStorageKey(workspace));
+    if (!stored) return false;
+
+    return hasWorkspaceContent(parseImportedJournal(stored));
+  } catch {
+    return false;
+  }
+};
 
 const normalizeWorkspaceName = (name: string) => name.trim().replace(/\s+/g, ' ');
 
@@ -216,6 +236,24 @@ export function useJournalWorkspaces() {
     setCustomWorkspaces(nextWorkspaces);
   }, [customWorkspaces]);
 
+  const restoreCustomWorkspaces = useCallback((workspaces: JournalWorkspaceMeta[]) => {
+    const restored = workspaces
+      .filter(
+        (workspace): workspace is JournalWorkspaceMeta =>
+          workspace.type === 'custom' &&
+          workspace.id.startsWith('custom-') &&
+          normalizeWorkspaceName(workspace.name).length > 0
+      )
+      .map((workspace) => ({
+        ...workspace,
+        name: normalizeWorkspaceName(workspace.name),
+      }))
+      .slice(0, MAX_CUSTOM_WORKSPACES);
+
+    persistCustomWorkspaces(restored);
+    setCustomWorkspaces(restored);
+  }, []);
+
   return {
     workspaces: [...SYSTEM_WORKSPACES, ...customWorkspaces],
     customWorkspaces,
@@ -223,6 +261,7 @@ export function useJournalWorkspaces() {
     createWorkspace,
     deleteWorkspace,
     reorderCustomWorkspaces,
+    restoreCustomWorkspaces,
   };
 }
 
@@ -301,6 +340,8 @@ export function useTrades(workspace: JournalWorkspace = 'personal') {
 
   const [state, setState] = useState<JournalState>(initialState);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [loadedWorkspace, setLoadedWorkspace] =
+    useState<JournalWorkspace | null>(null);
 
   // Load from localStorage whenever the selected workspace changes
   useEffect(() => {
@@ -317,19 +358,20 @@ export function useTrades(workspace: JournalWorkspace = 'personal') {
     } catch (error) {
       console.error('Failed to load trades from localStorage:', error);
     }
+    setLoadedWorkspace(workspace);
     setIsLoaded(true);
-  }, [storageKey]);
+  }, [storageKey, workspace]);
 
   // Save to localStorage whenever state changes
   useEffect(() => {
-    if (isLoaded) {
+    if (isLoaded && loadedWorkspace === workspace) {
       try {
         localStorage.setItem(storageKey, JSON.stringify(state));
       } catch (error) {
         console.error('Failed to save trades to localStorage:', error);
       }
     }
-  }, [state, isLoaded, storageKey]);
+  }, [state, isLoaded, loadedWorkspace, storageKey, workspace]);
 
   const addTrade = useCallback((trade: Trade) => {
     setState(prev => ({
@@ -561,7 +603,11 @@ export function useTrades(workspace: JournalWorkspace = 'personal') {
   }, [storageKey]);
 
   const getWorkspaceData = useCallback((targetWorkspace: JournalWorkspace) => {
-    if (targetWorkspace === workspace) {
+    if (
+      targetWorkspace === workspace &&
+      isLoaded &&
+      loadedWorkspace === workspace
+    ) {
       return state;
     }
 
@@ -570,7 +616,7 @@ export function useTrades(workspace: JournalWorkspace = 'personal') {
     );
 
     return stored ? parseImportedJournal(stored) || initialState : initialState;
-  }, [state, workspace]);
+  }, [isLoaded, loadedWorkspace, state, workspace]);
 
   const clearWorkspaceData = useCallback((targetWorkspace: JournalWorkspace) => {
     localStorage.removeItem(getWorkspaceStorageKey(targetWorkspace));

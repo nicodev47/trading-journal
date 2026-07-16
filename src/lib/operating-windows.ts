@@ -1,4 +1,9 @@
 import type { Trade } from './types/trade';
+import {
+  calculateWinRate,
+  getTradeOutcome,
+  isValidStatTrade,
+} from './calculations';
 
 interface OperatingWindowDefinition {
   name: string;
@@ -68,7 +73,8 @@ const getTradeTimeInMinutes = (trade: Trade) => {
 export function getBestOperatingWindow(
   trades: Trade[]
 ): OperatingWindowResult | null {
-  if (trades.length === 0) return null;
+  const validTrades = trades.filter(isValidStatTrade);
+  if (validTrades.length === 0) return null;
 
   const groups = [
     ...OPERATING_WINDOWS.map(window => ({
@@ -79,6 +85,7 @@ export function getBestOperatingWindow(
       pnl: 0,
       tradeCount: 0,
       winningTrades: 0,
+      losingTrades: 0,
     })),
     {
       ...OUTSIDE_WINDOW,
@@ -87,10 +94,11 @@ export function getBestOperatingWindow(
       pnl: 0,
       tradeCount: 0,
       winningTrades: 0,
+      losingTrades: 0,
     },
   ];
 
-  trades.forEach(trade => {
+  validTrades.forEach(trade => {
     const timeInMinutes = getTradeTimeInMinutes(trade);
     const configuredWindow =
       timeInMinutes === null
@@ -108,8 +116,11 @@ export function getBestOperatingWindow(
     group.pnl += netPnl;
     group.tradeCount += 1;
 
-    if (netPnl > 0) {
+    const outcome = getTradeOutcome(trade);
+    if (outcome === 'win') {
       group.winningTrades += 1;
+    } else if (outcome === 'loss') {
+      group.losingTrades += 1;
     }
   });
 
@@ -120,7 +131,7 @@ export function getBestOperatingWindow(
       description: group.description,
       pnl: group.pnl,
       tradeCount: group.tradeCount,
-      winRate: (group.winningTrades / group.tradeCount) * 100,
+      winRate: calculateWinRate(group.winningTrades, group.losingTrades),
     }));
 
   return populatedGroups.reduce((best, current) => {

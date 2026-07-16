@@ -9,6 +9,7 @@ type ActiveView = 'calendar' | 'monthly';
 
 interface NavHeaderProps {
   activeView: ActiveView;
+  pinnedForTutorial?: boolean;
   onViewChange: (view: ActiveView) => void;
   onHelpClick: () => void;
   onProfileClick: () => void;
@@ -16,6 +17,7 @@ interface NavHeaderProps {
 
 export function NavHeader({
   activeView,
+  pinnedForTutorial = false,
   onViewChange,
   onHelpClick,
   onProfileClick,
@@ -23,8 +25,18 @@ export function NavHeader({
   const { streamerMode } = useStreamerMode();
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-card/95 px-3 py-2 backdrop-blur max-md:px-3.5 max-md:py-2">
-      <div className="grid min-h-9 w-full grid-cols-[1fr_auto_1fr] items-center gap-2 max-md:grid-cols-[minmax(0,1fr)_auto] max-md:gap-y-2">
+    <>
+      {pinnedForTutorial && <div className="h-[53px] max-md:h-[82px]" />}
+      <header
+        data-tutorial-navbar="true"
+        className={cn(
+          'z-40 border-b border-border bg-card/95 px-3 py-2 backdrop-blur max-md:px-3.5 max-md:py-2',
+          pinnedForTutorial
+            ? 'fixed inset-x-0 top-0'
+            : 'sticky top-0'
+        )}
+      >
+        <div className="grid min-h-9 w-full grid-cols-[1fr_auto_1fr] items-center gap-2 max-md:grid-cols-[minmax(0,1fr)_auto] max-md:gap-y-2">
         <div className="flex min-w-0 items-center gap-2 justify-self-start">
           <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-primary/20">
             <Moon className="size-4 text-primary" />
@@ -101,7 +113,8 @@ export function NavHeader({
             <span className="max-[390px]:sr-only">Help</span>
           </Button>
         </div>
-      </div>
-    </header>
+        </div>
+      </header>
+    </>
   );
 }

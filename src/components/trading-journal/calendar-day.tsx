@@ -143,7 +143,10 @@ export function CalendarDay({
       };
     }
 
-    return {};
+    return {
+      backgroundColor: 'rgba(148, 163, 184, 0.08)',
+      boxShadow: 'inset 0 0 0 1px rgba(148, 163, 184, 0.14)',
+    };
   };
 
   const fullPnl = `${pnl.toLocaleString('it-IT', {

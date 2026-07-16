@@ -40,6 +40,22 @@ export function getExportDateSlug(date = new Date(), includeYear = false) {
   return includeYear ? `${day}-${month}-${year}` : `${day}-${month}`;
 }
 
+export type GuidedExportTarget = JournalWorkspace | 'full-backup';
+
+export function getGuidedExportBaseName(
+  target: GuidedExportTarget,
+  date = new Date()
+) {
+  const targetSlug = target === 'full-backup'
+    ? 'backup-completo'
+    : getWorkspaceExportSlug(target);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+
+  return `eclipsejournal-${targetSlug}-${year}-${month}-${day}`;
+}
+
 export function getProfileExportName() {
   try {
     return normalizeExportName(localStorage.getItem(PROFILE_NAME_KEY) || '');
@@ -92,7 +108,7 @@ export function getDefaultExportBaseName(
 }
 
 export function normalizeExportFileName(value: string, fallbackBaseName: string) {
-  const withoutExtension = value.trim().replace(/\.json$/i, '');
+  const withoutExtension = value.trim().replace(/(?:\.json)+$/i, '');
   const normalized = normalizeExportName(withoutExtension, fallbackBaseName);
 
   return `${normalized}.json`;

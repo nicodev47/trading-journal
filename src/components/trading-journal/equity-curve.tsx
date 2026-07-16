@@ -13,7 +13,10 @@ import {
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MonthYearPicker } from '@/components/trading-journal/month-year-picker';
-import { getEquityCurveData } from '@/lib/calculations';
+import {
+  getEquityCurveData,
+  isValidStatTrade,
+} from '@/lib/calculations';
 import {
   formatMonthYear,
   formatShortDate,
@@ -130,6 +133,7 @@ export function EquityCurve({
 
   const latestTradeMonth = useMemo(() => {
     const validDates = trades
+      .filter(isValidStatTrade)
       .map((trade) => new Date(trade.exitDate))
       .filter((date) => !Number.isNaN(date.getTime()));
 

@@ -67,6 +67,8 @@ export function ProfileDialog({
     setShowCalendarSetup,
     showCalendarTags,
     setShowCalendarTags,
+    showZeroPnlTradesInCalendar,
+    setShowZeroPnlTradesInCalendar,
   } = useStreamerMode();
 
   useEffect(() => {
@@ -75,7 +77,7 @@ export function ProfileDialog({
 
   const profile = useMemo(() => {
     const stats = calculateStatistics(trades);
-    const totalXP = trades.length * 10;
+    const totalXP = stats.totalTrades * 10;
     const level = Math.floor(totalXP / 100) + 1;
     const currentLevelXP = totalXP % 100;
     const rank = TRADER_RANKS[Math.min(level, 10) - 1];
@@ -309,6 +311,150 @@ export function ProfileDialog({
               ))}
             </section>
 
+            <section className="rounded-[14px] border border-border bg-background/35 p-3.5 sm:p-4">
+              <p className="flex items-center gap-2 font-mono text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                <span>Impostazioni calendario</span>
+                <span className="text-xl leading-none">🗓️</span>
+              </p>
+              <p className="mt-3 max-w-xl font-sans text-xs leading-relaxed text-muted-foreground">
+                Personalizza la visualizzazione del calendario in base al tuo modo
+                di leggere la settimana.
+              </p>
+
+              <div className="mt-3 space-y-2.5">
+                <div className="rounded-xl border border-border/70 bg-background/35 p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-sans text-sm font-semibold text-foreground">
+                        Settimana che inizia di Domenica
+                      </p>
+                      <p className="mt-1 font-sans text-xs leading-relaxed text-muted-foreground">
+                        Mostra il calendario con la domenica come primo giorno della settimana.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={sundayWeekStart}
+                      aria-label="Settimana che inizia di Domenica"
+                      onClick={() => setSundayWeekStart(!sundayWeekStart)}
+                      className={`relative h-6 w-11 shrink-0 rounded-full border transition-colors ${
+                        sundayWeekStart
+                          ? 'border-profit/60 bg-profit'
+                          : 'border-border bg-input/80'
+                      }`}
+                    >
+                      <span
+                        className={`absolute left-0.5 top-0.5 size-5 rounded-full bg-background shadow-sm transition-transform ${
+                          sundayWeekStart ? 'translate-x-5' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-border/70 bg-background/35 p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-sans text-sm font-semibold text-foreground">
+                        Mostra Tipo di Setup
+                      </p>
+                      <p className="mt-1 font-sans text-xs leading-relaxed text-muted-foreground">
+                        Mostra il setup principale della giornata sotto il P&L.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={showCalendarSetup}
+                      aria-label="Mostra Tipo di Setup"
+                      onClick={() => setShowCalendarSetup(!showCalendarSetup)}
+                      className={`relative h-6 w-11 shrink-0 rounded-full border transition-colors ${
+                        showCalendarSetup
+                          ? 'border-profit/60 bg-profit'
+                          : 'border-border bg-input/80'
+                      }`}
+                    >
+                      <span
+                        className={`absolute left-0.5 top-0.5 size-5 rounded-full bg-background shadow-sm transition-transform ${
+                          showCalendarSetup ? 'translate-x-5' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-border/70 bg-background/35 p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-sans text-sm font-semibold text-foreground">
+                        Mostra Tag
+                      </p>
+                      <p className="mt-1 font-sans text-xs leading-relaxed text-muted-foreground">
+                        Mostra i tag principali della giornata sotto il P&L.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={showCalendarTags}
+                      aria-label="Mostra Tag"
+                      onClick={() => setShowCalendarTags(!showCalendarTags)}
+                      className={`relative h-6 w-11 shrink-0 rounded-full border transition-colors ${
+                        showCalendarTags
+                          ? 'border-profit/60 bg-profit'
+                          : 'border-border bg-input/80'
+                      }`}
+                    >
+                      <span
+                        className={`absolute left-0.5 top-0.5 size-5 rounded-full bg-background shadow-sm transition-transform ${
+                          showCalendarTags ? 'translate-x-5' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-border/70 bg-background/35 p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-sans text-sm font-semibold text-foreground">
+                        Mostra Operazioni Mancate
+                      </p>
+                      <p className="mt-1 font-sans text-xs leading-relaxed text-muted-foreground">
+                        Mostra nel calendario le operazioni con risultato nullo,
+                        come trade missati o break-even.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={showZeroPnlTradesInCalendar}
+                      aria-label="Mostra Operazioni Mancate"
+                      onClick={() =>
+                        setShowZeroPnlTradesInCalendar(
+                          !showZeroPnlTradesInCalendar
+                        )
+                      }
+                      className={`relative h-6 w-11 shrink-0 rounded-full border transition-colors ${
+                        showZeroPnlTradesInCalendar
+                          ? 'border-profit/60 bg-profit'
+                          : 'border-border bg-input/80'
+                      }`}
+                    >
+                      <span
+                        className={`absolute left-0.5 top-0.5 size-5 rounded-full bg-background shadow-sm transition-transform ${
+                          showZeroPnlTradesInCalendar
+                            ? 'translate-x-5'
+                            : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </section>
+
             <section className="rounded-[14px] border border-violet-400/35 bg-violet-500/5 p-3.5 sm:p-4">
               <p className="flex items-center gap-2 font-mono text-xs font-semibold uppercase tracking-[0.14em] text-violet-300">
                 <span>Modalità Streamer</span>
@@ -331,112 +477,6 @@ export function ProfileDialog({
                     ? 'Disattiva modalità streamer'
                     : 'Attiva modalità streamer'}
                 </Button>
-              </div>
-            </section>
-
-            <section className="rounded-[14px] border border-border bg-background/35 p-3.5 sm:p-4">
-              <p className="flex items-center gap-2 font-mono text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                <span>Impostazioni calendario</span>
-                <span className="text-xl leading-none">🗓️</span>
-              </p>
-              <p className="mt-3 max-w-xl font-sans text-xs leading-relaxed text-muted-foreground">
-                Personalizza la visualizzazione del calendario in base al tuo modo
-                di leggere la settimana.
-              </p>
-
-              <div className="mt-3 space-y-2.5">
-                <div className="rounded-xl border border-border/70 bg-background/35 p-3">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="font-sans text-sm font-semibold text-foreground">
-                        Settimana che inizia di domenica
-                      </p>
-                      <p className="mt-1 font-sans text-xs leading-relaxed text-muted-foreground">
-                        Mostra il calendario con la domenica come primo giorno della settimana.
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={sundayWeekStart}
-                      aria-label="Settimana che inizia di domenica"
-                      onClick={() => setSundayWeekStart(!sundayWeekStart)}
-                      className={`relative h-6 w-11 shrink-0 rounded-full border transition-colors ${
-                        sundayWeekStart
-                          ? 'border-profit/60 bg-profit'
-                          : 'border-border bg-input/80'
-                      }`}
-                    >
-                      <span
-                        className={`absolute left-0.5 top-0.5 size-5 rounded-full bg-background shadow-sm transition-transform ${
-                          sundayWeekStart ? 'translate-x-5' : 'translate-x-0'
-                        }`}
-                      />
-                    </button>
-                  </div>
-                </div>
-
-                <div className="rounded-xl border border-border/70 bg-background/35 p-3">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="font-sans text-sm font-semibold text-foreground">
-                        Mostra setup nel calendario
-                      </p>
-                      <p className="mt-1 font-sans text-xs leading-relaxed text-muted-foreground">
-                        Mostra il setup principale della giornata sotto il P&L.
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={showCalendarSetup}
-                      aria-label="Mostra setup nel calendario"
-                      onClick={() => setShowCalendarSetup(!showCalendarSetup)}
-                      className={`relative h-6 w-11 shrink-0 rounded-full border transition-colors ${
-                        showCalendarSetup
-                          ? 'border-profit/60 bg-profit'
-                          : 'border-border bg-input/80'
-                      }`}
-                    >
-                      <span
-                        className={`absolute left-0.5 top-0.5 size-5 rounded-full bg-background shadow-sm transition-transform ${
-                          showCalendarSetup ? 'translate-x-5' : 'translate-x-0'
-                        }`}
-                      />
-                    </button>
-                  </div>
-                </div>
-
-                <div className="rounded-xl border border-border/70 bg-background/35 p-3">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="font-sans text-sm font-semibold text-foreground">
-                        Mostra tag nel calendario
-                      </p>
-                      <p className="mt-1 font-sans text-xs leading-relaxed text-muted-foreground">
-                        Mostra i tag principali della giornata sotto il P&L.
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={showCalendarTags}
-                      aria-label="Mostra tag nel calendario"
-                      onClick={() => setShowCalendarTags(!showCalendarTags)}
-                      className={`relative h-6 w-11 shrink-0 rounded-full border transition-colors ${
-                        showCalendarTags
-                          ? 'border-profit/60 bg-profit'
-                          : 'border-border bg-input/80'
-                      }`}
-                    >
-                      <span
-                        className={`absolute left-0.5 top-0.5 size-5 rounded-full bg-background shadow-sm transition-transform ${
-                          showCalendarTags ? 'translate-x-5' : 'translate-x-0'
-                        }`}
-                      />
-                    </button>
-                  </div>
-                </div>
               </div>
             </section>
 

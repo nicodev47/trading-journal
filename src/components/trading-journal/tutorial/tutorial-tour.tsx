@@ -35,11 +35,14 @@ interface TutorialTourProps {
 
 const CARD_WIDTH = 360;
 const CARD_GAP = 12;
+const ANALYSIS_CARD_GAP = 28;
 const VIEWPORT_PADDING = 16;
 const SPOTLIGHT_PADDING = 6;
 const ANALYSIS_SPOTLIGHT_PADDING = 14;
 const ESTIMATED_CARD_HEIGHT = 260;
-const ANALYSIS_TOP_OFFSET = 18;
+const ANALYSIS_SCROLL_DELAY = 900;
+const ANALYSIS_SCROLL_DURATION = 14000;
+const TRADE_EDITOR_OPEN_DURATION = 240;
 const SCROLL_KEYS = new Set([
   ' ',
   'ArrowDown',
@@ -52,6 +55,24 @@ const SCROLL_KEYS = new Set([
   'PageUp',
   'Spacebar',
 ]);
+const INTERACTIVE_SELECTOR = [
+  'a[href]',
+  'button',
+  'input',
+  'select',
+  'textarea',
+  '[contenteditable="true"]',
+  '[role="button"]',
+  '[role="checkbox"]',
+  '[role="combobox"]',
+  '[role="link"]',
+  '[role="menuitem"]',
+  '[role="option"]',
+  '[role="radio"]',
+  '[role="slider"]',
+  '[role="switch"]',
+  '[role="tab"]',
+].join(', ');
 
 const clamp = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), max);
@@ -69,17 +90,17 @@ const areRectsEqual = (first: Rect | null, second: Rect | null) => {
 };
 
 function getTargetElement(target: string): HTMLElement | null {
-  if (target === 'analysis-section') {
-    const overviewElement = document.querySelector<HTMLElement>(
-      '[data-tour-target="analysis-overview"]'
-    );
-
-    if (overviewElement) return overviewElement;
-  }
-
   return document.querySelector<HTMLElement>(
     `[data-tutorial="${target}"]`
   );
+}
+
+function getTutorialNavbarBottom() {
+  const navbar = document.querySelector<HTMLElement>(
+    '[data-tutorial-navbar="true"]'
+  );
+
+  return navbar?.getBoundingClientRect().bottom ?? 0;
 }
 
 function getElementRect(target: string): Rect | null {
@@ -89,12 +110,66 @@ function getElementRect(target: string): Rect | null {
 
   const rect = element.getBoundingClientRect();
 
+  if (target === 'analysis-section') {
+    const navbarBottom = getTutorialNavbarBottom();
+    const top = navbarBottom + ANALYSIS_SPOTLIGHT_PADDING;
+
+    return {
+      top,
+      left: Math.max(0, rect.left),
+      width: Math.min(rect.width, window.innerWidth),
+      height: Math.max(
+        0,
+        window.innerHeight - navbarBottom - ANALYSIS_SPOTLIGHT_PADDING * 2
+      ),
+    };
+  }
+
   return {
     top: rect.top,
     left: rect.left,
     width: rect.width,
     height: rect.height,
   };
+}
+
+function getHighlightRects(target: string, fallbackRect: Rect): Rect[] {
+  if (target !== 'detailed-stats-equity') return [fallbackRect];
+
+  const partRects = Array.from(
+    document.querySelectorAll<HTMLElement>(
+      '[data-tutorial-part="detailed-stats"], [data-tutorial-part="equity"]'
+    )
+  ).map((element) => {
+    const rect = element.getBoundingClientRect();
+
+    return {
+      top: rect.top,
+      left: rect.left,
+      width: rect.width,
+      height: rect.height,
+    };
+  });
+
+  if (partRects.length === 0) return [fallbackRect];
+
+  const top = Math.min(...partRects.map((rect) => rect.top));
+  const left = Math.min(...partRects.map((rect) => rect.left));
+  const right = Math.max(
+    ...partRects.map((rect) => rect.left + rect.width)
+  );
+  const bottom = Math.max(
+    ...partRects.map((rect) => rect.top + rect.height)
+  );
+
+  return [
+    {
+      top,
+      left,
+      width: right - left,
+      height: bottom - top,
+    },
+  ];
 }
 
 function getRightSideCardPosition(
@@ -145,32 +220,25 @@ function getSafeFallbackCardPosition(rect: Rect, width: number): CSSProperties {
   };
 }
 
-function getAnalysisFallbackCardPosition(rect: Rect, width: number): CSSProperties {
-  const left = clamp(
-    rect.left + rect.width / 2 - width / 2,
-    VIEWPORT_PADDING,
-    window.innerWidth - width - VIEWPORT_PADDING
+function getTopCenteredCardPosition(width: number): CSSProperties {
+  const navbar = document.querySelector<HTMLElement>(
+    '[data-tutorial-navbar="true"]'
   );
-  const belowTop = rect.top + rect.height + CARD_GAP;
-  const aboveTop = rect.top - CARD_GAP - ESTIMATED_CARD_HEIGHT;
+  const navbarBottom = navbar?.getBoundingClientRect().bottom ?? 0;
 
-  if (belowTop + ESTIMATED_CARD_HEIGHT <= window.innerHeight - VIEWPORT_PADDING) {
-    return {
-      width,
-      left,
-      top: belowTop,
-    };
-  }
-
-  if (aboveTop >= VIEWPORT_PADDING) {
-    return {
-      width,
-      left,
-      top: aboveTop,
-    };
-  }
-
-  return getSafeFallbackCardPosition(rect, width);
+  return {
+    width,
+    left: clamp(
+      window.innerWidth / 2 - width / 2,
+      VIEWPORT_PADDING,
+      window.innerWidth - width - VIEWPORT_PADDING
+    ),
+    top: clamp(
+      navbarBottom + VIEWPORT_PADDING,
+      VIEWPORT_PADDING,
+      window.innerHeight - ESTIMATED_CARD_HEIGHT - VIEWPORT_PADDING
+    ),
+  };
 }
 
 function getCardPosition(rect: Rect | null, target?: string): CSSProperties {
@@ -191,15 +259,31 @@ function getCardPosition(rect: Rect | null, target?: string): CSSProperties {
   if (rect && target === 'calendar') {
     return (
       getRightSideCardPosition(rect, width, -24) ??
-      getSafeFallbackCardPosition(rect, width)
+      getTopCenteredCardPosition(width)
     );
   }
 
   if (rect && target === 'analysis-section') {
-    return (
-      getRightSideCardPosition(rect, width, -48) ??
-      getAnalysisFallbackCardPosition(rect, width)
-    );
+    const sideLeft = rect.left + rect.width + ANALYSIS_CARD_GAP;
+    const fitsOnRight =
+      sideLeft + width <= window.innerWidth - VIEWPORT_PADDING;
+    const left = fitsOnRight
+      ? sideLeft
+      : window.innerWidth / 2 - width / 2;
+
+    return {
+      width,
+      left: clamp(
+        left,
+        VIEWPORT_PADDING,
+        window.innerWidth - width - VIEWPORT_PADDING
+      ),
+      top: clamp(
+        window.innerHeight / 2 - ESTIMATED_CARD_HEIGHT / 2,
+        VIEWPORT_PADDING,
+        window.innerHeight - ESTIMATED_CARD_HEIGHT - VIEWPORT_PADDING
+      ),
+    };
   }
 
   if (rect && target === 'trade-editor') {
@@ -278,38 +362,70 @@ function getCardPosition(rect: Rect | null, target?: string): CSSProperties {
 }
 
 function getSpotlightPadding(target?: string) {
-  if (window.innerWidth < 768) return 4;
+  if (window.innerWidth < 768) {
+    return { horizontal: 4, vertical: 4 };
+  }
 
-  return target === 'analysis-section'
-    ? ANALYSIS_SPOTLIGHT_PADDING
-    : SPOTLIGHT_PADDING;
+  if (target === 'stats-grid') {
+    return { horizontal: SPOTLIGHT_PADDING, vertical: 0 };
+  }
+
+  if (target === 'detailed-stats-equity') {
+    return { horizontal: 2, vertical: 0 };
+  }
+
+  const padding =
+    target === 'analysis-section'
+      ? ANALYSIS_SPOTLIGHT_PADDING
+      : SPOTLIGHT_PADDING;
+
+  return { horizontal: padding, vertical: padding };
 }
 
 function getOverlayPieces(rect: Rect | null, target?: string): CSSProperties[] {
   if (!rect) {
+    if (target === 'analysis-section') {
+      const navbarBottom = getTutorialNavbarBottom();
+
+      return [{ top: navbarBottom, left: 0, right: 0, bottom: 0 }];
+    }
+
     return [{ inset: 0 }];
   }
 
   const spotlightPadding = getSpotlightPadding(target);
-  const top = clamp(rect.top - spotlightPadding, 0, window.innerHeight);
-  const left = clamp(rect.left - spotlightPadding, 0, window.innerWidth);
+  const top = clamp(
+    rect.top - spotlightPadding.vertical,
+    0,
+    window.innerHeight
+  );
+  const left = clamp(
+    rect.left - spotlightPadding.horizontal,
+    0,
+    window.innerWidth
+  );
   const right = clamp(
-    rect.left + rect.width + spotlightPadding,
+    rect.left + rect.width + spotlightPadding.horizontal,
     0,
     window.innerWidth
   );
   const bottom = clamp(
-    rect.top + rect.height + spotlightPadding,
+    rect.top + rect.height + spotlightPadding.vertical,
     0,
     window.innerHeight
   );
 
-  return [
-    { top: 0, left: 0, right: 0, height: top },
+  const pieces: CSSProperties[] = [
     { top: bottom, left: 0, right: 0, bottom: 0 },
     { top, left: 0, width: left, height: bottom - top },
     { top, left: right, right: 0, height: bottom - top },
   ];
+
+  if (target !== 'analysis-section') {
+    pieces.unshift({ top: 0, left: 0, right: 0, height: top });
+  }
+
+  return pieces;
 }
 
 function isInteractiveKeyboardTarget(target: EventTarget | null) {
@@ -333,7 +449,9 @@ export function TutorialTour({
   const [isStepReady, setIsStepReady] = useState(false);
   const [cardPositionState, setCardPositionState] =
     useState<CardPositionState | null>(null);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const nextFrameRef = useRef<number | null>(null);
+  const hasPresentedStepRef = useRef(false);
   const step = TUTORIAL_STEPS[stepIndex];
   const targetRect =
     step && targetRectState?.target === step.target
@@ -341,9 +459,7 @@ export function TutorialTour({
       : null;
 
   const hideStepChrome = () => {
-    setIsStepReady(false);
-    setTargetRectState(step ? { target: step.target, rect: null } : null);
-    setCardPositionState(null);
+    setIsTransitioning(true);
   };
 
   const commitStepGeometry = (rect: Rect | null) => {
@@ -356,13 +472,13 @@ export function TutorialTour({
       position: getCardPosition(rect, step.target),
     });
     setIsStepReady(true);
+    setIsTransitioning(false);
+    hasPresentedStepRef.current = true;
 
     return true;
   };
 
   useLayoutEffect(() => {
-    hideStepChrome();
-
     return () => {
       if (nextFrameRef.current !== null) {
         window.cancelAnimationFrame(nextFrameRef.current);
@@ -370,6 +486,16 @@ export function TutorialTour({
       }
     };
   }, [active, stepIndex, step?.target]);
+
+  useEffect(() => {
+    if (active) return;
+
+    hasPresentedStepRef.current = false;
+    setIsTransitioning(false);
+    setIsStepReady(false);
+    setTargetRectState(null);
+    setCardPositionState(null);
+  }, [active]);
 
   useEffect(() => {
     if (!active) return;
@@ -432,17 +558,74 @@ export function TutorialTour({
   }, [active]);
 
   useEffect(() => {
+    if (!active) return;
+
+    const isTutorialControl = (target: EventTarget | null) =>
+      target instanceof HTMLElement &&
+      Boolean(target.closest('[data-tutorial-control="true"]'));
+
+    const blockAppInteraction = (event: Event) => {
+      if (isTutorialControl(event.target)) return;
+      if (!(event.target instanceof HTMLElement)) return;
+      if (!event.target.closest(INTERACTIVE_SELECTOR)) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+    };
+
+    const blockAppKeyboardInteraction = (event: KeyboardEvent) => {
+      if (isTutorialControl(event.target)) return;
+      const isEscape = event.key === 'Escape';
+      const isInteractiveActivation =
+        (event.key === 'Enter' || event.key === ' ') &&
+        event.target instanceof HTMLElement &&
+        Boolean(event.target.closest(INTERACTIVE_SELECTOR));
+
+      if (!isEscape && !isInteractiveActivation) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+    };
+
+    document.addEventListener('click', blockAppInteraction, true);
+    document.addEventListener('pointerdown', blockAppInteraction, true);
+    document.addEventListener('submit', blockAppInteraction, true);
+    document.addEventListener('keydown', blockAppKeyboardInteraction, true);
+
+    return () => {
+      document.removeEventListener('click', blockAppInteraction, true);
+      document.removeEventListener('pointerdown', blockAppInteraction, true);
+      document.removeEventListener('submit', blockAppInteraction, true);
+      document.removeEventListener(
+        'keydown',
+        blockAppKeyboardInteraction,
+        true
+      );
+    };
+  }, [active]);
+
+  useEffect(() => {
     if (!active || !step) return;
 
-    hideStepChrome();
+    if (hasPresentedStepRef.current) {
+      setIsTransitioning(true);
+    }
 
     let isCancelled = false;
     let timeout = 0;
     let firstFrame = 0;
     let secondFrame = 0;
+    let analysisScrollFrame = 0;
     let attempts = 0;
 
-    const measureWhenStable = () => {
+    const measureWhenStable = (delay = 0) => {
+      if (delay > 0) {
+        timeout = window.setTimeout(() => measureWhenStable(), delay);
+        return;
+      }
+
       firstFrame = window.requestAnimationFrame(() => {
         secondFrame = window.requestAnimationFrame(() => {
           if (isCancelled) return;
@@ -477,7 +660,7 @@ export function TutorialTour({
 
       if (step.target === 'analysis-section') {
         const rect = element.getBoundingClientRect();
-        const targetTop = window.scrollY + rect.top - ANALYSIS_TOP_OFFSET;
+        const targetTop = window.scrollY + rect.top;
 
         window.scrollTo({
           top: Math.max(0, targetTop),
@@ -485,6 +668,48 @@ export function TutorialTour({
         });
 
         measureWhenStable();
+        timeout = window.setTimeout(() => {
+          if (isCancelled) return;
+
+          const startTop = window.scrollY;
+          const sectionRect = element.getBoundingClientRect();
+          const sectionBottom = startTop + sectionRect.bottom;
+          const destination = Math.max(
+            startTop,
+            sectionBottom - window.innerHeight + VIEWPORT_PADDING
+          );
+          const distance = destination - startTop;
+          const startedAt = window.performance.now();
+
+          const animateAnalysisScroll = (timestamp: number) => {
+            if (isCancelled) return;
+
+            const progress = clamp(
+              (timestamp - startedAt) / ANALYSIS_SCROLL_DURATION,
+              0,
+              1
+            );
+            const easedProgress =
+              progress < 0.5
+                ? 2 * progress * progress
+                : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+
+            window.scrollTo({
+              top: startTop + distance * easedProgress,
+              behavior: 'auto',
+            });
+
+            if (progress < 1) {
+              analysisScrollFrame = window.requestAnimationFrame(
+                animateAnalysisScroll
+              );
+            }
+          };
+
+          analysisScrollFrame = window.requestAnimationFrame(
+            animateAnalysisScroll
+          );
+        }, ANALYSIS_SCROLL_DELAY);
         return;
       }
 
@@ -493,7 +718,9 @@ export function TutorialTour({
         block: 'center',
         inline: 'center',
       });
-      measureWhenStable();
+      measureWhenStable(
+        step.target === 'trade-editor' ? TRADE_EDITOR_OPEN_DURATION : 0
+      );
     };
 
     timeout = window.setTimeout(scrollToTarget, 0);
@@ -503,6 +730,7 @@ export function TutorialTour({
       window.clearTimeout(timeout);
       window.cancelAnimationFrame(firstFrame);
       window.cancelAnimationFrame(secondFrame);
+      window.cancelAnimationFrame(analysisScrollFrame);
     };
   }, [active, step, stepIndex]);
 
@@ -526,25 +754,6 @@ export function TutorialTour({
       });
     };
 
-    if (step.target === 'trade-editor') {
-      let firstFrame = 0;
-      let secondFrame = 0;
-      const timeout = window.setTimeout(() => {
-        firstFrame = window.requestAnimationFrame(() => {
-          secondFrame = window.requestAnimationFrame(updateRect);
-        });
-      }, 80);
-
-      window.addEventListener('resize', updateRect);
-
-      return () => {
-        window.clearTimeout(timeout);
-        window.cancelAnimationFrame(firstFrame);
-        window.cancelAnimationFrame(secondFrame);
-        window.removeEventListener('resize', updateRect);
-      };
-    }
-
     const timeout = window.setTimeout(updateRect, 220);
 
     updateRect();
@@ -558,20 +767,6 @@ export function TutorialTour({
     };
   }, [active, isStepReady, step, stepIndex]);
 
-  useEffect(() => {
-    if (!active) return;
-
-    const unlockCardPosition = () => {
-      setCardPositionState(null);
-    };
-
-    window.addEventListener('resize', unlockCardPosition);
-
-    return () => {
-      window.removeEventListener('resize', unlockCardPosition);
-    };
-  }, [active]);
-
   if (!active || !step) return null;
 
   const descriptionParagraphs = step.description.split('\n\n');
@@ -582,41 +777,59 @@ export function TutorialTour({
       : null;
   const spotlightPadding = getSpotlightPadding(step.target);
   const isChromeReady = isStepReady && !!targetRect && !!cardPosition;
+  const highlightRects =
+    isChromeReady && targetRect
+      ? getHighlightRects(step.target, targetRect)
+      : [];
   const overlayPieces = getOverlayPieces(
     isChromeReady ? targetRect : null,
     step.target
   );
-  const highlightStyle = isChromeReady && targetRect
-    ? {
-        top: targetRect.top - spotlightPadding,
-        left: targetRect.left - spotlightPadding,
-        width: targetRect.width + spotlightPadding * 2,
-        height: targetRect.height + spotlightPadding * 2,
-      }
-    : undefined;
+  const isTourVisible = isChromeReady || isTransitioning;
   const highlightClassName =
     step.target === 'analysis-section'
-      ? 'absolute rounded-[18px] border border-profit/80 shadow-[0_0_10px_rgba(0,214,143,0.22),0_0_22px_rgba(0,214,143,0.12)]'
+      ? 'absolute rounded-b-[18px] border-x border-b border-profit/80'
       : 'absolute rounded-2xl border border-profit/85 shadow-[0_0_22px_rgba(0,214,143,0.28),0_0_42px_rgba(0,214,143,0.14)]';
 
   return (
-    <div className="fixed inset-0 z-[70]">
-      {overlayPieces.map((style, index) => (
+    <div
+      className={`fixed inset-0 z-[70] transition-opacity duration-150 ${
+        isTourVisible ? 'opacity-100' : 'pointer-events-none opacity-0'
+      }`}
+    >
+      {isTourVisible &&
+        (isChromeReady
+          ? overlayPieces
+          : getOverlayPieces(null, step.target)
+        ).map(
+          (style, index) => (
+          <div
+            key={index}
+            className="absolute bg-black/55"
+            style={style}
+            aria-hidden="true"
+          />
+          )
+        )}
+
+      {highlightRects.map((rect, index) => (
         <div
           key={index}
-          className="absolute bg-black/55"
-          style={style}
+          className={highlightClassName}
+          style={{
+            top: rect.top - spotlightPadding.vertical,
+            left: rect.left - spotlightPadding.horizontal,
+            width: rect.width + spotlightPadding.horizontal * 2,
+            height: rect.height + spotlightPadding.vertical * 2,
+          }}
           aria-hidden="true"
         />
       ))}
 
-      {isChromeReady && highlightStyle && (
-        <div
-          className={highlightClassName}
-          style={highlightStyle}
-          aria-hidden="true"
-        />
-      )}
+      <div
+        className="pointer-events-auto absolute inset-0"
+        aria-hidden="true"
+      />
 
       {isChromeReady && cardPosition && (
         <div
@@ -654,6 +867,7 @@ export function TutorialTour({
             <Button
               type="button"
               variant="ghost"
+              data-tutorial-control="true"
               className="px-2 text-xs text-muted-foreground hover:text-foreground max-sm:w-full"
               onClick={() => {
                 hideStepChrome();
@@ -665,6 +879,7 @@ export function TutorialTour({
 
             <Button
               type="button"
+              data-tutorial-control="true"
               className="max-sm:w-full"
               onClick={() => {
                 hideStepChrome();

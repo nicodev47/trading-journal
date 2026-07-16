@@ -12,6 +12,10 @@ import {
 import { useStreamerMode } from '@/contexts/streamer-mode-context';
 import type { Trade } from '@/lib/types/trade';
 import { cn } from '@/lib/utils';
+import {
+  calculateTradeWinRate,
+  isValidStatTrade,
+} from '@/lib/calculations';
 
 type TradeGroupDetailDialogProps = {
   open: boolean;
@@ -132,13 +136,16 @@ export function TradeGroupDetailDialog({
     setCurrentPage(1);
   }, [title, trades]);
 
-  const totalPnl = useMemo(
-    () => sortedTrades.reduce((sum, trade) => sum + netPnl(trade), 0),
+  const statTrades = useMemo(
+    () => sortedTrades.filter(isValidStatTrade),
     [sortedTrades]
   );
-  const wins = sortedTrades.filter((trade) => netPnl(trade) > 0).length;
-  const winRate = sortedTrades.length > 0 ? (wins / sortedTrades.length) * 100 : 0;
-  const pnlValues = sortedTrades.map(netPnl);
+  const totalPnl = useMemo(
+    () => statTrades.reduce((sum, trade) => sum + netPnl(trade), 0),
+    [statTrades]
+  );
+  const winRate = calculateTradeWinRate(statTrades);
+  const pnlValues = statTrades.map(netPnl);
   const bestTrade = pnlValues.length > 0 ? Math.max(...pnlValues) : 0;
   const worstTrade = pnlValues.length > 0 ? Math.min(...pnlValues) : 0;
 
@@ -158,7 +165,7 @@ export function TradeGroupDetailDialog({
 
         <div className="ej-scrollbar max-h-[calc(92dvh-7rem)] overflow-y-auto overscroll-contain px-4 py-4 sm:max-h-none sm:px-6 sm:py-5">
           <div className="grid grid-cols-1 gap-2.5 min-[420px]:grid-cols-2 sm:gap-3 md:grid-cols-5">
-            <SummaryStat label="Trade">{sortedTrades.length}</SummaryStat>
+            <SummaryStat label="Trade">{statTrades.length}</SummaryStat>
             <SummaryStat label="P&L totale">
               <EconomicValue value={totalPnl} streamerMode={streamerMode} />
             </SummaryStat>

@@ -1,5 +1,6 @@
 import { Moon } from 'lucide-react';
 import type { Trade } from '@/lib/types/trade';
+import { getTradeSharePresentation } from '@/lib/trade-share-outcome';
 import { cn } from '@/lib/utils';
 
 interface TradeShareCardProps {
@@ -101,18 +102,14 @@ export function TradeShareCard({
   className,
 }: TradeShareCardProps) {
   const netPnl = trade.pnl - (trade.commission || 0);
-  const isLoss = netPnl < 0;
-  const accent = isLoss ? '#ff4d70' : '#00d68f';
-  const accentGlow = isLoss
-    ? 'rgba(255, 77, 112, 0.18)'
-    : 'rgba(0, 214, 143, 0.18)';
-  const accentBorder = isLoss
-    ? 'rgba(255, 77, 112, 0.42)'
-    : 'rgba(0, 214, 143, 0.42)';
-  const accentShadow = isLoss
-    ? 'rgba(255, 77, 112, 0.16)'
-    : 'rgba(0, 214, 143, 0.16)';
-  const badgeLabel = isLoss ? 'LOSS' : 'PROFIT';
+  const {
+    accent,
+    accentGlow,
+    accentBorder,
+    accentShadow,
+    badgeLabel,
+    orbOpacity,
+  } = getTradeSharePresentation(netPnl);
   const displayHandle = getDisplayHandle(handle);
 
   return (
@@ -129,7 +126,7 @@ export function TradeShareCard({
     >
       <div
         className="pointer-events-none absolute -right-24 -top-24 size-72 rounded-full blur-3xl"
-        style={{ backgroundColor: accent, opacity: 0.2 }}
+        style={{ backgroundColor: accent, opacity: orbOpacity }}
       />
       <div className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent" />
 

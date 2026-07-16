@@ -129,6 +129,7 @@ function formatDialogDate(date: string | Date) {
 
 interface DayEditorDialogProps {
   isOpen: boolean;
+  isTutorialMode?: boolean;
   onClose: () => void;
   date: string;
   existingTrades: Trade[];
@@ -145,6 +146,7 @@ interface DayEditorDialogProps {
 
 export function DayEditorDialog({
   isOpen,
+  isTutorialMode = false,
   onClose,
   date,
   existingTrades,
@@ -595,6 +597,8 @@ export function DayEditorDialog({
   };
 
   const handleDialogOpenChange = (open: boolean) => {
+    if (!open && isTutorialMode) return;
+
     if (!open) {
       persistCurrentRows();
       onClose();
@@ -625,6 +629,12 @@ export function DayEditorDialog({
         className="max-h-[92dvh] w-[calc(100vw-1.25rem)] max-w-4xl gap-0 overflow-hidden bg-card p-0 sm:w-[92vw] sm:max-h-[86vh]"
         data-tutorial="trade-editor"
         onOpenAutoFocus={(e) => e.preventDefault()}
+        onEscapeKeyDown={(event) => {
+          if (isTutorialMode) event.preventDefault();
+        }}
+        onInteractOutside={(event) => {
+          if (isTutorialMode) event.preventDefault();
+        }}
       >
         <DialogHeader className="border-b border-border px-4 py-3.5 text-left sm:px-6 sm:py-4">
           <DialogTitle className="font-mono text-base font-medium tracking-wide">
