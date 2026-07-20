@@ -808,7 +808,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
           <span className="font-mono text-xs text-muted-foreground">
             Powered by{' '}
             <a
-              href="https://www.youtube.com/@eclipsetradingclub"
+              href="https://eclipsetradingclub.it"
               target="_blank"
               rel="noopener noreferrer"
               className="text-profit hover:underline"
