@@ -25,7 +25,6 @@ import {
   filterCalendarTrades,
   getDayData,
 } from '@/lib/calculations';
-import { cn } from '@/lib/utils';
 import type { Trade, WeeklyPlan } from '@/lib/types/trade';
 import type { JournalWorkspace } from '@/hooks/use-trades';
 import { useStreamerMode } from '@/contexts/streamer-mode-context';
@@ -37,7 +36,6 @@ interface TradingCalendarProps {
   activeWorkspace: JournalWorkspace;
   showPreviewWorkspace?: boolean;
   showResetButton?: boolean;
-  onWorkspaceChange: (workspace: JournalWorkspace) => void;
   onResetStudentJournal: () => void;
   onResetBacktestJournal?: () => void;
   onDayClick: (date: string) => void;
@@ -94,7 +92,6 @@ export function TradingCalendar({
   activeWorkspace,
   showPreviewWorkspace = false,
   showResetButton = false,
-  onWorkspaceChange,
   onResetStudentJournal,
   onResetBacktestJournal,
   onDayClick,
@@ -205,17 +202,6 @@ export function TradingCalendar({
     });
   }, [weeks, calendarTrades, weeklyPlans, sundayWeekStart, currentMonth]);
 
-  const getWorkspaceButtonClass = (workspace: JournalWorkspace) => {
-    const isActive = activeWorkspace === workspace;
-
-    return cn(
-      'h-8 rounded-lg border font-sans text-xs font-semibold transition-colors max-md:h-9 max-md:flex-1 max-md:px-2 max-[360px]:text-[11px]',
-      isActive
-        ? '!border-profit !bg-profit !text-background hover:!border-profit hover:!bg-profit hover:!text-background'
-        : 'border-border bg-background/50 text-muted-foreground hover:border-border hover:bg-secondary hover:text-foreground'
-    );
-  };
-
   return (
     <div
       className="flex max-w-full flex-col overflow-hidden rounded-lg border border-border bg-card shadow-[0_18px_50px_rgba(0,0,0,0.25)]"
@@ -230,38 +216,6 @@ export function TradingCalendar({
             Calendario P/L
           </h2>
 
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className={getWorkspaceButtonClass('personal')}
-            onClick={() => onWorkspaceChange('personal')}
-          >
-            👤 Personale
-          </Button>
-
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className={getWorkspaceButtonClass('backtest')}
-            onClick={() => onWorkspaceChange('backtest')}
-          >
-            ⚙️ Backtest
-          </Button>
-
-          {showPreviewWorkspace && (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className={getWorkspaceButtonClass('student')}
-              onClick={() => onWorkspaceChange('student')}
-            >
-              👁️ Preview
-            </Button>
-          )}
-
           {activeWorkspace === 'backtest' && showResetButton && (
             <Button
               type="button"
@@ -275,7 +229,8 @@ export function TradingCalendar({
             </Button>
           )}
 
-          {activeWorkspace === 'student' && showPreviewWorkspace && (
+          {(activeWorkspace === 'student' || activeWorkspace.startsWith('preview-')) &&
+            showPreviewWorkspace && (
             <Button
               type="button"
               variant="outline"

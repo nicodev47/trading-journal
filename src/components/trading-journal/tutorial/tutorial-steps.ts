@@ -23,16 +23,16 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   },
   {
     target: 'workspace-tabs',
-    title: 'Spazi di lavoro',
+    title: 'Conti e spazi di lavoro',
     description:
-      'Gli spazi di lavoro servono a tenere separate le analisi.\n\nPersonale è il journal principale, dove tieni le operazioni reali.\nBacktest serve per analizzare le sessioni di backtest senza modificare i dati del journal principale.',
+      'Gli spazi di lavoro servono a tenere separate operatività e analisi.\n\nDal selettore puoi creare nuovi conti, sessioni Backtest e spazi Preview. Quando aggiungi un conto puoi inserire anche una nota facoltativa con obiettivi, regole o informazioni utili.\n\nOgni spazio mantiene separati trade, calendario e statistiche e può essere rinominato, modificato o esportato individualmente.',
     cta: 'Avanti',
   },
   {
     target: 'import-export-buttons',
     title: 'Import / Export',
     description:
-      'Import ed Export servono per gestire i backup del journal.\n\nI dati vengono salvati in locale nel browser, quindi è sempre consigliato esportare una copia fisica del file JSON e conservarla in un posto sicuro.\n\nQuando importi un file, puoi scegliere se aggiungerlo ai dati attuali oppure sovrascrivere quelli presenti. Prima di sovrascrivere, è sempre meglio esportare un backup dei dati attuali.\n\nPuoi anche inviare i tuoi dati a un’altra persona, per farlo ti basterà inviare il file JSON: chi lo riceve dovrà cliccare sul pulsante “Importa” e inserire il file. Una volta fatto, potrà visualizzare una copia del tuo journal.',
+      'Import ed Export lavorano direttamente sulla pagina che hai aperto, senza chiederti di selezionare un altro conto.\n\nExport scarica il file JSON della pagina corrente. Import carica i dati nella stessa pagina e, se sono già presenti dati, ti permette di aggiungerli oppure sovrascriverli.\n\nPrima di procedere puoi usare la card viola “Scarica i dati attuali” per creare una copia di sicurezza e ripristinarla in seguito se necessario. Gli altri conti e spazi di lavoro non vengono modificati.',
     cta: 'Avanti',
   },
   {

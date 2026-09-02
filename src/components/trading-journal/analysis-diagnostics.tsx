@@ -81,7 +81,7 @@ type ChartClickState = {
 
 type TradeLogFilters = {
   direction: 'all' | 'long' | 'short';
-  result: 'all' | 'profit' | 'loss';
+  result: 'all' | 'profit' | 'loss' | 'missed';
   asset: 'all' | 'NQ' | 'MNQ';
   setup: string;
   tag: string;
@@ -926,6 +926,10 @@ export function AnalysisDiagnostics({
         }
 
         if (tradeLogFilters.result === 'loss' && outcome !== 'loss') {
+          return false;
+        }
+
+        if (tradeLogFilters.result === 'missed' && outcome !== 'missed') {
           return false;
         }
 
@@ -1920,6 +1924,7 @@ export function AnalysisDiagnostics({
                   <option value="all">Tutti</option>
                   <option value="profit">Profit</option>
                   <option value="loss">Loss</option>
+                  <option value="missed">Missed</option>
                 </select>
               </FilterField>
 

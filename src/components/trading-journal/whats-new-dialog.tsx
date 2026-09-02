@@ -14,40 +14,34 @@ interface WhatsNewDialogProps {
 
 const updates = [
   {
-    icon: "➕",
-    title: "Inserimento trade Breakeven / Missed",
-    description:
-      "Ora è possibile registrare trade con P&L pari a 0 USD. Questo permette di tracciare anche i trade chiusi in pari o i trade mancati, ottenendo statistiche e analisi più realistiche.",
-  },
-  {
     icon: "📥",
-    title: "Import / Export migliorati",
+    title: "Import ed Export sulla pagina aperta",
     description:
-      "L'anteprima dei dati è ora integrata direttamente nel flusso di Importa. Anche il processo di esportazione è stato ottimizzato, rendendo Import ed Export più semplici, intuitivi e affidabili.",
+      "Import ed Export lavorano direttamente sul conto, Backtest o Preview che stai visualizzando. Non serve più scegliere una destinazione e gli altri spazi non vengono modificati.",
   },
   {
-    icon: "⚙️",
-    title: "Nuove impostazioni calendario",
+    icon: "🛡️",
+    title: "Backup prima dell'importazione",
     description:
-      "Ora puoi scegliere se mostrare nel calendario i tag e il tipo di setup dei trade. Puoi anche includere o escludere dalla visualizzazione i trade con P&L pari a 0 USD, senza modificare i dati salvati.",
+      "Se la pagina contiene già dati, una nuova card viola permette di scaricare subito una copia di sicurezza prima di aggiungere o sovrascrivere i dati importati.",
   },
   {
-    icon: "⚖️",
-    title: "Risk-to-Reward Ratio",
+    icon: "📝",
+    title: "Note durante la creazione dei conti",
     description:
-      "Il Risk-to-Reward Ratio sostituisce il Profit Factor e confronta la media dei trade vincenti con quella dei trade perdenti, fornendo un dato più rilevante per valutare l'efficacia della strategia.",
+      "Quando crei un nuovo conto, una sessione Backtest o uno spazio Preview puoi aggiungere subito una nota facoltativa con obiettivi, regole e informazioni utili.",
   },
   {
-    icon: "🎨",
-    title: "Colori personalizzati per i tag",
+    icon: "🗂️",
+    title: "Gestione degli spazi più chiara",
     description:
-      "Ora puoi assegnare un colore ai tag durante la creazione o modificarlo in seguito. Il colore scelto viene utilizzato anche nelle barre della sezione Tag Analytics.",
+      "I flussi di creazione, modifica, backup e importazione mantengono sempre visibile il contesto della pagina corrente, riducendo il rischio di intervenire sul conto sbagliato.",
   },
   {
     icon: "🛠️",
     title: "Bug Fix & Improvements",
     description:
-      "• Tutorial guidato migliorato. • Risolti numerosi bug minori. • Migliorata la stabilità generale. • Ottimizzazioni dell'interfaccia e dell'esperienza utente. • Miglioramenti generali delle prestazioni.",
+      "• Tutorial e sezione Help aggiornati. • Flussi Import/Export semplificati. • Migliorata la chiarezza delle conferme. • Ottimizzazioni generali dell'interfaccia.",
   },
 ];
 
@@ -62,10 +56,10 @@ export function WhatsNewDialog({ open, onOpenChange }: WhatsNewDialogProps) {
           <div className="flex items-start justify-between gap-4">
             <div>
               <DialogTitle className="text-lg text-foreground sm:text-xl">
-                🚀 EclipseJournal v0.5
+                🚀 EclipseJournal v0.6
               </DialogTitle>
               <DialogDescription className="mt-1 text-sm text-muted-foreground">
-                Versione: v0.5
+                Versione: v0.6
               </DialogDescription>
             </div>
             <button

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Area,
   AreaChart,
@@ -20,8 +20,6 @@ import {
 import {
   formatMonthYear,
   formatShortDate,
-  nextMonth,
-  prevMonth,
 } from '@/lib/date-utils';
 import type { Trade } from '@/lib/types/trade';
 import { useStreamerMode } from '@/contexts/streamer-mode-context';
@@ -131,23 +129,43 @@ export function EquityCurve({
   const { streamerMode } = useStreamerMode();
   const [selectedMonth, setSelectedMonth] = useState<Date | null>(null);
 
-  const latestTradeMonth = useMemo(() => {
-    const validDates = trades
+  const availableTradeMonths = useMemo(() => {
+    const monthKeys = new Set(
+      trades
       .filter(isValidStatTrade)
       .map((trade) => new Date(trade.exitDate))
-      .filter((date) => !Number.isNaN(date.getTime()));
-
-    if (validDates.length === 0) {
-      const today = new Date();
-      return new Date(today.getFullYear(), today.getMonth(), 1);
-    }
-
-    const latestDate = validDates.reduce((latest, date) =>
-      date.getTime() > latest.getTime() ? date : latest
+      .filter((date) => !Number.isNaN(date.getTime()))
+      .map((date) => `${date.getFullYear()}-${date.getMonth()}`)
     );
 
-    return new Date(latestDate.getFullYear(), latestDate.getMonth(), 1);
+    return Array.from(monthKeys)
+      .map((key) => {
+        const [year, month] = key.split('-').map(Number);
+        return new Date(year, month, 1);
+      })
+      .sort((a, b) => a.getTime() - b.getTime());
   }, [trades]);
+
+  const latestTradeMonth = useMemo(() => {
+    if (availableTradeMonths.length > 0) {
+      return availableTradeMonths[availableTradeMonths.length - 1];
+    }
+
+    const today = new Date();
+    return new Date(today.getFullYear(), today.getMonth(), 1);
+  }, [availableTradeMonths]);
+
+  useEffect(() => {
+    if (!selectedMonth) return;
+
+    const selectionStillAvailable = availableTradeMonths.some(
+      (month) =>
+        month.getFullYear() === selectedMonth.getFullYear() &&
+        month.getMonth() === selectedMonth.getMonth()
+    );
+
+    if (!selectionStillAvailable) setSelectedMonth(null);
+  }, [availableTradeMonths, selectedMonth]);
 
   const displayedTrades = useMemo(() => {
     if (!selectedMonth) return trades;
@@ -175,11 +193,51 @@ export function EquityCurve({
     }));
   }, [data]);
 
+  const equityAxis = useMemo(() => {
+    if (data.length === 0) {
+      return { domain: [-1, 1] as [number, number], ticks: [-1, 0, 1] };
+    }
+
+    const values = data.map((point) => point.equity);
+    const minimum = Math.min(...values);
+    const maximum = Math.max(...values);
+    const range = Math.max(maximum - minimum, Math.abs(maximum), 1);
+    const rawStep = range / 4;
+    const magnitude = 10 ** Math.floor(Math.log10(rawStep));
+    const normalizedStep = rawStep / magnitude;
+    const niceMultiplier =
+      normalizedStep <= 1
+        ? 1
+        : normalizedStep <= 2
+          ? 2
+          : normalizedStep <= 2.5
+            ? 2.5
+            : normalizedStep <= 5
+              ? 5
+              : 10;
+    const step = niceMultiplier * magnitude;
+    const lowerBound = Math.floor(minimum / step) * step - step;
+    const upperBound = Math.max(
+      Math.ceil(maximum / step) * step,
+      lowerBound + step * 2
+    );
+    const ticks: number[] = [];
+
+    for (let value = lowerBound; value <= upperBound + step / 2; value += step) {
+      ticks.push(Number(value.toFixed(10)));
+    }
+
+    return {
+      domain: [lowerBound, upperBound] as [number, number],
+      ticks,
+    };
+  }, [data]);
+
   const isPositive = data.length > 0 && data[data.length - 1].equity >= 0;
 
   // Use explicit colors that will show as white/light on dark backgrounds
   const strokeColor = isPositive ? '#22c55e' : '#ef4444';
-  const fillColorStart = isPositive ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)';
+  const fillColorStart = isPositive ? 'rgba(34, 197, 94, 0.38)' : 'rgba(239, 68, 68, 0.38)';
   const fillColorEnd = isPositive ? 'rgba(34, 197, 94, 0.05)' : 'rgba(239, 68, 68, 0.05)';
 
   // White color for axis text
@@ -196,11 +254,20 @@ export function EquityCurve({
 
   const changeMonth = (offset: number) => {
     setSelectedMonth((current) => {
-      if (!current) {
-        return offset > 0 ? nextMonth(latestTradeMonth) : latestTradeMonth;
-      }
+      if (availableTradeMonths.length === 0) return null;
+      if (!current) return latestTradeMonth;
 
-      return offset > 0 ? nextMonth(current) : prevMonth(current);
+      const currentIndex = availableTradeMonths.findIndex(
+        (month) =>
+          month.getFullYear() === current.getFullYear() &&
+          month.getMonth() === current.getMonth()
+      );
+      const nextIndex = Math.min(
+        availableTradeMonths.length - 1,
+        Math.max(0, currentIndex + offset)
+      );
+
+      return availableTradeMonths[nextIndex] ?? latestTradeMonth;
     });
   };
 
@@ -254,6 +321,7 @@ export function EquityCurve({
           <MonthYearPicker
             value={pickerMonth}
             onChange={handleSelectedMonthChange}
+            availableMonths={availableTradeMonths}
             triggerVariant="ghost"
             triggerLabel={selectedMonthLabel}
             showTodayButton
@@ -309,6 +377,8 @@ export function EquityCurve({
                   axisLine={false}
                 />
                 <YAxis
+                  domain={equityAxis.domain}
+                  ticks={equityAxis.ticks}
                   tick={{ fontSize: 10, fill: axisTextColor }}
                   tickLine={false}
                   axisLine={false}
@@ -327,10 +397,12 @@ export function EquityCurve({
                   allowEscapeViewBox={{ x: false, y: true }}
                 />
                 <Area
-                  type="monotone"
+                  type="natural"
                   dataKey="equity"
                   stroke={strokeColor}
-                  strokeWidth={2}
+                  strokeWidth={3}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                   fill="url(#equityGradient)"
                   activeDot={(props) => (
                     <CustomDot

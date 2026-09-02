@@ -11,6 +11,9 @@ export interface JournalExportMetadata {
   exportType: 'workspace' | 'full-backup';
   exportedAt: string;
   sourceWorkspace?: JournalWorkspace;
+  workspaceName?: string;
+  workspaceNotes?: string;
+  workspaceGroup?: JournalWorkspaceMeta['group'];
 }
 
 export type WorkspaceJournalExport = JournalState & {
@@ -99,7 +102,8 @@ export function getAppendImportTargetMonth(
 export function createWorkspaceExportData(
   workspace: JournalWorkspace,
   data: JournalState,
-  exportedAt = new Date()
+  exportedAt = new Date(),
+  workspaceMetadata?: JournalWorkspaceMeta
 ): string {
   const payload: WorkspaceJournalExport = {
     ...data,
@@ -108,6 +112,9 @@ export function createWorkspaceExportData(
       exportType: 'workspace',
       sourceWorkspace: workspace,
       exportedAt: exportedAt.toISOString(),
+      workspaceName: workspaceMetadata?.name,
+      workspaceNotes: workspaceMetadata?.notes,
+      workspaceGroup: workspaceMetadata?.group,
     },
   };
 
@@ -168,6 +175,10 @@ export function parseJournalExport(jsonString: string): ParsedJournalExport | nu
             typeof item.name === 'string' &&
             (item.type === 'system' || item.type === 'custom')
         )
+          .map((item) => ({
+            ...item,
+            initialBalance: 0,
+          }))
       : [];
 
     return {

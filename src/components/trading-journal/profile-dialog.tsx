@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Trash2 } from 'lucide-react';
+import { Download, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -27,7 +27,8 @@ interface ProfileDialogProps {
   isOpen: boolean;
   onClose: () => void;
   trades: Trade[];
-  onClearPersonal: () => void;
+  onExportAll: () => void;
+  onClearAll: () => void;
 }
 
 const formatCurrency = (value: number) =>
@@ -52,7 +53,8 @@ export function ProfileDialog({
   isOpen,
   onClose,
   trades,
-  onClearPersonal,
+  onExportAll,
+  onClearAll,
 }: ProfileDialogProps) {
   const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
   const [confirmationText, setConfirmationText] = useState('');
@@ -143,10 +145,10 @@ export function ProfileDialog({
     setConfirmationText('');
   };
 
-  const handleClearPersonal = () => {
-    if (confirmationText !== 'SVUOTA') return;
+  const handleClearAll = () => {
+    if (confirmationText !== 'ELIMINA TUTTO') return;
 
-    onClearPersonal();
+    onClearAll();
     closeClearDialog();
   };
 
@@ -480,6 +482,29 @@ export function ProfileDialog({
               </div>
             </section>
 
+            <section className="rounded-[14px] border border-profit/35 bg-profit/5 p-3.5 sm:p-4">
+              <p className="flex items-center gap-2 font-mono text-xs font-semibold uppercase tracking-[0.14em] text-profit">
+                <span>Esporta tutto</span>
+                <span className="text-xl leading-none">📦</span>
+              </p>
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                <p className="max-w-md font-sans text-xs leading-relaxed text-muted-foreground">
+                  Scarica in un unico file ZIP solo i journal che contengono dati,
+                  organizzati nelle cartelle I tuoi conti, Backtest e Preview.
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="gap-2 border-profit/50 bg-profit/10 text-profit hover:bg-profit/20 hover:text-profit max-sm:w-full"
+                  onClick={onExportAll}
+                >
+                  <Download className="size-3.5" />
+                  Esporta tutto
+                </Button>
+              </div>
+            </section>
+
             <section className="rounded-[14px] border border-loss/30 bg-loss/5 p-3.5 sm:p-4">
               <p className="flex items-center gap-2 font-mono text-xs font-semibold uppercase tracking-[0.14em] text-loss">
                 <span>Zona pericolosa</span>
@@ -487,8 +512,8 @@ export function ProfileDialog({
               </p>
               <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
                 <p className="max-w-md font-sans text-xs leading-relaxed text-muted-foreground">
-                  Cancella trade, piani, strategie e tag personalizzati salvati nel
-                  journal Personale. Backtest e Preview non verranno modificati.
+                  Cancella trade, piani, strategie e tag personalizzati da tutti i
+                  conti, da tutte le sessioni Backtest e da tutte le Preview.
                 </p>
                 <Button
                   type="button"
@@ -498,7 +523,7 @@ export function ProfileDialog({
                   onClick={() => setIsClearDialogOpen(true)}
                 >
                   <Trash2 className="size-3.5" />
-                  Svuota personale
+                  Elimina tutti i dati
                 </Button>
               </div>
             </section>
@@ -513,20 +538,21 @@ export function ProfileDialog({
         <DialogContent className="max-h-[92dvh] w-[calc(100vw-1.75rem)] rounded-2xl border border-loss/35 bg-card sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="font-mono text-loss">
-              Svuota journal Personale
+              Elimina tutti i dati
             </DialogTitle>
             <DialogDescription>
-              Questa azione è irreversibile e non toccherà i dati Backtest o Preview.
+              Questa azione è irreversibile e svuoterà ogni journal presente nei
+              tuoi conti, nei Backtest e nelle Preview.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-2 py-2">
-            <Label htmlFor="clear-personal-confirmation" className="font-sans text-sm">
-              Digita <span className="font-mono font-bold text-foreground">SVUOTA</span>{' '}
+            <Label htmlFor="clear-all-confirmation" className="font-sans text-sm">
+              Digita <span className="font-mono font-bold text-foreground">ELIMINA TUTTO</span>{' '}
               per confermare
             </Label>
             <Input
-              id="clear-personal-confirmation"
+              id="clear-all-confirmation"
               value={confirmationText}
               onChange={event => setConfirmationText(event.target.value)}
               className="border-loss/35 bg-background font-mono"
@@ -542,10 +568,10 @@ export function ProfileDialog({
             <Button
               type="button"
               variant="destructive"
-              disabled={confirmationText !== 'SVUOTA'}
-              onClick={handleClearPersonal}
+              disabled={confirmationText !== 'ELIMINA TUTTO'}
+              onClick={handleClearAll}
             >
-              Svuota personale
+              Elimina tutti i dati
             </Button>
           </DialogFooter>
         </DialogContent>

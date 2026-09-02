@@ -28,6 +28,7 @@ interface MonthYearPickerProps {
   onActionClick?: () => void;
   firstTradeMonth?: Date | null;
   lastTradeMonth?: Date | null;
+  availableMonths?: Date[];
 }
 
 const MONTHS = [
@@ -56,12 +57,19 @@ export function MonthYearPicker({
   onActionClick,
   firstTradeMonth,
   lastTradeMonth,
+  availableMonths,
 }: MonthYearPickerProps) {
   const id = useId();
   const [isOpen, setIsOpen] = useState(false);
   const hasTradeNavigation =
     firstTradeMonth !== undefined || lastTradeMonth !== undefined;
   const years = useMemo(() => {
+    if (availableMonths) {
+      return Array.from(
+        new Set(availableMonths.map((month) => month.getFullYear()))
+      ).sort((a, b) => b - a);
+    }
+
     const currentYear = new Date().getFullYear();
     const selectedYear = value.getFullYear();
     const minYear = Math.min(2018, selectedYear);
@@ -71,14 +79,37 @@ export function MonthYearPicker({
       { length: maxYear - minYear + 1 },
       (_, index) => maxYear - index
     );
-  }, [value]);
+  }, [availableMonths, value]);
+  const months = useMemo(() => {
+    if (!availableMonths) {
+      return MONTHS.map((label, index) => ({ label, index }));
+    }
+
+    const availableMonthIndexes = new Set(
+      availableMonths
+        .filter((month) => month.getFullYear() === value.getFullYear())
+        .map((month) => month.getMonth())
+    );
+
+    return MONTHS
+      .map((label, index) => ({ label, index }))
+      .filter((month) => availableMonthIndexes.has(month.index));
+  }, [availableMonths, value]);
 
   const handleMonthChange = (monthIndex: number) => {
     onChange(new Date(value.getFullYear(), monthIndex, 1));
   };
 
   const handleYearChange = (year: number) => {
-    onChange(new Date(year, value.getMonth(), 1));
+    const monthsInYear = availableMonths
+      ?.filter((month) => month.getFullYear() === year)
+      .map((month) => month.getMonth())
+      .sort((a, b) => a - b);
+    const nextMonth = monthsInYear?.includes(value.getMonth())
+      ? value.getMonth()
+      : monthsInYear?.at(-1) ?? value.getMonth();
+
+    onChange(new Date(year, nextMonth, 1));
   };
 
   const handleTodayClick = () => {
@@ -158,9 +189,9 @@ export function MonthYearPicker({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {MONTHS.map((month, index) => (
-                  <SelectItem key={month} value={String(index)}>
-                    {month}
+                {months.map((month) => (
+                  <SelectItem key={month.label} value={String(month.index)}>
+                    {month.label}
                   </SelectItem>
                 ))}
               </SelectContent>

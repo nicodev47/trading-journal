@@ -35,8 +35,10 @@ import { WhatsNewDialog } from '@/components/trading-journal/whats-new-dialog';
 import { Download, RotateCcw } from 'lucide-react';
 import {
   getDefaultExportBaseName,
+  normalizeExportName,
   normalizeExportFileName,
 } from '@/lib/export-filename';
+import { createZipBlob } from '@/lib/zip-export';
 import { TutorialTour } from '@/components/trading-journal/tutorial/tutorial-tour';
 import { TutorialWelcomeDialog } from '@/components/trading-journal/tutorial/tutorial-welcome-dialog';
 import { TUTORIAL_STEPS } from '@/components/trading-journal/tutorial/tutorial-steps';
@@ -48,14 +50,12 @@ import {
 } from '@/components/trading-journal/tutorial/tutorial-constants';
 import { hasWorkspaceContent } from '@/lib/workspace-content';
 import {
-  createFullBackupExportData,
   createWorkspaceExportData,
   getAppendImportTargetMonth,
-  parseJournalExport,
 } from '@/lib/journal-export';
 
 const UPDATE_BANNER_KEY =
-  'dismissedUpdateBanner_eclipsejournal_v05_revision2';
+  'dismissedUpdateBanner_eclipsejournal_v06_accounts_import';
 const BACKTEST_STORAGE_KEY = 'eclipse-trading-journal-data-backtest';
 
 type TradeGroupDialogState = {
@@ -137,6 +137,14 @@ const getWorkspaceNavigationTargetMonth = (
     return getLatestTradeMonth(trades);
   }
 
+  if (workspace.startsWith('backtest-')) {
+    return getLatestTradeMonth(trades);
+  }
+
+  if (workspace.startsWith('preview-')) {
+    return getLatestTradeMonth(trades);
+  }
+
   return null;
 };
 
@@ -177,7 +185,13 @@ const getBacktestHasTrades = () => {
 
 function AppContent() {
  const { streamerMode } = useStreamerMode();
- const { workspaces, restoreCustomWorkspaces } = useJournalWorkspaces();
+ const {
+   workspaces,
+   maxCustomWorkspaces,
+   createWorkspace,
+   updateWorkspace,
+   deleteWorkspace,
+ } = useJournalWorkspaces();
  const [activeWorkspace, setActiveWorkspace] = useState<JournalWorkspace>('personal');
 const [activeView, setActiveView] = useState<'calendar' | 'monthly'>('calendar');
 const [isHelpOpen, setIsHelpOpen] = useState(false);
@@ -256,8 +270,10 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
   const [selectedWeek, setSelectedWeek] = useState<{ weekKey: string; weekLabel: string } | null>(null);
   const [importExportMode, setImportExportMode] = useState<'import' | 'export' | null>(null);
   const showBacktestResetButton = activeWorkspace === 'backtest' && backtestHasData;
-  const previewHasContent = hasWorkspaceContent(getWorkspaceData('student'));
-  const showPreviewWorkspace = previewHasContent;
+  const previewHasContent =
+    (activeWorkspace === 'student' || activeWorkspace.startsWith('preview-')) &&
+    hasWorkspaceContent(getWorkspaceData(activeWorkspace));
+  const showPreviewWorkspace = true;
   const visibleTrades = isTutorialActive ? tutorialTrades : trades;
 
   useEffect(() => {
@@ -455,15 +471,9 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
   }, [activeWorkspace, saveWeeklyPlan]);
 
   const handleWorkspaceChange = (workspace: JournalWorkspace) => {
-    const targetWorkspace =
-      workspace === 'student' &&
-      !isTutorialActive &&
-      !hasWorkspaceContent(getWorkspaceData('student'))
-        ? 'personal'
-        : workspace;
     const targetMonth = getWorkspaceNavigationTargetMonth(
-      targetWorkspace,
-      getWorkspaceData(targetWorkspace).trades
+      workspace,
+      getWorkspaceData(workspace).trades
     );
 
     setSelectedDate(null);
@@ -474,44 +484,12 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
     setBacktestHasData(getBacktestHasData());
     setBacktestHasTrades(getBacktestHasTrades());
     setImportTargetMonth(targetMonth);
-    setActiveWorkspace(targetWorkspace);
+    setActiveWorkspace(workspace);
   };
-
-  useEffect(() => {
-    if (
-      isTutorialActive ||
-      activeWorkspace !== 'student' ||
-      previewHasContent
-    ) {
-      return;
-    }
-
-    setSelectedDate(null);
-    setSelectedWeek(null);
-    setImportExportMode(null);
-    setIsResetPreviewConfirmOpen(false);
-    setActiveView('calendar');
-    setImportTargetMonth(new Date());
-    setActiveWorkspace('personal');
-  }, [activeWorkspace, isTutorialActive, previewHasContent]);
 
   const getWorkspaceExportData = useCallback((workspace: JournalWorkspace) => {
     return createWorkspaceExportData(workspace, getWorkspaceData(workspace));
   }, [getWorkspaceData]);
-
-  const getFullBackupExportData = useCallback(() => {
-    const workspaceData: Partial<Record<JournalWorkspace, JournalState>> = {};
-
-    workspaces.forEach((workspace) => {
-      const data = getWorkspaceData(workspace.id);
-
-      if (workspace.id !== 'student' || hasWorkspaceContent(data)) {
-        workspaceData[workspace.id] = data;
-      }
-    });
-
-    return createFullBackupExportData(workspaceData, workspaces);
-  }, [getWorkspaceData, workspaces]);
 
   const getWorkspaceHasImportData = useCallback((workspace: JournalWorkspace) => {
     return hasWorkspaceContent(getWorkspaceData(workspace));
@@ -565,50 +543,20 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
     return success;
   };
 
-  const handleFullBackupImport = (data: string) => {
-    const parsed = parseJournalExport(data);
-    if (parsed?.kind !== 'full-backup') return false;
-
-    const restoredEntries = Object.entries(parsed.data.workspaces).filter(
-      ([workspace]) =>
-        workspace === 'personal' ||
-        workspace === 'backtest' ||
-        workspace === 'student' ||
-        workspace.startsWith('custom-')
-    );
-    const restoredWorkspaceIds = new Set(
-      restoredEntries.map(([workspace]) => workspace)
-    );
-
-    workspaces.forEach((workspace) => {
-      if (
-        (workspace.id === 'student' || workspace.type === 'custom') &&
-        !restoredWorkspaceIds.has(workspace.id)
-      ) {
-        clearWorkspaceData(workspace.id);
-      }
-    });
-
-    const success = restoredEntries.every(([workspace, journal]) =>
-      importData(JSON.stringify(journal), workspace as JournalWorkspace)
-    );
-
-    if (!success) return false;
-
-    restoreCustomWorkspaces(parsed.data.workspaceOptions);
-    setBacktestHasData(getBacktestHasData());
-    setBacktestHasTrades(getBacktestHasTrades());
-    return true;
-  };
-
   const handleResetStudentJournal = () => {
-    if (activeWorkspace !== 'student') return;
+    if (
+      activeWorkspace !== 'student' &&
+      !activeWorkspace.startsWith('preview-')
+    ) return;
 
     setIsResetPreviewConfirmOpen(true);
   };
 
   const confirmResetPreview = () => {
-    if (activeWorkspace !== 'student') {
+    if (
+      activeWorkspace !== 'student' &&
+      !activeWorkspace.startsWith('preview-')
+    ) {
       setIsResetPreviewConfirmOpen(false);
       return;
     }
@@ -616,7 +564,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
     setSelectedDate(null);
     setSelectedWeek(null);
     setImportExportMode(null);
-    clearWorkspaceData('student');
+    clearWorkspaceData(activeWorkspace);
     setIsResetPreviewConfirmOpen(false);
     setActiveView('calendar');
     setImportTargetMonth(new Date());
@@ -665,10 +613,131 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
     setIsProfileOpen(true);
   };
 
-  const handleClearPersonal = () => {
-    clearWorkspaceData('personal');
+  const handleExportAllJournals = () => {
+    const folderNames = {
+      account: 'I tuoi conti',
+      backtest: 'Backtest',
+      preview: 'Preview',
+    } as const;
+    const files = workspaces.flatMap((workspace) => {
+      const workspaceData = getWorkspaceData(workspace.id);
+
+      if (!hasWorkspaceContent(workspaceData)) return [];
+
+      const folder = folderNames[workspace.group ?? 'account'];
+      const fileName = normalizeExportName(workspace.name, workspace.id);
+
+      return [{
+        path: `${folder}/${fileName}.json`,
+        content: createWorkspaceExportData(
+          workspace.id,
+          workspaceData,
+          new Date(),
+          workspace
+        ),
+      }];
+    });
+
+    if (files.length === 0) {
+      toast.info('Non ci sono dati da esportare');
+      return;
+    }
+    const blob = createZipBlob(files);
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    const date = new Date();
+    const dateSlug = [
+      date.getFullYear(),
+      String(date.getMonth() + 1).padStart(2, '0'),
+      String(date.getDate()).padStart(2, '0'),
+    ].join('-');
+
+    anchor.href = url;
+    anchor.download = `eclipsejournal-tutti-i-dati-${dateSlug}.zip`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(url);
+    toast.success('Tutti i journal sono stati esportati');
+  };
+
+  const handleClearAllJournals = () => {
+    workspaces.forEach((workspace) => clearWorkspaceData(workspace.id));
     setPersonalProfileTrades([]);
-    toast.success('Journal Personale svuotato');
+    setBacktestHasData(false);
+    setBacktestHasTrades(false);
+    setSelectedDate(null);
+    setSelectedWeek(null);
+    setImportExportMode(null);
+    setActiveView('calendar');
+    setImportTargetMonth(new Date());
+    setActiveWorkspace('personal');
+    toast.success('Tutti i dati dei journal sono stati eliminati');
+  };
+
+  const handleBackupWorkspace = (workspace: JournalWorkspace) => {
+    const workspaceData = getWorkspaceData(workspace);
+    const workspaceName = workspaces.find((item) => item.id === workspace)?.name;
+    const backupData = createWorkspaceExportData(workspace, workspaceData);
+    const blob = new Blob([backupData], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    const backupBaseName = getDefaultExportBaseName(
+      workspace,
+      workspaceData.trades,
+      workspaceName
+    );
+
+    anchor.href = url;
+    anchor.download = normalizeExportFileName(backupBaseName, backupBaseName);
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(url);
+    toast.success(`Backup di ${workspaceName ?? 'conto'} scaricato`);
+  };
+
+  const handleDeleteWorkspace = (workspace: JournalWorkspace) => {
+    const workspaceName = workspaces.find((item) => item.id === workspace)?.name;
+
+    clearWorkspaceData(workspace);
+    const success = deleteWorkspace(workspace);
+
+    if (!success) {
+      toast.error('Impossibile eliminare il conto');
+      return false;
+    }
+
+    if (workspace === 'personal') {
+      setPersonalProfileTrades([]);
+    }
+
+    if (workspace === 'backtest') {
+      setBacktestHasData(false);
+      setBacktestHasTrades(false);
+    }
+
+    if (activeWorkspace === workspace && workspace !== 'personal' && workspace !== 'backtest') {
+      handleWorkspaceChange(
+        workspace.startsWith('backtest-')
+          ? 'backtest'
+          : workspace.startsWith('preview-')
+            ? 'student'
+            : 'personal'
+      );
+    }
+
+    toast.success(
+      workspace === 'personal' ||
+      workspace === 'secondary' ||
+      workspace === 'backtest' ||
+      workspace === 'backtest-2' ||
+      workspace === 'preview-2' ||
+      workspace === 'student'
+        ? `${workspaceName ?? 'Conto'} ripristinato`
+        : `${workspaceName ?? 'Conto'} eliminato`
+    );
+    return true;
   };
 
   const handleDismissUpdateBanner = () => {
@@ -710,10 +779,10 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
             <div className="flex min-w-0 flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-center">
               <div className="min-w-0 basis-full sm:basis-auto">
                 <p className="font-mono text-xs font-semibold text-violet-100 sm:text-sm">
-                  EclipseJournal v0.5 è fuori ora!
+                  EclipseJournal v0.6 è disponibile!
                 </p>
                 <p className="font-sans text-[11px] text-violet-200/75">
-                  Import migliorato, nuove impostazioni calendario, navigazione rapida e fix generali.
+                  Import ed Export per pagina, backup preventivo e note durante la creazione dei conti.
                 </p>
               </div>
               <div className="flex shrink-0 items-center justify-center gap-1.5">
@@ -740,6 +809,15 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
 
       <NavHeader
         activeView={activeView}
+        activeWorkspace={activeWorkspace}
+        workspaces={workspaces}
+        showPreviewWorkspace={showPreviewWorkspace}
+        maxCustomWorkspaces={maxCustomWorkspaces}
+        onWorkspaceChange={handleWorkspaceChange}
+        onCreateWorkspace={createWorkspace}
+        onUpdateWorkspace={updateWorkspace}
+        onBackupWorkspace={handleBackupWorkspace}
+        onDeleteWorkspace={handleDeleteWorkspace}
         pinnedForTutorial={
           isTutorialActive &&
           TUTORIAL_STEPS[tutorialStepIndex]?.target === 'analysis-section'
@@ -760,9 +838,8 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
     navigationTrades={isTutorialActive ? [] : trades}
     weeklyPlans={isTutorialActive ? [] : weeklyPlans}
     activeWorkspace={activeWorkspace}
-    showPreviewWorkspace={showPreviewWorkspace}
+    showPreviewWorkspace={previewHasContent}
     showResetButton={!isTutorialActive && showBacktestResetButton}
-    onWorkspaceChange={handleWorkspaceChange}
     onResetStudentJournal={handleResetStudentJournal}
     onResetBacktestJournal={() => setIsBacktestResetDialogOpen(true)}
     onDayClick={handleDayClick}
@@ -906,14 +983,10 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
         workspaceOptions={workspaces}
         exportData={exportData()}
         getWorkspaceExportData={getWorkspaceExportData}
-        getFullBackupExportData={getFullBackupExportData}
         workspaceHasData={getWorkspaceHasImportData}
         onImport={importExportMode === 'import' ? handleImportData : undefined}
         onAppendImport={
           importExportMode === 'import' ? handleAppendImportData : undefined
-        }
-        onFullBackupImport={
-          importExportMode === 'import' ? handleFullBackupImport : undefined
         }
       />
 
@@ -921,7 +994,8 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
         isOpen={isProfileOpen}
         onClose={() => setIsProfileOpen(false)}
         trades={personalProfileTrades}
-        onClearPersonal={handleClearPersonal}
+        onExportAll={handleExportAllJournals}
+        onClearAll={handleClearAllJournals}
       />
 
       <Dialog
@@ -1037,7 +1111,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
                   Guida EclipseJournal
                 </h2>
                 <p className="mt-1 max-w-xl font-sans text-xs text-muted-foreground sm:text-sm">
-                  Una guida rapida per capire calendario, trade, analisi, backup e profilo.
+                  Una guida rapida per capire conti, calendario, trade, analisi, backup e profilo.
                 </p>
               </div>
 
@@ -1075,10 +1149,10 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
                 <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
                   <div>
                     <h3 className="font-sans text-sm font-bold text-foreground">
-                      EclipseJournal v0.5 — Import, calendario e share
+                      EclipseJournal v0.6 — Conti, Import e backup
                     </h3>
                     <p className="mt-1 font-sans text-xs leading-relaxed text-muted-foreground">
-                      Scopri le novità dell’ultimo aggiornamento: import migliorato, nuove impostazioni calendario, navigazione rapida e share profilo.
+                      Scopri il nuovo flusso Import/Export per pagina, il backup preventivo e le note durante la creazione dei conti.
                     </p>
                   </div>
                   <button
@@ -1106,11 +1180,12 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
                 {
                   icon: '👤',
                   title: 'Spazi di Lavoro',
-                  description: 'Due spazi separati per lavorare senza mischiare i dati.',
+                  description: 'Crea e organizza conti separati senza mischiare dati e analisi.',
                   bullets: [
                     'Personale è il tuo journal principale.',
-                    'Backtest serve per testare strategie senza toccare il journal reale.',
-                    'I due archivi restano sempre separati.',
+                    'Puoi aggiungere conti, sessioni Backtest e spazi Preview.',
+                    'Durante la creazione puoi aggiungere una nota facoltativa con obiettivi o regole.',
+                    'Ogni spazio conserva separatamente trade, calendario e statistiche.',
                   ],
                 },
                 {
@@ -1182,12 +1257,13 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
                 {
                   icon: '📥',
                   title: 'Import / Export',
-                  description: 'Gestisci backup e trasferimento dei dati in modo sicuro.',
+                  description: 'Gestisci i dati della pagina aperta in modo semplice e sicuro.',
                   bullets: [
-                    'Export scarica un backup JSON del tuo journal.',
-                    'Import carica un backup già esportato.',
+                    'Import ed Export lavorano sempre sulla pagina attualmente aperta.',
+                    'Export scarica il file JSON del conto, Backtest o Preview corrente.',
+                    'Import permette di aggiungere i dati oppure sovrascrivere quelli presenti.',
+                    'Se ci sono già dati, la card viola consente di scaricare prima una copia di sicurezza.',
                     'Il backup salva trade, note, setup, tag, piani e link.',
-                    'Le immagini non vengono incorporate: usa link esterni per screenshot e grafici.',
                   ],
                 },
                 {
@@ -1196,7 +1272,8 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
                   description: 'Proteggi i tuoi dati prima di fare modifiche importanti.',
                   bullets: [
                     'Esporta periodicamente un backup JSON.',
-                    'Prima di importare dati, salva sempre una copia di sicurezza.',
+                    'Prima di importare, usa “Scarica i dati attuali” per salvare la pagina aperta.',
+                    'L’import non modifica gli altri conti o spazi di lavoro.',
                     'Le azioni delicate mostrano messaggi di conferma.',
                     'I dati restano nel browser finché non li cancelli o resetti manualmente.',
                   ],
