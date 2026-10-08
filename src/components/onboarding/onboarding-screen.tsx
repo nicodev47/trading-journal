@@ -29,6 +29,7 @@ const STEPS: { title: string; description?: string; why?: string }[] = [
     title: 'Hai una finestra operativa?',
     description:
       'Indica gli orari in cui di solito sei a mercato. Se non hai una finestra definita, passa direttamente allo step successivo.',
+    why: 'I dati del journal restano nella cache del tuo browser: ricordati di fare backup regolari dalla scheda Dati del profilo.',
   },
 ];
 

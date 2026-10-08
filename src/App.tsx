@@ -1272,13 +1272,13 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
                 },
                 {
                   icon: '📥',
-                  title: 'Import / Export',
+                  title: 'Dati e backup',
                   description: 'Gestisci i dati della pagina aperta in modo semplice e sicuro.',
                   bullets: [
                     'Import ed Export lavorano sempre sulla pagina attualmente aperta.',
                     'Export scarica il file JSON del conto, Backtest o Preview corrente.',
                     'Import permette di aggiungere i dati oppure sovrascrivere quelli presenti.',
-                    'Se ci sono già dati, la card viola consente di scaricare prima una copia di sicurezza.',
+                    'I dati sono salvati nella cache del browser: fai backup regolari per non perderli.',
                     'Il backup salva trade, note, setup, tag, piani e link.',
                   ],
                 },
