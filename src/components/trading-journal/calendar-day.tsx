@@ -126,8 +126,8 @@ export function CalendarDay({
     if (pnl > 0) {
       const alpha = 0.26 + intensity * 0.34;
       return {
-        backgroundColor: `rgba(0, 214, 143, ${alpha})`,
-        boxShadow: `inset 0 0 0 1px rgba(0, 214, 143, ${
+        backgroundColor: `rgba(48, 209, 88, ${alpha})`,
+        boxShadow: `inset 0 0 0 1px rgba(48, 209, 88, ${
           0.12 + intensity * 0.22
         })`,
       };
@@ -136,16 +136,16 @@ export function CalendarDay({
     if (pnl < 0) {
       const alpha = 0.22 + intensity * 0.3;
       return {
-        backgroundColor: `rgba(255, 77, 112, ${alpha})`,
-        boxShadow: `inset 0 0 0 1px rgba(255, 77, 112, ${
+        backgroundColor: `rgba(255, 69, 58, ${alpha})`,
+        boxShadow: `inset 0 0 0 1px rgba(255, 69, 58, ${
           0.16 + intensity * 0.24
         })`,
       };
     }
 
     return {
-      backgroundColor: 'rgba(148, 163, 184, 0.08)',
-      boxShadow: 'inset 0 0 0 1px rgba(148, 163, 184, 0.14)',
+      backgroundColor: 'rgba(255, 255, 255, 0.03)',
+      boxShadow: 'inset 0 0 0 1px rgba(255, 255, 255, 0.08)',
     };
   };
 
@@ -201,8 +201,8 @@ export function CalendarDay({
       onKeyDown={handleDayKeyDown}
       data-tutorial={tutorialTarget}
       className={cn(
-        'group relative flex h-[78px] w-full min-w-0 cursor-pointer flex-col bg-background p-1 pb-4 text-left transition-colors hover:bg-secondary/30 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-profit/80 min-[380px]:h-[84px] min-[380px]:p-1.5 min-[380px]:pb-4 sm:h-[92px] sm:p-2 sm:pb-5 md:h-[106px] md:p-2.5 md:pb-6',
-        isToday && 'ring-1 ring-inset ring-profit/80'
+        'group relative flex h-[78px] w-full min-w-0 cursor-pointer flex-col bg-background p-1 pb-4 text-left transition-colors hover:bg-secondary/30 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-primary min-[380px]:h-[84px] min-[380px]:p-1.5 min-[380px]:pb-4 sm:h-[92px] sm:p-2 sm:pb-5 md:h-[106px] md:p-2.5 md:pb-6',
+        isToday && 'ring-1 ring-inset ring-primary'
       )}
       style={getBackgroundStyle()}
     >

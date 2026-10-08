@@ -22,7 +22,7 @@ export function WeekSummary({ totalPnl, tradeCount }: WeekSummaryProps) {
   return (
     <div className="flex h-full min-h-[92px] w-full min-w-0 flex-col items-end justify-center gap-1 bg-background p-2 md:min-h-[106px] md:gap-1.5 md:p-3">
       <div className="flex items-center gap-1">
-        <span className="font-mono text-[8px] font-medium uppercase tracking-wider text-muted-foreground sm:text-[10px] md:text-xs">
+        <span className="font-mono text-[8px] font-medium tracking-normal text-muted-foreground sm:text-[10px] md:text-xs">
           SETT
         </span>
       </div>

@@ -53,7 +53,7 @@ export function TradeList({
         </SheetHeader>
 
         {/* Day Summary */}
-        <div className="mt-4 flex items-center justify-between rounded-lg border border-border bg-secondary/30 p-4">
+        <div className="mt-4 flex items-center justify-between rounded-xl border border-border bg-secondary/30 p-4">
           <div>
             <p className="text-xs text-muted-foreground">Day P&L</p>
             <p className={cn(
@@ -109,7 +109,7 @@ export function TradeList({
                 <button
                   key={trade.id}
                   onClick={() => onEditTrade(trade)}
-                  className="w-full rounded-lg border border-border bg-card p-4 text-left transition-colors hover:bg-secondary/50"
+                  className="w-full rounded-xl border border-border bg-card p-4 text-left transition-colors hover:bg-secondary/50"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-2">

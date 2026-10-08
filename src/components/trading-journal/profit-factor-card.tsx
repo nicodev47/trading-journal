@@ -54,7 +54,7 @@ export function RiskRewardCard({
   return (
     <Card
       className={cn(
-        'max-w-full rounded-2xl border border-border bg-card/95 shadow-[0_10px_24px_rgba(0,0,0,0.18)]',
+        'max-w-full rounded-[20px] border border-border bg-card',
         isAnalysis && 'self-start py-0'
       )}
     >
