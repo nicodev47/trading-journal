@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import {
+  countOutsideWindowTrades,
   getBestOperatingWindow,
   getWorstOperatingWindow,
 } from '@/lib/operating-windows';
@@ -142,6 +143,7 @@ export function AdvancedStatsGrid({
 
     const tradingDays = tradesByDay.size;
     const bestOperatingWindow = getBestOperatingWindow(validTrades, preferences.windows);
+    const outsideWindowTrades = countOutsideWindowTrades(validTrades, preferences.windows);
     const worstOperatingWindowCandidate = getWorstOperatingWindow(
       validTrades,
       preferences.windows
@@ -279,6 +281,7 @@ export function AdvancedStatsGrid({
       shortTrades,
       tradingDays,
       bestOperatingWindow,
+      outsideWindowTrades,
       bestSetup,
       worstSetup,
       worstOperatingWindow,
@@ -447,7 +450,13 @@ export function AdvancedStatsGrid({
           </p>
 
           <p className="mt-1 font-sans tabular-nums text-[11px] text-muted-foreground">
-            {data.bestOperatingWindow?.description ?? 'Nessun trade registrato'}
+            {data.bestOperatingWindow
+              ? `${data.bestOperatingWindow.description}${
+                  data.outsideWindowTrades > 0
+                    ? ` · ${data.outsideWindowTrades} fuori finestra`
+                    : ''
+                }`
+              : 'Nessun trade registrato'}
           </p>
 
           <div className="mt-3 flex h-1.5 w-full overflow-hidden rounded-full bg-secondary md:mt-4">

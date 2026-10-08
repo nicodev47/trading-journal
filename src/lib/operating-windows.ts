@@ -173,6 +173,18 @@ function getWindowResults(
   return populatedGroups;
 }
 
+/** Valid trades that fall before or after every configured window. */
+export function countOutsideWindowTrades(
+  trades: Trade[],
+  windows: OperatingWindowConfig[]
+): number {
+  return trades.filter(isValidStatTrade).filter(trade => {
+    const name = getOperatingWindowName(trade, windows);
+
+    return name === PRE_SESSION_NAME || name === OUT_OF_SESSION_NAME;
+  }).length;
+}
+
 export function getBestOperatingWindow(
   trades: Trade[],
   windows: OperatingWindowConfig[]

@@ -6,6 +6,7 @@ import {
   isAutomaticWindowName,
   getBestOperatingWindow,
   getOperatingWindowName,
+  countOutsideWindowTrades,
 } from '../src/lib/operating-windows.ts';
 import { LEGACY_WINDOWS } from '../src/lib/preferences.ts';
 
@@ -131,4 +132,18 @@ test('la finestra peggiore ignora pre sessione e fuori sessione', async () => {
     getWorstOperatingWindow([makeTrade('10:00', 50), makeTrade('13:00', -500)], custom)?.name,
     'Londra'
   );
+});
+
+test('conta i trade fuori dalle finestre configurate', () => {
+  const trades = [
+    makeTrade('08:00', 100),
+    makeTrade('10:00', 100),
+    makeTrade('20:00', -50),
+  ];
+
+  assert.equal(countOutsideWindowTrades(trades, custom), 2);
+});
+
+test('senza finestre configurate nessun trade è fuori finestra', () => {
+  assert.equal(countOutsideWindowTrades([makeTrade('03:00', 100)], []), 0);
 });
