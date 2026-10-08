@@ -4,7 +4,6 @@ import {
   ShareCardFooter,
   ShareCardFrame,
   ShareCardHeader,
-  ShareCaption,
   ShareGlowAmount,
   ShareRow,
 } from './share-card-parts';
@@ -53,8 +52,8 @@ const splitPnl = (pnl: number, streamerMode: boolean) => {
   return { sign, amount };
 };
 
-const getTradeTime = (trade: Trade) => {
-  return (trade.exitDate?.split('T')[1] || trade.entryDate?.split('T')[1] || '')
+const getTradeOpenTime = (trade: Trade) => {
+  return (trade.entryDate?.split('T')[1] || trade.exitDate?.split('T')[1] || '')
     .slice(0, 5) || '--:--';
 };
 
@@ -62,14 +61,6 @@ const getDisplayHandle = (handle: string) => {
   const normalizedHandle = handle.trim().replace(/^@+/, '');
 
   return normalizedHandle ? `@${normalizedHandle}` : null;
-};
-
-const formatShareCardSetup = (setup?: string | null) => {
-  if (setup === 'Continuation') return 'Continuation';
-  if (setup === 'Reversal Sequence') return 'Reversal Seq.';
-  if (setup === 'Reversal Sequence Failed') return 'Rev. Seq. Failed';
-
-  return '—';
 };
 
 export function TradeShareCard({
@@ -101,13 +92,10 @@ export function TradeShareCard({
         trend={netPnl > 0 ? 'up' : netPnl < 0 ? 'down' : 'flat'}
       />
 
-      <ShareCaption lines={[`${trade.pair || '--'} · ${directionLabel}`]} />
-
-      <div className="mt-5 space-y-3">
+      <div className="mt-auto space-y-3">
         <ShareRow label="Asset" value={trade.pair || '--'} />
         <ShareRow label="Direzione" value={directionLabel} />
-        <ShareRow label="Orario" value={getTradeTime(trade)} />
-        <ShareRow label="Setup" value={formatShareCardSetup(trade.strategy)} />
+        <ShareRow label="Orario apertura" value={getTradeOpenTime(trade)} />
       </div>
 
       <ShareCardFooter
