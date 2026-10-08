@@ -29,7 +29,7 @@ export function TutorialWelcomeDialog({
         </h2>
 
         <p className="mt-3 font-sans text-sm leading-relaxed text-muted-foreground">
-          Questo breve tutorial ti mostra le funzioni principali del journal usando dati demo temporanei.
+          Un breve giro delle funzioni principali del journal, con dati demo temporanei. I tuoi dati non vengono toccati.
         </p>
 
         <div className="mt-5 flex flex-col-reverse gap-2 sm:mt-6 sm:flex-row sm:justify-center max-sm:[&_button]:w-full">
