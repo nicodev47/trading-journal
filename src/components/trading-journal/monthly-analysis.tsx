@@ -548,7 +548,7 @@ export function MonthlyAnalysis({
                       <>
                         <div
                           className={cn(
-                            'pointer-events-none absolute top-1 z-10 whitespace-nowrap rounded-lg border border-blue-300/20 bg-[#232323]/98 px-2.5 py-1.5 font-sans tabular-nums text-[10px] text-slate-200 opacity-0 shadow-[0_10px_30px_rgba(0,0,0,0.45),0_0_18px_rgba(10,132,255,0.08)] transition-all duration-200 group-hover:translate-y-1 group-hover:opacity-100',
+                            'pointer-events-none absolute top-1 z-10 whitespace-nowrap rounded-lg border border-blue-300/20 bg-[#1c1c1f]/98 px-2.5 py-1.5 font-sans tabular-nums text-[10px] text-slate-200 opacity-0 shadow-[0_10px_30px_rgba(0,0,0,0.45),0_0_18px_rgba(10,132,255,0.08)] transition-all duration-200 group-hover:translate-y-1 group-hover:opacity-100',
                             month.monthIndex === 0
                               ? 'left-0'
                               : month.monthIndex === 11
@@ -641,7 +641,7 @@ export function MonthlyAnalysis({
                           <>
                             <div
                               className={cn(
-                                'pointer-events-none absolute top-1 z-10 whitespace-nowrap rounded-lg border border-blue-300/20 bg-[#232323]/98 px-2.5 py-1.5 font-sans tabular-nums text-[10px] text-slate-200 opacity-0 shadow-[0_10px_30px_rgba(0,0,0,0.45),0_0_18px_rgba(10,132,255,0.08)] transition-all duration-200 group-hover:translate-y-1 group-hover:opacity-100',
+                                'pointer-events-none absolute top-1 z-10 whitespace-nowrap rounded-lg border border-blue-300/20 bg-[#1c1c1f]/98 px-2.5 py-1.5 font-sans tabular-nums text-[10px] text-slate-200 opacity-0 shadow-[0_10px_30px_rgba(0,0,0,0.45),0_0_18px_rgba(10,132,255,0.08)] transition-all duration-200 group-hover:translate-y-1 group-hover:opacity-100',
                                 month.monthIndex === 0
                                   ? 'left-0'
                                   : month.monthIndex === 11
