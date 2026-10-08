@@ -36,7 +36,11 @@ export function TutorialWelcomeDialog({
           <Button type="button" variant="outline" onClick={onSkip}>
             Salta
           </Button>
-          <Button type="button" onClick={onStart}>
+          <Button
+            type="button"
+            className="bg-[#0a84ff] text-white hover:bg-[#0a84ff]/90"
+            onClick={onStart}
+          >
             Inizia tutorial
           </Button>
         </div>
