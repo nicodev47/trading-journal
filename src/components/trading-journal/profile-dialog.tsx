@@ -24,6 +24,7 @@ import { AssetPicker } from '@/components/preferences/asset-picker';
 import { ProfileFields } from '@/components/preferences/profile-fields';
 import { SetupInput } from '@/components/preferences/setup-input';
 import { WindowsEditor } from '@/components/preferences/windows-editor';
+import { PreferencesBackup } from '@/components/preferences/preferences-backup';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ProfileShareDialog } from './profile-share-dialog';
 import type { ProfileShareData } from './profile-share-card';
@@ -324,6 +325,7 @@ export function ProfileDialog({
                 onChange={windows => updatePreferences({ windows })}
               />
             </section>
+            <PreferencesBackup />
             <section className="rounded-[14px] border border-border bg-background/35 p-3.5 sm:p-4">
               <p className="flex items-center gap-2 font-sans tabular-nums text-xs font-semibold tracking-normal text-muted-foreground">
                 <span>Impostazioni calendario</span>
