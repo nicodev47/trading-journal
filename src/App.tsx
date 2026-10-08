@@ -1374,7 +1374,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
                   bullets: [
                     'Import ed Export lavorano sempre sulla pagina attualmente aperta.',
                     'Export scarica il file JSON del conto o Backtest corrente, con il tuo profilo.',
-                    'Import permette di aggiungere i dati al profilo oppure aprire il file in Preview, solo in lettura.',
+                    'Import permette di aggiungere i dati al profilo oppure aprire il file in Preview.',
                     'I dati sono salvati nella cache del browser: fai backup regolari per non perderli.',
                     'Il backup salva trade, note, setup, tag, piani e link.',
                   ],

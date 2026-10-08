@@ -53,7 +53,7 @@ const updates = [
     icon: "👀",
     title: "Preview dei file importati",
     description:
-      "Quando importi un file puoi aprirlo in Preview: vedi profilo, calendario e analisi di chi lo ha esportato, in sola lettura, e ne esci quando vuoi senza modificare il tuo journal.",
+      "Quando importi un file puoi aprirlo in Preview: vedi profilo, calendario e analisi di chi lo ha esportato, e ne esci quando vuoi senza modificare il tuo journal.",
   },
   {
     icon: "🛠️",

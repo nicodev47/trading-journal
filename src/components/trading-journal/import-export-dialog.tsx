@@ -447,7 +447,7 @@ export function ImportExportDialog({
                     Preview
                   </span>
                   <span className="font-sans text-xs text-muted-foreground">
-                    Apri il profilo e i dati del file in una pagina a parte, solo da guardare. Non cambia nulla nel tuo journal.
+                    Apri il profilo e i dati del file in una pagina a parte. Non cambia nulla nel tuo journal.
                   </span>
                 </button>
               )}
@@ -667,7 +667,7 @@ export function ImportExportDialog({
             </DialogTitle>
             <DialogDescription className="font-sans text-sm">
               {pendingConfirm === 'preview'
-                ? `Il file ${selectedFileName} verrà aperto in sola lettura: il tuo journal non cambia.`
+                ? `Il file ${selectedFileName} verrà aperto in Preview: il tuo journal non cambia.`
                 : `I dati del file ${selectedFileName} verranno importati in ${selectedWorkspaceLabel}.`}
             </DialogDescription>
           </DialogHeader>
