@@ -1492,7 +1492,7 @@ export function AnalysisDiagnostics({
                       </linearGradient>
                     </defs>
                     <PolarGrid
-                      stroke="rgba(10,132,255,0.18)"
+                      stroke="rgba(255,255,255,0.1)"
                       radialLines
                     />
                     <PolarAngleAxis
