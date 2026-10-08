@@ -160,7 +160,7 @@ export function ProfileFields({ name, photo, onChange, autoFocus, fallbackInitia
           onChange={event => onChange({ name: event.target.value })}
         />
         <p className="text-xs text-muted-foreground">
-          Con nome e cognome mostriamo le iniziali; con una sola parola la usiamo come username.
+          Puoi caricare una foto profilo personalizzata, altrimenti verranno utilizzate le tue iniziali di default.
         </p>
       </div>
     </div>
