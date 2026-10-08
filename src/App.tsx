@@ -40,6 +40,7 @@ import {
   normalizeExportName,
   normalizeExportFileName,
 } from '@/lib/export-filename';
+import { collectImportedChoices, getMissingChoices } from '@/lib/import-preferences';
 import { createZipBlob } from '@/lib/zip-export';
 import {
   getBackupSnoozedAt,
@@ -194,7 +195,7 @@ const getBacktestHasTrades = () => {
 
 function AppContent() {
  const { streamerMode } = useStreamerMode();
- const { preferences, justCompletedOnboarding } = usePreferences();
+ const { preferences, justCompletedOnboarding, updatePreferences } = usePreferences();
  const {
    workspaces,
    maxCustomWorkspaces,
@@ -570,10 +571,37 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
     setImportTargetMonth(getEarliestImportedTradeMonth(data));
   };
 
+  // Imported journals may use assets/setups the user never configured: add them
+  // to the preferences so menus and analysis show them, with an undo.
+  const adoptImportedChoices = (data: string) => {
+    const missing = getMissingChoices(preferences, collectImportedChoices(data));
+    const count = missing.assets.length + missing.setups.length;
+
+    if (count === 0) return;
+
+    const previous = { assets: preferences.assets, setups: preferences.setups };
+
+    updatePreferences({
+      assets: [...preferences.assets, ...missing.assets],
+      setups: [...preferences.setups, ...missing.setups],
+    });
+    toast.info('Preferenze aggiornate con i dati importati', {
+      description: [
+        missing.assets.length ? `Asset: ${missing.assets.join(', ')}` : '',
+        missing.setups.length ? `Setup: ${missing.setups.join(', ')}` : '',
+      ]
+        .filter(Boolean)
+        .join(' · '),
+      duration: 10000,
+      action: { label: 'Annulla', onClick: () => updatePreferences(previous) },
+    });
+  };
+
   const handleImportData = (data: string, workspace: JournalWorkspace) => {
     const success = importData(data, workspace);
 
     if (success) {
+      adoptImportedChoices(data);
       completeImportNavigation(data, workspace);
     }
 
@@ -588,6 +616,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
     const success = appendImportData(data, workspace);
 
     if (success) {
+      adoptImportedChoices(data);
       completeImportNavigation(data, workspace);
       setImportTargetMonth(targetMonth);
     }
