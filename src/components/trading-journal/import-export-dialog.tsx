@@ -792,7 +792,9 @@ export function ImportExportDialog({
               Prima di sovrascrivere
             </DialogTitle>
             <DialogDescription className="font-sans text-sm">
-              La sovrascrittura sostituirà i dati della pagina aperta con quelli del file importato.
+              {isFullBackup
+                ? 'La sovrascrittura sostituirà i dati di tutti i journal presenti nel file con quelli del file importato.'
+                : 'La sovrascrittura sostituirà i dati della pagina aperta con quelli del file importato.'}
             </DialogDescription>
           </DialogHeader>
 
@@ -803,10 +805,12 @@ export function ImportExportDialog({
               </p>
             </div>
 
-            <p className="font-sans text-xs leading-relaxed text-muted-foreground">
-              Il backup esportato riguarda i dati attuali di{' '}
-              {selectedWorkspaceLabel} e non importa ancora nulla.
-            </p>
+            {!isFullBackup && (
+              <p className="font-sans text-xs leading-relaxed text-muted-foreground">
+                Il backup esportato riguarda i dati attuali di{' '}
+                {selectedWorkspaceLabel} e non importa ancora nulla.
+              </p>
+            )}
           </div>
 
           <DialogFooter className="border-t border-border bg-background/25 px-4 py-3.5 max-sm:[&_button]:w-full sm:px-5 sm:py-4">
@@ -817,14 +821,16 @@ export function ImportExportDialog({
             >
               Annulla
             </Button>
-            <Button
-              type="button"
-              onClick={() => handleBackupDownload(true)}
-              className="gap-2 bg-[#0a84ff] text-white hover:bg-[#0a84ff]/90 hover:text-white"
-            >
-              <Download className="size-4" />
-              Esporta backup
-            </Button>
+            {!isFullBackup && (
+              <Button
+                type="button"
+                onClick={() => handleBackupDownload(true)}
+                className="gap-2 bg-[#0a84ff] text-white hover:bg-[#0a84ff]/90 hover:text-white"
+              >
+                <Download className="size-4" />
+                Esporta backup
+              </Button>
+            )}
             <Button
               type="button"
               onClick={handleReplaceImport}

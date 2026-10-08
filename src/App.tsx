@@ -43,7 +43,7 @@ import {
 } from '@/lib/export-filename';
 import { extractImportedPreferences, planPreferencesImport } from '@/lib/import-preferences';
 import { ImportPreview } from '@/components/trading-journal/import-preview';
-import { createFullBackupExportData } from '@/lib/journal-export';
+import { createFullBackupExportData, parseJournalExport } from '@/lib/journal-export';
 import {
   getBackupBaseline,
   setBackupBaseline,
@@ -200,6 +200,7 @@ function AppContent() {
    workspaces,
    maxCustomWorkspaces,
    createWorkspace,
+   createWorkspaces,
    updateWorkspace,
    deleteWorkspace,
  } = useJournalWorkspaces();
@@ -595,10 +596,13 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
 
   // Empty journal + file with a profile: restore it (new device). Otherwise keep
   // the user's profile and only add the assets/setups the imported trades use.
-  const adoptImportedPreferences = (data: string) => {
-    const journalIsEmpty = !workspaces.some(workspace =>
+  const adoptImportedPreferences = (
+    data: string,
+    emptyBeforeImport = !workspaces.some(workspace =>
       hasWorkspaceContent(getWorkspaceData(workspace.id))
-    );
+    )
+  ) => {
+    const journalIsEmpty = emptyBeforeImport;
     const plan = planPreferencesImport(preferences, data, journalIsEmpty);
 
     if (Object.keys(plan.patch).length === 0) return;
@@ -649,6 +653,103 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
     }
 
     return success;
+  };
+
+  // Restores every journal of a full backup file in one go. Journals that do not
+  // exist yet (custom accounts, Backtest sessions) are created first.
+  const handleImportFullBackup = (data: string, mode: 'replace' | 'append') => {
+    const parsed = parseJournalExport(data);
+
+    if (parsed?.kind !== 'full-backup') return false;
+
+    const journalIsEmpty = !workspaces.some(workspace =>
+      hasWorkspaceContent(getWorkspaceData(workspace.id))
+    );
+    const entries = Object.entries(parsed.data.workspaces) as [JournalWorkspace, JournalState][];
+    const existingIds = new Set<string>(workspaces.map(workspace => workspace.id));
+    const metaOf = (id: string) =>
+      parsed.data.workspaceOptions.find(option => option.id === id);
+    const isCustomId = (id: string) => /^(custom|backtest|preview)-\d+-/.test(id);
+    // A custom journal already present under the same name receives the data.
+    const sameNameIds = new Map<string, JournalWorkspace>();
+
+    entries.forEach(([id]) => {
+      if (existingIds.has(id) || !isCustomId(id)) return;
+
+      const name = metaOf(id)?.name.trim().toLowerCase();
+      const match = workspaces.find(
+        workspace =>
+          workspace.name.trim().toLowerCase() === name &&
+          (workspace.group ?? 'account') === (metaOf(id)?.group ?? 'account')
+      );
+
+      if (match) sameNameIds.set(id, match.id);
+    });
+
+    const missing = entries.filter(
+      ([id]) => !existingIds.has(id) && isCustomId(id) && !sameNameIds.has(id)
+    );
+    const createdWorkspaces = createWorkspaces(
+      missing.map(([id]) => ({
+        name: metaOf(id)?.name ?? '',
+        group: metaOf(id)?.group,
+        notes: metaOf(id)?.notes,
+      }))
+    );
+    const createdIds = new Map<string, JournalWorkspace>(sameNameIds);
+
+    missing.forEach(([id], index) => {
+      const created = createdWorkspaces[index];
+
+      if (created) createdIds.set(id, created.id);
+    });
+
+    let restored: JournalWorkspace | null = null;
+    let restoredCount = 0;
+    const skipped: string[] = [];
+
+    entries.forEach(([id, state]) => {
+      const target = existingIds.has(id) ? id : createdIds.get(id);
+
+      if (!target) {
+        skipped.push(metaOf(id)?.name ?? id);
+        return;
+      }
+
+      const json = JSON.stringify(state);
+      const ok = mode === 'replace' ? importData(json, target) : appendImportData(json, target);
+
+      if (ok) {
+        restoredCount += 1;
+        restored ??= target;
+      } else {
+        skipped.push(metaOf(id)?.name ?? id);
+      }
+    });
+
+    if (restoredCount === 0) return false;
+
+    const allTrades = entries.flatMap(([, state]) => state.trades);
+
+    justImportedRef.current = true;
+    window.setTimeout(() => { justImportedRef.current = false; }, 1500);
+    adoptImportedPreferences(JSON.stringify({ trades: allTrades }), journalIsEmpty);
+
+    if (skipped.length > 0) {
+      toast.warning(`Non importati: ${skipped.join(', ')}`);
+    }
+
+    toast.success(
+      restoredCount === 1 ? '1 journal importato' : `${restoredCount} journal importati`
+    );
+    completeImportNavigation(
+      JSON.stringify({ trades: allTrades }),
+      existingIds.has(activeWorkspace) && entries.some(([id]) => id === activeWorkspace)
+        ? activeWorkspace
+        : (restored as JournalWorkspace | null) ?? activeWorkspace
+    );
+
+    return true;
   };
 
   const handleResetStudentJournal = () => {
@@ -1099,6 +1200,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
         getWorkspaceExportData={getWorkspaceExportData}
         workspaceHasData={getWorkspaceHasImportData}
         onBackupDone={() => setBackupBaseline(totalTrades)}
+        onImportAll={importExportMode === 'import' ? handleImportFullBackup : undefined}
         onPreview={(data, fileName) => setImportPreview({ data, fileName })}
         onImport={importExportMode === 'import' ? handleImportData : undefined}
         onAppendImport={
