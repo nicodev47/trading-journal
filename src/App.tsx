@@ -1019,6 +1019,13 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
             : undefined
         }
         onExitPreview={() => setImportPreview(null)}
+        legacyPreviewWorkspaceIds={workspaces
+          .filter(
+            workspace =>
+              workspace.group === 'preview' &&
+              hasWorkspaceContent(getWorkspaceData(workspace.id))
+          )
+          .map(workspace => workspace.id)}
         onCreateWorkspace={createWorkspace}
         onUpdateWorkspace={updateWorkspace}
         onBackupWorkspace={handleBackupWorkspace}

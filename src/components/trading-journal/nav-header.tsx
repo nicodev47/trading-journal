@@ -38,6 +38,7 @@ interface NavHeaderProps {
   onDeleteWorkspace: (workspace: JournalWorkspace) => boolean;
   previewLabel?: string;
   onExitPreview?: () => void;
+  legacyPreviewWorkspaceIds?: string[];
 }
 
 export function NavHeader({
@@ -57,6 +58,7 @@ export function NavHeader({
   onDeleteWorkspace,
   previewLabel,
   onExitPreview,
+  legacyPreviewWorkspaceIds,
 }: NavHeaderProps) {
   const { streamerMode } = useStreamerMode();
 
@@ -94,6 +96,7 @@ export function NavHeader({
             onDeleteWorkspace={onDeleteWorkspace}
             previewLabel={previewLabel}
             onExitPreview={onExitPreview}
+            legacyPreviewWorkspaceIds={legacyPreviewWorkspaceIds}
           />
         </div>
 

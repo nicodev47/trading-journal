@@ -60,6 +60,8 @@ interface AccountSelectorProps {
   /** Set while an imported file is shown in Preview. */
   previewLabel?: string;
   onExitPreview?: () => void;
+  /** Old Preview accounts that still hold data: kept reachable so nothing is lost. */
+  legacyPreviewWorkspaceIds?: string[];
 }
 
 export function AccountSelector({
@@ -74,6 +76,7 @@ export function AccountSelector({
   onDeleteWorkspace,
   previewLabel,
   onExitPreview,
+  legacyPreviewWorkspaceIds = [],
 }: AccountSelectorProps) {
   const isPreviewing = previewLabel !== undefined;
   const [isEditorOpen, setIsEditorOpen] = useState(false);
@@ -427,6 +430,22 @@ export function AccountSelector({
             </div>
           )}
 
+          {legacyPreviewWorkspaceIds.length > 0 && (
+            <>
+              <div className="-mx-1 my-2 h-px bg-border" />
+              <div className="px-2.5 pb-1 font-sans text-[11px] text-muted-foreground">
+                Preview precedenti
+              </div>
+              {workspaces
+                .filter(workspace => legacyPreviewWorkspaceIds.includes(workspace.id))
+                .map(workspace =>
+                  renderWorkspaceItem(
+                    workspace,
+                    <span className="size-2 rounded-full bg-violet-400" />
+                  )
+                )}
+            </>
+          )}
         </PopoverContent>
       </Popover>
 
