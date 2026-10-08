@@ -789,7 +789,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
                 <button
                   type="button"
                   onClick={() => setIsWhatsNewOpen(true)}
-                  className="shrink-0 rounded-full bg-primary px-3.5 py-1.5 font-sans text-xs font-medium text-primary-foreground transition hover:bg-primary/90"
+                  className="shrink-0 rounded-full bg-[#0a84ff] px-3.5 py-1.5 font-sans text-xs font-medium text-white transition hover:bg-[#0a84ff]/90"
                 >
                   Visualizza novità
                 </button>
