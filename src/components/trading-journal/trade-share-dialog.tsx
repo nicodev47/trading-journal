@@ -147,7 +147,7 @@ export function TradeShareDialog({
               size="icon"
               onClick={() => onOpenChange(false)}
               aria-label="Torna al trade"
-              className="h-10 w-10 shrink-0 rounded-lg border border-transparent bg-transparent text-muted-foreground hover:border-border hover:bg-secondary/40 hover:text-foreground focus-visible:ring-1 focus-visible:ring-highlight/50"
+              className="h-10 w-10 shrink-0 rounded-lg border border-transparent bg-transparent text-muted-foreground hover:border-border hover:bg-secondary/40 hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring/50"
             >
               <ArrowLeft className="size-4" />
             </Button>

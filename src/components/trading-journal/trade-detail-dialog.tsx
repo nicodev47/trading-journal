@@ -290,7 +290,7 @@ export function TradeDetailDialog({
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="h-10 w-10 rounded-lg border border-border bg-background/60 text-muted-foreground hover:border-border hover:bg-secondary/70 hover:text-foreground focus-visible:ring-1 focus-visible:ring-highlight/50"
+                className="h-10 w-10 rounded-lg border border-border bg-background/60 text-muted-foreground hover:border-border hover:bg-secondary/70 hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring/50"
                 onClick={handleBack}
                 aria-label="Torna alla lista trade"
               >
@@ -338,7 +338,7 @@ export function TradeDetailDialog({
                 <select
                   value={setupDraft}
                   onChange={(event) => setSetupDraft(event.target.value)}
-                  className="ej-filter-select h-9 w-full rounded-lg border border-border bg-background/70 px-3 font-sans tabular-nums text-xs text-foreground outline-none transition-colors focus:border-highlight/60"
+                  className="ej-filter-select h-9 w-full rounded-lg border border-border bg-background/70 px-3 font-sans tabular-nums text-xs text-foreground outline-none transition-colors focus:border-ring/60"
                 >
                   <option value="">Seleziona setup</option>
                   {VALID_TRADE_SETUPS.map((setup) => (

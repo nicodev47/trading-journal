@@ -729,7 +729,7 @@ export function MonthlyAnalysis({
             className={cn(
               'grid grid-cols-[1.2fr_1fr_0.8fr_0.8fr_0.9fr_0.9fr_1fr_1fr_64px] items-center border-b border-border/70 px-4 py-3 font-sans tabular-nums text-xs outline-none last:border-b-0',
               isClickable
-                ? 'cursor-pointer transition hover:bg-primary/[0.035] hover:shadow-[inset_3px_0_0_rgba(52,210,123,0.55)] focus-visible:bg-primary/[0.06] focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-highlight/60'
+                ? 'cursor-pointer transition hover:bg-primary/[0.035] hover:shadow-[inset_3px_0_0_rgba(52,210,123,0.55)] focus-visible:bg-primary/[0.06] focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring/60'
                 : 'text-muted-foreground/55'
             )}
           >
@@ -822,7 +822,7 @@ export function MonthlyAnalysis({
                       event.target.value as TagAnalyticsOrder
                     )
                   }
-                  className="ej-filter-select h-9 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-highlight/60"
+                  className="ej-filter-select h-9 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-ring/60"
                 >
                   <option value="most-used">Più utilizzato</option>
                   <option value="least-used">Meno utilizzato</option>
@@ -1093,7 +1093,7 @@ export function MonthlyAnalysis({
                         key={trade.id}
                         role="button"
                         tabIndex={0}
-                        className="grid w-full grid-cols-1 gap-2 px-4 py-3 text-left transition hover:bg-primary/[0.035] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-highlight/60 md:grid-cols-[96px_120px_72px_84px_64px_minmax(0,1fr)_64px]"
+                        className="grid w-full grid-cols-1 gap-2 px-4 py-3 text-left transition hover:bg-primary/[0.035] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring/60 md:grid-cols-[96px_120px_72px_84px_64px_minmax(0,1fr)_64px]"
                         onClick={() => {
                           setSelectedMonthIndex(null);
                           setSelectedTrade(trade);

@@ -184,7 +184,7 @@ export function MonthYearPicker({
             >
               <SelectTrigger
                 id={`${id}-month`}
-                className="relative flex h-12 w-full items-center justify-between rounded-lg border border-border bg-background/50 px-4 text-sm font-semibold text-foreground hover:bg-secondary/40 focus-visible:border-highlight/60"
+                className="relative flex h-12 w-full items-center justify-between rounded-lg border border-border bg-background/50 px-4 text-sm font-semibold text-foreground hover:bg-secondary/40 focus-visible:border-ring/60"
               >
                 <SelectValue />
               </SelectTrigger>
@@ -213,7 +213,7 @@ export function MonthYearPicker({
             >
               <SelectTrigger
                 id={`${id}-year`}
-                className="relative flex h-12 w-full items-center justify-between rounded-lg border border-border bg-background/50 px-4 text-sm font-semibold text-foreground hover:bg-secondary/40 focus-visible:border-highlight/60"
+                className="relative flex h-12 w-full items-center justify-between rounded-lg border border-border bg-background/50 px-4 text-sm font-semibold text-foreground hover:bg-secondary/40 focus-visible:border-ring/60"
               >
                 <SelectValue />
               </SelectTrigger>
@@ -241,7 +241,7 @@ export function MonthYearPicker({
               >
                 <SelectTrigger
                   id={`${id}-go-to`}
-                  className="relative flex h-12 w-full items-center justify-between rounded-lg border border-border bg-background/50 px-4 text-sm font-semibold text-foreground hover:bg-secondary/40 focus-visible:border-highlight/60"
+                  className="relative flex h-12 w-full items-center justify-between rounded-lg border border-border bg-background/50 px-4 text-sm font-semibold text-foreground hover:bg-secondary/40 focus-visible:border-ring/60"
                 >
                   <SelectValue placeholder="Seleziona destinazione" />
                 </SelectTrigger>

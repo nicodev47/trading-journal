@@ -1902,7 +1902,7 @@ export function AnalysisDiagnostics({
                       direction: event.target.value as TradeLogFilters['direction'],
                     }))
                   }
-                  className="ej-filter-select h-9 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-highlight/60"
+                  className="ej-filter-select h-9 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-ring/60"
                 >
                   <option value="all">Tutti</option>
                   <option value="long">Long</option>
@@ -1919,7 +1919,7 @@ export function AnalysisDiagnostics({
                       result: event.target.value as TradeLogFilters['result'],
                     }))
                   }
-                  className="ej-filter-select h-9 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-highlight/60"
+                  className="ej-filter-select h-9 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-ring/60"
                 >
                   <option value="all">Tutti</option>
                   <option value="profit">Profit</option>
@@ -1937,7 +1937,7 @@ export function AnalysisDiagnostics({
                       asset: event.target.value as TradeLogFilters['asset'],
                     }))
                   }
-                  className="ej-filter-select h-9 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-highlight/60"
+                  className="ej-filter-select h-9 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-ring/60"
                 >
                   <option value="all">Tutti</option>
                   <option value="NQ">NQ</option>
@@ -1954,7 +1954,7 @@ export function AnalysisDiagnostics({
                       setup: event.target.value,
                     }))
                   }
-                  className="ej-filter-select h-9 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-highlight/60"
+                  className="ej-filter-select h-9 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-ring/60"
                 >
                   <option value="all">Tutti</option>
                   {availableSetups.map((setup) => (
@@ -1974,7 +1974,7 @@ export function AnalysisDiagnostics({
                       tag: event.target.value,
                     }))
                   }
-                  className="ej-filter-select h-9 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-highlight/60"
+                  className="ej-filter-select h-9 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-ring/60"
                 >
                   <option value="all">Tutti</option>
                   {availableTags.map((tag) => (
@@ -1995,7 +1995,7 @@ export function AnalysisDiagnostics({
                         .value as TradeLogFilters['favoritesOnly'],
                     }))
                   }
-                  className="ej-filter-select h-9 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-highlight/60"
+                  className="ej-filter-select h-9 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-ring/60"
                 >
                   <option value="no">No</option>
                   <option value="yes">Sì</option>
@@ -2012,7 +2012,7 @@ export function AnalysisDiagnostics({
                         .value as TradeLogFilters['displayOrder'],
                     }))
                   }
-                  className="ej-filter-select h-9 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-highlight/60"
+                  className="ej-filter-select h-9 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-ring/60"
                 >
                   <option value="latest">Trade più recente</option>
                   <option value="earliest">Trade meno recente</option>
@@ -2032,7 +2032,7 @@ export function AnalysisDiagnostics({
                         dateFrom: event.target.value,
                       }))
                     }
-                    className="ej-date-input-no-indicator h-9 min-w-0 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-highlight/60"
+                    className="ej-date-input-no-indicator h-9 min-w-0 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-ring/60"
                   />
                 </FilterField>
                 <FilterField label="A">
@@ -2045,7 +2045,7 @@ export function AnalysisDiagnostics({
                         dateTo: event.target.value,
                       }))
                     }
-                    className="ej-date-input-no-indicator h-9 min-w-0 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-highlight/60"
+                    className="ej-date-input-no-indicator h-9 min-w-0 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-ring/60"
                   />
                 </FilterField>
               </div>

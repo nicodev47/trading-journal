@@ -234,7 +234,7 @@ export function WeeklyPlanDialog({
               className={cn(
                 'flex min-h-[100px] flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed transition-colors outline-none',
                 isDragging ? 'border-profit bg-profit/5' : 'border-border',
-                'focus:border-highlight focus:ring-1 focus:ring-highlight'
+                'focus:border-ring focus:ring-1 focus:ring-ring'
               )}
             >
               <div className="flex items-center gap-2 text-muted-foreground">
