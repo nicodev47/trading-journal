@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import {
   getBestOperatingWindow,
+  getWorstOperatingWindow,
 } from '@/lib/operating-windows';
 import { isValidTradeSetup, type Trade } from '@/lib/types/trade';
 import { useStreamerMode } from '@/contexts/streamer-mode-context';
@@ -137,6 +138,15 @@ export function AdvancedStatsGrid({
 
     const tradingDays = tradesByDay.size;
     const bestOperatingWindow = getBestOperatingWindow(validTrades, preferences.windows);
+    const worstOperatingWindowCandidate = getWorstOperatingWindow(
+      validTrades,
+      preferences.windows
+    );
+    const worstOperatingWindow =
+      worstOperatingWindowCandidate &&
+      worstOperatingWindowCandidate.name !== bestOperatingWindow?.name
+        ? worstOperatingWindowCandidate
+        : null;
     const bestSetup = Array.from(setupStats.entries()).reduce<{
       name: string | null;
       trades: number;
@@ -156,6 +166,33 @@ export function AdvancedStatsGrid({
       },
       { name: null, trades: 0, winRate: -1 }
     );
+    const worstSetupEntry =
+      setupStats.size > 1
+        ? Array.from(setupStats.entries()).reduce<{
+            name: string | null;
+            trades: number;
+            winRate: number;
+          }>(
+            (worst, [name, stats]) => {
+              const winRate = calculateWinRate(stats.wins, stats.losses);
+
+              if (
+                worst.name === null ||
+                winRate < worst.winRate ||
+                (winRate === worst.winRate && stats.trades > worst.trades)
+              ) {
+                return { name, trades: stats.trades, winRate };
+              }
+
+              return worst;
+            },
+            { name: null, trades: 0, winRate: 101 }
+          )
+        : null;
+    const worstSetup =
+      worstSetupEntry && worstSetupEntry.name !== bestSetup.name
+        ? worstSetupEntry
+        : null;
     const bestWeekday = Array.from(weekdayStats.entries())
       .map(([weekday, stats]) => ({
         name: WEEKDAY_NAMES[weekday],
@@ -251,6 +288,8 @@ export function AdvancedStatsGrid({
       tradingDays,
       bestOperatingWindow,
       bestSetup,
+      worstSetup,
+      worstOperatingWindow,
       currentStreak: tradeStatistics.currentStreak,
       currentStreakType:
         tradeStatistics.streakType === 'winning'
@@ -280,6 +319,7 @@ export function AdvancedStatsGrid({
   );
 
   return (
+    <>
     <StatisticsCardGrid
       className={cn(
         'items-start py-3 md:py-4',
@@ -405,6 +445,8 @@ export function AdvancedStatsGrid({
         </CardContent>
       </Card>
 
+      {!extended && (
+        <>
       <Card className="self-start rounded-2xl border border-border bg-card/95 py-0 shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
         <CardContent className="flex min-h-[112px] min-w-0 flex-col justify-center p-3.5 md:min-h-[148px] md:p-4">
           <p className="font-sans tabular-nums text-xs font-medium tracking-normal text-muted-foreground">
@@ -457,6 +499,9 @@ export function AdvancedStatsGrid({
           </div>
         </CardContent>
       </Card>
+
+        </>
+      )}
 
       <Card className="self-start rounded-2xl border border-border bg-card/95 py-0 shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
         <CardContent className="flex min-h-[112px] min-w-0 flex-col justify-center p-3.5 md:min-h-[148px] md:p-4">
@@ -527,6 +572,89 @@ export function AdvancedStatsGrid({
           />
 
           <CompactAnalysisCard
+            title="Profitto massimo realizzato di fila"
+            value={
+              data.maxConsecutiveProfitTrades === 0
+                ? '—'
+                : streamerMode
+                  ? '******'
+                  : formatCurrency(data.maxConsecutiveProfit)
+            }
+            subtitle={
+              data.maxConsecutiveProfitTrades > 0
+                ? `${data.maxConsecutiveProfitTrades} win consecutive`
+                : 'Nessuna serie positiva'
+            }
+            tone={data.maxConsecutiveProfitTrades > 0 ? 'profit' : 'neutral'}
+            hasData={data.maxConsecutiveProfitTrades > 0}
+          />
+
+        </>
+      )}
+
+    </StatisticsCardGrid>
+
+      {extended && (
+        <StatisticsCardGrid className="items-start pb-3 md:grid-cols-2 md:pb-4">
+          <CompactAnalysisCard
+            title="Setup migliore"
+            value={data.bestSetup.name ?? '—'}
+            subtitle={
+              data.bestSetup.name
+                ? `${data.bestSetup.winRate.toFixed(0)}% win rate · ${
+                    data.bestSetup.trades
+                  } trade`
+                : 'Nessun setup registrato'
+            }
+            tone={data.bestSetup.name ? 'profit' : 'neutral'}
+            progress={data.bestSetup.name ? data.bestSetup.winRate : 0}
+            hasData={data.bestSetup.name !== null}
+            prominentValue
+          />
+
+          <CompactAnalysisCard
+            title="Setup peggiore"
+            value={data.worstSetup?.name ?? '—'}
+            subtitle={
+              data.worstSetup
+                ? `${data.worstSetup.winRate.toFixed(0)}% win rate · ${
+                    data.worstSetup.trades
+                  } trade`
+                : 'Servono almeno due setup registrati'
+            }
+            tone={data.worstSetup ? 'loss' : 'neutral'}
+            progress={data.worstSetup ? data.worstSetup.winRate : 0}
+            hasData={data.worstSetup !== null}
+            prominentValue
+          />
+
+          <CompactAnalysisCard
+            title="Finestra operativa migliore"
+            value={data.bestOperatingWindow?.name ?? '—'}
+            subtitle={
+              data.bestOperatingWindow
+                ? `${data.bestOperatingWindow.description} · ${data.bestOperatingWindow.tradeCount} trade`
+                : 'Nessun trade registrato'
+            }
+            tone={data.bestOperatingWindow ? 'profit' : 'neutral'}
+            hasData={data.bestOperatingWindow !== null}
+            prominentValue
+          />
+
+          <CompactAnalysisCard
+            title="Finestra operativa peggiore"
+            value={data.worstOperatingWindow?.name ?? '—'}
+            subtitle={
+              data.worstOperatingWindow
+                ? `${data.worstOperatingWindow.description} · ${data.worstOperatingWindow.tradeCount} trade`
+                : 'Servono almeno due finestre con trade'
+            }
+            tone={data.worstOperatingWindow ? 'loss' : 'neutral'}
+            hasData={data.worstOperatingWindow !== null}
+            prominentValue
+          />
+
+          <CompactAnalysisCard
             title="Giorno operativo migliore"
             value={data.bestWeekday?.name ?? '—'}
             subtitle={
@@ -553,21 +681,31 @@ export function AdvancedStatsGrid({
           />
 
           <CompactAnalysisCard
-            title="Profitto massimo realizzato di fila"
-            value={
-              data.maxConsecutiveProfitTrades === 0
-                ? '—'
-                : streamerMode
-                  ? '******'
-                  : formatCurrency(data.maxConsecutiveProfit)
-            }
+            title="Giorno operativo peggiore"
+            value={data.worstWeekday?.name ?? '—'}
             subtitle={
-              data.maxConsecutiveProfitTrades > 0
-                ? `${data.maxConsecutiveProfitTrades} win consecutive`
-                : 'Nessuna serie positiva'
+              data.worstWeekday
+                ? `${data.worstWeekday.winRate.toFixed(0)}% WR · ${
+                    data.worstWeekday.trades
+                  } trade · ${
+                    streamerMode
+                      ? '******'
+                      : formatSignedCurrency(data.worstWeekday.pnl)
+                  }`
+                : 'Nessun trade registrato'
             }
-            tone={data.maxConsecutiveProfitTrades > 0 ? 'profit' : 'neutral'}
-            hasData={data.maxConsecutiveProfitTrades > 0}
+            tone={
+              !data.worstWeekday
+                ? 'neutral'
+                : data.worstWeekday.pnl < 0
+                  ? 'loss'
+                  : 'profit'
+            }
+            progress={
+              data.worstWeekday ? 100 : 0
+            }
+            hasData={Boolean(data.worstWeekday)}
+            prominentValue
           />
 
           <CompactAnalysisCard
@@ -615,38 +753,9 @@ export function AdvancedStatsGrid({
             hasData={data.worstMonth !== null}
             prominentValue
           />
-
-          <CompactAnalysisCard
-            title="Giorno operativo peggiore"
-            value={data.worstWeekday?.name ?? '—'}
-            subtitle={
-              data.worstWeekday
-                ? `${data.worstWeekday.winRate.toFixed(0)}% WR · ${
-                    data.worstWeekday.trades
-                  } trade · ${
-                    streamerMode
-                      ? '******'
-                      : formatSignedCurrency(data.worstWeekday.pnl)
-                  }`
-                : 'Nessun trade registrato'
-            }
-            tone={
-              !data.worstWeekday
-                ? 'neutral'
-                : data.worstWeekday.pnl < 0
-                  ? 'loss'
-                  : 'profit'
-            }
-            progress={
-              data.worstWeekday ? 100 : 0
-            }
-            hasData={Boolean(data.worstWeekday)}
-            prominentValue
-          />
-        </>
+        </StatisticsCardGrid>
       )}
-
-    </StatisticsCardGrid>
+    </>
   );
 }
 
