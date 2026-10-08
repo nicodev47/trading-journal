@@ -95,7 +95,7 @@ export function OnboardingScreen() {
         <div className="flex max-w-[480px] flex-1 flex-col">
           {isIntro ? (
             <>
-              <h1 className="text-3xl font-semibold tracking-tight">Benvenuto in EclipseJournal</h1>
+              <h1 className="text-3xl font-semibold tracking-tight">Benvenuto in EclipseJournal!</h1>
               <p className="mt-2 text-xl font-medium tracking-tight text-foreground/80">
                 Prima di incominciare, rendiamo la tua esperienza unica.
               </p>
