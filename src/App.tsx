@@ -41,6 +41,13 @@ import {
   normalizeExportFileName,
 } from '@/lib/export-filename';
 import { createZipBlob } from '@/lib/zip-export';
+import {
+  getBackupSnoozedAt,
+  getLastBackupAt,
+  markBackupDone,
+  shouldRemindBackup,
+  snoozeBackupReminder,
+} from '@/lib/backup-reminder';
 import { TutorialTour } from '@/components/trading-journal/tutorial/tutorial-tour';
 import { TutorialWelcomeDialog } from '@/components/trading-journal/tutorial/tutorial-welcome-dialog';
 import { TUTORIAL_STEPS } from '@/components/trading-journal/tutorial/tutorial-steps';
@@ -374,6 +381,37 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
     handleStartTutorial();
   }, [justCompletedOnboarding]);
 
+  const backupReminderCheck = useRef<() => void>(() => {});
+
+  backupReminderCheck.current = () => {
+    if (isTutorialActive || isTutorialWelcomeOpen) return;
+
+    const due = shouldRemindBackup({
+      hasData: workspaces.some(workspace =>
+        hasWorkspaceContent(getWorkspaceData(workspace.id))
+      ),
+      lastBackupAt: getLastBackupAt(),
+      snoozedAt: getBackupSnoozedAt(),
+      now: Date.now(),
+    });
+
+    if (!due) return;
+
+    snoozeBackupReminder();
+    toast.info('È un po’ che non fai un backup', {
+      description:
+        'I dati sono salvati nella cache del browser: esporta una copia per non perderli.',
+      duration: 12000,
+      action: { label: 'Esporta tutto', onClick: () => handleExportAllJournals() },
+    });
+  };
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => backupReminderCheck.current(), 4000);
+
+    return () => window.clearTimeout(timer);
+  }, []);
+
   const handleRestartTutorial = () => {
     setIsHelpOpen(false);
     setIsTutorialActive(false);
@@ -675,6 +713,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
     anchor.click();
     document.body.removeChild(anchor);
     URL.revokeObjectURL(url);
+    markBackupDone();
     toast.success('Tutti i journal sono stati esportati');
   };
 

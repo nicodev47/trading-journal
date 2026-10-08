@@ -19,6 +19,7 @@ import {
   getGuidedExportBaseName,
   normalizeExportFileName,
 } from '@/lib/export-filename';
+import { markBackupDone } from '@/lib/backup-reminder';
 import { parseJournalExport } from '@/lib/journal-export';
 import {
   SYSTEM_WORKSPACES,
@@ -139,6 +140,7 @@ export function ImportExportDialog({
     anchor.click();
     document.body.removeChild(anchor);
     URL.revokeObjectURL(url);
+    markBackupDone();
   };
 
   const handleDownload = () => {
