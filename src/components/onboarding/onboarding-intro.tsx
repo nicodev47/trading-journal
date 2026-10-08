@@ -21,7 +21,7 @@ const INTRO_POINTS = [
   {
     icon: UserRound,
     title: 'Un profilo personalizzato',
-    text: 'Nome e foto per riconoscerti nel journal e nelle card che condividi.',
+    text: 'La tua strategia, i tuoi setup, modelli operativi e molto altro ancora...',
   },
 ];
 
