@@ -1602,7 +1602,7 @@ export function DayEditorDialog({
           <DialogHeader>
             <DialogTitle>Eliminare questa giornata?</DialogTitle>
             <DialogDescription>
-              Questa azione cancellerà tutti i trade e le informazioni salvate per questa giornata. Ti consigliamo di avere un backup prima di continuare.
+              Questa azione cancellerà tutti i trade e le informazioni salvate per questa giornata.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="max-sm:[&_button]:w-full">
