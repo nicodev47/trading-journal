@@ -292,7 +292,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
     if (!isTutorialActive) return;
 
     if (!isValidTutorialTradeSet(tutorialTrades)) {
-      setTutorialTrades(createTutorialTrades());
+      setTutorialTrades(createTutorialTrades(preferences));
       return;
     }
 
@@ -365,7 +365,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
     setImportExportMode(null);
     setIsProfileOpen(false);
     setIsHelpOpen(false);
-    setTutorialTrades(createTutorialTrades());
+    setTutorialTrades(createTutorialTrades(preferences));
     setTutorialStepIndex(0);
     setIsTutorialWelcomeOpen(false);
     setIsTutorialActive(true);

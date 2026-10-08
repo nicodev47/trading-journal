@@ -60,7 +60,14 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     target: 'profile-button',
     title: 'Profilo trader',
     description:
-      'Il profilo raccoglie la tua identità e i tuoi progressi.\n\nNella scheda Profilo cambi nome e foto, vedi livello e XP e condividi la tua card. In Impostazioni modifichi asset, setup e finestre operative scelti all’inizio; in Dati trovi import ed export.',
+      'Il profilo raccoglie la tua identità e i tuoi progressi.\n\nNella scheda Profilo cambi nome e foto, vedi livello, rank e XP e, con il pulsante Share, crei la card del tuo profilo da condividere. Anche ogni trade ha la sua card Share.',
+    cta: 'Avanti',
+  },
+  {
+    target: 'profile-button',
+    title: 'Le tue impostazioni',
+    description:
+      'Nella scheda Impostazioni del profilo modifichi quando vuoi gli asset, i setup e le finestre operative scelti all’inizio: menu, analisi e calendario si aggiornano di conseguenza.\n\nLì trovi anche il backup delle preferenze, mentre nella scheda Dati puoi esportare tutti i tuoi journal.',
     cta: 'Avanti',
   },
   {
