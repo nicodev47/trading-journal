@@ -78,7 +78,7 @@ export function TradeShareDialog({
   const profileHandle = normalizeHandleInput(initialHandle);
 
   const exportOptions = {
-    backgroundColor: '#05080c',
+    backgroundColor: '#0a0a0b',
     cacheBust: true,
     pixelRatio: 2,
   };

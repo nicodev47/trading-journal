@@ -119,7 +119,7 @@ export function TradeShareCard({
         className
       )}
       style={{
-        background: `radial-gradient(circle at 18% 14%, ${accentGlow}, transparent 32%), radial-gradient(circle at 88% 6%, rgba(135, 92, 255, 0.18), transparent 28%), linear-gradient(135deg, #05080c 0%, #081019 45%, #05070b 100%)`,
+        background: `radial-gradient(circle at 18% 14%, ${accentGlow}, transparent 32%), radial-gradient(circle at 88% 6%, rgba(10,132,255, 0.18), transparent 28%), linear-gradient(135deg, #0a0a0b 0%, #081019 45%, #05070b 100%)`,
         borderColor: accentBorder,
         boxShadow: `0 0 0 1px rgba(255,255,255,0.04), 0 30px 90px ${accentShadow}`,
       }}

@@ -66,9 +66,9 @@ function ProfileMetric({
         className={cn(
           'mt-2 break-words font-mono text-[20px] font-black leading-tight',
           tone === 'profit'
-            ? 'text-[#00d68f]'
+            ? 'text-[#30d158]'
             : tone === 'loss'
-              ? 'text-[#ff4d70]'
+              ? 'text-[#ff453a]'
               : 'text-white'
         )}
       >
@@ -97,12 +97,12 @@ export function ProfileShareCard({
   return (
     <div
       className={cn(
-        'relative aspect-square w-[760px] max-w-full rounded-[28px] border border-[#00a978] bg-[#050b0c] p-8 text-white shadow-2xl',
+        'relative aspect-square w-[760px] max-w-full rounded-[28px] border border-[#28a745] bg-[#050b0c] p-8 text-white shadow-2xl',
         className
       )}
       style={{
         boxShadow:
-          '0 0 0 1px rgba(0,214,143,0.18), 0 24px 86px rgba(0,214,143,0.12)',
+          '0 0 0 1px rgba(48,209,88,0.18), 0 24px 86px rgba(48,209,88,0.12)',
       }}
     >
       <div className="flex h-full flex-col rounded-[22px]">
@@ -112,9 +112,9 @@ export function ProfileShareCard({
           </h2>
         </header>
 
-        <section className="mt-6 rounded-[22px] border border-[#00a978] bg-[#063f30] px-7 py-6">
+        <section className="mt-6 rounded-[22px] border border-[#28a745] bg-[#063f30] px-7 py-6">
           <div className="flex items-center gap-6">
-            <div className="flex size-[82px] shrink-0 items-center justify-center overflow-hidden rounded-[18px] border border-[#00d68f]/35 bg-[#00d68f]/10 text-[52px] leading-none shadow-[0_0_28px_rgba(0,214,143,0.10)]">
+            <div className="flex size-[82px] shrink-0 items-center justify-center overflow-hidden rounded-[18px] border border-[#30d158]/35 bg-[#30d158]/10 text-[52px] leading-none shadow-[0_0_28px_rgba(48,209,88,0.10)]">
               {profile.profileIcon}
             </div>
 
@@ -127,7 +127,7 @@ export function ProfileShareCard({
                 <span>{profile.rank.name}</span>
               </div>
 
-              <div className="mt-3 flex flex-wrap items-center justify-between gap-x-6 gap-y-1 font-mono text-[17px] font-black uppercase text-[#00d68f]">
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-x-6 gap-y-1 font-mono text-[17px] font-black uppercase text-[#30d158]">
                 <span>LIVELLO {profile.level}</span>
                 <span>{profile.totalXP} XP TOTALI</span>
               </div>

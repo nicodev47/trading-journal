@@ -54,7 +54,7 @@ export function ProfileShareDialog({
   const [isCopying, setIsCopying] = useState(false);
 
   const exportOptions = {
-    backgroundColor: '#05080c',
+    backgroundColor: '#0a0a0b',
     cacheBust: true,
     pixelRatio: 2,
   };

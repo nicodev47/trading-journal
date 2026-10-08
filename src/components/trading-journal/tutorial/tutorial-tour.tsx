@@ -789,7 +789,7 @@ export function TutorialTour({
   const highlightClassName =
     step.target === 'analysis-section'
       ? 'absolute rounded-b-[18px] border-x border-b border-profit/80'
-      : 'absolute rounded-2xl border border-profit/85 shadow-[0_0_22px_rgba(0,214,143,0.28),0_0_42px_rgba(0,214,143,0.14)]';
+      : 'absolute rounded-2xl border border-profit/85 shadow-[0_0_22px_rgba(48,209,88,0.28),0_0_42px_rgba(48,209,88,0.14)]';
 
   return (
     <div

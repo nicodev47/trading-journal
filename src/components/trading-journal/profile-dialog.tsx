@@ -235,7 +235,7 @@ export function ProfileDialog({
               </div>
 
               <div className="flex items-center gap-3 sm:gap-4">
-                <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl border border-profit/30 bg-profit/10 text-[40px] leading-none shadow-[0_0_24px_rgba(0,214,143,0.08)] sm:size-16 sm:text-[46px]">
+                <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl border border-profit/30 bg-profit/10 text-[40px] leading-none shadow-[0_0_24px_rgba(48,209,88,0.08)] sm:size-16 sm:text-[46px]">
                   {profile.profileIcon}
                 </div>
 
@@ -457,8 +457,8 @@ export function ProfileDialog({
               </div>
             </section>
 
-            <section className="rounded-[14px] border border-violet-400/35 bg-violet-500/5 p-3.5 sm:p-4">
-              <p className="flex items-center gap-2 font-mono text-xs font-semibold uppercase tracking-[0.14em] text-violet-300">
+            <section className="rounded-[14px] border border-blue-400/35 bg-blue-500/5 p-3.5 sm:p-4">
+              <p className="flex items-center gap-2 font-mono text-xs font-semibold uppercase tracking-[0.14em] text-blue-300">
                 <span>Modalità Streamer</span>
                 <span className="text-xl leading-none">🙈</span>
               </p>
@@ -472,7 +472,7 @@ export function ProfileDialog({
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="border-violet-400/45 bg-violet-500/10 text-violet-200 hover:bg-violet-500/20 hover:text-violet-100 max-sm:w-full"
+                  className="border-blue-400/45 bg-blue-500/10 text-blue-200 hover:bg-blue-500/20 hover:text-blue-100 max-sm:w-full"
                   onClick={toggleStreamerMode}
                 >
                   {streamerMode

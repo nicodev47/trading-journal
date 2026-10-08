@@ -74,7 +74,7 @@ export function WhatsNewDialog({ open, onOpenChange }: WhatsNewDialogProps) {
         </DialogHeader>
 
         <div className="p-4 sm:p-5">
-          <h2 className="mb-4 font-mono text-xs font-semibold uppercase tracking-[0.16em] text-violet-200">
+          <h2 className="mb-4 font-mono text-xs font-semibold uppercase tracking-[0.16em] text-blue-200">
             ✨ Nuove funzionalità
           </h2>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -101,7 +101,7 @@ export function WhatsNewDialog({ open, onOpenChange }: WhatsNewDialogProps) {
           <button
             type="button"
             onClick={() => onOpenChange(false)}
-            className="rounded-lg border border-violet-300/30 bg-violet-300/10 px-4 py-2 font-sans text-xs font-semibold text-violet-100 transition hover:border-violet-200/50 hover:bg-violet-300/15"
+            className="rounded-lg border border-blue-300/30 bg-blue-300/10 px-4 py-2 font-sans text-xs font-semibold text-blue-100 transition hover:border-blue-200/50 hover:bg-blue-300/15"
           >
             Ho capito
           </button>

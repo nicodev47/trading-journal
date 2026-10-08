@@ -548,7 +548,7 @@ export function MonthlyAnalysis({
                       <>
                         <div
                           className={cn(
-                            'pointer-events-none absolute top-1 z-10 whitespace-nowrap rounded-xl border border-teal-300/20 bg-[#20242d]/98 px-2.5 py-1.5 font-mono text-[10px] text-slate-200 opacity-0 shadow-[0_10px_30px_rgba(0,0,0,0.45),0_0_18px_rgba(45,212,191,0.08)] transition-all duration-200 group-hover:translate-y-1 group-hover:opacity-100',
+                            'pointer-events-none absolute top-1 z-10 whitespace-nowrap rounded-xl border border-blue-300/20 bg-[#1c1c1f]/98 px-2.5 py-1.5 font-mono text-[10px] text-slate-200 opacity-0 shadow-[0_10px_30px_rgba(0,0,0,0.45),0_0_18px_rgba(10,132,255,0.08)] transition-all duration-200 group-hover:translate-y-1 group-hover:opacity-100',
                             month.monthIndex === 0
                               ? 'left-0'
                               : month.monthIndex === 11
@@ -562,7 +562,7 @@ export function MonthlyAnalysis({
                           <span
                             className={cn(
                               'font-semibold',
-                              month.totalPnl > 0 && 'text-teal-200',
+                              month.totalPnl > 0 && 'text-blue-200',
                               month.totalPnl < 0 && 'text-rose-200'
                             )}
                           >
@@ -575,9 +575,9 @@ export function MonthlyAnalysis({
                           className={cn(
                             'w-11 rounded-t-lg transition-all duration-200 group-hover:scale-x-105 group-hover:brightness-110 sm:w-12',
                             month.totalPnl > 0 &&
-                              'bg-[linear-gradient(to_top,rgba(0,214,143,0.25),#00d68f)] shadow-[0_0_12px_rgba(0,214,143,0.18)] group-hover:shadow-[0_0_22px_rgba(0,214,143,0.34)]',
+                              'bg-[linear-gradient(to_top,rgba(48,209,88,0.25),#30d158)] shadow-[0_0_12px_rgba(48,209,88,0.18)] group-hover:shadow-[0_0_22px_rgba(48,209,88,0.34)]',
                             month.totalPnl < 0 &&
-                              'bg-[linear-gradient(to_top,rgba(255,77,112,0.25),#ff4d70)] shadow-[0_0_12px_rgba(255,77,112,0.16)] group-hover:shadow-[0_0_22px_rgba(255,77,112,0.32)]'
+                              'bg-[linear-gradient(to_top,rgba(255,69,58,0.25),#ff453a)] shadow-[0_0_12px_rgba(255,69,58,0.16)] group-hover:shadow-[0_0_22px_rgba(255,69,58,0.32)]'
                           )}
                           style={{ height }}
                         />
@@ -641,7 +641,7 @@ export function MonthlyAnalysis({
                           <>
                             <div
                               className={cn(
-                                'pointer-events-none absolute top-1 z-10 whitespace-nowrap rounded-xl border border-teal-300/20 bg-[#20242d]/98 px-2.5 py-1.5 font-mono text-[10px] text-slate-200 opacity-0 shadow-[0_10px_30px_rgba(0,0,0,0.45),0_0_18px_rgba(45,212,191,0.08)] transition-all duration-200 group-hover:translate-y-1 group-hover:opacity-100',
+                                'pointer-events-none absolute top-1 z-10 whitespace-nowrap rounded-xl border border-blue-300/20 bg-[#1c1c1f]/98 px-2.5 py-1.5 font-mono text-[10px] text-slate-200 opacity-0 shadow-[0_10px_30px_rgba(0,0,0,0.45),0_0_18px_rgba(10,132,255,0.08)] transition-all duration-200 group-hover:translate-y-1 group-hover:opacity-100',
                                 month.monthIndex === 0
                                   ? 'left-0'
                                   : month.monthIndex === 11
@@ -652,12 +652,12 @@ export function MonthlyAnalysis({
                               <span className="mr-1 text-foreground">
                                 {month.monthName}:
                               </span>
-                              <span className="font-semibold text-teal-200">
+                              <span className="font-semibold text-blue-200">
                                 {month.trades} trade
                               </span>
                             </div>
                             <div
-                              className="w-11 rounded-t-lg bg-[linear-gradient(to_top,rgba(0,214,143,0.25),#00d68f)] shadow-[0_0_12px_rgba(0,214,143,0.16)] transition-all duration-200 group-hover:scale-x-105 group-hover:brightness-110 group-hover:shadow-[0_0_22px_rgba(0,214,143,0.32)] sm:w-12"
+                              className="w-11 rounded-t-lg bg-[linear-gradient(to_top,rgba(48,209,88,0.25),#30d158)] shadow-[0_0_12px_rgba(48,209,88,0.16)] transition-all duration-200 group-hover:scale-x-105 group-hover:brightness-110 group-hover:shadow-[0_0_22px_rgba(48,209,88,0.32)] sm:w-12"
                               style={{ height }}
                             />
                           </>
@@ -729,7 +729,7 @@ export function MonthlyAnalysis({
             className={cn(
               'grid grid-cols-[1.2fr_1fr_0.8fr_0.8fr_0.9fr_0.9fr_1fr_1fr_64px] items-center border-b border-border/70 px-4 py-3 font-mono text-xs outline-none last:border-b-0',
               isClickable
-                ? 'cursor-pointer transition hover:bg-profit/[0.035] hover:shadow-[inset_3px_0_0_rgba(0,240,168,0.55)] focus-visible:bg-profit/[0.06] focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-profit/60'
+                ? 'cursor-pointer transition hover:bg-profit/[0.035] hover:shadow-[inset_3px_0_0_rgba(48,209,88,0.55)] focus-visible:bg-profit/[0.06] focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-profit/60'
                 : 'text-muted-foreground/55'
             )}
           >

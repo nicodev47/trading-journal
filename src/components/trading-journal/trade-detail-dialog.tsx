@@ -369,7 +369,7 @@ export function TradeDetailDialog({
                 {tags.map((tag) => (
                   <span
                     key={tag}
-                    className="rounded-md border border-teal-300/25 bg-teal-300/10 px-2.5 py-1.5 font-mono text-xs text-teal-100"
+                    className="rounded-md border border-blue-300/25 bg-blue-300/10 px-2.5 py-1.5 font-mono text-xs text-blue-100"
                   >
                     {getTagLabel(tag)}
                   </span>

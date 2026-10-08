@@ -125,7 +125,7 @@ export function NavHeader({
         <div className="flex items-center gap-2 justify-self-end max-md:absolute max-md:right-3.5 max-md:top-2 max-md:gap-1.5">
           {streamerMode && (
             <div
-              className="flex h-8 min-w-8 items-center justify-center rounded-full border border-violet-400/45 bg-violet-500/15 px-2 text-sm"
+              className="flex h-8 min-w-8 items-center justify-center rounded-full border border-blue-400/45 bg-blue-500/15 px-2 text-sm"
               aria-label="Modalità streamer attiva"
               title="Modalità streamer attiva"
             >

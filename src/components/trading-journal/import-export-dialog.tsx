@@ -338,14 +338,14 @@ export function ImportExportDialog({
           <>
               <div className="ej-scrollbar max-h-[calc(92dvh-9rem)] space-y-3 overflow-y-auto px-4 py-4 sm:px-5 sm:py-5">
                 {streamerMode && (
-                  <div className="rounded-xl border border-violet-400/35 bg-violet-500/10 p-3.5">
+                  <div className="rounded-xl border border-blue-400/35 bg-blue-500/10 p-3.5">
                     <div className="flex items-start gap-3">
                       <span className="text-lg leading-none" aria-hidden="true">🙈</span>
                       <div>
-                        <p className="font-sans text-sm font-semibold text-violet-200">
+                        <p className="font-sans text-sm font-semibold text-blue-200">
                           Modalità Streamer attiva
                         </p>
-                        <p className="mt-1 font-sans text-xs leading-relaxed text-violet-100/70">
+                        <p className="mt-1 font-sans text-xs leading-relaxed text-blue-100/70">
                           Attenzione! I dati che stai per esportare hanno la modalità
                           Streamer attiva: i tuoi profitti e le tue perdite sono
                           censurati.
@@ -476,13 +476,13 @@ export function ImportExportDialog({
               )}
 
               {selectedWorkspaceHasData && (
-                <div className="rounded-xl border border-violet-400/35 bg-violet-500/10 p-4">
+                <div className="rounded-xl border border-blue-400/35 bg-blue-500/10 p-4">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="min-w-0">
-                      <p className="font-sans text-sm font-semibold text-violet-200">
+                      <p className="font-sans text-sm font-semibold text-blue-200">
                         Proteggi i dati attuali
                       </p>
-                      <p className="mt-1 font-sans text-xs leading-relaxed text-violet-100/70">
+                      <p className="mt-1 font-sans text-xs leading-relaxed text-blue-100/70">
                         Scarica una copia della pagina aperta prima di procedere con l’importazione.
                       </p>
                     </div>
@@ -490,7 +490,7 @@ export function ImportExportDialog({
                       type="button"
                       variant="outline"
                       onClick={() => handleBackupDownload(false)}
-                      className="shrink-0 gap-2 border-violet-400/40 bg-violet-500/10 text-violet-200 hover:bg-violet-500/20 hover:text-violet-100"
+                      className="shrink-0 gap-2 border-blue-400/40 bg-blue-500/10 text-blue-200 hover:bg-blue-500/20 hover:text-blue-100"
                     >
                       <Download className="size-4" />
                       Scarica backup

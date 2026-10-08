@@ -7,7 +7,7 @@ test('Trade Recap usa gli accenti profit per un P&L positivo', () => {
 
   assert.equal(presentation.outcome, 'profit');
   assert.equal(presentation.badgeLabel, 'PROFIT');
-  assert.equal(presentation.accent, '#00d68f');
+  assert.equal(presentation.accent, '#30d158');
 });
 
 test('Trade Recap usa gli accenti loss per un P&L negativo', () => {
@@ -15,7 +15,7 @@ test('Trade Recap usa gli accenti loss per un P&L negativo', () => {
 
   assert.equal(presentation.outcome, 'loss');
   assert.equal(presentation.badgeLabel, 'LOSS');
-  assert.equal(presentation.accent, '#ff4d70');
+  assert.equal(presentation.accent, '#ff453a');
 });
 
 test('Trade Recap usa gli accenti neutri per zero e meno zero', () => {

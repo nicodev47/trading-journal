@@ -142,8 +142,8 @@ const WEEKDAYS = [
 ] as const;
 
 const SETUP_COLORS = [
-  '#00f0a8',
-  '#14b8a6',
+  '#30d158',
+  '#0a84ff',
   '#0f766e',
   '#5eead4',
   '#4f8f84',
@@ -306,9 +306,9 @@ function BreakdownTooltip({
 
   if (kind === 'setup') {
     return (
-      <div className="min-w-32 rounded-xl border border-teal-300/25 bg-[#20242d]/98 px-3 py-2.5 font-mono text-xs shadow-[0_10px_30px_rgba(0,0,0,0.45),0_0_18px_rgba(45,212,191,0.08)]">
+      <div className="min-w-32 rounded-xl border border-blue-300/25 bg-[#1c1c1f]/98 px-3 py-2.5 font-mono text-xs shadow-[0_10px_30px_rgba(0,0,0,0.45),0_0_18px_rgba(10,132,255,0.08)]">
         <p className="font-semibold text-white">{item.name || 'Untagged'}</p>
-        <p className="mt-1 text-[11px] text-teal-200">
+        <p className="mt-1 text-[11px] text-blue-200">
           {item.value ?? 0} trade · {Math.round(item.percentage ?? 0)}%
         </p>
       </div>
@@ -316,12 +316,12 @@ function BreakdownTooltip({
   }
 
   return (
-    <div className="min-w-36 rounded-xl border border-teal-300/25 bg-[#20242d]/98 px-3 py-2.5 font-mono text-xs shadow-[0_10px_30px_rgba(0,0,0,0.45),0_0_18px_rgba(45,212,191,0.08)]">
+    <div className="min-w-36 rounded-xl border border-blue-300/25 bg-[#1c1c1f]/98 px-3 py-2.5 font-mono text-xs shadow-[0_10px_30px_rgba(0,0,0,0.45),0_0_18px_rgba(10,132,255,0.08)]">
       <p className="font-semibold text-white">{item.direction || '—'}</p>
       <p className="mt-1 text-[11px] text-slate-200">
         {item.trades ?? 0} trade · {Math.round(item.winRate ?? 0)}% WR
       </p>
-      <p className="mt-1 text-[11px] font-semibold text-teal-200">
+      <p className="mt-1 text-[11px] font-semibold text-blue-200">
         P&amp;L:{' '}
         {streamerMode
           ? '******'
@@ -349,9 +349,9 @@ function DailyPnlTooltip({
   if (!active || !item) return null;
 
   return (
-    <div className="min-w-36 rounded-xl border border-teal-300/25 bg-[#20242d]/98 px-3 py-2.5 font-mono text-xs shadow-[0_10px_30px_rgba(0,0,0,0.45),0_0_18px_rgba(45,212,191,0.08)]">
+    <div className="min-w-36 rounded-xl border border-blue-300/25 bg-[#1c1c1f]/98 px-3 py-2.5 font-mono text-xs shadow-[0_10px_30px_rgba(0,0,0,0.45),0_0_18px_rgba(10,132,255,0.08)]">
       <p className="font-semibold text-white">{item.dateLabel || '—'}</p>
-      <p className="mt-1 text-[11px] font-semibold text-teal-200">
+      <p className="mt-1 text-[11px] font-semibold text-blue-200">
         P&amp;L:{' '}
         {streamerMode
           ? '******'
@@ -381,11 +381,11 @@ function EclipseScoreTooltip({
   if (!active || !item) return null;
 
   return (
-    <div className="min-w-40 rounded-xl border border-border bg-[#20242d]/98 px-3 py-2.5 font-mono text-xs shadow-[0_10px_30px_rgba(0,0,0,0.45),0_0_18px_rgba(45,212,191,0.08)]">
+    <div className="min-w-40 rounded-xl border border-border bg-[#1c1c1f]/98 px-3 py-2.5 font-mono text-xs shadow-[0_10px_30px_rgba(0,0,0,0.45),0_0_18px_rgba(10,132,255,0.08)]">
       <p className="font-semibold text-white">
         {item.metric ? getEclipseMetricCardLabel(item.metric) : '—'}
       </p>
-      <p className="mt-1 text-[11px] font-semibold text-teal-200">
+      <p className="mt-1 text-[11px] font-semibold text-blue-200">
         Score: {Math.round(item.normalizedScore ?? 0)} / 100 ·{' '}
         {getScoreEvaluation(item.normalizedScore ?? 0)}
       </p>
@@ -516,9 +516,9 @@ function CumulativePnlTooltip({
   if (!active || !item) return null;
 
   return (
-    <div className="min-w-40 rounded-xl border border-teal-300/25 bg-[#20242d]/98 px-3 py-2.5 font-mono text-xs shadow-[0_10px_30px_rgba(0,0,0,0.45),0_0_18px_rgba(45,212,191,0.08)]">
+    <div className="min-w-40 rounded-xl border border-blue-300/25 bg-[#1c1c1f]/98 px-3 py-2.5 font-mono text-xs shadow-[0_10px_30px_rgba(0,0,0,0.45),0_0_18px_rgba(10,132,255,0.08)]">
       <p className="font-semibold text-white">{item.dateLabel || '—'}</p>
-      <p className="mt-1 text-[11px] font-semibold text-teal-200">
+      <p className="mt-1 text-[11px] font-semibold text-blue-200">
         P&amp;L cumulativo:{' '}
         {streamerMode
           ? '******'
@@ -624,7 +624,7 @@ export function AnalysisDiagnostics({
           (sum, trade) => sum + netPnl(trade),
           0
         ),
-        fill: direction === 'long' ? '#00f0a8' : '#ff4d70',
+        fill: direction === 'long' ? '#30d158' : '#ff453a',
       };
     });
 
@@ -1029,7 +1029,7 @@ export function AnalysisDiagnostics({
   }, [currentPage, totalTradeLogPages]);
 
   const cumulativeColor =
-    monthlyFinalCumulativePnl >= 0 ? '#00f0a8' : '#ff4d70';
+    monthlyFinalCumulativePnl >= 0 ? '#30d158' : '#ff453a';
   const cumulativeGradientId =
     monthlyFinalCumulativePnl >= 0
       ? 'cumulativePnlProfitGradient'
@@ -1070,26 +1070,26 @@ export function AnalysisDiagnostics({
 
     if (value > 0) {
       if (intensity > 0.75) {
-        return { top: '#00d68f', bottom: '#008f64' };
+        return { top: '#30d158', bottom: '#248a3d' };
       }
 
       if (intensity > 0.45) {
         return { top: '#00b87a', bottom: '#007a55' };
       }
 
-      return { top: '#008f64', bottom: '#00684d' };
+      return { top: '#248a3d', bottom: '#1a6b2e' };
     }
 
     if (value < 0) {
       if (intensity > 0.75) {
-        return { top: '#ff4d70', bottom: '#a92d4b' };
+        return { top: '#ff453a', bottom: '#c0332b' };
       }
 
       if (intensity > 0.45) {
         return { top: '#d93b5f', bottom: '#8f263f' };
       }
 
-      return { top: '#a92d4b', bottom: '#7f2239' };
+      return { top: '#c0332b', bottom: '#8f2620' };
     }
 
     return { top: '#1f2937', bottom: '#111827' };
@@ -1281,7 +1281,7 @@ export function AnalysisDiagnostics({
                             fill={`url(#setupGradient-${index})`}
                             stroke="transparent"
                             strokeWidth={1}
-                            className="cursor-pointer outline-none transition-all duration-200 focus:outline-none hover:brightness-125 hover:[filter:drop-shadow(0_0_7px_rgba(45,212,191,0.45))]"
+                            className="cursor-pointer outline-none transition-all duration-200 focus:outline-none hover:brightness-125 hover:[filter:drop-shadow(0_0_7px_rgba(10,132,255,0.45))]"
                             tabIndex={-1}
                             focusable={false}
                           />
@@ -1353,7 +1353,7 @@ export function AnalysisDiagnostics({
                           y2="0"
                         >
                           <stop offset="0%" stopColor="#064e3b" />
-                          <stop offset="100%" stopColor="#00f0a8" />
+                          <stop offset="100%" stopColor="#30d158" />
                         </linearGradient>
                         <linearGradient
                           id="shortDirectionGradient"
@@ -1363,7 +1363,7 @@ export function AnalysisDiagnostics({
                           y2="0"
                         >
                           <stop offset="0%" stopColor="#7f1d3b" />
-                          <stop offset="100%" stopColor="#ff4d70" />
+                          <stop offset="100%" stopColor="#ff453a" />
                         </linearGradient>
                       </defs>
                       <CartesianGrid
@@ -1372,14 +1372,14 @@ export function AnalysisDiagnostics({
                       />
                       <XAxis
                         dataKey="direction"
-                        tick={{ fill: '#9ca3af', fontSize: 11 }}
+                        tick={{ fill: '#8e8e93', fontSize: 11 }}
                         tickLine={false}
                         axisLine={false}
                       />
                       <YAxis
                         allowDecimals={false}
                         domain={[0, maxDirectionTrades]}
-                        tick={{ fill: '#9ca3af', fontSize: 10 }}
+                        tick={{ fill: '#8e8e93', fontSize: 10 }}
                         tickLine={false}
                         axisLine={false}
                       />
@@ -1411,7 +1411,7 @@ export function AnalysisDiagnostics({
                                 ? 'url(#longDirectionGradient)'
                                 : 'url(#shortDirectionGradient)'
                             }
-                            className="cursor-pointer transition-all duration-200 hover:brightness-125 hover:[filter:drop-shadow(0_0_7px_rgba(45,212,191,0.38))]"
+                            className="cursor-pointer transition-all duration-200 hover:brightness-125 hover:[filter:drop-shadow(0_0_7px_rgba(10,132,255,0.38))]"
                           />
                         ))}
                       </Bar>
@@ -1481,18 +1481,18 @@ export function AnalysisDiagnostics({
                       >
                         <stop
                           offset="0%"
-                          stopColor="#00f0a8"
+                          stopColor="#30d158"
                           stopOpacity={0.42}
                         />
                         <stop
                           offset="100%"
-                          stopColor="#00f0a8"
+                          stopColor="#30d158"
                           stopOpacity={0.08}
                         />
                       </linearGradient>
                     </defs>
                     <PolarGrid
-                      stroke="rgba(94,234,212,0.18)"
+                      stroke="rgba(10,132,255,0.18)"
                       radialLines
                     />
                     <PolarAngleAxis
@@ -1508,11 +1508,11 @@ export function AnalysisDiagnostics({
                     />
                     <Radar
                       dataKey="normalizedScore"
-                      stroke="#00f0a8"
+                      stroke="#30d158"
                       strokeWidth={2}
                       fill="url(#eclipseScoreFill)"
                       fillOpacity={1}
-                      dot={{ r: 3, fill: '#00f0a8', strokeWidth: 0 }}
+                      dot={{ r: 3, fill: '#30d158', strokeWidth: 0 }}
                       isAnimationActive
                       animationDuration={650}
                     />
@@ -1639,12 +1639,12 @@ export function AnalysisDiagnostics({
                     />
                     <XAxis
                       dataKey="dateLabel"
-                      tick={{ fill: '#9ca3af', fontSize: 10 }}
+                      tick={{ fill: '#8e8e93', fontSize: 10 }}
                       tickLine={false}
                       axisLine={false}
                     />
                     <YAxis
-                      tick={{ fill: '#9ca3af', fontSize: 10 }}
+                      tick={{ fill: '#8e8e93', fontSize: 10 }}
                       tickLine={false}
                       axisLine={false}
                       tickFormatter={(value) =>
@@ -1654,7 +1654,7 @@ export function AnalysisDiagnostics({
                       }
                     />
                     <Tooltip
-                      cursor={{ stroke: 'rgba(94,234,212,0.22)' }}
+                      cursor={{ stroke: 'rgba(10,132,255,0.22)' }}
                       content={
                         <CumulativePnlTooltip streamerMode={streamerMode} />
                       }
@@ -1742,12 +1742,12 @@ export function AnalysisDiagnostics({
                     />
                     <XAxis
                       dataKey="dateLabel"
-                      tick={{ fill: '#9ca3af', fontSize: 10 }}
+                      tick={{ fill: '#8e8e93', fontSize: 10 }}
                       tickLine={false}
                       axisLine={false}
                     />
                     <YAxis
-                      tick={{ fill: '#9ca3af', fontSize: 10 }}
+                      tick={{ fill: '#8e8e93', fontSize: 10 }}
                       tickLine={false}
                       axisLine={false}
                       tickFormatter={(value) =>
@@ -1784,7 +1784,7 @@ export function AnalysisDiagnostics({
                             `url(#dailyPnlGradient-${item.date})`
                           }
                           fillOpacity={1}
-                          className="cursor-pointer transition-all duration-200 hover:brightness-125 hover:[filter:drop-shadow(0_0_7px_rgba(45,212,191,0.38))]"
+                          className="cursor-pointer transition-all duration-200 hover:brightness-125 hover:[filter:drop-shadow(0_0_7px_rgba(10,132,255,0.38))]"
                         />
                       ))}
                     </Bar>

@@ -237,8 +237,8 @@ export function EquityCurve({
 
   // Use explicit colors that will show as white/light on dark backgrounds
   const strokeColor = isPositive ? '#22c55e' : '#ef4444';
-  const fillColorStart = isPositive ? 'rgba(34, 197, 94, 0.38)' : 'rgba(239, 68, 68, 0.38)';
-  const fillColorEnd = isPositive ? 'rgba(34, 197, 94, 0.05)' : 'rgba(239, 68, 68, 0.05)';
+  const fillColorStart = isPositive ? 'rgba(48,209,88, 0.38)' : 'rgba(255,69,58, 0.38)';
+  const fillColorEnd = isPositive ? 'rgba(48,209,88, 0.05)' : 'rgba(255,69,58, 0.05)';
 
   // White color for axis text
   const axisTextColor = '#e5e5e5';
