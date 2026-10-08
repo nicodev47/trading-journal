@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+  OUT_OF_SESSION_NAME,
   getBestOperatingWindow,
   getOperatingWindowName,
 } from '../src/lib/operating-windows.ts';
@@ -27,9 +28,26 @@ test('una finestra personalizzata riconosce i trade al suo interno', () => {
   assert.equal(getOperatingWindowName(makeTrade('15:30', 100), custom), 'New York');
 });
 
-test('un trade fuori da tutte le finestre non ha finestra e non causa errori', () => {
-  assert.equal(getOperatingWindowName(makeTrade('13:00', 100), custom), null);
+test('un trade fuori da tutte le finestre viene contato come fuori sessione', () => {
+  assert.equal(OUT_OF_SESSION_NAME, 'Fuori sessione');
+  assert.equal(getOperatingWindowName(makeTrade('13:00', 100), custom), 'Fuori sessione');
+  assert.equal(getOperatingWindowName(makeTrade('18:00', 100), custom), 'Fuori sessione');
+});
+
+test('fuori sessione non può essere la finestra migliore e non causa errori', () => {
   assert.equal(getBestOperatingWindow([makeTrade('13:00', 100)], custom), null);
+
+  const best = getBestOperatingWindow(
+    [makeTrade('10:00', 50), makeTrade('13:00', 900)],
+    custom
+  );
+
+  assert.equal(best?.name, 'Londra');
+});
+
+test('senza finestre definite nessun trade è fuori sessione', () => {
+  assert.notEqual(getOperatingWindowName(makeTrade('03:10', 10), []), 'Fuori sessione');
+  assert.notEqual(getOperatingWindowName(makeTrade('23:59', 10), []), 'Fuori sessione');
 });
 
 test('senza finestre usa fasce automatiche di un\'ora', () => {

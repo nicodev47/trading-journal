@@ -8,6 +8,8 @@ import type { OperatingWindowConfig } from './preferences.ts';
 
 export type OperatingWindowName = string;
 
+export const OUT_OF_SESSION_NAME = 'Fuori sessione';
+
 interface OperatingWindowDefinition {
   name: OperatingWindowName;
   start: number;
@@ -103,7 +105,7 @@ export function getOperatingWindowName(
     resolveWindowDefinitions(windows).find(
       window =>
         timeInMinutes >= window.start && timeInMinutes < window.end
-    )?.name ?? null
+    )?.name ?? OUT_OF_SESSION_NAME
   );
 }
 

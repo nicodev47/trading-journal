@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import {
+  OUT_OF_SESSION_NAME,
   getBestOperatingWindow,
   getOperatingWindowName,
   type OperatingWindowName,
@@ -163,7 +164,9 @@ export function AdvancedStatsGrid({
     );
     const mostUsedOperatingWindow = Array.from(
       operatingWindowStats.entries()
-    ).sort((a, b) => b[1] - a[1])[0];
+    )
+      .filter(([name]) => name !== OUT_OF_SESSION_NAME)
+      .sort((a, b) => b[1] - a[1])[0];
     const timedTrades = Array.from(operatingWindowStats.values()).reduce(
       (sum, count) => sum + count,
       0
