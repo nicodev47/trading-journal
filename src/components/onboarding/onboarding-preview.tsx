@@ -31,7 +31,7 @@ function Chips({ items, empty }: { items: string[]; empty: string }) {
 export function OnboardingPreview({ draft }: { draft: JournalPreferences }) {
   const identity = getShareIdentity(draft.name);
   const calendarAssets = getCalendarAssets(draft.assets);
-  const assets = calendarAssets.length > 0 ? calendarAssets : ['NQ'];
+  const assets = calendarAssets.length > 0 ? calendarAssets : ['XX'];
   const outcomeDays = Object.keys(SAMPLE_DAYS).map(Number);
 
   return (
