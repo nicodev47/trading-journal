@@ -7,9 +7,11 @@ import { MAX_LABEL_LENGTH, addSetup } from '@/lib/preferences';
 interface SetupInputProps {
   value: string[];
   onChange: (setups: string[]) => void;
+  /** When false, Enter is left to the parent (e.g. onboarding goes to the next step). */
+  enterToAdd?: boolean;
 }
 
-export function SetupInput({ value, onChange }: SetupInputProps) {
+export function SetupInput({ value, onChange, enterToAdd = true }: SetupInputProps) {
   const [draft, setDraft] = useState('');
 
   const submit = () => {
@@ -27,12 +29,12 @@ export function SetupInput({ value, onChange }: SetupInputProps) {
           maxLength={MAX_LABEL_LENGTH}
           onChange={event => setDraft(event.target.value)}
           onKeyDown={event => {
-            if (event.key === 'Enter') {
+            if (enterToAdd && event.key === 'Enter' && draft.trim()) {
               event.preventDefault();
               submit();
             }
           }}
-          placeholder="Scrivi un setup e premi Invio"
+          placeholder={enterToAdd ? 'Scrivi un setup e premi Invio' : 'Scrivi un setup e premi +'}
         />
         <Button type="button" variant="outline" size="icon" aria-label="Aggiungi setup" onClick={submit}>
           <Plus className="size-4" />

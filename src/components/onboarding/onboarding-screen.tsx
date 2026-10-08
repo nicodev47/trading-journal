@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, Check, Moon } from 'lucide-react';
 import { AssetPicker } from '@/components/preferences/asset-picker';
 import { ProfileFields } from '@/components/preferences/profile-fields';
@@ -63,12 +63,27 @@ export function OnboardingScreen() {
     setStep(current => current + 1);
   };
 
+  const nextRef = useRef(next);
+  nextRef.current = next;
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Enter' || event.defaultPrevented || event.isComposing) return;
+      if ((event.target as Element | null)?.closest?.('button')) return;
+      nextRef.current();
+    };
+
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, []);
+
   if (step === -1) {
     return <OnboardingIntro onStart={() => setStep(0)} />;
   }
 
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col overflow-y-auto bg-background md:grid md:grid-cols-2 md:overflow-hidden">
+    <div
+      className="fixed inset-0 z-[100] flex flex-col overflow-y-auto bg-background md:grid md:grid-cols-2 md:overflow-hidden">
       <div className="order-last flex min-h-0 flex-col px-6 py-8 md:order-first md:overflow-y-auto md:px-14 md:py-12">
         <div className="mb-10 flex items-center gap-3">
           <div className="flex size-9 items-center justify-center rounded-xl bg-white/10">
@@ -120,7 +135,11 @@ export function OnboardingScreen() {
                   <AssetPicker value={draft.assets} onChange={assets => patch({ assets })} />
                 )}
                 {step === 2 && (
-                  <SetupInput value={draft.setups} onChange={setups => patch({ setups })} />
+                  <SetupInput
+                    enterToAdd={false}
+                    value={draft.setups}
+                    onChange={setups => patch({ setups })}
+                  />
                 )}
                 {step === 3 && (
                   <WindowsEditor value={draft.windows} onChange={windows => patch({ windows })} />
