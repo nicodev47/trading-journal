@@ -1,6 +1,14 @@
 import { useMemo, useState } from 'react';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { ProfileAvatar } from '@/components/preferences/profile-fields';
 import { PreferencesOverrideProvider, usePreferences } from '@/contexts/preferences-context';
 import { DefaultDisplaySettingsProvider, useStreamerMode } from '@/contexts/streamer-mode-context';
@@ -40,6 +48,7 @@ function PreviewContent({ data, fileName, view, onClose }: ImportPreviewProps) {
   const [group, setGroup] = useState<GroupDialog | null>(null);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isExportConfirmOpen, setIsExportConfirmOpen] = useState(false);
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
   const [returnToGroup, setReturnToGroup] = useState(false);
 
@@ -122,7 +131,7 @@ function PreviewContent({ data, fileName, view, onClose }: ImportPreviewProps) {
               onDayClick={setSelectedDay}
               onWeekPlanClick={noop}
               onImport={noop}
-              onExport={handleExport}
+              onExport={() => setIsExportConfirmOpen(true)}
               importTargetMonth={latestMonth}
             />
             <AdvancedStatsGrid trades={journal.trades} />
@@ -159,6 +168,32 @@ function PreviewContent({ data, fileName, view, onClose }: ImportPreviewProps) {
           onRemoveTag={noop}
         />
       )}
+
+      <Dialog open={isExportConfirmOpen} onOpenChange={setIsExportConfirmOpen}>
+        <DialogContent className="w-[calc(100vw-1.75rem)] max-w-[460px] gap-0 rounded-2xl border border-border bg-card p-0">
+          <DialogHeader className="border-b border-border px-4 py-3.5 text-left sm:px-5 sm:py-4">
+            <DialogTitle className="font-sans text-base">Esportare questo journal?</DialogTitle>
+            <DialogDescription className="font-sans text-sm">
+              Verrà scaricato un file con i dati e il profilo di {preferences.name || 'questo trader'}.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="px-4 py-3.5 max-sm:[&_button]:w-full sm:px-5 sm:py-4">
+            <Button type="button" variant="outline" onClick={() => setIsExportConfirmOpen(false)}>
+              Annulla
+            </Button>
+            <Button
+              type="button"
+              className="bg-[#0a84ff] text-white hover:bg-[#0a84ff]/90"
+              onClick={() => {
+                setIsExportConfirmOpen(false);
+                handleExport();
+              }}
+            >
+              Esporta
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <ProfileDialog
         readOnly

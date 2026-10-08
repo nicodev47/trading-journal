@@ -84,6 +84,7 @@ export function ImportExportDialog({
   const [importStep, setImportStep] = useState<'choose' | 'profile'>('choose');
   const [importError, setImportError] = useState('');
   const [isAppendConfirmOpen, setIsAppendConfirmOpen] = useState(false);
+  const [pendingConfirm, setPendingConfirm] = useState<'direct' | 'preview' | null>(null);
   const [isOverwriteConfirmOpen, setIsOverwriteConfirmOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isBackupNameOpen, setIsBackupNameOpen] = useState(false);
@@ -110,6 +111,7 @@ export function ImportExportDialog({
     setSelectedFileName('');
     setPendingImportData(null);
     setImportStep('choose');
+    setPendingConfirm(null);
     setImportError('');
     setIsAppendConfirmOpen(false);
     setIsOverwriteConfirmOpen(false);
@@ -124,6 +126,7 @@ export function ImportExportDialog({
     setSelectedFileName('');
     setPendingImportData(null);
     setImportStep('choose');
+    setPendingConfirm(null);
     setImportError('');
     setIsAppendConfirmOpen(false);
     setIsOverwriteConfirmOpen(false);
@@ -207,7 +210,9 @@ export function ImportExportDialog({
     setSelectedFileName(file.name);
     setPendingImportData(null);
     setImportStep('choose');
+    setPendingConfirm(null);
     setImportStep('choose');
+    setPendingConfirm(null);
     setImportError('');
 
     if (!file.name.toLowerCase().endsWith('.json') && file.type !== 'application/json') {
@@ -435,10 +440,7 @@ export function ImportExportDialog({
               {onPreview && (
                 <button
                   type="button"
-                  onClick={() => {
-                    onPreview(pendingImportData, selectedFileName);
-                    handleClose();
-                  }}
+                  onClick={() => setPendingConfirm('preview')}
                   className="flex w-full flex-col gap-1 rounded-lg border border-border bg-background/35 p-4 text-left transition-colors hover:border-white/25 hover:bg-white/[0.04]"
                 >
                   <span className="font-sans text-sm font-semibold text-foreground">
@@ -592,7 +594,7 @@ export function ImportExportDialog({
               ) : (
                 <Button
                   type="button"
-                  onClick={handleReplaceImport}
+                  onClick={() => setPendingConfirm('direct')}
                   className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground"
                 >
                   <Upload className="size-4" />
@@ -653,6 +655,48 @@ export function ImportExportDialog({
           </>
         )}
       </DialogContent>
+
+      <Dialog
+        open={pendingConfirm !== null}
+        onOpenChange={open => !open && setPendingConfirm(null)}
+      >
+        <DialogContent className="max-h-[92dvh] w-[calc(100vw-1.75rem)] max-w-[460px] overflow-hidden rounded-2xl border border-border bg-card p-0 shadow-[0_20px_48px_rgba(0,0,0,0.36)] outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0">
+          <DialogHeader className="border-b border-border px-4 py-3.5 sm:px-5 sm:py-4">
+            <DialogTitle className="font-sans tabular-nums text-base">
+              {pendingConfirm === 'preview' ? 'Aprire in Preview?' : 'Confermi l’importazione?'}
+            </DialogTitle>
+            <DialogDescription className="font-sans text-sm">
+              {pendingConfirm === 'preview'
+                ? `Il file ${selectedFileName} verrà aperto in sola lettura: il tuo journal non cambia.`
+                : `I dati del file ${selectedFileName} verranno importati in ${selectedWorkspaceLabel}.`}
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter className="px-4 py-3.5 max-sm:[&_button]:w-full sm:px-5 sm:py-4">
+            <Button type="button" variant="outline" onClick={() => setPendingConfirm(null)}>
+              Annulla
+            </Button>
+            <Button
+              type="button"
+              className="bg-[#0a84ff] text-white hover:bg-[#0a84ff]/90"
+              onClick={() => {
+                const action = pendingConfirm;
+
+                setPendingConfirm(null);
+
+                if (action === 'preview' && pendingImportData) {
+                  onPreview?.(pendingImportData, selectedFileName);
+                  handleClose();
+                } else if (action === 'direct') {
+                  handleReplaceImport();
+                }
+              }}
+            >
+              {pendingConfirm === 'preview' ? 'Apri Preview' : 'Importa'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog
         open={isAppendConfirmOpen}
