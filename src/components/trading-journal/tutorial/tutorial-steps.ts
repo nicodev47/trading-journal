@@ -30,9 +30,9 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   },
   {
     target: 'import-export-buttons',
-    title: 'Import / Export',
+    title: 'Dati e backup',
     description:
-      'Import ed Export lavorano sulla pagina che hai aperto, senza toccare gli altri conti.\n\nExport scarica un file con i dati della pagina corrente. Import li carica nella stessa pagina: se ci sono già dati puoi aggiungerli oppure sovrascriverli.',
+      'I dati del journal sono salvati nella cache del tuo browser, non su un server: se la cancelli o cambi dispositivo, li perdi. Per questo è importante fare backup regolari.\n\nExport scarica un file con i dati della pagina aperta, senza toccare gli altri conti. Import li carica nella stessa pagina: se ci sono già dati puoi aggiungerli oppure sovrascriverli.',
     cta: 'Avanti',
   },
   {
