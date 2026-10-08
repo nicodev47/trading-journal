@@ -51,8 +51,8 @@ export function OnboardingIntro({ onStart }: { onStart: () => void }) {
             Prima di incominciare, rendiamo la tua esperienza unica.
           </p>
           <p className="mx-auto mt-4 max-w-[520px] text-sm text-muted-foreground">
-            Ti facciamo quattro domande veloci, circa un minuto. Servono a far funzionare il
-            journal sul tuo modo di operare, invece di darti uno strumento uguale per tutti.
+            Ti facciamo quattro domande veloci, serviranno per andare ad impostare e calibrare il
+            journal in base alla tua operatività e obiettivi.
           </p>
         </Reveal>
 
