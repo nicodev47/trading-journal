@@ -257,7 +257,7 @@ export function ImportExportDialog({
             entries.map(([id, state]) => ({
               name:
                 parsed.data.workspaceOptions.find(option => option.id === id)?.name ?? id,
-              trades: state.trades.length,
+              trades: state?.trades.length ?? 0,
             }))
           );
           // Preview shows one journal: the open one when present, else the first.
