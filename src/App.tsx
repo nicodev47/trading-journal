@@ -57,7 +57,7 @@ import {
 } from '@/lib/journal-export';
 
 const UPDATE_BANNER_KEY =
-  'dismissedUpdateBanner_eclipsejournal_v06_accounts_import';
+  'dismissedUpdateBanner_eclipsejournal_v10_onboarding';
 const BACKTEST_STORAGE_KEY = 'eclipse-trading-journal-data-backtest';
 
 type TradeGroupDialogState = {
@@ -796,10 +796,10 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
             <div className="hidden sm:block" aria-hidden="true" />
             <div className="min-w-0 text-center">
               <p className="font-sans text-xs font-semibold text-foreground sm:text-sm">
-                EclipseJournal v0.6 è disponibile!
+                EclipseJournal v1.0 è disponibile!
               </p>
               <p className="font-sans text-[11px] text-muted-foreground">
-                Import ed Export per pagina, backup preventivo e note durante la creazione dei conti.
+                Onboarding personalizzato, profilo con foto, asset e setup tuoi, finestre operative e nuove analisi.
               </p>
             </div>
             <div className="flex items-center justify-center gap-1.5 sm:justify-start">
@@ -1165,10 +1165,10 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
                 <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
                   <div>
                     <h3 className="font-sans text-sm font-semibold text-foreground">
-                      EclipseJournal v0.6 — Conti, Import e backup
+                      EclipseJournal v1.0 — Personalizzazione e analisi
                     </h3>
                     <p className="mt-1 font-sans text-xs leading-relaxed text-muted-foreground">
-                      Scopri il nuovo flusso Import/Export per pagina, il backup preventivo e le note durante la creazione dei conti.
+                      Scopri l'onboarding personalizzato, il profilo rinnovato, le nuove analisi e le card Share ridisegnate.
                     </p>
                   </div>
                   <button

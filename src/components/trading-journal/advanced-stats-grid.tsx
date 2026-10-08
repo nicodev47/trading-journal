@@ -588,7 +588,13 @@ export function AdvancedStatsGrid({
                   } trade`
                 : 'Servono almeno due setup registrati'
             }
-            tone={data.worstSetup ? 'loss' : 'neutral'}
+            tone={
+              data.worstSetup
+                ? data.worstSetup.winRate >= 50
+                  ? 'profit'
+                  : 'loss'
+                : 'neutral'
+            }
             progress={data.worstSetup ? data.worstSetup.winRate : 0}
             hasData={data.worstSetup !== null}
             prominentValue

@@ -14,34 +14,46 @@ interface WhatsNewDialogProps {
 
 const updates = [
   {
-    icon: "📥",
-    title: "Import ed Export sulla pagina aperta",
+    icon: "👋",
+    title: "Onboarding personalizzato",
     description:
-      "Import ed Export lavorano direttamente sul conto, Backtest o Preview che stai visualizzando. Non serve più scegliere una destinazione e gli altri spazi non vengono modificati.",
+      "Al primo accesso scegli nome e foto, gli asset che operi, i tuoi setup e le finestre operative. Il journal si adatta a te e il tutorial parte subito dopo.",
   },
   {
-    icon: "🛡️",
-    title: "Backup prima dell'importazione",
+    icon: "🧩",
+    title: "Asset, setup e finestre tuoi",
     description:
-      "Se la pagina contiene già dati, una nuova card viola permette di scaricare subito una copia di sicurezza prima di aggiungere o sovrascrivere i dati importati.",
+      "Menu, analisi, calendario e card di condivisione usano le tue scelte. Puoi modificarle in ogni momento dal profilo, nella scheda Impostazioni.",
   },
   {
-    icon: "📝",
-    title: "Note durante la creazione dei conti",
+    icon: "🪪",
+    title: "Profilo rinnovato",
     description:
-      "Quando crei un nuovo conto, una sessione Backtest o uno spazio Preview puoi aggiungere subito una nota facoltativa con obiettivi, regole e informazioni utili.",
+      "Foto o iniziali, livello e XP in un'unica card, con tre schede: Profilo, Impostazioni e Dati.",
   },
   {
-    icon: "🗂️",
-    title: "Gestione degli spazi più chiara",
+    icon: "📊",
+    title: "Nuove analisi",
     description:
-      "I flussi di creazione, modifica, backup e importazione mantengono sempre visibile il contesto della pagina corrente, riducendo il rischio di intervenire sul conto sbagliato.",
+      "Setup e finestra operativa migliori e peggiori, giorno e mese migliori con win rate, Long vs Short, RR, drawdown e profitto in una griglia ordinata.",
+  },
+  {
+    icon: "🖼️",
+    title: "Card Share ridisegnate",
+    description:
+      "Le card di trade e profilo hanno un nuovo formato verticale con foto o iniziali, pensato per essere condiviso.",
+  },
+  {
+    icon: "🎨",
+    title: "Nuovo stile grafico",
+    description:
+      "Interfaccia scura ispirata allo stile Apple: colori, font e bordi uniformi, calendario con il giorno corrente evidenziato.",
   },
   {
     icon: "🛠️",
     title: "Bug Fix & Improvements",
     description:
-      "• Tutorial e sezione Help aggiornati. • Flussi Import/Export semplificati. • Migliorata la chiarezza delle conferme. • Ottimizzazioni generali dell'interfaccia.",
+      "• Esc chiude solo il sottomenu aperto. • Conferma prima di eliminare un link immagine. • Salvataggio automatico nelle note. • Miglioramenti su mobile.",
   },
 ];
 
@@ -56,10 +68,10 @@ export function WhatsNewDialog({ open, onOpenChange }: WhatsNewDialogProps) {
           <div className="flex items-start justify-between gap-4">
             <div>
               <DialogTitle className="text-lg text-foreground sm:text-xl">
-                🚀 EclipseJournal v0.6
+                🚀 EclipseJournal v1.0
               </DialogTitle>
               <DialogDescription className="mt-1 text-sm text-muted-foreground">
-                Versione: v0.6
+                Versione: v1.0
               </DialogDescription>
             </div>
             <button
