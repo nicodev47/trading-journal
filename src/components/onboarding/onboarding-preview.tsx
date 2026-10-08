@@ -29,8 +29,8 @@ function Chips({ items, empty }: { items: string[]; empty: string }) {
 
 export function OnboardingPreview({ draft }: { draft: JournalPreferences }) {
   const identity = getShareIdentity(draft.name);
-  const asset = draft.assets[0] ?? 'NQ';
-  const setup = draft.setups[0];
+  const assets = draft.assets.length > 0 ? draft.assets : ['NQ'];
+  const outcomeDays = Object.keys(SAMPLE_DAYS).map(Number);
 
   return (
     <div className="flex w-full max-w-[460px] flex-col gap-4">
@@ -81,6 +81,12 @@ export function OnboardingPreview({ draft }: { draft: JournalPreferences }) {
           {Array.from({ length: 28 }, (_, index) => {
             const day = index + 1;
             const outcome = SAMPLE_DAYS[day];
+            const outcomeIndex = outcomeDays.indexOf(day);
+            const asset = assets[outcomeIndex % assets.length];
+            const setup =
+              draft.setups.length > 0 && outcomeIndex % 2 === 0
+                ? draft.setups[Math.floor(outcomeIndex / 2) % draft.setups.length]
+                : undefined;
 
             return (
               <div
@@ -96,7 +102,7 @@ export function OnboardingPreview({ draft }: { draft: JournalPreferences }) {
                 {outcome && (
                   <span className="mt-auto truncate text-[9px] font-medium leading-tight">
                     {asset}
-                    {setup && outcome === 1 && day % 2 === 0 ? ` · ${setup}` : ''}
+                    {setup ? ` · ${setup}` : ''}
                   </span>
                 )}
               </div>
