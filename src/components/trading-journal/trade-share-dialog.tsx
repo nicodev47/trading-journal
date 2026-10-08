@@ -166,7 +166,7 @@ export function TradeShareDialog({
             {trade && (
               <ShareCardPreview
                 width={760}
-                height={950}
+                height={800}
                 desktopScale={0.68}
                 exportRef={cardRef}
               >

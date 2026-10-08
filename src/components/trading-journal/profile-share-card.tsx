@@ -5,6 +5,8 @@ import {
   ShareCaption,
   ShareGlowAmount,
   ShareRow,
+  SHARE_PROFILE_CARD_HEIGHT,
+  getShareIdentity,
 } from './share-card-parts';
 
 export interface ProfileShareData {
@@ -58,7 +60,10 @@ export function ProfileShareCard({
   streamerMode,
   className,
 }: ProfileShareCardProps) {
-  const displayName = profile.traderName.trim() || 'Trader';
+  const identity =
+    profile.traderName.trim() === 'Trader'
+      ? { initials: 'TR', displayName: 'Trader' }
+      : getShareIdentity(profile.traderName) ?? { initials: 'TR', displayName: 'Trader' };
   const accent = profile.totalPnl < 0 ? '#ff6568' : '#34d27b';
   const { sign, amount } = splitCurrency(profile.totalPnl, streamerMode);
   const todayLabel = new Date().toLocaleDateString('it-IT', {
@@ -68,7 +73,7 @@ export function ProfileShareCard({
   });
 
   return (
-    <ShareCardFrame className={className} glow={`${accent}26`}>
+    <ShareCardFrame className={className} glow={`${accent}26`} height={SHARE_PROFILE_CARD_HEIGHT}>
       <ShareCardHeader dateLabel={todayLabel} />
 
       <ShareGlowAmount
@@ -95,8 +100,8 @@ export function ProfileShareCard({
       </div>
 
       <ShareCardFooter
-        avatar={profile.profileIcon}
-        name={displayName}
+        avatar={identity.initials}
+        name={identity.displayName}
         caption="Profilo trader"
         right={`Livello ${profile.level}`}
       />

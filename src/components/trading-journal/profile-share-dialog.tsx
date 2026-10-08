@@ -141,7 +141,7 @@ export function ProfileShareDialog({
           <div className="overflow-hidden rounded-2xl border border-border bg-card/60 p-2.5">
             <ShareCardPreview
               width={760}
-              height={950}
+              height={980}
               desktopScale={0.68}
               exportRef={cardRef}
             >

@@ -3,7 +3,25 @@ import { BadgeCheck, Moon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export const SHARE_CARD_WIDTH = 760;
-export const SHARE_CARD_HEIGHT = 950;
+export const SHARE_TRADE_CARD_HEIGHT = 800;
+export const SHARE_PROFILE_CARD_HEIGHT = 980;
+
+export function getShareIdentity(rawName: string) {
+  const name = rawName.trim().replace(/^@+/, '').replace(/\s+/g, ' ');
+
+  if (!name) return null;
+
+  const words = name.split(' ');
+  const initials =
+    words.length >= 2
+      ? `${words[0][0]}${words[words.length - 1][0]}`
+      : name.slice(0, 2);
+
+  return {
+    initials: initials.toUpperCase(),
+    displayName: words.length >= 2 ? name : `@${name}`,
+  };
+}
 
 const getAmountFontSize = (amount: string) =>
   amount.length <= 8 ? 120 : amount.length <= 10 ? 100 : amount.length <= 12 ? 82 : 64;
@@ -11,19 +29,22 @@ const getAmountFontSize = (amount: string) =>
 export function ShareCardFrame({
   className,
   glow,
+  height,
   children,
 }: {
   className?: string;
   glow: string;
+  height: number;
   children: ReactNode;
 }) {
   return (
     <div
       className={cn(
-        'relative aspect-[4/5] w-[760px] max-w-full overflow-hidden rounded-[32px] border border-white/10 bg-[#0a0a0b] p-14 text-white',
+        'relative w-[760px] max-w-full overflow-hidden rounded-[32px] border border-white/10 bg-[#0a0a0b] p-14 text-white',
         className
       )}
       style={{
+        height,
         background: `radial-gradient(circle at 20% 32%, ${glow}, transparent 36%), #0a0a0b`,
       }}
     >
@@ -100,7 +121,7 @@ export function ShareGlowAmount({
 
 export function ShareCaption({ lines }: { lines: string[] }) {
   return (
-    <div className="mt-auto space-y-1.5 text-[18px] font-medium text-white/45">
+    <div className="mt-14 space-y-1.5 text-[18px] font-medium text-white/45">
       {lines.map((line) => (
         <div key={line}>{line}</div>
       ))}
@@ -150,7 +171,7 @@ export function ShareCardFooter({
   right: string;
 }) {
   return (
-    <footer className="mt-8 flex items-center justify-between gap-6">
+    <footer className="mt-auto flex items-center pt-8 justify-between gap-6">
       <div className="flex items-center gap-4">
         <div className="flex size-16 items-center justify-center rounded-full bg-white/10 text-[24px] font-semibold text-white">
           {avatar}

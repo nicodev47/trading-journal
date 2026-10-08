@@ -6,6 +6,8 @@ import {
   ShareCardHeader,
   ShareGlowAmount,
   ShareRow,
+  SHARE_TRADE_CARD_HEIGHT,
+  getShareIdentity,
 } from './share-card-parts';
 
 interface TradeShareCardProps {
@@ -57,12 +59,6 @@ const getTradeOpenTime = (trade: Trade) => {
     .slice(0, 5) || '--:--';
 };
 
-const getDisplayHandle = (handle: string) => {
-  const normalizedHandle = handle.trim().replace(/^@+/, '');
-
-  return normalizedHandle ? `@${normalizedHandle}` : null;
-};
-
 export function TradeShareCard({
   trade,
   date,
@@ -72,15 +68,12 @@ export function TradeShareCard({
 }: TradeShareCardProps) {
   const netPnl = trade.pnl - (trade.commission || 0);
   const { accent, badgeLabel } = getTradeSharePresentation(netPnl);
-  const displayHandle = getDisplayHandle(handle);
+  const identity = getShareIdentity(handle);
   const directionLabel = trade.direction === 'short' ? 'Short' : 'Long';
   const { sign, amount } = splitPnl(netPnl, streamerMode);
-  const avatar = displayHandle
-    ? displayHandle.slice(1, 3).toUpperCase()
-    : 'EJ';
 
   return (
-    <ShareCardFrame className={className} glow={`${accent}26`}>
+    <ShareCardFrame className={className} glow={`${accent}26`} height={SHARE_TRADE_CARD_HEIGHT}>
       <ShareCardHeader dateLabel={formatTradeDate(trade, date)} />
 
       <ShareGlowAmount
@@ -92,15 +85,15 @@ export function TradeShareCard({
         trend={netPnl > 0 ? 'up' : netPnl < 0 ? 'down' : 'flat'}
       />
 
-      <div className="mt-auto space-y-3">
+      <div className="mt-14 space-y-3">
         <ShareRow label="Asset" value={trade.pair || '--'} />
         <ShareRow label="Direzione" value={directionLabel} />
         <ShareRow label="Orario apertura" value={getTradeOpenTime(trade)} />
       </div>
 
       <ShareCardFooter
-        avatar={avatar}
-        name={displayHandle ?? 'EclipseJournal'}
+        avatar={identity?.initials ?? 'EJ'}
+        name={identity?.displayName ?? 'EclipseJournal'}
         caption="Trading journal"
         right={badgeLabel}
       />
