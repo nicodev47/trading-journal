@@ -117,12 +117,12 @@ export function getOperatingWindowName(
   return timeInMinutes < firstStart ? PRE_SESSION_NAME : OUT_OF_SESSION_NAME;
 }
 
-export function getBestOperatingWindow(
+function getWindowResults(
   trades: Trade[],
   windows: OperatingWindowConfig[]
-): OperatingWindowResult | null {
+): OperatingWindowResult[] {
   const validTrades = trades.filter(isValidStatTrade);
-  if (validTrades.length === 0) return null;
+  if (validTrades.length === 0) return [];
 
   const groups = resolveWindowDefinitions(windows).map(window => ({
     name: window.name,
@@ -170,9 +170,18 @@ export function getBestOperatingWindow(
       winRate: calculateWinRate(group.winningTrades, group.losingTrades),
     }));
 
-  if (populatedGroups.length === 0) return null;
+  return populatedGroups;
+}
 
-  return populatedGroups.reduce((best, current) => {
+export function getBestOperatingWindow(
+  trades: Trade[],
+  windows: OperatingWindowConfig[]
+): OperatingWindowResult | null {
+  const results = getWindowResults(trades, windows);
+
+  if (results.length === 0) return null;
+
+  return results.reduce((best, current) => {
     if (current.pnl !== best.pnl) {
       return current.pnl > best.pnl ? current : best;
     }
@@ -182,5 +191,26 @@ export function getBestOperatingWindow(
     }
 
     return current.tradeCount > best.tradeCount ? current : best;
+  });
+}
+
+export function getWorstOperatingWindow(
+  trades: Trade[],
+  windows: OperatingWindowConfig[]
+): OperatingWindowResult | null {
+  const results = getWindowResults(trades, windows);
+
+  if (results.length === 0) return null;
+
+  return results.reduce((worst, current) => {
+    if (current.pnl !== worst.pnl) {
+      return current.pnl < worst.pnl ? current : worst;
+    }
+
+    if (current.winRate !== worst.winRate) {
+      return current.winRate < worst.winRate ? current : worst;
+    }
+
+    return current.tradeCount > worst.tradeCount ? current : worst;
   });
 }

@@ -105,3 +105,30 @@ test('isAutomaticWindowName riconosce pre sessione e fuori sessione', () => {
 test('senza finestre definite nessun trade è pre sessione', () => {
   assert.notEqual(getOperatingWindowName(makeTrade('01:00', 10), []), 'Pre sessione');
 });
+
+test('la finestra peggiore è quella con il risultato più basso', async () => {
+  const { getWorstOperatingWindow } = await import('../src/lib/operating-windows.ts');
+  const trades = [
+    makeTrade('10:00', 50),
+    makeTrade('10:30', 70),
+    makeTrade('16:00', 400),
+    makeTrade('16:10', -600),
+  ];
+  const worst = getWorstOperatingWindow(trades, custom);
+
+  assert.equal(worst?.name, 'New York');
+  assert.equal(worst?.pnl, -200);
+});
+
+test('la finestra peggiore ignora pre sessione e fuori sessione', async () => {
+  const { getWorstOperatingWindow } = await import('../src/lib/operating-windows.ts');
+
+  assert.equal(
+    getWorstOperatingWindow([makeTrade('08:00', -900), makeTrade('13:00', -500)], custom),
+    null
+  );
+  assert.equal(
+    getWorstOperatingWindow([makeTrade('10:00', 50), makeTrade('13:00', -500)], custom)?.name,
+    'Londra'
+  );
+});
