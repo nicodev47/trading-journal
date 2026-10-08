@@ -775,25 +775,24 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
     <div className="flex min-h-screen flex-col bg-background">
       {isUpdateBannerVisible && (
         <div className="border-b border-border bg-white/[0.03]">
-          <div className="relative flex min-h-11 w-full items-center justify-center px-12 py-2">
-            <div className="flex min-w-0 flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-center">
-              <div className="min-w-0 basis-full sm:basis-auto">
-                <p className="font-sans text-xs font-semibold text-foreground sm:text-sm">
-                  EclipseJournal v0.6 è disponibile!
-                </p>
-                <p className="font-sans text-[11px] text-muted-foreground">
-                  Import ed Export per pagina, backup preventivo e note durante la creazione dei conti.
-                </p>
-              </div>
-              <div className="flex shrink-0 items-center justify-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => setIsWhatsNewOpen(true)}
-                  className="shrink-0 rounded-full bg-[#0a84ff] px-3.5 py-1.5 font-sans text-xs font-medium text-white transition hover:bg-[#0a84ff]/90"
-                >
-                  Visualizza novità
-                </button>
-              </div>
+          <div className="relative grid min-h-11 w-full items-center gap-x-3 gap-y-1.5 px-12 py-2 sm:grid-cols-[1fr_auto_1fr]">
+            <div className="hidden sm:block" aria-hidden="true" />
+            <div className="min-w-0 text-center">
+              <p className="font-sans text-xs font-semibold text-foreground sm:text-sm">
+                EclipseJournal v0.6 è disponibile!
+              </p>
+              <p className="font-sans text-[11px] text-muted-foreground">
+                Import ed Export per pagina, backup preventivo e note durante la creazione dei conti.
+              </p>
+            </div>
+            <div className="flex items-center justify-center sm:justify-start">
+              <button
+                type="button"
+                onClick={() => setIsWhatsNewOpen(true)}
+                className="shrink-0 rounded-full bg-[#0a84ff] px-3.5 py-1.5 font-sans text-xs font-medium text-white transition hover:bg-[#0a84ff]/90"
+              >
+                Visualizza novità
+              </button>
             </div>
             <button
               type="button"
