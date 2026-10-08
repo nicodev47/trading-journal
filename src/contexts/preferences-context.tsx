@@ -21,6 +21,7 @@ import { hasWorkspaceContent } from '@/lib/workspace-content';
 interface PreferencesContextValue {
   preferences: JournalPreferences;
   needsOnboarding: boolean;
+  justCompletedOnboarding: boolean;
   updatePreferences: (patch: Partial<JournalPreferences>) => void;
   completeOnboarding: (preferences: JournalPreferences) => void;
 }
@@ -117,6 +118,7 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
     return {
       preferences,
       needsOnboarding: resolved.needsOnboarding || override !== null,
+      justCompleted: false,
     };
   });
 
@@ -135,7 +137,7 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
   const completeOnboarding = useCallback((preferences: JournalPreferences) => {
     if (override === 'preview') {
       clearOnboardingParam();
-      setState(current => ({ ...current, needsOnboarding: false }));
+      setState(current => ({ ...current, needsOnboarding: false, justCompleted: true }));
       return;
     }
 
@@ -145,13 +147,14 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
 
     saveStoredPreferences(completed);
     persistName(completed.name);
-    setState({ preferences: completed, needsOnboarding: false });
+    setState({ preferences: completed, needsOnboarding: false, justCompleted: true });
   }, [override]);
 
   const value = useMemo(
     () => ({
       preferences: state.preferences,
       needsOnboarding: state.needsOnboarding,
+      justCompletedOnboarding: state.justCompleted,
       updatePreferences,
       completeOnboarding,
     }),

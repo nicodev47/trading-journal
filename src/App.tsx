@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { NavHeader } from '@/components/trading-journal/nav-header';
 import { TradingCalendar } from '@/components/trading-journal/trading-calendar';
 import { StatsGrid } from '@/components/trading-journal/stats-grid';
@@ -187,7 +187,7 @@ const getBacktestHasTrades = () => {
 
 function AppContent() {
  const { streamerMode } = useStreamerMode();
- const { preferences } = usePreferences();
+ const { preferences, justCompletedOnboarding } = usePreferences();
  const {
    workspaces,
    maxCustomWorkspaces,
@@ -218,6 +218,8 @@ const [tradeGroupDialog, setTradeGroupDialog] = useState<TradeGroupDialogState |
 const [isTradeGroupOpen, setIsTradeGroupOpen] = useState(false);
 const [returnToTradeGroup, setReturnToTradeGroup] = useState(false);
 const [isTutorialWelcomeOpen, setIsTutorialWelcomeOpen] = useState(() => {
+  if (justCompletedOnboarding) return false;
+
   try {
     return localStorage.getItem(TUTORIAL_SEEN_KEY) !== 'true';
   } catch {
@@ -362,6 +364,15 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
     setIsTutorialActive(true);
     setActiveView('calendar');
   };
+
+  const autoStartedTutorial = useRef(false);
+
+  useEffect(() => {
+    if (!justCompletedOnboarding || autoStartedTutorial.current) return;
+
+    autoStartedTutorial.current = true;
+    handleStartTutorial();
+  }, [justCompletedOnboarding]);
 
   const handleRestartTutorial = () => {
     setIsHelpOpen(false);
