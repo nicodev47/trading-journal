@@ -42,7 +42,7 @@ export function OnboardingIntro({ onStart }: { onStart: () => void }) {
 
         <Reveal delay={150}>
           <h1 className="text-4xl font-semibold tracking-tight max-sm:text-3xl">
-            Benvenuto in EclipseJournal!
+            Benvenuto in EclipseJournal !
           </h1>
         </Reveal>
 
