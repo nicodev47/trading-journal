@@ -5,6 +5,7 @@ import {
   PRE_SESSION_NAME,
   isAutomaticWindowName,
   getBestOperatingWindow,
+  getWorstOperatingWindow,
   getOperatingWindowName,
   countOutsideWindowTrades,
 } from '../src/lib/operating-windows.ts';
@@ -79,7 +80,7 @@ test('le finestre legacy riproducono il comportamento attuale', () => {
 test('prima dell\'inizio della prima finestra il trade è pre sessione', () => {
   assert.equal(PRE_SESSION_NAME, 'Pre sessione');
   assert.equal(getOperatingWindowName(makeTrade('08:59', 100), custom), 'Pre sessione');
-  assert.equal(getOperatingWindowName(makeTrade('00:00', 100), custom), 'Pre sessione');
+  assert.equal(getOperatingWindowName(makeTrade('00:01', 100), custom), 'Pre sessione');
 });
 
 test('tra due finestre e dopo l\'ultima il trade è fuori sessione, non pre sessione', () => {
@@ -146,4 +147,13 @@ test('conta i trade fuori dalle finestre configurate', () => {
 
 test('senza finestre configurate nessun trade è fuori finestra', () => {
   assert.equal(countOutsideWindowTrades([makeTrade('03:00', 100)], []), 0);
+});
+
+test('un trade senza orario (00:00) non entra in nessuna finestra', () => {
+  const trades = [makeTrade('00:00', -500), makeTrade('10:00', 100), makeTrade('20:00', -50)];
+
+  assert.equal(getOperatingWindowName(makeTrade('00:00', -500), custom), null);
+  assert.equal(countOutsideWindowTrades(trades, custom), 1);
+  assert.equal(getWorstOperatingWindow(trades, custom)?.pnl, 100);
+  assert.equal(getBestOperatingWindow([makeTrade('00:00', 900)], custom), null);
 });

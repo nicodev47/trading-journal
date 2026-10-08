@@ -86,7 +86,8 @@ const getWindowDescription = (window: OperatingWindowDefinition) =>
 const getTradeTimeInMinutes = (trade: Trade) => {
   const time = trade.entryDate.split('T')[1]?.slice(0, 5);
 
-  if (!time) return null;
+  // The editor stores 00:00 when no time was entered, so it counts as "no time".
+  if (!time || time === '00:00') return null;
 
   const [hours, minutes] = time.split(':').map(Number);
 
