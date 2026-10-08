@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, ArrowRight, BarChart3, Check, Clock, Moon, ShieldCheck, Target, UserRound } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Moon } from 'lucide-react';
 import { AssetPicker } from '@/components/preferences/asset-picker';
 import { ProfileFields } from '@/components/preferences/profile-fields';
 import { SetupInput } from '@/components/preferences/setup-input';
@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { usePreferences } from '@/contexts/preferences-context';
 import { EMPTY_PREFERENCES, capitalizeSetup, type JournalPreferences } from '@/lib/preferences';
 import { cn } from '@/lib/utils';
+import { OnboardingIntro } from './onboarding-intro';
 import { OnboardingPreview } from './onboarding-preview';
 
 const STEPS = [
@@ -33,19 +34,11 @@ const STEPS = [
   },
 ];
 
-const INTRO_POINTS = [
-  { icon: Target, title: 'I tuoi Asset preferiti a portata di mano', text: 'Menu, calendario e filtri mostrano solo quello che operi.' },
-  { icon: BarChart3, title: 'Statistiche basate sulle tue performance', text: 'Parlano la tua lingua, con i nomi che scegli tu.' },
-  { icon: Clock, title: 'Le tue sessioni operative', text: 'Vediamo in quali finestre funzioni meglio.' },
-  { icon: UserRound, title: 'Un profilo tuo', text: 'Nome e foto compaiono nelle card che condividi.' },
-];
-
 export function OnboardingScreen() {
   const { completeOnboarding } = usePreferences();
   const [step, setStep] = useState(-1);
   const [draft, setDraft] = useState<JournalPreferences>(EMPTY_PREFERENCES);
 
-  const isIntro = step === -1;
   const isLast = step === STEPS.length - 1;
   const canContinue = step !== 1 || draft.assets.length > 0;
   const patch = (value: Partial<JournalPreferences>) =>
@@ -67,6 +60,10 @@ export function OnboardingScreen() {
     setStep(current => current + 1);
   };
 
+  if (step === -1) {
+    return <OnboardingIntro onStart={() => setStep(0)} />;
+  }
+
   return (
     <div className="fixed inset-0 z-[100] flex flex-col overflow-y-auto bg-background md:grid md:grid-cols-2 md:overflow-hidden">
       <div className="order-last flex min-h-0 flex-col px-6 py-8 md:order-first md:overflow-y-auto md:px-14 md:py-12">
@@ -78,7 +75,7 @@ export function OnboardingScreen() {
         </div>
 
         <div
-          className={cn('mb-8 flex gap-2', isIntro && 'invisible')}
+          className="mb-8 flex gap-2"
           aria-label={`Passo ${step + 1} di ${STEPS.length}`}
         >
           {STEPS.map((_, index) => (
@@ -93,40 +90,7 @@ export function OnboardingScreen() {
         </div>
 
         <div className="flex max-w-[480px] flex-1 flex-col">
-          {isIntro ? (
-            <>
-              <h1 className="text-3xl font-semibold tracking-tight">Benvenuto in EclipseJournal!</h1>
-              <p className="mt-2 text-xl font-medium tracking-tight text-foreground/80">
-                Prima di incominciare, rendiamo la tua esperienza unica.
-              </p>
-              <p className="mt-4 text-sm text-muted-foreground">
-                Ti facciamo quattro domande veloci, circa un minuto. Servono a far funzionare il
-                journal sul tuo modo di operare, invece di darti uno strumento uguale per tutti.
-              </p>
-
-              <ul className="mt-8 grid gap-5">
-                {INTRO_POINTS.map(point => (
-                  <li key={point.title} className="flex gap-4">
-                    <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-white/10">
-                      <point.icon className="size-5" />
-                    </div>
-                    <div>
-                      <div className="text-sm font-semibold">{point.title}</div>
-                      <div className="mt-0.5 text-sm text-muted-foreground">{point.text}</div>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-
-              <div className="mt-8 flex items-start gap-3 rounded-xl border border-border bg-white/[0.03] p-4 text-sm text-muted-foreground">
-                <ShieldCheck className="mt-0.5 size-4 shrink-0" />
-                <span>
-                  Puoi modificare queste impostazioni quando vuoi successivamente all&apos;interno del tuo profilo.
-                </span>
-              </div>
-            </>
-          ) : (
-            <>
+          <>
               <h1 className="text-3xl font-semibold tracking-tight">{STEPS[step].title}</h1>
               <p className="mt-3 text-sm text-muted-foreground">{STEPS[step].description}</p>
               <p className="mt-2 text-xs text-muted-foreground/80">
@@ -153,14 +117,13 @@ export function OnboardingScreen() {
                   <WindowsEditor value={draft.windows} onChange={windows => patch({ windows })} />
                 )}
               </div>
-            </>
-          )}
+          </>
 
           <div className="mt-auto flex items-center justify-between gap-3 pt-10">
             <Button
               type="button"
               variant="ghost"
-              className={cn('gap-2', isIntro && 'invisible')}
+              className="gap-2"
               onClick={() => setStep(current => Math.max(-1, current - 1))}
             >
               <ArrowLeft className="size-4" />
@@ -172,7 +135,7 @@ export function OnboardingScreen() {
               className="gap-2 px-6"
               onClick={next}
             >
-              {isIntro ? 'Iniziamo' : isLast ? 'Inizia' : 'Avanti'}
+              {isLast ? 'Inizia' : 'Avanti'}
               {isLast ? <Check className="size-4" /> : <ArrowRight className="size-4" />}
             </Button>
           </div>
