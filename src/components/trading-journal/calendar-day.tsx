@@ -124,28 +124,28 @@ export function CalendarDay({
     if (!hasTrades) return {};
 
     if (pnl > 0) {
-      const alpha = 0.07 + intensity * 0.13;
+      const alpha = 0.12 + intensity * 0.2;
       return {
         backgroundColor: `rgba(48, 209, 88, ${alpha})`,
         boxShadow: `inset 0 0 0 1px rgba(48, 209, 88, ${
-          0.10 + intensity * 0.18
+          0.12 + intensity * 0.22
         })`,
       };
     }
 
     if (pnl < 0) {
-      const alpha = 0.07 + intensity * 0.13;
+      const alpha = 0.12 + intensity * 0.2;
       return {
         backgroundColor: `rgba(255, 69, 58, ${alpha})`,
         boxShadow: `inset 0 0 0 1px rgba(255, 69, 58, ${
-          0.10 + intensity * 0.18
+          0.16 + intensity * 0.24
         })`,
       };
     }
 
     return {
-      backgroundColor: 'rgba(255, 255, 255, 0.05)',
-      boxShadow: 'inset 0 0 0 1px rgba(255, 255, 255, 0.06)',
+      backgroundColor: 'rgba(255, 255, 255, 0.03)',
+      boxShadow: 'inset 0 0 0 1px rgba(255, 255, 255, 0.08)',
     };
   };
 
@@ -201,7 +201,7 @@ export function CalendarDay({
       onKeyDown={handleDayKeyDown}
       data-tutorial={tutorialTarget}
       className={cn(
-        'group relative flex h-[78px] w-full min-w-0 cursor-pointer flex-col rounded-2xl bg-white/[0.03] p-1 pb-4 text-left transition-colors hover:bg-white/[0.07] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-primary min-[380px]:h-[84px] min-[380px]:p-1.5 min-[380px]:pb-4 sm:h-[92px] sm:p-2 sm:pb-5 md:h-[106px] md:p-2.5 md:pb-6',
+        'group relative flex h-[78px] w-full min-w-0 cursor-pointer flex-col bg-background p-1 pb-4 text-left transition-colors hover:bg-secondary/30 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-primary min-[380px]:h-[84px] min-[380px]:p-1.5 min-[380px]:pb-4 sm:h-[92px] sm:p-2 sm:pb-5 md:h-[106px] md:p-2.5 md:pb-6',
         isToday && 'ring-1 ring-inset ring-primary'
       )}
       style={getBackgroundStyle()}
@@ -209,9 +209,9 @@ export function CalendarDay({
       <div className="flex h-full w-full min-w-0 flex-col gap-1 sm:gap-1.5">
         <span
           className={cn(
-            'font-sans text-[12px] font-medium leading-none tabular-nums min-[380px]:text-[13px] sm:text-[14px] md:text-[15px]',
+            'font-sans text-[12px] font-bold leading-none tracking-[-0.04em] min-[380px]:text-[13px] sm:text-[15px] md:text-[17px]',
             isToday && 'text-primary',
-            !isToday && 'text-muted-foreground'
+            !isToday && 'text-foreground'
           )}
         >
           {date.getDate()}
@@ -221,7 +221,7 @@ export function CalendarDay({
           <>
             <span
               className={cn(
-                'block w-full min-w-0 truncate font-sans text-[9px] font-semibold leading-tight tabular-nums tracking-tight min-[380px]:text-[10px] sm:text-xs md:text-[15px]',
+                'block w-full min-w-0 truncate font-sans text-[8px] font-semibold leading-tight tabular-nums tracking-tight min-[380px]:text-[9px] sm:text-[11px] md:text-sm',
                 pnl > 0 && 'text-profit',
                 pnl < 0 && 'text-loss',
                 pnl === 0 && 'text-muted-foreground'
