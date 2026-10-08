@@ -75,7 +75,10 @@ export function AdvancedStatsGrid({
     const longTrades = validTrades.filter((trade) => trade.direction === 'long').length;
     const shortTrades = validTrades.filter((trade) => trade.direction === 'short').length;
     const tradesByDay = new Map<string, number>();
-    const setupStats = new Map<string, { trades: number; wins: number; losses: number }>();
+    const setupStats = new Map<
+      string,
+      { trades: number; wins: number; losses: number; pnl: number }
+    >();
     const weekdayStats = new Map<
       number,
       { trades: number; wins: number; losses: number; pnl: number }
@@ -122,8 +125,9 @@ export function AdvancedStatsGrid({
 
       const rawSetup = trade.strategy.trim();
       const setup = isValidTradeSetup(rawSetup) ? rawSetup : 'Senza Setup';
-      const stats = setupStats.get(setup) ?? { trades: 0, wins: 0, losses: 0 };
+      const stats = setupStats.get(setup) ?? { trades: 0, wins: 0, losses: 0, pnl: 0 };
       stats.trades += 1;
+      stats.pnl += netPnl;
       const outcome = getTradeOutcome(trade);
       if (outcome === 'win') stats.wins += 1;
       if (outcome === 'loss') stats.losses += 1;
@@ -166,33 +170,21 @@ export function AdvancedStatsGrid({
       },
       { name: null, trades: 0, winRate: -1 }
     );
-    const worstSetupEntry =
-      setupStats.size > 1
-        ? Array.from(setupStats.entries()).reduce<{
-            name: string | null;
-            trades: number;
-            winRate: number;
-          }>(
-            (worst, [name, stats]) => {
-              const winRate = calculateWinRate(stats.wins, stats.losses);
-
-              if (
-                worst.name === null ||
-                winRate < worst.winRate ||
-                (winRate === worst.winRate && stats.trades > worst.trades)
-              ) {
-                return { name, trades: stats.trades, winRate };
-              }
-
-              return worst;
-            },
-            { name: null, trades: 0, winRate: 101 }
-          )
-        : null;
     const worstSetup =
-      worstSetupEntry && worstSetupEntry.name !== bestSetup.name
-        ? worstSetupEntry
-        : null;
+      Array.from(setupStats.entries())
+        .filter(([name]) => name !== bestSetup.name && name !== 'Senza Setup')
+        .map(([name, stats]) => ({
+          name,
+          trades: stats.trades,
+          winRate: calculateWinRate(stats.wins, stats.losses),
+          pnl: stats.pnl,
+        }))
+        .sort(
+          (a, b) =>
+            a.winRate - b.winRate ||
+            a.pnl - b.pnl ||
+            a.trades - b.trades
+        )[0] ?? null;
     const bestWeekday = Array.from(weekdayStats.entries())
       .map(([weekday, stats]) => ({
         name: WEEKDAY_NAMES[weekday],
