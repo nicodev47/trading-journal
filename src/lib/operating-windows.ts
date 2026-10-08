@@ -3,13 +3,10 @@ import {
   calculateWinRate,
   getTradeOutcome,
   isValidStatTrade,
-} from './calculations';
+} from './calculations.ts';
+import type { OperatingWindowConfig } from './preferences.ts';
 
-export type OperatingWindowName =
-  | 'Sessione di Londra'
-  | 'Inizio sessione'
-  | 'Fine sessione'
-  | 'Late New York / Asia';
+export type OperatingWindowName = string;
 
 interface OperatingWindowDefinition {
   name: OperatingWindowName;
@@ -25,29 +22,6 @@ export interface OperatingWindowResult {
   winRate: number;
 }
 
-const OPERATING_WINDOWS: OperatingWindowDefinition[] = [
-  {
-    name: 'Sessione di Londra',
-    start: 0,
-    end: 15 * 60 + 30,
-  },
-  {
-    name: 'Inizio sessione',
-    start: 15 * 60 + 30,
-    end: 15 * 60 + 50,
-  },
-  {
-    name: 'Fine sessione',
-    start: 15 * 60 + 50,
-    end: 16 * 60 + 11,
-  },
-  {
-    name: 'Late New York / Asia',
-    start: 16 * 60 + 11,
-    end: 24 * 60,
-  },
-];
-
 const formatMinutes = (minutes: number) => {
   const hours = Math.floor(minutes / 60);
   const remainingMinutes = minutes % 60;
@@ -56,6 +30,42 @@ const formatMinutes = (minutes: number) => {
     .toString()
     .padStart(2, '0')}`;
 };
+
+const parseClock = (value: string): number | null => {
+  const match = /^(\d{1,2}):(\d{2})$/.exec(value.trim());
+
+  if (!match) return null;
+
+  const total = Number(match[1]) * 60 + Number(match[2]);
+
+  return total >= 0 && total <= 24 * 60 && Number(match[2]) < 60 ? total : null;
+};
+
+const HOURLY_WINDOWS: OperatingWindowDefinition[] = Array.from(
+  { length: 24 },
+  (_, hour) => ({
+    name: `${formatMinutes(hour * 60)}–${formatMinutes((hour + 1) * 60)}`,
+    start: hour * 60,
+    end: (hour + 1) * 60,
+  })
+);
+
+export function resolveWindowDefinitions(
+  windows: OperatingWindowConfig[]
+): OperatingWindowDefinition[] {
+  const definitions = windows.flatMap(window => {
+    const start = parseClock(window.start);
+    const end = parseClock(window.end);
+
+    if (start === null || end === null || end <= start || !window.name.trim()) {
+      return [];
+    }
+
+    return [{ name: window.name.trim(), start, end }];
+  });
+
+  return definitions.length > 0 ? definitions : HOURLY_WINDOWS;
+}
 
 const getWindowDescription = (window: OperatingWindowDefinition) =>
   `${formatMinutes(window.start)}–${formatMinutes(window.end)}`;
@@ -82,14 +92,15 @@ const getTradeTimeInMinutes = (trade: Trade) => {
 };
 
 export function getOperatingWindowName(
-  trade: Trade
+  trade: Trade,
+  windows: OperatingWindowConfig[]
 ): OperatingWindowName | null {
   const timeInMinutes = getTradeTimeInMinutes(trade);
 
   if (timeInMinutes === null) return null;
 
   return (
-    OPERATING_WINDOWS.find(
+    resolveWindowDefinitions(windows).find(
       window =>
         timeInMinutes >= window.start && timeInMinutes < window.end
     )?.name ?? null
@@ -97,27 +108,26 @@ export function getOperatingWindowName(
 }
 
 export function getBestOperatingWindow(
-  trades: Trade[]
+  trades: Trade[],
+  windows: OperatingWindowConfig[]
 ): OperatingWindowResult | null {
   const validTrades = trades.filter(isValidStatTrade);
   if (validTrades.length === 0) return null;
 
-  const groups = [
-    ...OPERATING_WINDOWS.map(window => ({
-      name: window.name,
-      description: getWindowDescription(window),
-      start: window.start,
-      end: window.end,
-      pnl: 0,
-      tradeCount: 0,
-      winningTrades: 0,
-      losingTrades: 0,
-    })),
-  ];
+  const groups = resolveWindowDefinitions(windows).map(window => ({
+    name: window.name,
+    description: getWindowDescription(window),
+    start: window.start,
+    end: window.end,
+    pnl: 0,
+    tradeCount: 0,
+    winningTrades: 0,
+    losingTrades: 0,
+  }));
 
   validTrades.forEach(trade => {
     const timeInMinutes = getTradeTimeInMinutes(trade);
-    const configuredWindow =
+    const group =
       timeInMinutes === null
         ? undefined
         : groups.find(
@@ -125,9 +135,8 @@ export function getBestOperatingWindow(
               timeInMinutes >= window.start &&
               timeInMinutes < window.end
           );
-    if (!configuredWindow) return;
+    if (!group) return;
 
-    const group = configuredWindow;
     const netPnl = trade.pnl - trade.commission;
 
     group.pnl += netPnl;
