@@ -194,7 +194,7 @@ export function ProfileDialog({
           <Tabs defaultValue="profilo" className="gap-0">
             <TabsList className="mx-4 mt-4 grid h-10 w-auto grid-cols-3 sm:mx-5">
               <TabsTrigger value="profilo">Profilo</TabsTrigger>
-              <TabsTrigger value="operativita">Operatività</TabsTrigger>
+              <TabsTrigger value="operativita">Impostazioni</TabsTrigger>
               <TabsTrigger value="dati">Dati</TabsTrigger>
             </TabsList>
 
@@ -296,7 +296,7 @@ export function ProfileDialog({
             <TabsContent value="operativita" className="space-y-3 p-4 sm:space-y-4 sm:p-5">
             <section className="rounded-[14px] border border-border bg-background/35 p-3.5 sm:p-4">
               <p className="mb-4 font-sans text-xs font-semibold tracking-normal text-muted-foreground">
-                Asset che operi
+                I tuoi Asset
               </p>
               <AssetPicker
                 value={preferences.assets}
