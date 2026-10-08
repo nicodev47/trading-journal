@@ -436,6 +436,63 @@ export function useJournalWorkspaces() {
     return { success: true, workspace };
   }, [backtestSecondWorkspace, backtestWorkspace, customWorkspaces, personalWorkspace, previewSecondWorkspace, previewWorkspace, secondaryWorkspace]);
 
+  /**
+   * Creates several custom workspaces in one state update (restoring a full
+   * backup). Items whose name clashes or exceed the per-group limit are skipped
+   * and reported as null.
+   */
+  const createWorkspaces = useCallback((
+    items: { name: string; group?: JournalWorkspaceGroup; notes?: string }[]
+  ): (JournalWorkspaceMeta | null)[] => {
+    const usedNames = new Set(
+      [personalWorkspace, secondaryWorkspace, backtestWorkspace, backtestSecondWorkspace, previewWorkspace, previewSecondWorkspace, ...customWorkspaces]
+        .map((workspace) => workspace.name.toLowerCase())
+    );
+    const created: JournalWorkspaceMeta[] = [];
+    const groupCount = (group: JournalWorkspaceGroup) =>
+      [...customWorkspaces, ...created].filter(
+        (workspace) => (workspace.group ?? 'account') === group
+      ).length;
+
+    const results = items.map((item) => {
+      const group = item.group ?? 'account';
+      const name = normalizeWorkspaceName(item.name);
+
+      if (
+        !name ||
+        name.length > 20 ||
+        usedNames.has(name.toLowerCase()) ||
+        groupCount(group) >= MAX_CUSTOM_WORKSPACES
+      ) {
+        return null;
+      }
+
+      const prefix = group === 'backtest' ? 'backtest' : group === 'preview' ? 'preview' : 'custom';
+      const workspace: JournalWorkspaceMeta = {
+        id: `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}` as JournalWorkspace,
+        name,
+        type: 'custom',
+        initialBalance: 0,
+        notes: (item.notes ?? '').trim(),
+        group,
+      };
+
+      usedNames.add(name.toLowerCase());
+      created.push(workspace);
+
+      return workspace;
+    });
+
+    if (created.length > 0) {
+      const nextWorkspaces = [...customWorkspaces, ...created];
+
+      persistCustomWorkspaces(nextWorkspaces);
+      setCustomWorkspaces(nextWorkspaces);
+    }
+
+    return results;
+  }, [backtestSecondWorkspace, backtestWorkspace, customWorkspaces, personalWorkspace, previewSecondWorkspace, previewWorkspace, secondaryWorkspace]);
+
   const updateWorkspace = useCallback((
     workspaceId: JournalWorkspace,
     name: string,
@@ -773,6 +830,7 @@ export function useJournalWorkspaces() {
     customWorkspaces,
     maxCustomWorkspaces: MAX_CUSTOM_WORKSPACES,
     createWorkspace,
+    createWorkspaces,
     updateWorkspace,
     deleteWorkspace,
     reorderCustomWorkspaces,

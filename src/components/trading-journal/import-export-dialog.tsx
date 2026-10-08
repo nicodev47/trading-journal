@@ -41,6 +41,8 @@ interface ImportExportDialogProps {
   onPreview?: (data: string, fileName: string) => void;
   /** Called after a real (non-censored) backup file was downloaded. */
   onBackupDone?: () => void;
+  /** Restores every journal of a full backup file in one go. */
+  onImportAll?: (data: string, mode: 'replace' | 'append') => boolean;
 }
 
 const getWorkspaceLabel = (
@@ -74,6 +76,7 @@ export function ImportExportDialog({
   onAppendImport,
   onPreview,
   onBackupDone,
+  onImportAll,
   workspaceOptions: providedWorkspaceOptions,
 }: ImportExportDialogProps) {
   const { streamerMode } = useStreamerMode();
@@ -99,9 +102,17 @@ export function ImportExportDialog({
   const selectedWorkspaceHasData = workspaceHasData
     ? workspaceHasData(activeWorkspace)
     : hasImportableWorkspaceTrades(selectedWorkspaceExportData);
+  const [fullBackupSummary, setFullBackupSummary] = useState<
+    { name: string; trades: number }[] | null
+  >(null);
+  const [fullBackupPreviewData, setFullBackupPreviewData] = useState<string | null>(null);
+  const isFullBackup = fullBackupSummary !== null;
+  const importTargetLabel = isFullBackup ? 'tutti i journal del file' : selectedWorkspaceLabel;
+  const importHasData = isFullBackup
+    ? workspaceOptions.some(workspace => workspaceHasData?.(workspace.id))
+    : selectedWorkspaceHasData;
   const canAppendImport =
-    selectedWorkspaceHasData &&
-    !!onAppendImport;
+    importHasData && (isFullBackup ? !!onImportAll : !!onAppendImport);
   const selectedExportLabel = getWorkspaceLabel(activeWorkspace, workspaceOptions);
   const selectedExportData = getWorkspaceExportData?.(activeWorkspace) || exportData;
   const suggestedExportFileName = getGuidedExportBaseName(activeWorkspace);
@@ -113,6 +124,8 @@ export function ImportExportDialog({
     setSelectedFileName('');
     setPendingImportData(null);
     setImportStep('choose');
+    setFullBackupSummary(null);
+    setFullBackupPreviewData(null);
     setPendingConfirm(null);
     setImportError('');
     setIsAppendConfirmOpen(false);
@@ -128,6 +141,8 @@ export function ImportExportDialog({
     setSelectedFileName('');
     setPendingImportData(null);
     setImportStep('choose');
+    setFullBackupSummary(null);
+    setFullBackupPreviewData(null);
     setPendingConfirm(null);
     setImportError('');
     setIsAppendConfirmOpen(false);
@@ -193,9 +208,9 @@ export function ImportExportDialog({
   };
 
   const importDirectly = (data: string) => {
-    if (!onImport) return false;
-
-    const success = onImport(data, activeWorkspace);
+    const success = isFullBackup
+      ? onImportAll?.(data, 'replace') ?? false
+      : onImport?.(data, activeWorkspace) ?? false;
 
     if (!success) {
       setImportError('Il formato dei dati non è valido.');
@@ -203,7 +218,7 @@ export function ImportExportDialog({
       return false;
     }
 
-    toast.success(`Dati importati in ${selectedWorkspaceLabel}`);
+    toast.success(`Dati importati in ${importTargetLabel}`);
     handleClose();
     return true;
   };
@@ -236,20 +251,26 @@ export function ImportExportDialog({
         }
 
         if (parsed.kind === 'full-backup') {
-          const activeWorkspaceData = parsed.data.workspaces[activeWorkspace];
+          const entries = Object.entries(parsed.data.workspaces);
 
-          if (!activeWorkspaceData) {
-            setImportError(
-              `Il backup non contiene dati per la pagina ${selectedWorkspaceLabel}.`
-            );
-            toast.error('La pagina aperta non è presente nel backup');
-            return;
-          }
+          setFullBackupSummary(
+            entries.map(([id, state]) => ({
+              name:
+                parsed.data.workspaceOptions.find(option => option.id === id)?.name ?? id,
+              trades: state.trades.length,
+            }))
+          );
+          // Preview shows one journal: the open one when present, else the first.
+          const previewState =
+            parsed.data.workspaces[activeWorkspace] ?? entries[0]?.[1];
 
-          setPendingImportData(JSON.stringify(activeWorkspaceData));
+          setFullBackupPreviewData(previewState ? JSON.stringify(previewState) : null);
+          setPendingImportData(text);
           return;
         }
 
+        setFullBackupSummary(null);
+        setFullBackupPreviewData(null);
         setPendingImportData(text);
       } catch {
         setImportError('Il JSON selezionato non contiene dati validi del calendario.');
@@ -306,13 +327,11 @@ export function ImportExportDialog({
   };
 
   const handleAppendImport = () => {
-    if (
-      !pendingImportData ||
-      !onAppendImport ||
-      !canAppendImport
-    ) return;
+    if (!pendingImportData || !canAppendImport) return;
 
-    const success = onAppendImport(pendingImportData, activeWorkspace);
+    const success = isFullBackup
+      ? onImportAll?.(pendingImportData, 'append') ?? false
+      : onAppendImport?.(pendingImportData, activeWorkspace) ?? false;
 
     if (!success) {
       setImportError('Il formato dei dati non è valido.');
@@ -320,7 +339,7 @@ export function ImportExportDialog({
       return;
     }
 
-    toast.success(`Dati aggiunti in ${selectedWorkspaceLabel}`);
+    toast.success(`Dati aggiunti in ${importTargetLabel}`);
     setIsAppendConfirmOpen(false);
     handleClose();
   };
@@ -348,8 +367,8 @@ export function ImportExportDialog({
               : pendingImportData
                 ? importStep === 'choose'
                   ? 'Come vuoi usare il file selezionato?'
-                  : `Scegli come importare i dati in ${selectedWorkspaceLabel}.`
-                : `Seleziona un file JSON da importare in ${selectedWorkspaceLabel}.`}
+                  : `Scegli come importare i dati in ${importTargetLabel}.`
+                : `Seleziona un file JSON da importare in ${importTargetLabel}.`}
           </DialogDescription>
         </DialogHeader>
 
@@ -435,7 +454,7 @@ export function ImportExportDialog({
                   Aggiungi al profilo
                 </span>
                 <span className="font-sans text-xs text-muted-foreground">
-                  Importa i dati in {selectedWorkspaceLabel}: aggiungili a quelli attuali oppure sostituiscili.
+                  Importa i dati in {importTargetLabel}: aggiungili a quelli attuali oppure sostituiscili.
                 </span>
               </button>
 
@@ -471,19 +490,32 @@ export function ImportExportDialog({
                     {selectedFileName}
                   </span>
                   <span className="mt-0.5 block font-sans text-xs text-muted-foreground">
-                    Importa nella pagina aperta: {selectedWorkspaceLabel}
+                    {isFullBackup ? `Backup completo: ${fullBackupSummary?.length ?? 0} journal` : `Importa nella pagina aperta: ${importTargetLabel}`}
                   </span>
                 </div>
               </div>
 
+              {isFullBackup && fullBackupSummary && (
+                <ul className="space-y-1 rounded-lg border border-border bg-background/35 p-3 font-sans text-xs text-muted-foreground">
+                  {fullBackupSummary.map(item => (
+                    <li key={item.name} className="flex justify-between gap-3">
+                      <span className="truncate text-foreground">{item.name}</span>
+                      <span className="shrink-0 tabular-nums">{item.trades} trade</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
               <div className="rounded-lg border border-border bg-background/35 p-4">
-                {!selectedWorkspaceHasData ? (
+                {!importHasData ? (
                   <div className="space-y-2 font-sans text-sm">
                     <p className="text-foreground">
-                      {selectedWorkspaceLabel} non contiene ancora dati.
+                      {isFullBackup ? 'Il tuo journal' : importTargetLabel} non contiene ancora dati.
                     </p>
                     <p className="text-muted-foreground">
-                      Puoi importare direttamente il file JSON nella pagina aperta.
+                      {isFullBackup
+                        ? 'Puoi ripristinare direttamente tutti i journal del file.'
+                        : 'Puoi importare direttamente il file JSON nella pagina aperta.'}
                     </p>
                   </div>
                 ) : canAppendImport ? (
@@ -510,7 +542,7 @@ export function ImportExportDialog({
                           <span className="font-semibold text-foreground">
                             Sovrascrivi dati
                           </span>{' '}
-                          elimina i dati attuali di {selectedWorkspaceLabel} e
+                          elimina i dati attuali di {importTargetLabel} e
                           li sostituisce con quelli del file importato.
                         </span>
                       </li>
@@ -519,10 +551,10 @@ export function ImportExportDialog({
                 ) : (
                   <p className="font-sans text-sm text-foreground">
                     Il file importato sovrascriverà i dati attuali di{' '}
-                    {selectedWorkspaceLabel}.
+                    {importTargetLabel}.
                   </p>
                 )}
-                {selectedWorkspaceHasData && (
+                {importHasData && (
                   <p className="mt-2 font-sans text-sm text-muted-foreground">
                     Prima di sovrascrivere, ti consigliamo di esportare un backup
                     dei dati attuali.
@@ -530,7 +562,7 @@ export function ImportExportDialog({
                 )}
               </div>
 
-              {selectedWorkspaceHasData && (
+              {importHasData && !isFullBackup && (
                 <div className="rounded-lg border border-profit/30 bg-profit/10 p-3.5">
                   <p className="font-sans text-xs leading-relaxed text-muted-foreground">
                     L’import modifica solo la pagina attualmente aperta.
@@ -539,7 +571,7 @@ export function ImportExportDialog({
                 </div>
               )}
 
-              {selectedWorkspaceHasData && (
+              {importHasData && !isFullBackup && (
                 <div className="rounded-lg border border-blue-400/35 bg-blue-500/10 p-4">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="min-w-0">
@@ -584,7 +616,7 @@ export function ImportExportDialog({
                   Aggiungi ai dati attuali
                 </Button>
               )}
-              {selectedWorkspaceHasData ? (
+              {importHasData ? (
                 <Button
                   type="button"
                   onClick={() => setIsOverwriteConfirmOpen(true)}
@@ -670,7 +702,7 @@ export function ImportExportDialog({
             <DialogDescription className="font-sans text-sm">
               {pendingConfirm === 'preview'
                 ? `Il file ${selectedFileName} verrà aperto in Preview: il tuo journal non cambia.`
-                : `I dati del file ${selectedFileName} verranno importati in ${selectedWorkspaceLabel}.`}
+                : `I dati del file ${selectedFileName} verranno importati in ${importTargetLabel}.`}
             </DialogDescription>
           </DialogHeader>
 
@@ -687,7 +719,7 @@ export function ImportExportDialog({
                 setPendingConfirm(null);
 
                 if (action === 'preview' && pendingImportData) {
-                  onPreview?.(pendingImportData, selectedFileName);
+                  onPreview?.(isFullBackup ? fullBackupPreviewData ?? pendingImportData : pendingImportData, selectedFileName);
                   handleClose();
                 } else if (action === 'direct') {
                   handleReplaceImport();

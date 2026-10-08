@@ -632,7 +632,13 @@ export function AdvancedStatsGrid({
                 ? `${data.worstOperatingWindow.description} · ${data.worstOperatingWindow.tradeCount} trade`
                 : 'Servono almeno due finestre con trade'
             }
-            tone={data.worstOperatingWindow ? 'loss' : 'neutral'}
+            tone={
+              data.worstOperatingWindow
+                ? data.worstOperatingWindow.pnl > 0
+                  ? 'profit'
+                  : 'loss'
+                : 'neutral'
+            }
             hasData={data.worstOperatingWindow !== null}
             prominentValue
           />
