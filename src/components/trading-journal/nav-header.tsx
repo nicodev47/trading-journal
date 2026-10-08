@@ -36,6 +36,8 @@ interface NavHeaderProps {
   ) => { success: boolean; error?: string; workspace?: JournalWorkspaceMeta };
   onBackupWorkspace: (workspace: JournalWorkspace) => void;
   onDeleteWorkspace: (workspace: JournalWorkspace) => boolean;
+  previewLabel?: string;
+  onExitPreview?: () => void;
 }
 
 export function NavHeader({
@@ -53,6 +55,8 @@ export function NavHeader({
   onUpdateWorkspace,
   onBackupWorkspace,
   onDeleteWorkspace,
+  previewLabel,
+  onExitPreview,
 }: NavHeaderProps) {
   const { streamerMode } = useStreamerMode();
 
@@ -88,6 +92,8 @@ export function NavHeader({
             onUpdateWorkspace={onUpdateWorkspace}
             onBackupWorkspace={onBackupWorkspace}
             onDeleteWorkspace={onDeleteWorkspace}
+            previewLabel={previewLabel}
+            onExitPreview={onExitPreview}
           />
         </div>
 

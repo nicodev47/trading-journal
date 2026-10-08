@@ -50,6 +50,12 @@ const updates = [
       "Interfaccia scura ispirata allo stile Apple: colori, font e bordi uniformi, calendario con il giorno corrente evidenziato.",
   },
   {
+    icon: "👀",
+    title: "Preview dei file importati",
+    description:
+      "Quando importi un file puoi aprirlo in Preview: vedi profilo, calendario e analisi di chi lo ha esportato, in sola lettura, e ne esci quando vuoi senza modificare il tuo journal.",
+  },
+  {
     icon: "🛠️",
     title: "Bug Fix & Improvements",
     description:

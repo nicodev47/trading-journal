@@ -25,14 +25,14 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     target: 'workspace-tabs',
     title: 'Conti e spazi di lavoro',
     description:
-      'Gli spazi di lavoro tengono separate operatività e analisi.\n\nDal selettore crei conti, sessioni Backtest e spazi Preview, con una nota facoltativa per obiettivi e regole.\n\nOgni spazio ha i suoi trade, il suo calendario e le sue statistiche, e può essere rinominato, modificato o esportato.',
+      'Gli spazi di lavoro tengono separate operatività e analisi.\n\nDal selettore crei conti e sessioni Backtest, con una nota facoltativa per obiettivi e regole.\n\nOgni spazio ha i suoi trade, il suo calendario e le sue statistiche, e può essere rinominato, modificato o esportato.',
     cta: 'Avanti',
   },
   {
     target: 'import-export-buttons',
     title: 'Dati e backup',
     description:
-      'I dati del journal sono salvati nella cache del tuo browser, non su un server: se la cancelli o cambi dispositivo, li perdi. Per questo è importante fare backup regolari.\n\nExport scarica un file con i dati della pagina aperta, senza toccare gli altri conti. Import li carica nella stessa pagina: se ci sono già dati puoi aggiungerli oppure sovrascriverli.',
+      'I dati del journal sono salvati nella cache del tuo browser, non su un server: se la cancelli o cambi dispositivo, li perdi. Per questo è importante fare backup regolari.\n\nExport scarica un file con i dati della pagina aperta e il tuo profilo, senza toccare gli altri conti. Con Import scegli se aggiungere i dati al profilo oppure aprire il file in Preview, una pagina di sola lettura che non cambia nulla nel tuo journal.',
     cta: 'Avanti',
   },
   {

@@ -13,6 +13,7 @@ import {
   Plus,
   Trash2,
   WalletCards,
+  X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -56,6 +57,9 @@ interface AccountSelectorProps {
   ) => { success: boolean; error?: string; workspace?: JournalWorkspaceMeta };
   onBackupWorkspace: (workspace: JournalWorkspace) => void;
   onDeleteWorkspace: (workspace: JournalWorkspace) => boolean;
+  /** Set while an imported file is shown in Preview. */
+  previewLabel?: string;
+  onExitPreview?: () => void;
 }
 
 export function AccountSelector({
@@ -68,7 +72,10 @@ export function AccountSelector({
   onUpdateWorkspace,
   onBackupWorkspace,
   onDeleteWorkspace,
+  previewLabel,
+  onExitPreview,
 }: AccountSelectorProps) {
+  const isPreviewing = previewLabel !== undefined;
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [menuSection, setMenuSection] =
@@ -114,24 +121,12 @@ export function AccountSelector({
     ),
     [workspaces]
   );
-  const previewWorkspaces = useMemo(
-    () =>
-      workspaces.filter(
-        (workspace) =>
-          workspace.group === 'preview'
-      ),
-    [workspaces]
-  );
   const customWorkspaceCount = accountWorkspaces.filter(
     (workspace) => workspace.type === 'custom'
   ).length;
   const backtestWorkspaceCount = backtestWorkspaces.filter(
     (workspace) => workspace.type === 'custom'
   ).length;
-  const previewWorkspaceCount = previewWorkspaces.filter(
-    (workspace) => workspace.type === 'custom'
-  ).length;
-
   useEffect(() => {
     if (activeWorkspace === 'student' || activeWorkspace.startsWith('preview-')) {
       setMenuSection('preview');
@@ -226,7 +221,7 @@ export function AccountSelector({
           type="button"
           className={cn(
             'flex min-h-10 w-full cursor-pointer items-center gap-2.5 rounded-[9px] px-2.5 text-left text-sm outline-none transition-colors hover:bg-white/10 hover:text-foreground focus-visible:bg-white/10',
-            activeWorkspace === workspace.id && 'bg-white/[0.07]',
+            activeWorkspace === workspace.id && !isPreviewing && 'bg-white/[0.07]',
             isEditable && 'pr-11'
           )}
           onClick={() => {
@@ -257,7 +252,7 @@ export function AccountSelector({
               </span>
             )}
           </span>
-          {activeWorkspace === workspace.id && (
+          {activeWorkspace === workspace.id && !isPreviewing && (
             <Check
               className={cn(
                 'absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground',
@@ -314,7 +309,7 @@ export function AccountSelector({
                 aria-hidden="true"
                 className={cn(
                   'size-2 shrink-0 rounded-full',
-                  activeWorkspace === 'student' || activeWorkspace.startsWith('preview-')
+                  isPreviewing
                     ? 'bg-violet-400'
                     : activeWorkspace === 'backtest' || activeWorkspace.startsWith('backtest-')
                       ? 'bg-muted-foreground'
@@ -322,7 +317,7 @@ export function AccountSelector({
                 )}
               />
               <span className="truncate font-sans text-xs font-medium">
-                {activeAccount?.name ?? 'Seleziona conto'}
+                {isPreviewing ? 'Preview' : activeAccount?.name ?? 'Seleziona conto'}
               </span>
             </span>
             <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" />
@@ -330,6 +325,37 @@ export function AccountSelector({
         </PopoverTrigger>
 
         <PopoverContent align="start" className="w-[290px] rounded-lg p-1.5">
+          {isPreviewing && (
+            <>
+              <div className="flex min-h-10 w-full items-center gap-2.5 rounded-[9px] bg-white/[0.07] px-2.5">
+                <span className="flex size-4 shrink-0 items-center justify-center">
+                  <span className="size-2 rounded-full bg-violet-400" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block font-sans text-xs font-semibold">Preview</span>
+                  {previewLabel && (
+                    <span className="block truncate font-sans text-[10px] text-muted-foreground">
+                      {previewLabel}
+                    </span>
+                  )}
+                </span>
+                <Check className="size-4 text-muted-foreground" />
+              </div>
+              <button
+                type="button"
+                className="mt-0.5 flex min-h-10 w-full cursor-pointer items-center gap-2.5 rounded-[9px] px-2.5 text-left text-muted-foreground outline-none transition-colors hover:bg-white/10 hover:text-foreground focus-visible:bg-white/10"
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  onExitPreview?.();
+                }}
+              >
+                <X className="size-4" />
+                <span className="font-sans text-xs font-semibold">Esci dalla preview</span>
+              </button>
+              <div className="-mx-1 my-2 h-px bg-border" />
+            </>
+          )}
+
           <div className="px-2.5 pb-1 pt-2 font-sans text-[11px] text-muted-foreground">
             I tuoi conti
           </div>
@@ -401,52 +427,6 @@ export function AccountSelector({
             </div>
           )}
 
-          {(showPreviewWorkspace || menuSection === 'preview') && (
-            <>
-              <button
-                type="button"
-                aria-expanded={menuSection === 'preview'}
-                className="flex min-h-10 w-full cursor-pointer items-center gap-2.5 rounded-[9px] px-2.5 text-left outline-none transition-colors hover:bg-white/10 focus-visible:bg-white/10"
-                onClick={() =>
-                  setMenuSection(menuSection === 'preview' ? 'accounts' : 'preview')
-                }
-              >
-                <span className="flex size-4 shrink-0 items-center justify-center">
-                  <span className="size-2 rounded-full bg-violet-400" />
-                </span>
-                <span className="flex-1 font-sans text-xs font-semibold">Preview</span>
-                <ChevronRight
-                  className={cn(
-                    'size-3.5 text-muted-foreground transition-transform',
-                    menuSection === 'preview' && 'rotate-90'
-                  )}
-                />
-              </button>
-
-              {menuSection === 'preview' && (
-                <div className="ml-4 border-l border-white/10 pl-1">
-                  {previewWorkspaces.map((workspace) =>
-                    renderWorkspaceItem(
-                      workspace,
-                      <span className="size-2 rounded-full bg-violet-400" />
-                    )
-                  )}
-
-                  <button
-                    type="button"
-                    disabled={previewWorkspaceCount >= maxCustomWorkspaces}
-                    className="mt-0.5 flex min-h-10 w-full cursor-pointer items-center gap-2.5 rounded-[9px] px-2.5 text-left text-muted-foreground hover:text-foreground outline-none transition-colors hover:bg-white/10 focus-visible:bg-white/10 disabled:pointer-events-none disabled:opacity-50"
-                    onClick={() => openCreateDialog('preview')}
-                  >
-                    <Plus className="size-4" />
-                    <span className="font-sans text-xs font-semibold">
-                      Aggiungi conto Preview
-                    </span>
-                  </button>
-                </div>
-              )}
-            </>
-          )}
         </PopoverContent>
       </Popover>
 

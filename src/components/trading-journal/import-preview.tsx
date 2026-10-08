@@ -18,6 +18,7 @@ import { TradingCalendar } from './trading-calendar';
 interface ImportPreviewProps {
   data: string;
   fileName: string;
+  view: 'calendar' | 'monthly';
   onClose: () => void;
 }
 
@@ -36,11 +37,10 @@ const formatDay = (dateKey: string) => {
 const getTradeDay = (trade: Trade) =>
   (trade.exitDate || trade.entryDate || '').split('T')[0];
 
-function PreviewContent({ data, fileName, onClose }: ImportPreviewProps) {
+function PreviewContent({ data, fileName, view, onClose }: ImportPreviewProps) {
   const { preferences } = usePreferences();
   const { streamerMode } = useStreamerMode();
   const journal = useMemo(() => parseImportedJournal(data), [data]);
-  const [view, setView] = useState<'calendar' | 'analysis'>('calendar');
   const [group, setGroup] = useState<GroupDialog | null>(null);
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
   const [returnToGroup, setReturnToGroup] = useState(false);
@@ -55,13 +55,13 @@ function PreviewContent({ data, fileName, onClose }: ImportPreviewProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-[45] flex flex-col overflow-y-auto bg-background">
-      <header className="sticky top-0 z-10 border-b border-border bg-background/80 px-4 py-3 backdrop-blur-xl">
-        <div className="mx-auto flex w-full max-w-6xl items-center gap-3">
+    <div className="flex flex-1 flex-col">
+      <div className="border-b border-border bg-violet-500/[0.06]">
+        <div className="mx-auto flex w-full max-w-6xl items-center gap-3 px-4 py-2.5">
           <ProfileAvatar
             name={preferences.name}
             photo={preferences.photo}
-            className="size-10 text-sm"
+            className="size-9 text-xs"
           />
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold text-foreground">
@@ -71,50 +71,12 @@ function PreviewContent({ data, fileName, onClose }: ImportPreviewProps) {
               Preview di sola lettura · {fileName}
             </p>
           </div>
-
-          <div className="hidden gap-1 rounded-full bg-secondary p-1 sm:flex">
-            {(['calendar', 'analysis'] as const).map(item => (
-              <button
-                key={item}
-                type="button"
-                onClick={() => setView(item)}
-                className={`rounded-full px-4 py-1.5 text-xs font-medium transition ${
-                  view === item
-                    ? 'bg-white/10 text-foreground'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                {item === 'calendar' ? 'Calendario' : 'Analisi'}
-              </button>
-            ))}
-          </div>
-
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            aria-label="Chiudi preview"
-            onClick={onClose}
-          >
-            <X className="size-5" />
+          <Button type="button" variant="outline" size="sm" className="gap-2" onClick={onClose}>
+            <X className="size-4" />
+            Esci
           </Button>
         </div>
-
-        <div className="mx-auto mt-3 flex w-full max-w-6xl gap-1 rounded-full bg-secondary p-1 sm:hidden">
-          {(['calendar', 'analysis'] as const).map(item => (
-            <button
-              key={item}
-              type="button"
-              onClick={() => setView(item)}
-              className={`flex-1 rounded-full px-4 py-1.5 text-xs font-medium transition ${
-                view === item ? 'bg-white/10 text-foreground' : 'text-muted-foreground'
-              }`}
-            >
-              {item === 'calendar' ? 'Calendario' : 'Analisi'}
-            </button>
-          ))}
-        </div>
-      </header>
+      </div>
 
       <main className="mx-auto w-full max-w-6xl flex-1 overflow-x-hidden px-3.5 py-2.5 sm:px-4 sm:py-3">
         {view === 'calendar' ? (

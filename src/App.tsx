@@ -40,7 +40,7 @@ import {
   normalizeExportName,
   normalizeExportFileName,
 } from '@/lib/export-filename';
-import { planPreferencesImport } from '@/lib/import-preferences';
+import { extractImportedPreferences, planPreferencesImport } from '@/lib/import-preferences';
 import { ImportPreview } from '@/components/trading-journal/import-preview';
 import { createZipBlob } from '@/lib/zip-export';
 import {
@@ -906,7 +906,16 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
         workspaces={workspaces}
         showPreviewWorkspace={showPreviewWorkspace}
         maxCustomWorkspaces={maxCustomWorkspaces}
-        onWorkspaceChange={handleWorkspaceChange}
+        onWorkspaceChange={(workspace) => {
+          setImportPreview(null);
+          handleWorkspaceChange(workspace);
+        }}
+        previewLabel={
+          importPreview
+            ? extractImportedPreferences(importPreview.data)?.name || importPreview.fileName
+            : undefined
+        }
+        onExitPreview={() => setImportPreview(null)}
         onCreateWorkspace={createWorkspace}
         onUpdateWorkspace={updateWorkspace}
         onBackupWorkspace={handleBackupWorkspace}
@@ -920,6 +929,14 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
         onProfileClick={handleOpenProfile}
       />
 
+      {importPreview ? (
+        <ImportPreview
+          data={importPreview.data}
+          fileName={importPreview.fileName}
+          view={activeView}
+          onClose={() => setImportPreview(null)}
+        />
+      ) : (
       <main className="mx-auto w-full max-w-6xl flex-1 overflow-x-hidden px-3.5 py-2.5 sm:px-4 sm:py-3">
         {activeView === 'calendar' ? (
           <>
@@ -972,6 +989,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
           />
         )}
       </main>
+      )}
 
       <footer className="border-t border-border bg-card py-4">
         <div className="mx-auto max-w-6xl px-4 text-center">
@@ -1067,14 +1085,6 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
           setReturnToTradeGroup(true);
         }}
       />
-
-      {importPreview && (
-        <ImportPreview
-          data={importPreview.data}
-          fileName={importPreview.fileName}
-          onClose={() => setImportPreview(null)}
-        />
-      )}
 
       <ImportExportDialog
         isOpen={!!importExportMode}
@@ -1285,7 +1295,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
                   description: 'Crea e organizza conti separati senza mischiare dati e analisi.',
                   bullets: [
                     'Personale è il tuo journal principale.',
-                    'Puoi aggiungere conti, sessioni Backtest e spazi Preview.',
+                    'Puoi aggiungere conti e sessioni Backtest.',
                     'Durante la creazione puoi aggiungere una nota facoltativa con obiettivi o regole.',
                     'Ogni spazio conserva separatamente trade, calendario e statistiche.',
                   ],
@@ -1362,8 +1372,8 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
                   description: 'Gestisci i dati della pagina aperta in modo semplice e sicuro.',
                   bullets: [
                     'Import ed Export lavorano sempre sulla pagina attualmente aperta.',
-                    'Export scarica il file JSON del conto, Backtest o Preview corrente.',
-                    'Import permette di aggiungere i dati oppure sovrascrivere quelli presenti.',
+                    'Export scarica il file JSON del conto o Backtest corrente, con il tuo profilo.',
+                    'Import permette di aggiungere i dati al profilo oppure aprire il file in Preview, solo in lettura.',
                     'I dati sono salvati nella cache del browser: fai backup regolari per non perderli.',
                     'Il backup salva trade, note, setup, tag, piani e link.',
                   ],
