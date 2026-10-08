@@ -34,9 +34,9 @@ const STEPS = [
 ];
 
 const INTRO_POINTS = [
-  { icon: Target, title: 'Solo i tuoi asset', text: 'Menu, calendario e filtri mostrano solo quello che operi.' },
-  { icon: BarChart3, title: 'Statistiche sui tuoi setup', text: 'Parlano la tua lingua, con i nomi che scegli tu.' },
-  { icon: Clock, title: 'I tuoi orari', text: 'Vediamo in quali finestre funzioni meglio.' },
+  { icon: Target, title: 'I tuoi Asset preferiti a portata di mano', text: 'Menu, calendario e filtri mostrano solo quello che operi.' },
+  { icon: BarChart3, title: 'Statistiche basate sulle tue performance', text: 'Parlano la tua lingua, con i nomi che scegli tu.' },
+  { icon: Clock, title: 'Le tue sessioni operative', text: 'Vediamo in quali finestre funzioni meglio.' },
   { icon: UserRound, title: 'Un profilo tuo', text: 'Nome e foto compaiono nelle card che condividi.' },
 ];
 
