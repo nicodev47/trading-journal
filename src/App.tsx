@@ -44,11 +44,9 @@ import { extractImportedPreferences, planPreferencesImport } from '@/lib/import-
 import { ImportPreview } from '@/components/trading-journal/import-preview';
 import { createZipBlob } from '@/lib/zip-export';
 import {
-  getBackupSnoozedAt,
-  getLastBackupAt,
-  markBackupDone,
+  getBackupBaseline,
+  setBackupBaseline,
   shouldRemindBackup,
-  snoozeBackupReminder,
 } from '@/lib/backup-reminder';
 import { TutorialTour } from '@/components/trading-journal/tutorial/tutorial-tour';
 import { TutorialWelcomeDialog } from '@/components/trading-journal/tutorial/tutorial-welcome-dialog';
@@ -384,36 +382,38 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
     handleStartTutorial();
   }, [justCompletedOnboarding]);
 
-  const backupReminderCheck = useRef<() => void>(() => {});
+  const totalTrades = workspaces.reduce(
+    (sum, workspace) => sum + getWorkspaceData(workspace.id).trades.length,
+    0
+  );
+  const justImportedRef = useRef(false);
 
-  backupReminderCheck.current = () => {
+  // Remind about a backup after 3 new trades since the last one. Data that
+  // just came from an import file counts as already backed up.
+  useEffect(() => {
     if (isTutorialActive || isTutorialWelcomeOpen) return;
 
-    const due = shouldRemindBackup({
-      hasData: workspaces.some(workspace =>
-        hasWorkspaceContent(getWorkspaceData(workspace.id))
-      ),
-      lastBackupAt: getLastBackupAt(),
-      snoozedAt: getBackupSnoozedAt(),
-      now: Date.now(),
-    });
+    if (justImportedRef.current) {
+      justImportedRef.current = false;
+      setBackupBaseline(totalTrades);
+      return;
+    }
 
-    if (!due) return;
+    if (!shouldRemindBackup({ totalTrades, baseline: getBackupBaseline() })) return;
 
-    snoozeBackupReminder();
-    toast.info('È un po’ che non fai un backup', {
-      description:
-        'I dati sono salvati nella cache del browser: esporta una copia per non perderli.',
-      duration: 12000,
-      action: { label: 'Esporta tutto', onClick: () => handleExportAllJournals() },
-    });
-  };
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => backupReminderCheck.current(), 4000);
+    // Small delay so the toast is not fired before the Toaster is mounted.
+    const timer = window.setTimeout(() => {
+      setBackupBaseline(totalTrades);
+      toast.info('Ricordati di fare un backup', {
+        description:
+          'Hai aggiunto 3 operazioni dall’ultimo backup. I dati sono salvati nella cache del browser: esporta una copia per non perderli.',
+        duration: 12000,
+        action: { label: 'Esporta tutto', onClick: () => handleExportAllJournals() },
+      });
+    }, 1500);
 
     return () => window.clearTimeout(timer);
-  }, []);
+  }, [totalTrades, isTutorialActive, isTutorialWelcomeOpen]);
 
   const handleRestartTutorial = () => {
     setIsHelpOpen(false);
@@ -610,6 +610,8 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
     const success = importData(data, workspace);
 
     if (success) {
+      justImportedRef.current = true;
+      window.setTimeout(() => { justImportedRef.current = false; }, 1500);
       adoptImportedPreferences(data);
       completeImportNavigation(data, workspace);
     }
@@ -625,6 +627,8 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
     const success = appendImportData(data, workspace);
 
     if (success) {
+      justImportedRef.current = true;
+      window.setTimeout(() => { justImportedRef.current = false; }, 1500);
       adoptImportedPreferences(data);
       completeImportNavigation(data, workspace);
       setImportTargetMonth(targetMonth);
@@ -751,7 +755,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
     anchor.click();
     document.body.removeChild(anchor);
     URL.revokeObjectURL(url);
-    markBackupDone();
+    setBackupBaseline(totalTrades);
     toast.success('Tutti i journal sono stati esportati');
   };
 
@@ -1096,6 +1100,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
         exportData={exportData()}
         getWorkspaceExportData={getWorkspaceExportData}
         workspaceHasData={getWorkspaceHasImportData}
+        onBackupDone={() => setBackupBaseline(totalTrades)}
         onPreview={(data, fileName) => setImportPreview({ data, fileName })}
         onImport={importExportMode === 'import' ? handleImportData : undefined}
         onAppendImport={

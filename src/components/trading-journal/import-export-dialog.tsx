@@ -19,7 +19,6 @@ import {
   getGuidedExportBaseName,
   normalizeExportFileName,
 } from '@/lib/export-filename';
-import { markBackupDone } from '@/lib/backup-reminder';
 import { parseJournalExport } from '@/lib/journal-export';
 import {
   SYSTEM_WORKSPACES,
@@ -40,6 +39,8 @@ interface ImportExportDialogProps {
   onImport?: (data: string, workspace: JournalWorkspace) => boolean;
   onAppendImport?: (data: string, workspace: JournalWorkspace) => boolean;
   onPreview?: (data: string, fileName: string) => void;
+  /** Called after a real (non-censored) backup file was downloaded. */
+  onBackupDone?: () => void;
 }
 
 const getWorkspaceLabel = (
@@ -72,6 +73,7 @@ export function ImportExportDialog({
   onImport,
   onAppendImport,
   onPreview,
+  onBackupDone,
   workspaceOptions: providedWorkspaceOptions,
 }: ImportExportDialogProps) {
   const { streamerMode } = useStreamerMode();
@@ -149,7 +151,7 @@ export function ImportExportDialog({
     document.body.removeChild(anchor);
     URL.revokeObjectURL(url);
     // A censored (streamer mode) export is not a usable backup.
-    if (!streamerMode) markBackupDone();
+    if (!streamerMode) onBackupDone?.();
   };
 
   const handleDownload = () => {

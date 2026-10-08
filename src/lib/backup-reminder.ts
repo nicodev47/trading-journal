@@ -1,54 +1,35 @@
-export const LAST_BACKUP_KEY = 'eclipse-last-backup-at';
-export const BACKUP_SNOOZE_KEY = 'eclipse-backup-reminder-snoozed-at';
+export const BACKUP_BASELINE_KEY = 'eclipse-backup-trades-baseline';
 
-export const BACKUP_INTERVAL_DAYS = 14;
-export const SNOOZE_DAYS = 7;
+/** New trades since the last backup (or the last reminder) that trigger a reminder. */
+export const TRADES_BEFORE_REMINDER = 3;
 
-const DAY_MS = 24 * 60 * 60 * 1000;
-
-const daysSince = (timestamp: number | null, now: number) =>
-  timestamp === null ? Infinity : (now - timestamp) / DAY_MS;
-
-/**
- * A reminder is due when the journal holds data, the last backup is older than
- * BACKUP_INTERVAL_DAYS (or missing) and the reminder was not snoozed recently.
- */
 export function shouldRemindBackup({
-  hasData,
-  lastBackupAt,
-  snoozedAt,
-  now,
+  totalTrades,
+  baseline,
 }: {
-  hasData: boolean;
-  lastBackupAt: number | null;
-  snoozedAt: number | null;
-  now: number;
+  totalTrades: number;
+  baseline: number | null;
 }) {
-  if (!hasData) return false;
-  if (daysSince(lastBackupAt, now) < BACKUP_INTERVAL_DAYS) return false;
-
-  return daysSince(snoozedAt, now) >= SNOOZE_DAYS;
+  // Without a baseline nothing has been backed up yet: count from zero.
+  return totalTrades - (baseline ?? 0) >= TRADES_BEFORE_REMINDER;
 }
 
-const readTimestamp = (key: string) => {
+export const getBackupBaseline = (): number | null => {
   try {
-    const value = Number(localStorage.getItem(key));
+    const raw = localStorage.getItem(BACKUP_BASELINE_KEY);
+    const value = raw === null ? NaN : Number(raw);
 
-    return Number.isFinite(value) && value > 0 ? value : null;
+    return Number.isFinite(value) && value >= 0 ? value : null;
   } catch {
     return null;
   }
 };
 
-const writeTimestamp = (key: string, value: number) => {
+/** Records the trade count at the moment of a backup, or when a reminder was shown. */
+export const setBackupBaseline = (totalTrades: number) => {
   try {
-    localStorage.setItem(key, String(value));
+    localStorage.setItem(BACKUP_BASELINE_KEY, String(totalTrades));
   } catch {
     // Storage unavailable: the reminder simply stays active.
   }
 };
-
-export const getLastBackupAt = () => readTimestamp(LAST_BACKUP_KEY);
-export const getBackupSnoozedAt = () => readTimestamp(BACKUP_SNOOZE_KEY);
-export const markBackupDone = (now = Date.now()) => writeTimestamp(LAST_BACKUP_KEY, now);
-export const snoozeBackupReminder = (now = Date.now()) => writeTimestamp(BACKUP_SNOOZE_KEY, now);
