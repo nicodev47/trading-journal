@@ -36,7 +36,7 @@ export function OnboardingPreview({ draft }: { draft: JournalPreferences }) {
     <div className="flex w-full max-w-[460px] flex-col gap-4">
       <div className="rounded-2xl border border-border bg-card p-6">
         <div className="flex items-center gap-4">
-          <ProfileAvatar name={draft.name} photo={draft.photo} className="size-16 text-xl" />
+          <ProfileAvatar name={draft.name} photo={draft.photo} fallbackInitials="MR" className="size-16 text-xl" />
           <div className="min-w-0">
             <div className="truncate text-lg font-semibold">
               {identity?.displayName ?? 'Il tuo nome'}

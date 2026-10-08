@@ -51,12 +51,14 @@ export function ProfileAvatar({
   name,
   photo,
   className = 'size-20 text-2xl',
+  fallbackInitials = 'EJ',
 }: {
   name: string;
   photo: string | null;
   className?: string;
+  fallbackInitials?: string;
 }) {
-  const initials = getShareIdentity(name)?.initials ?? 'EJ';
+  const initials = getShareIdentity(name)?.initials ?? fallbackInitials;
 
   return photo ? (
     <img
@@ -78,9 +80,10 @@ interface ProfileFieldsProps {
   photo: string | null;
   onChange: (patch: { name?: string; photo?: string | null }) => void;
   autoFocus?: boolean;
+  fallbackInitials?: string;
 }
 
-export function ProfileFields({ name, photo, onChange, autoFocus }: ProfileFieldsProps) {
+export function ProfileFields({ name, photo, onChange, autoFocus, fallbackInitials }: ProfileFieldsProps) {
   const fileInput = useRef<HTMLInputElement>(null);
   const [error, setError] = useState('');
 
@@ -108,7 +111,7 @@ export function ProfileFields({ name, photo, onChange, autoFocus }: ProfileField
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center gap-5">
-        <ProfileAvatar name={name} photo={photo} />
+        <ProfileAvatar name={name} photo={photo} fallbackInitials={fallbackInitials} />
         <div className="flex flex-wrap gap-2">
           <Button
             type="button"

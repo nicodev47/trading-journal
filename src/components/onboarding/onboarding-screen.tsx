@@ -11,11 +11,9 @@ import { cn } from '@/lib/utils';
 import { OnboardingIntro } from './onboarding-intro';
 import { OnboardingPreview } from './onboarding-preview';
 
-const STEPS = [
+const STEPS: { title: string; description?: string; why: string }[] = [
   {
     title: 'Incominciamo con le presentazioni, come ti chiami?',
-    description:
-      'Inserisci il tuo Nome e Cognome, altrimenti l\'username con il quale vuoi essere riconosciuto. Se ti va, carica una foto profilo unica, se non vuoi utilizzare quella di default.',
     why: 'Ti chiediamo questi dati solo per un punto di vista estetico e di personalizzazione del tuo profilo. I tuoi dati non vengono condivisi con nessuno: per i nostri trader la privacy è al primo posto.',
   },
   {
@@ -93,8 +91,10 @@ export function OnboardingScreen() {
         <div className="flex max-w-[480px] flex-1 flex-col">
           <>
               <h1 className="text-3xl font-semibold tracking-tight">{STEPS[step].title}</h1>
-              <p className="mt-3 text-sm text-muted-foreground">{STEPS[step].description}</p>
-              <p className="mt-2 text-xs text-muted-foreground/80">
+              {STEPS[step].description && (
+                <p className="mt-3 text-sm text-muted-foreground">{STEPS[step].description}</p>
+              )}
+              <p className="mt-3 text-xs text-muted-foreground/80">
                 <span className="font-medium text-muted-foreground">Perché te lo chiediamo: </span>
                 {STEPS[step].why}
               </p>
@@ -103,6 +103,7 @@ export function OnboardingScreen() {
                 {step === 0 && (
                   <ProfileFields
                     autoFocus
+                    fallbackInitials="MR"
                     name={draft.name}
                     photo={draft.photo}
                     onChange={patch}
