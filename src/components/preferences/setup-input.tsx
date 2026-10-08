@@ -58,11 +58,7 @@ export function SetupInput({ value, onChange }: SetupInputProps) {
             </span>
           ))}
         </div>
-      ) : (
-        <p className="text-xs text-muted-foreground">
-          Chiamali come vuoi: l&apos;iniziale di ogni parola diventa maiuscola in automatico.
-        </p>
-      )}
+      ) : null}
     </div>
   );
 }

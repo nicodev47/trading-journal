@@ -22,9 +22,8 @@ const STEPS: { title: string; description?: string; why?: string }[] = [
       'Scegli su quale asset si basa la tua operatività in modo da avere sempre a portata di mano i tuoi asset preferiti.',
   },
   {
-    title: 'Che setup usi?',
-    description: 'Scrivi i nomi dei tuoi setup come li chiami tu. Potrai cambiarli quando vuoi dal profilo.',
-    why: 'Le statistiche confrontano i tuoi setup tra loro e ti dicono quale funziona meglio.',
+    title: 'Come si chiamano i setup della tua strategia?',
+    description: 'Scrivi i nomi dei setup che utilizzi all\'interno della tua operatività.',
   },
   {
     title: 'Hai una finestra operativa?',
