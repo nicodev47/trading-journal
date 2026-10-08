@@ -107,7 +107,7 @@ const initialState: JournalState = {
   },
 };
 
-const parseImportedJournal = (jsonString: string): JournalState | null => {
+export const parseImportedJournal = (jsonString: string): JournalState | null => {
   try {
     const data = JSON.parse(jsonString) as LegacyJournalState;
 

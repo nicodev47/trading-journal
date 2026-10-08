@@ -44,6 +44,8 @@ interface TradingCalendarProps {
   onExport: () => void;
   importTargetMonth?: Date | null;
   tutorialDemoDateKey?: string;
+  /** Hides import/export/reset: used by the import preview. */
+  readOnly?: boolean;
 }
 
 const WEEKDAYS = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
@@ -100,6 +102,7 @@ export function TradingCalendar({
   onExport,
   importTargetMonth,
   tutorialDemoDateKey,
+  readOnly = false,
 }: TradingCalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const { sundayWeekStart, showZeroPnlTradesInCalendar } = useStreamerMode();
@@ -216,7 +219,7 @@ export function TradingCalendar({
             Calendario P/L
           </h2>
 
-          {activeWorkspace === 'backtest' && showResetButton && (
+          {!readOnly && activeWorkspace === 'backtest' && showResetButton && (
             <Button
               type="button"
               variant="outline"
@@ -229,7 +232,8 @@ export function TradingCalendar({
             </Button>
           )}
 
-          {(activeWorkspace === 'student' || activeWorkspace.startsWith('preview-')) &&
+          {!readOnly &&
+            (activeWorkspace === 'student' || activeWorkspace.startsWith('preview-')) &&
             showPreviewWorkspace && (
             <Button
               type="button"
@@ -274,30 +278,32 @@ export function TradingCalendar({
           </Button>
         </div>
 
-        <div
-          className="flex items-center gap-2 max-md:w-full"
-          data-tutorial="import-export-buttons"
-        >
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onImport}
-            className="h-9 gap-2 rounded-lg border-white/[0.07] font-sans text-xs font-semibold dark:border-white/[0.07] max-md:flex-1"
+        {!readOnly && (
+          <div
+            className="flex items-center gap-2 max-md:w-full"
+            data-tutorial="import-export-buttons"
           >
-            <Upload className="size-3" />
-            Importa
-          </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onImport}
+              className="h-9 gap-2 rounded-lg border-white/[0.07] font-sans text-xs font-semibold dark:border-white/[0.07] max-md:flex-1"
+            >
+              <Upload className="size-3" />
+              Importa
+            </Button>
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onExport}
-            className="h-9 gap-2 rounded-lg border-white/[0.07] font-sans text-xs font-semibold dark:border-white/[0.07] max-md:flex-1"
-          >
-            <Download className="size-3" />
-            Esporta
-          </Button>
-        </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onExport}
+              className="h-9 gap-2 rounded-lg border-white/[0.07] font-sans text-xs font-semibold dark:border-white/[0.07] max-md:flex-1"
+            >
+              <Download className="size-3" />
+              Esporta
+            </Button>
+          </div>
+        )}
       </div>
 
       <div className="w-full overflow-hidden">

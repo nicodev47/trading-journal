@@ -39,6 +39,7 @@ interface ImportExportDialogProps {
   workspaceHasData?: (workspace: JournalWorkspace) => boolean;
   onImport?: (data: string, workspace: JournalWorkspace) => boolean;
   onAppendImport?: (data: string, workspace: JournalWorkspace) => boolean;
+  onPreview?: (data: string, fileName: string) => void;
 }
 
 const getWorkspaceLabel = (
@@ -70,6 +71,7 @@ export function ImportExportDialog({
   workspaceHasData,
   onImport,
   onAppendImport,
+  onPreview,
   workspaceOptions: providedWorkspaceOptions,
 }: ImportExportDialogProps) {
   const { streamerMode } = useStreamerMode();
@@ -79,6 +81,7 @@ export function ImportExportDialog({
   );
   const [selectedFileName, setSelectedFileName] = useState('');
   const [pendingImportData, setPendingImportData] = useState<string | null>(null);
+  const [importStep, setImportStep] = useState<'choose' | 'profile'>('choose');
   const [importError, setImportError] = useState('');
   const [isAppendConfirmOpen, setIsAppendConfirmOpen] = useState(false);
   const [isOverwriteConfirmOpen, setIsOverwriteConfirmOpen] = useState(false);
@@ -106,6 +109,7 @@ export function ImportExportDialog({
     setExportFileName(getGuidedExportBaseName(activeWorkspace));
     setSelectedFileName('');
     setPendingImportData(null);
+    setImportStep('choose');
     setImportError('');
     setIsAppendConfirmOpen(false);
     setIsOverwriteConfirmOpen(false);
@@ -119,6 +123,7 @@ export function ImportExportDialog({
     setExportFileName(getGuidedExportBaseName(activeWorkspace));
     setSelectedFileName('');
     setPendingImportData(null);
+    setImportStep('choose');
     setImportError('');
     setIsAppendConfirmOpen(false);
     setIsOverwriteConfirmOpen(false);
@@ -201,6 +206,8 @@ export function ImportExportDialog({
   const prepareImport = (file: File) => {
     setSelectedFileName(file.name);
     setPendingImportData(null);
+    setImportStep('choose');
+    setImportStep('choose');
     setImportError('');
 
     if (!file.name.toLowerCase().endsWith('.json') && file.type !== 'application/json') {
@@ -332,7 +339,9 @@ export function ImportExportDialog({
             {mode === 'export'
               ? `Stai esportando i dati della pagina aperta: ${selectedExportLabel}.`
               : pendingImportData
-                ? `Scegli come importare i dati in ${selectedWorkspaceLabel}.`
+                ? importStep === 'choose'
+                  ? 'Come vuoi usare il file selezionato?'
+                  : `Scegli come importare i dati in ${selectedWorkspaceLabel}.`
                 : `Seleziona un file JSON da importare in ${selectedWorkspaceLabel}.`}
           </DialogDescription>
         </DialogHeader>
@@ -400,6 +409,54 @@ export function ImportExportDialog({
                 </Button>
               </DialogFooter>
             </>
+        ) : pendingImportData && importStep === 'choose' ? (
+          <>
+            <div className="space-y-3 px-4 py-4 sm:px-5 sm:py-5">
+              <div className="flex items-center gap-3 rounded-lg border border-border bg-background/45 p-3">
+                <FileJson className="size-6 shrink-0 text-profit" />
+                <span className="block truncate font-sans text-sm text-foreground">
+                  {selectedFileName}
+                </span>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setImportStep('profile')}
+                className="flex w-full flex-col gap-1 rounded-lg border border-border bg-background/35 p-4 text-left transition-colors hover:border-white/25 hover:bg-white/[0.04]"
+              >
+                <span className="font-sans text-sm font-semibold text-foreground">
+                  Aggiungi al profilo
+                </span>
+                <span className="font-sans text-xs text-muted-foreground">
+                  Importa i dati in {selectedWorkspaceLabel}: aggiungili a quelli attuali oppure sostituiscili.
+                </span>
+              </button>
+
+              {onPreview && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onPreview(pendingImportData, selectedFileName);
+                    handleClose();
+                  }}
+                  className="flex w-full flex-col gap-1 rounded-lg border border-border bg-background/35 p-4 text-left transition-colors hover:border-white/25 hover:bg-white/[0.04]"
+                >
+                  <span className="font-sans text-sm font-semibold text-foreground">
+                    Preview
+                  </span>
+                  <span className="font-sans text-xs text-muted-foreground">
+                    Apri il profilo e i dati del file in una pagina a parte, solo da guardare. Non cambia nulla nel tuo journal.
+                  </span>
+                </button>
+              )}
+            </div>
+
+            <DialogFooter className="border-t border-border bg-background/25 px-4 py-3.5 max-sm:[&_button]:w-full sm:px-5 sm:py-4">
+              <Button type="button" variant="outline" onClick={handleClose}>
+                Annulla
+              </Button>
+            </DialogFooter>
+          </>
         ) : pendingImportData ? (
           <>
             <div className="ej-scrollbar max-h-[calc(92dvh-9rem)] space-y-4 overflow-y-auto px-4 py-4 sm:px-5 sm:py-5">

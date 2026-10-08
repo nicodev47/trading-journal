@@ -168,6 +168,32 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
   );
 }
 
+/** Fixed, read-only preferences for a subtree (e.g. the import preview). */
+export function PreferencesOverrideProvider({
+  preferences,
+  children,
+}: {
+  preferences: JournalPreferences;
+  children: ReactNode;
+}) {
+  const value = useMemo<PreferencesContextValue>(
+    () => ({
+      preferences,
+      needsOnboarding: false,
+      justCompletedOnboarding: false,
+      updatePreferences: () => {},
+      completeOnboarding: () => {},
+    }),
+    [preferences]
+  );
+
+  return (
+    <PreferencesContext.Provider value={value}>
+      {children}
+    </PreferencesContext.Provider>
+  );
+}
+
 export function usePreferences() {
   const context = useContext(PreferencesContext);
 

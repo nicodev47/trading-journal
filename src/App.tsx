@@ -40,7 +40,8 @@ import {
   normalizeExportName,
   normalizeExportFileName,
 } from '@/lib/export-filename';
-import { collectImportedChoices, getMissingChoices } from '@/lib/import-preferences';
+import { planPreferencesImport } from '@/lib/import-preferences';
+import { ImportPreview } from '@/components/trading-journal/import-preview';
 import { createZipBlob } from '@/lib/zip-export';
 import {
   getBackupSnoozedAt,
@@ -238,6 +239,7 @@ const [isTutorialActive, setIsTutorialActive] = useState(false);
 const [tutorialStepIndex, setTutorialStepIndex] = useState(0);
 const [tutorialTrades, setTutorialTrades] = useState<Trade[]>([]);
 const [importTargetMonth, setImportTargetMonth] = useState<Date | null>(null);
+const [importPreview, setImportPreview] = useState<{ data: string; fileName: string } | null>(null);
 const tutorialDemoDateKey = getTutorialDemoDateKey();
 
   useEffect(() => {
@@ -541,8 +543,14 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
   };
 
   const getWorkspaceExportData = useCallback((workspace: JournalWorkspace) => {
-    return createWorkspaceExportData(workspace, getWorkspaceData(workspace));
-  }, [getWorkspaceData]);
+    return createWorkspaceExportData(
+      workspace,
+      getWorkspaceData(workspace),
+      new Date(),
+      undefined,
+      preferences
+    );
+  }, [getWorkspaceData, preferences]);
 
   const getWorkspaceHasImportData = useCallback((workspace: JournalWorkspace) => {
     return hasWorkspaceContent(getWorkspaceData(workspace));
@@ -571,29 +579,30 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
     setImportTargetMonth(getEarliestImportedTradeMonth(data));
   };
 
-  // Imported journals may use assets/setups the user never configured: add them
-  // to the preferences so menus and analysis show them, with an undo.
-  const adoptImportedChoices = (data: string) => {
-    const missing = getMissingChoices(preferences, collectImportedChoices(data));
-    const count = missing.assets.length + missing.setups.length;
+  // Empty journal + file with a profile: restore it (new device). Otherwise keep
+  // the user's profile and only add the assets/setups the imported trades use.
+  const adoptImportedPreferences = (data: string) => {
+    const journalIsEmpty = !workspaces.some(workspace =>
+      hasWorkspaceContent(getWorkspaceData(workspace.id))
+    );
+    const plan = planPreferencesImport(preferences, data, journalIsEmpty);
 
-    if (count === 0) return;
+    if (Object.keys(plan.patch).length === 0) return;
 
-    const previous = { assets: preferences.assets, setups: preferences.setups };
+    updatePreferences(plan.patch);
 
-    updatePreferences({
-      assets: [...preferences.assets, ...missing.assets],
-      setups: [...preferences.setups, ...missing.setups],
-    });
+    if (plan.restored) {
+      toast.info('Profilo e preferenze ripristinati dal file');
+      return;
+    }
+
     toast.info('Preferenze aggiornate con i dati importati', {
       description: [
-        missing.assets.length ? `Asset: ${missing.assets.join(', ')}` : '',
-        missing.setups.length ? `Setup: ${missing.setups.join(', ')}` : '',
+        plan.addedAssets.length ? `Asset: ${plan.addedAssets.join(', ')}` : '',
+        plan.addedSetups.length ? `Setup: ${plan.addedSetups.join(', ')}` : '',
       ]
         .filter(Boolean)
         .join(' · '),
-      duration: 10000,
-      action: { label: 'Annulla', onClick: () => updatePreferences(previous) },
     });
   };
 
@@ -601,7 +610,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
     const success = importData(data, workspace);
 
     if (success) {
-      adoptImportedChoices(data);
+      adoptImportedPreferences(data);
       completeImportNavigation(data, workspace);
     }
 
@@ -616,7 +625,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
     const success = appendImportData(data, workspace);
 
     if (success) {
-      adoptImportedChoices(data);
+      adoptImportedPreferences(data);
       completeImportNavigation(data, workspace);
       setImportTargetMonth(targetMonth);
     }
@@ -1059,6 +1068,14 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
         }}
       />
 
+      {importPreview && (
+        <ImportPreview
+          data={importPreview.data}
+          fileName={importPreview.fileName}
+          onClose={() => setImportPreview(null)}
+        />
+      )}
+
       <ImportExportDialog
         isOpen={!!importExportMode}
         onClose={() => setImportExportMode(null)}
@@ -1068,6 +1085,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
         exportData={exportData()}
         getWorkspaceExportData={getWorkspaceExportData}
         workspaceHasData={getWorkspaceHasImportData}
+        onPreview={(data, fileName) => setImportPreview({ data, fileName })}
         onImport={importExportMode === 'import' ? handleImportData : undefined}
         onAppendImport={
           importExportMode === 'import' ? handleAppendImportData : undefined

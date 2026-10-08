@@ -3,6 +3,7 @@ import type {
   JournalWorkspaceMeta,
 } from '@/hooks/use-trades';
 import type { JournalState, Trade } from './types/trade';
+import type { JournalPreferences } from './preferences.ts';
 
 export const JOURNAL_EXPORT_FORMAT_VERSION = 1;
 
@@ -18,6 +19,8 @@ export interface JournalExportMetadata {
 
 export type WorkspaceJournalExport = JournalState & {
   exportMetadata: JournalExportMetadata;
+  /** Profile and personalization of the exporter, to restore on a new device. */
+  preferences?: JournalPreferences;
 };
 
 export interface FullJournalBackup {
@@ -103,10 +106,12 @@ export function createWorkspaceExportData(
   workspace: JournalWorkspace,
   data: JournalState,
   exportedAt = new Date(),
-  workspaceMetadata?: JournalWorkspaceMeta
+  workspaceMetadata?: JournalWorkspaceMeta,
+  preferences?: JournalPreferences
 ): string {
   const payload: WorkspaceJournalExport = {
     ...data,
+    ...(preferences ? { preferences } : {}),
     exportMetadata: {
       formatVersion: JOURNAL_EXPORT_FORMAT_VERSION,
       exportType: 'workspace',
