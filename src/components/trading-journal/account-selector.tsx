@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 're
 import {
   Check,
   ChevronDown,
+  ChevronRight,
   Download,
   Eye,
   FlaskConical,
@@ -224,7 +225,8 @@ export function AccountSelector({
         <button
           type="button"
           className={cn(
-            'flex min-h-11 w-full cursor-pointer items-center gap-2 rounded-lg border border-transparent px-2.5 text-left text-sm outline-none transition-colors hover:border-white/15 hover:bg-white/10 hover:text-foreground focus-visible:border-white/15 focus-visible:bg-white/10',
+            'flex min-h-10 w-full cursor-pointer items-center gap-2.5 rounded-[9px] px-2.5 text-left text-sm outline-none transition-colors hover:bg-white/10 hover:text-foreground focus-visible:bg-white/10',
+            activeWorkspace === workspace.id && 'bg-white/[0.07]',
             isEditable && 'pr-11'
           )}
           onClick={() => {
@@ -242,7 +244,7 @@ export function AccountSelector({
             setIsMenuOpen(false);
           }}
         >
-          <span className="flex size-7 items-center justify-center rounded-lg bg-secondary text-muted-foreground transition-colors group-hover:bg-white/10 group-hover:text-foreground">
+          <span className="flex size-4 shrink-0 items-center justify-center">
             {icon}
           </span>
           <span className="min-w-0 flex-1">
@@ -258,7 +260,7 @@ export function AccountSelector({
           {activeWorkspace === workspace.id && (
             <Check
               className={cn(
-                'absolute right-3 top-1/2 size-4 -translate-y-1/2 text-profit',
+                'absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground',
                 isEditable && 'group-hover:opacity-0'
               )}
             />
@@ -341,14 +343,14 @@ export function AccountSelector({
               {accountWorkspaces.map((workspace) =>
                 renderWorkspaceItem(
                   workspace,
-                  <WalletCards className="size-3.5" />
+                  <span className="size-2 rounded-full bg-profit" />
                 )
               )}
 
               <button
                 type="button"
                 disabled={customWorkspaceCount >= maxCustomWorkspaces}
-                className="mt-1 flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-lg border border-dashed border-white/15 px-2 text-left text-foreground outline-none transition-colors hover:bg-white/10 focus-visible:bg-white/10 disabled:pointer-events-none disabled:opacity-50"
+                className="mt-1 flex min-h-10 w-full cursor-pointer items-center gap-2.5 rounded-[9px] px-2.5 text-left text-muted-foreground hover:text-foreground outline-none transition-colors hover:bg-white/10 focus-visible:bg-white/10 disabled:pointer-events-none disabled:opacity-50"
                 onClick={() => openCreateDialog('account')}
               >
                 <Plus className="size-4" />
@@ -362,14 +364,14 @@ export function AccountSelector({
               {backtestWorkspaces.map((workspace) =>
                 renderWorkspaceItem(
                   workspace,
-                  <FlaskConical className="size-3.5" />
+                  <span className="size-2 rounded-full bg-muted-foreground" />
                 )
               )}
 
               <button
                 type="button"
                 disabled={backtestWorkspaceCount >= maxCustomWorkspaces}
-                className="mt-1 flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-lg border border-dashed border-white/15 px-2 text-left text-foreground outline-none transition-colors hover:bg-white/10 focus-visible:bg-white/10 disabled:pointer-events-none disabled:opacity-50"
+                className="mt-1 flex min-h-10 w-full cursor-pointer items-center gap-2.5 rounded-[9px] px-2.5 text-left text-muted-foreground hover:text-foreground outline-none transition-colors hover:bg-white/10 focus-visible:bg-white/10 disabled:pointer-events-none disabled:opacity-50"
                 onClick={() => openCreateDialog('backtest')}
               >
                 <Plus className="size-4" />
@@ -383,14 +385,14 @@ export function AccountSelector({
               {previewWorkspaces.map((workspace) =>
                 renderWorkspaceItem(
                   workspace,
-                  <Eye className="size-3.5" />
+                  <span className="size-2 rounded-full bg-violet-400" />
                 )
               )}
 
               <button
                 type="button"
                 disabled={previewWorkspaceCount >= maxCustomWorkspaces}
-                className="mt-1 flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-lg border border-dashed border-white/15 px-2 text-left text-foreground outline-none transition-colors hover:bg-white/10 focus-visible:bg-white/10 disabled:pointer-events-none disabled:opacity-50"
+                className="mt-1 flex min-h-10 w-full cursor-pointer items-center gap-2.5 rounded-[9px] px-2.5 text-left text-muted-foreground hover:text-foreground outline-none transition-colors hover:bg-white/10 focus-visible:bg-white/10 disabled:pointer-events-none disabled:opacity-50"
                 onClick={() => openCreateDialog('preview')}
               >
                 <Plus className="size-4" />
@@ -409,50 +411,54 @@ export function AccountSelector({
           {menuSection === 'accounts' ? (
             <button
               type="button"
-              className="flex min-h-11 w-full items-center gap-2 rounded-lg border border-transparent px-2.5 text-left outline-none transition-colors hover:border-white/15 hover:bg-white/10 focus-visible:border-white/15 focus-visible:bg-white/10"
+              className="flex min-h-10 w-full items-center gap-2.5 rounded-[9px] px-2.5 text-left outline-none transition-colors hover:bg-white/10 focus-visible:bg-white/10"
               onClick={() => setMenuSection('backtests')}
             >
-              <span className="flex size-7 items-center justify-center rounded-lg bg-secondary text-muted-foreground">
-                <Folder className="size-3.5" />
+              <span className="flex size-4 shrink-0 items-center justify-center">
+                <span className="size-2 rounded-full bg-muted-foreground" />
               </span>
               <span className="flex-1 font-sans text-xs font-semibold">Backtest</span>
+              <ChevronRight className="size-3.5 text-muted-foreground" />
             </button>
           ) : (
             <button
               type="button"
-              className="flex min-h-11 w-full items-center gap-2 rounded-lg border border-transparent px-2.5 text-left outline-none transition-colors hover:border-white/15 hover:bg-white/10 focus-visible:border-white/15 focus-visible:bg-white/10"
+              className="flex min-h-10 w-full items-center gap-2.5 rounded-[9px] px-2.5 text-left outline-none transition-colors hover:bg-white/10 focus-visible:bg-white/10"
               onClick={() => setMenuSection('accounts')}
             >
-              <span className="flex size-7 items-center justify-center rounded-lg bg-secondary text-muted-foreground">
-                <WalletCards className="size-3.5" />
+              <span className="flex size-4 shrink-0 items-center justify-center">
+                <span className="size-2 rounded-full bg-profit" />
               </span>
               <span className="flex-1 font-sans text-xs font-semibold">I tuoi conti</span>
+              <ChevronRight className="size-3.5 text-muted-foreground" />
             </button>
           )}
 
           {menuSection === 'preview' && (
             <button
               type="button"
-              className="flex min-h-11 w-full items-center gap-2 rounded-lg border border-transparent px-2.5 text-left outline-none transition-colors hover:border-white/15 hover:bg-white/10 focus-visible:border-white/15 focus-visible:bg-white/10"
+              className="flex min-h-10 w-full items-center gap-2.5 rounded-[9px] px-2.5 text-left outline-none transition-colors hover:bg-white/10 focus-visible:bg-white/10"
               onClick={() => setMenuSection('backtests')}
             >
-              <span className="flex size-7 items-center justify-center rounded-lg bg-secondary text-muted-foreground">
-                <Folder className="size-3.5" />
+              <span className="flex size-4 shrink-0 items-center justify-center">
+                <span className="size-2 rounded-full bg-muted-foreground" />
               </span>
               <span className="flex-1 font-sans text-xs font-semibold">Backtest</span>
+              <ChevronRight className="size-3.5 text-muted-foreground" />
             </button>
           )}
 
           {menuSection !== 'preview' && showPreviewWorkspace && (
             <button
               type="button"
-              className="flex min-h-11 w-full items-center gap-2 rounded-lg border border-transparent px-2.5 text-left outline-none transition-colors hover:border-white/15 hover:bg-white/10 focus-visible:border-white/15 focus-visible:bg-white/10"
+              className="flex min-h-10 w-full items-center gap-2.5 rounded-[9px] px-2.5 text-left outline-none transition-colors hover:bg-white/10 focus-visible:bg-white/10"
               onClick={() => setMenuSection('preview')}
             >
-              <span className="flex size-7 items-center justify-center rounded-lg bg-secondary text-muted-foreground">
-                <Eye className="size-3.5" />
+              <span className="flex size-4 shrink-0 items-center justify-center">
+                <span className="size-2 rounded-full bg-violet-400" />
               </span>
               <span className="flex-1 font-sans text-xs font-semibold">Preview</span>
+              <ChevronRight className="size-3.5 text-muted-foreground" />
             </button>
           )}
         </PopoverContent>
