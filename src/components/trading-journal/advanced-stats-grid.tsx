@@ -318,14 +318,7 @@ export function AdvancedStatsGrid({
     data.riskRewardRatio
   );
 
-  return (
-    <>
-    <StatisticsCardGrid
-      className={cn(
-        'items-start py-3 md:py-4',
-        extended && '[&_[data-slot=card-content]]:!min-h-[124px]'
-      )}
-    >
+  const giorniCard = (
       <Card className="self-start rounded-2xl border border-border bg-card/95 py-0 shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
         <CardContent className="flex min-h-[112px] min-w-0 flex-col justify-center p-3.5 md:min-h-[148px] md:p-4">
           <p className="font-sans tabular-nums text-xs font-medium tracking-normal text-muted-foreground">
@@ -350,7 +343,9 @@ export function AdvancedStatsGrid({
           </div>
         </CardContent>
       </Card>
+  );
 
+  const serieCard = (
       <Card className="self-start rounded-2xl border border-border bg-card/95 py-0 shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
         <CardContent className="flex min-h-[112px] min-w-0 flex-col justify-center p-3.5 md:min-h-[148px] md:p-4">
           <p className="font-sans tabular-nums text-xs font-medium tracking-normal text-muted-foreground">
@@ -397,7 +392,9 @@ export function AdvancedStatsGrid({
           </div>
         </CardContent>
       </Card>
+  );
 
+  const mediaCard = (
       <Card className="self-start rounded-2xl border border-border bg-card/95 py-0 shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
         <CardContent className="flex min-h-[112px] min-w-0 flex-col justify-center p-3.5 md:min-h-[148px] md:p-4">
           <p className="font-sans tabular-nums text-xs font-medium tracking-normal text-muted-foreground">
@@ -444,9 +441,9 @@ export function AdvancedStatsGrid({
           </div>
         </CardContent>
       </Card>
+  );
 
-      {!extended && (
-        <>
+  const finestraCard = (
       <Card className="self-start rounded-2xl border border-border bg-card/95 py-0 shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
         <CardContent className="flex min-h-[112px] min-w-0 flex-col justify-center p-3.5 md:min-h-[148px] md:p-4">
           <p className="font-sans tabular-nums text-xs font-medium tracking-normal text-muted-foreground">
@@ -468,7 +465,9 @@ export function AdvancedStatsGrid({
           </div>
         </CardContent>
       </Card>
+  );
 
+  const setupCard = (
       <Card className="self-start rounded-2xl border border-border bg-card/95 py-0 shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
         <CardContent className="flex min-h-[112px] min-w-0 flex-col justify-center p-3.5 md:min-h-[148px] md:p-4">
           <p className="font-sans tabular-nums text-xs font-medium tracking-normal text-muted-foreground">
@@ -499,10 +498,9 @@ export function AdvancedStatsGrid({
           </div>
         </CardContent>
       </Card>
+  );
 
-        </>
-      )}
-
+  const longshortCard = (
       <Card className="self-start rounded-2xl border border-border bg-card/95 py-0 shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
         <CardContent className="flex min-h-[112px] min-w-0 flex-col justify-center p-3.5 md:min-h-[148px] md:p-4">
           <p className="font-sans tabular-nums text-xs font-medium tracking-normal text-muted-foreground">
@@ -543,59 +541,35 @@ export function AdvancedStatsGrid({
           </div>
         </CardContent>
       </Card>
+  );
 
-      {extended && (
-        <>
-          <RiskRewardCard
-            {...riskRewardPresentation}
-            surface="analysis"
-          />
-
-          <CompactAnalysisCard
-            title="Drawdown massimo"
-            value={
-              data.maxDrawdown === null
-                ? '—'
-                : streamerMode
-                  ? '******'
-                  : formatCurrency(data.maxDrawdown)
-            }
-            subtitle={
-              data.maxDrawdown === null
-                ? 'Nessun dato disponibile'
-                : data.maxDrawdown === 0
-                  ? 'Nessun drawdown registrato'
-                  : 'Perdita massima'
-            }
-            tone={data.maxDrawdown !== null && data.maxDrawdown < 0 ? 'loss' : 'neutral'}
-            hasData={data.maxDrawdown !== null}
-          />
-
-          <CompactAnalysisCard
-            title="Profitto massimo realizzato di fila"
-            value={
-              data.maxConsecutiveProfitTrades === 0
-                ? '—'
-                : streamerMode
-                  ? '******'
-                  : formatCurrency(data.maxConsecutiveProfit)
-            }
-            subtitle={
-              data.maxConsecutiveProfitTrades > 0
-                ? `${data.maxConsecutiveProfitTrades} win consecutive`
-                : 'Nessuna serie positiva'
-            }
-            tone={data.maxConsecutiveProfitTrades > 0 ? 'profit' : 'neutral'}
-            hasData={data.maxConsecutiveProfitTrades > 0}
-          />
-
-        </>
+  if (!extended) {
+    return (
+      <StatisticsCardGrid
+      className={cn(
+        'items-start py-3 md:py-4',
+        extended &&
+          '[&_[data-slot=card-content]]:!min-h-[124px] md:[&_[data-slot=card-content]]:!min-h-[144px]'
       )}
+      >
+        {giorniCard}
+        {serieCard}
+        {mediaCard}
+        {finestraCard}
+        {setupCard}
+        {longshortCard}
+      </StatisticsCardGrid>
+    );
+  }
 
-    </StatisticsCardGrid>
-
-      {extended && (
-        <StatisticsCardGrid className="items-start pb-3 md:grid-cols-2 md:pb-4">
+  return (
+    <StatisticsCardGrid
+      className={cn(
+        'items-start py-3 md:py-4',
+        extended &&
+          '[&_[data-slot=card-content]]:!min-h-[124px] md:[&_[data-slot=card-content]]:!min-h-[144px]'
+      )}
+    >
           <CompactAnalysisCard
             title="Setup migliore"
             value={data.bestSetup.name ?? '—'}
@@ -628,6 +602,8 @@ export function AdvancedStatsGrid({
             prominentValue
           />
 
+      {giorniCard}
+
           <CompactAnalysisCard
             title="Finestra operativa migliore"
             value={data.bestOperatingWindow?.name ?? '—'}
@@ -653,6 +629,8 @@ export function AdvancedStatsGrid({
             hasData={data.worstOperatingWindow !== null}
             prominentValue
           />
+
+      {serieCard}
 
           <CompactAnalysisCard
             title="Giorno operativo migliore"
@@ -708,6 +686,8 @@ export function AdvancedStatsGrid({
             prominentValue
           />
 
+      {mediaCard}
+
           <CompactAnalysisCard
             title="Mese migliore"
             value={data.bestMonth?.name ?? '—'}
@@ -753,9 +733,53 @@ export function AdvancedStatsGrid({
             hasData={data.worstMonth !== null}
             prominentValue
           />
-        </StatisticsCardGrid>
-      )}
-    </>
+
+      {longshortCard}
+
+          <RiskRewardCard
+            {...riskRewardPresentation}
+            surface="analysis"
+          />
+
+          <CompactAnalysisCard
+            title="Drawdown massimo"
+            value={
+              data.maxDrawdown === null
+                ? '—'
+                : streamerMode
+                  ? '******'
+                  : formatCurrency(data.maxDrawdown)
+            }
+            subtitle={
+              data.maxDrawdown === null
+                ? 'Nessun dato disponibile'
+                : data.maxDrawdown === 0
+                  ? 'Nessun drawdown registrato'
+                  : 'Perdita massima'
+            }
+            tone={data.maxDrawdown !== null && data.maxDrawdown < 0 ? 'loss' : 'neutral'}
+            hasData={data.maxDrawdown !== null}
+          />
+
+          <CompactAnalysisCard
+            title="Profitto massimo realizzato di fila"
+            value={
+              data.maxConsecutiveProfitTrades === 0
+                ? '—'
+                : streamerMode
+                  ? '******'
+                  : formatCurrency(data.maxConsecutiveProfit)
+            }
+            subtitle={
+              data.maxConsecutiveProfitTrades > 0
+                ? `${data.maxConsecutiveProfitTrades} win consecutive`
+                : 'Nessuna serie positiva'
+            }
+            tone={data.maxConsecutiveProfitTrades > 0 ? 'profit' : 'neutral'}
+            hasData={data.maxConsecutiveProfitTrades > 0}
+          />
+
+    </StatisticsCardGrid>
   );
 }
 
