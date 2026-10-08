@@ -30,6 +30,8 @@ import { AdvancedStatsGrid } from '@/components/trading-journal/advanced-stats-g
 import { ProfileDialog } from '@/components/trading-journal/profile-dialog';
 import { toast } from 'sonner';
 import { StreamerModeProvider } from '@/contexts/streamer-mode-context';
+import { PreferencesProvider, usePreferences } from '@/contexts/preferences-context';
+import { OnboardingScreen } from '@/components/onboarding/onboarding-screen';
 import { useStreamerMode } from '@/contexts/streamer-mode-context';
 import { WhatsNewDialog } from '@/components/trading-journal/whats-new-dialog';
 import { Download, RotateCcw } from 'lucide-react';
@@ -1359,10 +1361,18 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
   );
 }
 
+function OnboardingGate() {
+  const { needsOnboarding } = usePreferences();
+
+  return needsOnboarding ? <OnboardingScreen /> : <AppContent />;
+}
+
 export default function App() {
   return (
-    <StreamerModeProvider>
-      <AppContent />
-    </StreamerModeProvider>
+    <PreferencesProvider>
+      <StreamerModeProvider>
+        <OnboardingGate />
+      </StreamerModeProvider>
+    </PreferencesProvider>
   );
 }

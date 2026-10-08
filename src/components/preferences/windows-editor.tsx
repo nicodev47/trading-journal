@@ -1,7 +1,7 @@
 import { Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { MAX_LABEL_LENGTH, type OperatingWindowConfig } from '@/lib/preferences';
+import { MAX_LABEL_LENGTH, capitalizeSetup, type OperatingWindowConfig } from '@/lib/preferences';
 
 interface WindowsEditorProps {
   value: OperatingWindowConfig[];
@@ -32,6 +32,7 @@ export function WindowsEditor({ value, onChange }: WindowsEditorProps) {
             maxLength={MAX_LABEL_LENGTH}
             placeholder="Nome (es. Apertura)"
             onChange={event => update(window.id, { name: event.target.value })}
+            onBlur={event => update(window.id, { name: capitalizeSetup(event.target.value) })}
             className="max-sm:col-span-1"
           />
           <Button
