@@ -54,7 +54,7 @@ export function StatsGrid({ trades }: StatsGridProps) {
             <span className="whitespace-nowrap">
               {streamerMode ? '******' : formatCurrency(stats.totalPnl)}
             </span>
-            <span className="shrink-0 whitespace-nowrap rounded-full border border-border bg-background/70 px-3 py-1 font-mono text-[11px] font-medium text-foreground">
+            <span className="shrink-0 whitespace-nowrap rounded-full border border-border bg-background/70 px-3 py-1 font-sans tabular-nums text-[11px] font-medium text-foreground">
               {trades.length} trade
             </span>
           </span>
@@ -70,10 +70,10 @@ export function StatsGrid({ trades }: StatsGridProps) {
             <span className="whitespace-nowrap">
               {hasNoTrades ? '—' : `${stats.winRate.toFixed(0)}%`}
             </span>
-            <span className="shrink-0 whitespace-nowrap rounded-full border border-profit/40 bg-profit/10 px-3 py-1 font-mono text-[11px] font-medium text-profit">
+            <span className="shrink-0 whitespace-nowrap rounded-full border border-profit/40 bg-profit/10 px-3 py-1 font-sans tabular-nums text-[11px] font-medium text-profit">
               {stats.winningTrades} win
             </span>
-            <span className="shrink-0 whitespace-nowrap rounded-full border border-loss/40 bg-loss/10 px-3 py-1 font-mono text-[11px] font-medium text-loss">
+            <span className="shrink-0 whitespace-nowrap rounded-full border border-loss/40 bg-loss/10 px-3 py-1 font-sans tabular-nums text-[11px] font-medium text-loss">
               {stats.losingTrades} loss
             </span>
           </span>

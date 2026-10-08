@@ -1,4 +1,6 @@
 import type { Trade } from '@/lib/types/trade';
+import type { JournalPreferences } from '../../../lib/preferences.ts';
+import { getConfiguredWindowDefinitions } from '../../../lib/operating-windows.ts';
 
 export const TUTORIAL_SEEN_KEY = 'eclipsejournal-simple-tutorial-seen';
 export const TUTORIAL_DEMO_PNLS = [520, 575, -450, 600, 540] as const;
@@ -79,7 +81,40 @@ export function getTutorialDemoDateKey() {
   return formatDateKey(getTutorialWeekStart());
 }
 
-export function createSimpleTutorialTrades(tutorialDate: string): Trade[] {
+const toClock = (minutes: number) =>
+  `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
+
+/**
+ * Demo trades follow the user's choices: assets and setups are cycled, and the
+ * times fall inside their first operating window (when one is configured).
+ */
+export function personalizeDemoTrades<
+  T extends { time: string; pair: string; strategy: string },
+>(demoTrades: T[], preferences?: Pick<JournalPreferences, 'assets' | 'setups' | 'windows'>): T[] {
+  if (!preferences) return demoTrades;
+
+  const [window] = getConfiguredWindowDefinitions(preferences.windows);
+  const offsets = [5, 15, 25, 10, 20];
+
+  return demoTrades.map((trade, index) => ({
+    ...trade,
+    pair: preferences.assets.length
+      ? preferences.assets[index % preferences.assets.length]
+      : trade.pair,
+    strategy: preferences.setups.length
+      ? preferences.setups[index % preferences.setups.length]
+      : trade.strategy,
+    time:
+      window && window.end - window.start > 1
+        ? toClock(Math.min(window.start + offsets[index % offsets.length], window.end - 1))
+        : trade.time,
+  }));
+}
+
+export function createSimpleTutorialTrades(
+  tutorialDate: string,
+  preferences?: Pick<JournalPreferences, 'assets' | 'setups' | 'windows'>
+): Trade[] {
   const baseDate = new Date(`${tutorialDate}T12:00:00`);
   const safeBaseDate = Number.isNaN(baseDate.getTime()) ? new Date() : baseDate;
   const weekStart = getTutorialWeekStart(safeBaseDate);
@@ -136,7 +171,7 @@ export function createSimpleTutorialTrades(tutorialDate: string): Trade[] {
     },
   ];
 
-  return demoTrades.map((trade, index) =>
+  return personalizeDemoTrades(demoTrades, preferences).map((trade, index) =>
     createDemoTrade({
       ...trade,
       id: `tutorial-demo-${index + 1}`,
@@ -145,8 +180,10 @@ export function createSimpleTutorialTrades(tutorialDate: string): Trade[] {
   );
 }
 
-export function createTutorialTrades(): Trade[] {
-  return createSimpleTutorialTrades(formatDateKey(new Date()));
+export function createTutorialTrades(
+  preferences?: Pick<JournalPreferences, 'assets' | 'setups' | 'windows'>
+): Trade[] {
+  return createSimpleTutorialTrades(formatDateKey(new Date()), preferences);
 }
 
 export function isValidTutorialTradeSet(trades: Trade[]) {

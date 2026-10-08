@@ -166,13 +166,13 @@ export function MonthYearPicker({
       </PopoverTrigger>
       <PopoverContent
         align="center"
-        className="w-[min(260px,calc(100vw-2rem))] rounded-xl border border-border bg-card p-4 text-foreground shadow-xl"
+        className="w-[min(260px,calc(100vw-2rem))] rounded-lg border border-border bg-card p-4 text-foreground shadow-xl"
       >
         <div className="space-y-3">
           <div className="space-y-1.5">
             <label
               htmlFor={`${id}-month`}
-              className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground"
+              className="text-xs font-semibold tracking-normal text-muted-foreground"
             >
               Mese
             </label>
@@ -184,7 +184,7 @@ export function MonthYearPicker({
             >
               <SelectTrigger
                 id={`${id}-month`}
-                className="relative flex h-12 w-full items-center justify-between rounded-xl border border-border bg-background/50 px-4 text-sm font-semibold text-foreground hover:bg-secondary/40 focus-visible:border-profit/60"
+                className="relative flex h-12 w-full items-center justify-between rounded-lg border border-border bg-background/50 px-4 text-sm font-semibold text-foreground hover:bg-secondary/40 focus-visible:border-ring/60"
               >
                 <SelectValue />
               </SelectTrigger>
@@ -201,7 +201,7 @@ export function MonthYearPicker({
           <div className="space-y-1.5">
             <label
               htmlFor={`${id}-year`}
-              className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground"
+              className="text-xs font-semibold tracking-normal text-muted-foreground"
             >
               Anno
             </label>
@@ -213,7 +213,7 @@ export function MonthYearPicker({
             >
               <SelectTrigger
                 id={`${id}-year`}
-                className="relative flex h-12 w-full items-center justify-between rounded-xl border border-border bg-background/50 px-4 text-sm font-semibold text-foreground hover:bg-secondary/40 focus-visible:border-profit/60"
+                className="relative flex h-12 w-full items-center justify-between rounded-lg border border-border bg-background/50 px-4 text-sm font-semibold text-foreground hover:bg-secondary/40 focus-visible:border-ring/60"
               >
                 <SelectValue />
               </SelectTrigger>
@@ -231,7 +231,7 @@ export function MonthYearPicker({
             <div className="space-y-1.5">
               <label
                 htmlFor={`${id}-go-to`}
-                className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground"
+                className="text-xs font-semibold tracking-normal text-muted-foreground"
               >
                 Vai a
               </label>
@@ -241,7 +241,7 @@ export function MonthYearPicker({
               >
                 <SelectTrigger
                   id={`${id}-go-to`}
-                  className="relative flex h-12 w-full items-center justify-between rounded-xl border border-border bg-background/50 px-4 text-sm font-semibold text-foreground hover:bg-secondary/40 focus-visible:border-profit/60"
+                  className="relative flex h-12 w-full items-center justify-between rounded-lg border border-border bg-background/50 px-4 text-sm font-semibold text-foreground hover:bg-secondary/40 focus-visible:border-ring/60"
                 >
                   <SelectValue placeholder="Seleziona destinazione" />
                 </SelectTrigger>
@@ -267,7 +267,7 @@ export function MonthYearPicker({
               type="button"
               variant="outline"
               onClick={handleActionClick}
-              className="mt-1 h-11 w-full rounded-xl border-profit/35 bg-profit/10 font-sans text-sm font-semibold text-profit transition-colors hover:border-profit/60 hover:bg-profit/15 hover:text-profit"
+              className="mt-1 h-11 w-full rounded-lg border-profit/35 bg-profit/10 font-sans text-sm font-semibold text-profit transition-colors hover:border-highlight/60 hover:bg-primary/15 hover:text-highlight"
             >
               {actionLabel ?? 'Vai a oggi'}
             </Button>

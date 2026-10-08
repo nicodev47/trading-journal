@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { NavHeader } from '@/components/trading-journal/nav-header';
 import { TradingCalendar } from '@/components/trading-journal/trading-calendar';
 import { StatsGrid } from '@/components/trading-journal/stats-grid';
@@ -30,15 +30,25 @@ import { AdvancedStatsGrid } from '@/components/trading-journal/advanced-stats-g
 import { ProfileDialog } from '@/components/trading-journal/profile-dialog';
 import { toast } from 'sonner';
 import { StreamerModeProvider } from '@/contexts/streamer-mode-context';
+import { PreferencesProvider, usePreferences } from '@/contexts/preferences-context';
+import { OnboardingScreen } from '@/components/onboarding/onboarding-screen';
 import { useStreamerMode } from '@/contexts/streamer-mode-context';
 import { WhatsNewDialog } from '@/components/trading-journal/whats-new-dialog';
 import { Download, RotateCcw } from 'lucide-react';
 import {
   getDefaultExportBaseName,
+  getGuidedExportBaseName,
   normalizeExportName,
   normalizeExportFileName,
 } from '@/lib/export-filename';
-import { createZipBlob } from '@/lib/zip-export';
+import { extractImportedPreferences, planPreferencesImport } from '@/lib/import-preferences';
+import { ImportPreview } from '@/components/trading-journal/import-preview';
+import { createFullBackupExportData, parseJournalExport } from '@/lib/journal-export';
+import {
+  getBackupBaseline,
+  setBackupBaseline,
+  shouldRemindBackup,
+} from '@/lib/backup-reminder';
 import { TutorialTour } from '@/components/trading-journal/tutorial/tutorial-tour';
 import { TutorialWelcomeDialog } from '@/components/trading-journal/tutorial/tutorial-welcome-dialog';
 import { TUTORIAL_STEPS } from '@/components/trading-journal/tutorial/tutorial-steps';
@@ -55,7 +65,7 @@ import {
 } from '@/lib/journal-export';
 
 const UPDATE_BANNER_KEY =
-  'dismissedUpdateBanner_eclipsejournal_v06_accounts_import';
+  'dismissedUpdateBanner_eclipsejournal_v10_onboarding';
 const BACKTEST_STORAGE_KEY = 'eclipse-trading-journal-data-backtest';
 
 type TradeGroupDialogState = {
@@ -185,10 +195,12 @@ const getBacktestHasTrades = () => {
 
 function AppContent() {
  const { streamerMode } = useStreamerMode();
+ const { preferences, justCompletedOnboarding, updatePreferences } = usePreferences();
  const {
    workspaces,
    maxCustomWorkspaces,
    createWorkspace,
+   createWorkspaces,
    updateWorkspace,
    deleteWorkspace,
  } = useJournalWorkspaces();
@@ -215,6 +227,8 @@ const [tradeGroupDialog, setTradeGroupDialog] = useState<TradeGroupDialogState |
 const [isTradeGroupOpen, setIsTradeGroupOpen] = useState(false);
 const [returnToTradeGroup, setReturnToTradeGroup] = useState(false);
 const [isTutorialWelcomeOpen, setIsTutorialWelcomeOpen] = useState(() => {
+  if (justCompletedOnboarding) return false;
+
   try {
     return localStorage.getItem(TUTORIAL_SEEN_KEY) !== 'true';
   } catch {
@@ -225,6 +239,7 @@ const [isTutorialActive, setIsTutorialActive] = useState(false);
 const [tutorialStepIndex, setTutorialStepIndex] = useState(0);
 const [tutorialTrades, setTutorialTrades] = useState<Trade[]>([]);
 const [importTargetMonth, setImportTargetMonth] = useState<Date | null>(null);
+const [importPreview, setImportPreview] = useState<{ data: string; fileName: string } | null>(null);
 const tutorialDemoDateKey = getTutorialDemoDateKey();
 
   useEffect(() => {
@@ -280,7 +295,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
     if (!isTutorialActive) return;
 
     if (!isValidTutorialTradeSet(tutorialTrades)) {
-      setTutorialTrades(createTutorialTrades());
+      setTutorialTrades(createTutorialTrades(preferences));
       return;
     }
 
@@ -353,12 +368,55 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
     setImportExportMode(null);
     setIsProfileOpen(false);
     setIsHelpOpen(false);
-    setTutorialTrades(createTutorialTrades());
+    setTutorialTrades(createTutorialTrades(preferences));
     setTutorialStepIndex(0);
     setIsTutorialWelcomeOpen(false);
     setIsTutorialActive(true);
     setActiveView('calendar');
   };
+
+  const autoStartedTutorial = useRef(false);
+
+  useEffect(() => {
+    if (!justCompletedOnboarding || autoStartedTutorial.current) return;
+
+    autoStartedTutorial.current = true;
+    handleStartTutorial();
+  }, [justCompletedOnboarding]);
+
+  const totalTrades = workspaces.reduce(
+    (sum, workspace) => sum + getWorkspaceData(workspace.id).trades.length,
+    0
+  );
+  const justImportedRef = useRef(false);
+  const exportCurrentJournalRef = useRef<() => void>(() => {});
+
+  // Remind about a backup after 3 new trades since the last one. Data that
+  // just came from an import file counts as already backed up.
+  useEffect(() => {
+    if (isTutorialActive || isTutorialWelcomeOpen) return;
+
+    if (justImportedRef.current) {
+      justImportedRef.current = false;
+      setBackupBaseline(totalTrades);
+      return;
+    }
+
+    if (!shouldRemindBackup({ totalTrades, baseline: getBackupBaseline() })) return;
+
+    // Small delay so the toast is not fired before the Toaster is mounted.
+    const timer = window.setTimeout(() => {
+      setBackupBaseline(totalTrades);
+      toast.info('Ricordati di fare un backup', {
+        description:
+          'Hai inserito nuove operazioni dall’ultimo backup. I dati sono salvati nella cache del browser: esporta una copia per non perderli.',
+        duration: 12000,
+        action: { label: 'Esporta', onClick: () => exportCurrentJournalRef.current() },
+      });
+    }, 1500);
+
+    return () => window.clearTimeout(timer);
+  }, [totalTrades, isTutorialActive, isTutorialWelcomeOpen]);
 
   const handleRestartTutorial = () => {
     setIsHelpOpen(false);
@@ -491,6 +549,24 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
     return createWorkspaceExportData(workspace, getWorkspaceData(workspace));
   }, [getWorkspaceData]);
 
+  // Used by the backup reminder: downloads the open journal as a single JSON file.
+  exportCurrentJournalRef.current = () => {
+    const blob = new Blob([getWorkspaceExportData(activeWorkspace)], {
+      type: 'application/json',
+    });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+
+    anchor.href = url;
+    anchor.download = `${getGuidedExportBaseName(activeWorkspace)}.json`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(url);
+    setBackupBaseline(totalTrades);
+    toast.success('Journal esportato');
+  };
+
   const getWorkspaceHasImportData = useCallback((workspace: JournalWorkspace) => {
     return hasWorkspaceContent(getWorkspaceData(workspace));
   }, [getWorkspaceData]);
@@ -518,10 +594,43 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
     setImportTargetMonth(getEarliestImportedTradeMonth(data));
   };
 
+  // Empty journal + file with a profile: restore it (new device). Otherwise keep
+  // the user's profile and only add the assets/setups the imported trades use.
+  const adoptImportedPreferences = (
+    data: string,
+    emptyBeforeImport = !workspaces.some(workspace =>
+      hasWorkspaceContent(getWorkspaceData(workspace.id))
+    )
+  ) => {
+    const journalIsEmpty = emptyBeforeImport;
+    const plan = planPreferencesImport(preferences, data, journalIsEmpty);
+
+    if (Object.keys(plan.patch).length === 0) return;
+
+    updatePreferences(plan.patch);
+
+    if (plan.restored) {
+      toast.info('Profilo e preferenze ripristinati dal file');
+      return;
+    }
+
+    toast.info('Preferenze aggiornate con i dati importati', {
+      description: [
+        plan.addedAssets.length ? `Asset: ${plan.addedAssets.join(', ')}` : '',
+        plan.addedSetups.length ? `Setup: ${plan.addedSetups.join(', ')}` : '',
+      ]
+        .filter(Boolean)
+        .join(' · '),
+    });
+  };
+
   const handleImportData = (data: string, workspace: JournalWorkspace) => {
     const success = importData(data, workspace);
 
     if (success) {
+      justImportedRef.current = true;
+      window.setTimeout(() => { justImportedRef.current = false; }, 1500);
+      adoptImportedPreferences(data);
       completeImportNavigation(data, workspace);
     }
 
@@ -536,11 +645,111 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
     const success = appendImportData(data, workspace);
 
     if (success) {
+      justImportedRef.current = true;
+      window.setTimeout(() => { justImportedRef.current = false; }, 1500);
+      adoptImportedPreferences(data);
       completeImportNavigation(data, workspace);
       setImportTargetMonth(targetMonth);
     }
 
     return success;
+  };
+
+  // Restores every journal of a full backup file in one go. Journals that do not
+  // exist yet (custom accounts, Backtest sessions) are created first.
+  const handleImportFullBackup = (data: string, mode: 'replace' | 'append') => {
+    const parsed = parseJournalExport(data);
+
+    if (parsed?.kind !== 'full-backup') return false;
+
+    const journalIsEmpty = !workspaces.some(workspace =>
+      hasWorkspaceContent(getWorkspaceData(workspace.id))
+    );
+    const entries = Object.entries(parsed.data.workspaces) as [JournalWorkspace, JournalState][];
+    const existingIds = new Set<string>(workspaces.map(workspace => workspace.id));
+    const metaOf = (id: string) =>
+      parsed.data.workspaceOptions.find(option => option.id === id);
+    const isCustomId = (id: string) => /^(custom|backtest|preview)-\d+-/.test(id);
+    // A custom journal already present under the same name receives the data.
+    const sameNameIds = new Map<string, JournalWorkspace>();
+
+    entries.forEach(([id]) => {
+      if (existingIds.has(id) || !isCustomId(id)) return;
+
+      const name = metaOf(id)?.name.trim().toLowerCase();
+      const match = workspaces.find(
+        workspace =>
+          workspace.name.trim().toLowerCase() === name &&
+          (workspace.group ?? 'account') === (metaOf(id)?.group ?? 'account')
+      );
+
+      if (match) sameNameIds.set(id, match.id);
+    });
+
+    const missing = entries.filter(
+      ([id]) => !existingIds.has(id) && isCustomId(id) && !sameNameIds.has(id)
+    );
+    const createdWorkspaces = createWorkspaces(
+      missing.map(([id]) => ({
+        name: metaOf(id)?.name ?? '',
+        group: metaOf(id)?.group,
+        notes: metaOf(id)?.notes,
+      }))
+    );
+    const createdIds = new Map<string, JournalWorkspace>(sameNameIds);
+
+    missing.forEach(([id], index) => {
+      const created = createdWorkspaces[index];
+
+      if (created) createdIds.set(id, created.id);
+    });
+
+    let restored: JournalWorkspace | null = null;
+    let restoredCount = 0;
+    const skipped: string[] = [];
+
+    entries.forEach(([id, state]) => {
+      const target = existingIds.has(id) ? id : createdIds.get(id);
+
+      if (!target) {
+        skipped.push(metaOf(id)?.name ?? id);
+        return;
+      }
+
+      const json = JSON.stringify(state);
+      const ok = mode === 'replace' ? importData(json, target) : appendImportData(json, target);
+
+      if (ok) {
+        restoredCount += 1;
+        restored ??= target;
+      } else {
+        skipped.push(metaOf(id)?.name ?? id);
+      }
+    });
+
+    if (restoredCount === 0) return false;
+
+    const allTrades = entries.flatMap(([, state]) => state.trades);
+
+    justImportedRef.current = true;
+    window.setTimeout(() => { justImportedRef.current = false; }, 1500);
+    adoptImportedPreferences(JSON.stringify({ trades: allTrades }), journalIsEmpty);
+
+    if (skipped.length > 0) {
+      toast.warning(`Non importati: ${skipped.join(', ')}`);
+    }
+
+    toast.success(
+      restoredCount === 1 ? '1 journal importato' : `${restoredCount} journal importati`
+    );
+    completeImportNavigation(
+      JSON.stringify({ trades: allTrades }),
+      existingIds.has(activeWorkspace) && entries.some(([id]) => id === activeWorkspace)
+        ? activeWorkspace
+        : (restored as JournalWorkspace | null) ?? activeWorkspace
+    );
+
+    return true;
   };
 
   const handleResetStudentJournal = () => {
@@ -614,50 +823,38 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
   };
 
   const handleExportAllJournals = () => {
-    const folderNames = {
-      account: 'I tuoi conti',
-      backtest: 'Backtest',
-      preview: 'Preview',
-    } as const;
-    const files = workspaces.flatMap((workspace) => {
-      const workspaceData = getWorkspaceData(workspace.id);
+    const included = workspaces.filter(workspace =>
+      hasWorkspaceContent(getWorkspaceData(workspace.id))
+    );
 
-      if (!hasWorkspaceContent(workspaceData)) return [];
-
-      const folder = folderNames[workspace.group ?? 'account'];
-      const fileName = normalizeExportName(workspace.name, workspace.id);
-
-      return [{
-        path: `${folder}/${fileName}.json`,
-        content: createWorkspaceExportData(
-          workspace.id,
-          workspaceData,
-          new Date(),
-          workspace
-        ),
-      }];
-    });
-
-    if (files.length === 0) {
+    if (included.length === 0) {
       toast.info('Non ci sono dati da esportare');
       return;
     }
-    const blob = createZipBlob(files);
+
+    const journals = Object.fromEntries(
+      included.map(workspace => {
+        // Profile data left over from older versions is never exported.
+        const { preferences: _preferences, ...journal } = getWorkspaceData(
+          workspace.id
+        ) as JournalState & { preferences?: unknown };
+
+        return [workspace.id, journal];
+      })
+    );
+    const blob = new Blob([createFullBackupExportData(journals, included)], {
+      type: 'application/json',
+    });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
-    const date = new Date();
-    const dateSlug = [
-      date.getFullYear(),
-      String(date.getMonth() + 1).padStart(2, '0'),
-      String(date.getDate()).padStart(2, '0'),
-    ].join('-');
 
     anchor.href = url;
-    anchor.download = `eclipsejournal-tutti-i-dati-${dateSlug}.zip`;
+    anchor.download = `${getGuidedExportBaseName('full-backup')}.json`;
     document.body.appendChild(anchor);
     anchor.click();
     document.body.removeChild(anchor);
     URL.revokeObjectURL(url);
+    setBackupBaseline(totalTrades);
     toast.success('Tutti i journal sono stati esportati');
   };
 
@@ -766,7 +963,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
   if (!isLoaded) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
-        <div className="font-mono text-sm text-muted-foreground">Caricamento...</div>
+        <div className="font-sans tabular-nums text-sm text-muted-foreground">Caricamento...</div>
       </div>
     );
   }
@@ -774,34 +971,33 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
   return (
     <div className="flex min-h-screen flex-col bg-background">
       {isUpdateBannerVisible && (
-        <div className="border-b border-violet-400/25 bg-gradient-to-r from-violet-950/90 via-violet-900/65 to-slate-950">
-          <div className="flex min-h-11 w-full items-center justify-center px-4 py-2">
-            <div className="flex min-w-0 flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-center">
-              <div className="min-w-0 basis-full sm:basis-auto">
-                <p className="font-mono text-xs font-semibold text-violet-100 sm:text-sm">
-                  EclipseJournal v0.6 è disponibile!
-                </p>
-                <p className="font-sans text-[11px] text-violet-200/75">
-                  Import ed Export per pagina, backup preventivo e note durante la creazione dei conti.
-                </p>
-              </div>
-              <div className="flex shrink-0 items-center justify-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => setIsWhatsNewOpen(true)}
-                  className="shrink-0 rounded-lg border border-violet-300/25 bg-violet-300/10 px-3 py-1.5 font-sans text-xs font-semibold text-violet-100 transition hover:border-violet-200/50 hover:bg-violet-300/15"
-                >
-                  Visualizza novità
-                </button>
-                <button
-                  type="button"
-                  onClick={handleDismissUpdateBanner}
-                  className="flex size-7 shrink-0 items-center justify-center rounded-lg text-sm leading-none text-violet-200/70 transition hover:bg-white/10 hover:text-white"
-                  aria-label="Chiudi annuncio aggiornamento"
-                >
-                  ×
-                </button>
-              </div>
+        <div className="border-b border-border bg-white/[0.03]">
+          <div className="relative grid min-h-11 w-full items-center gap-x-3 gap-y-1.5 px-6 py-2 sm:grid-cols-[1fr_auto_1fr]">
+            <div className="hidden sm:block" aria-hidden="true" />
+            <div className="min-w-0 text-center">
+              <p className="font-sans text-xs font-semibold text-foreground sm:text-sm">
+                EclipseJournal v1.0 è disponibile!
+              </p>
+              <p className="font-sans text-[11px] text-muted-foreground">
+                Onboarding personalizzato, profilo con foto, asset e setup tuoi, finestre operative e nuove analisi.
+              </p>
+            </div>
+            <div className="flex items-center justify-center gap-1.5 sm:justify-start">
+              <button
+                type="button"
+                onClick={() => setIsWhatsNewOpen(true)}
+                className="shrink-0 rounded-full bg-[#0a84ff] px-3.5 py-1.5 font-sans text-xs font-medium text-white transition hover:bg-[#0a84ff]/90"
+              >
+                Visualizza novità
+              </button>
+              <button
+                type="button"
+                onClick={handleDismissUpdateBanner}
+                className="flex size-7 shrink-0 items-center justify-center rounded-full text-sm leading-none text-muted-foreground transition hover:bg-white/10 hover:text-white"
+                aria-label="Chiudi annuncio aggiornamento"
+              >
+                ×
+              </button>
             </div>
           </div>
         </div>
@@ -813,7 +1009,23 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
         workspaces={workspaces}
         showPreviewWorkspace={showPreviewWorkspace}
         maxCustomWorkspaces={maxCustomWorkspaces}
-        onWorkspaceChange={handleWorkspaceChange}
+        onWorkspaceChange={(workspace) => {
+          setImportPreview(null);
+          handleWorkspaceChange(workspace);
+        }}
+        previewLabel={
+          importPreview
+            ? extractImportedPreferences(importPreview.data)?.name || importPreview.fileName
+            : undefined
+        }
+        onExitPreview={() => setImportPreview(null)}
+        legacyPreviewWorkspaceIds={workspaces
+          .filter(
+            workspace =>
+              workspace.group === 'preview' &&
+              hasWorkspaceContent(getWorkspaceData(workspace.id))
+          )
+          .map(workspace => workspace.id)}
         onCreateWorkspace={createWorkspace}
         onUpdateWorkspace={updateWorkspace}
         onBackupWorkspace={handleBackupWorkspace}
@@ -827,6 +1039,15 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
         onProfileClick={handleOpenProfile}
       />
 
+      {importPreview ? (
+        <ImportPreview
+          key={`${importPreview.fileName}-${importPreview.data.length}`}
+          data={importPreview.data}
+          fileName={importPreview.fileName}
+          view={activeView}
+          onClose={() => setImportPreview(null)}
+        />
+      ) : (
       <main className="mx-auto w-full max-w-6xl flex-1 overflow-x-hidden px-3.5 py-2.5 sm:px-4 sm:py-3">
         {activeView === 'calendar' ? (
           <>
@@ -879,10 +1100,11 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
           />
         )}
       </main>
+      )}
 
       <footer className="border-t border-border bg-card py-4">
         <div className="mx-auto max-w-6xl px-4 text-center">
-          <span className="font-mono text-xs text-muted-foreground">
+          <span className="font-sans tabular-nums text-xs text-muted-foreground">
             Powered by{' '}
             <a
               href="https://eclipsetradingclub.it"
@@ -984,6 +1206,9 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
         exportData={exportData()}
         getWorkspaceExportData={getWorkspaceExportData}
         workspaceHasData={getWorkspaceHasImportData}
+        onBackupDone={() => setBackupBaseline(totalTrades)}
+        onImportAll={importExportMode === 'import' ? handleImportFullBackup : undefined}
+        onPreview={(data, fileName) => setImportPreview({ data, fileName })}
         onImport={importExportMode === 'import' ? handleImportData : undefined}
         onAppendImport={
           importExportMode === 'import' ? handleAppendImportData : undefined
@@ -1054,7 +1279,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
           </DialogHeader>
 
           <div className="ej-scrollbar max-h-[calc(92dvh-9rem)] overflow-y-auto px-4 py-4 sm:px-5 sm:py-5">
-            <div className="rounded-xl border border-loss/30 bg-loss/10 p-4">
+            <div className="rounded-lg border border-loss/30 bg-loss/10 p-4">
               <p className="font-sans text-sm leading-relaxed text-foreground">
                 Questa azione cancellerà trade, strategie e piani salvati nel Backtest.
                 Il journal Personale e Preview non verranno modificati.
@@ -1067,7 +1292,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
             <Button
               type="button"
               onClick={handleBackupAndResetBacktest}
-              className="gap-2 bg-profit text-background hover:bg-profit/90"
+              className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
             >
               <Download className="size-4" />
               Scarica backup e resetta
@@ -1107,7 +1332,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
           <div className="ej-scrollbar max-h-[90dvh] w-full max-w-4xl overflow-y-auto overscroll-contain rounded-2xl border border-border bg-card shadow-2xl">
             <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-border bg-card/95 px-4 py-3.5 backdrop-blur md:px-6 md:py-4">
               <div>
-                <h2 id="help-dialog-title" className="font-mono text-lg font-semibold text-foreground">
+                <h2 id="help-dialog-title" className="font-sans tabular-nums text-lg font-semibold text-foreground">
                   Guida EclipseJournal
                 </h2>
                 <p className="mt-1 max-w-xl font-sans text-xs text-muted-foreground sm:text-sm">
@@ -1118,7 +1343,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
               <button
                 type="button"
                 onClick={() => setIsHelpOpen(false)}
-                className="rounded-md border border-border bg-background px-3 py-1.5 font-mono text-xs text-muted-foreground transition hover:border-profit/50 hover:text-foreground"
+                className="rounded-lg border border-border bg-background px-3 py-1.5 font-sans tabular-nums text-xs text-muted-foreground transition hover:border-highlight/50 hover:text-foreground"
               >
                 Chiudi
               </button>
@@ -1128,7 +1353,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
               <section className="rounded-[14px] border border-profit/30 bg-profit/5 p-4 md:col-span-2">
                 <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
                   <div>
-                    <h3 className="font-sans text-sm font-bold text-foreground">
+                    <h3 className="font-sans text-sm font-semibold text-foreground">
                       Tutorial
                     </h3>
                     <p className="mt-1 font-sans text-xs leading-relaxed text-muted-foreground">
@@ -1138,27 +1363,27 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
                   <button
                     type="button"
                     onClick={handleRestartTutorial}
-                    className="shrink-0 rounded-lg border border-profit/30 bg-profit/10 px-3 py-2 font-sans text-xs font-semibold text-profit transition hover:border-profit/60 hover:bg-profit/15"
+                    className="shrink-0 rounded-lg border border-profit/30 bg-profit/10 px-3 py-2 font-sans text-xs font-semibold text-profit transition hover:border-highlight/60 hover:bg-primary/15"
                   >
                     Riavvia tutorial
                   </button>
                 </div>
               </section>
 
-              <section className="rounded-[14px] border border-violet-400/30 bg-violet-500/[0.06] p-4 md:col-span-2">
+              <section className="rounded-[14px] border border-blue-400/30 bg-blue-500/[0.06] p-4 md:col-span-2">
                 <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
                   <div>
-                    <h3 className="font-sans text-sm font-bold text-foreground">
-                      EclipseJournal v0.6 — Conti, Import e backup
+                    <h3 className="font-sans text-sm font-semibold text-foreground">
+                      EclipseJournal v1.0 — Personalizzazione e analisi
                     </h3>
                     <p className="mt-1 font-sans text-xs leading-relaxed text-muted-foreground">
-                      Scopri il nuovo flusso Import/Export per pagina, il backup preventivo e le note durante la creazione dei conti.
+                      Scopri l'onboarding personalizzato, il profilo rinnovato, le nuove analisi e le card Share ridisegnate.
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={handleOpenWhatsNewFromHelp}
-                    className="shrink-0 rounded-lg border border-violet-300/30 bg-violet-300/10 px-3 py-2 font-sans text-xs font-semibold text-violet-100 transition hover:border-violet-200/50 hover:bg-violet-300/15"
+                    className="shrink-0 rounded-lg border border-blue-300/30 bg-blue-300/10 px-3 py-2 font-sans text-xs font-semibold text-blue-100 transition hover:border-blue-200/50 hover:bg-blue-300/15"
                   >
                     Visualizza novità
                   </button>
@@ -1183,7 +1408,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
                   description: 'Crea e organizza conti separati senza mischiare dati e analisi.',
                   bullets: [
                     'Personale è il tuo journal principale.',
-                    'Puoi aggiungere conti, sessioni Backtest e spazi Preview.',
+                    'Puoi aggiungere conti e sessioni Backtest.',
                     'Durante la creazione puoi aggiungere una nota facoltativa con obiettivi o regole.',
                     'Ogni spazio conserva separatamente trade, calendario e statistiche.',
                   ],
@@ -1251,18 +1476,18 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
                     'Esplora grafici chiari e coerenti con il tema dell’app.',
                     'Clicca sui grafici per aprire i trade filtrati.',
                     'Analizza setup, direzione, performance e distribuzione.',
-                    'Usa Execution Map ed Eclipse Score per leggere meglio il journal.',
+                    'Usa Execution Map e le statistiche per leggere meglio il journal.',
                   ],
                 },
                 {
                   icon: '📥',
-                  title: 'Import / Export',
+                  title: 'Dati e backup',
                   description: 'Gestisci i dati della pagina aperta in modo semplice e sicuro.',
                   bullets: [
                     'Import ed Export lavorano sempre sulla pagina attualmente aperta.',
-                    'Export scarica il file JSON del conto, Backtest o Preview corrente.',
-                    'Import permette di aggiungere i dati oppure sovrascrivere quelli presenti.',
-                    'Se ci sono già dati, la card viola consente di scaricare prima una copia di sicurezza.',
+                    'Export scarica il file JSON del conto o Backtest corrente.',
+                    'Import permette di aggiungere i dati al profilo oppure aprire il file in Preview.',
+                    'I dati sono salvati nella cache del browser: fai backup regolari per non perderli.',
                     'Il backup salva trade, note, setup, tag, piani e link.',
                   ],
                 },
@@ -1290,7 +1515,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
                 >
                   <div className="flex items-start gap-3">
                     <div
-                      className={`flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-xl border text-lg leading-none ${
+                      className={`flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg border text-lg leading-none ${
                         section.danger
                           ? 'border-loss/30 bg-loss/10'
                           : 'border-border bg-secondary/45'
@@ -1302,7 +1527,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
 
                     <div className="min-w-0">
                       <h3
-                        className={`font-sans text-sm font-bold ${
+                        className={`font-sans text-sm font-semibold ${
                           section.danger ? 'text-loss' : 'text-foreground'
                         }`}
                       >
@@ -1360,10 +1585,18 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
   );
 }
 
+function OnboardingGate() {
+  const { needsOnboarding } = usePreferences();
+
+  return needsOnboarding ? <OnboardingScreen /> : <AppContent />;
+}
+
 export default function App() {
   return (
-    <StreamerModeProvider>
-      <AppContent />
-    </StreamerModeProvider>
+    <PreferencesProvider>
+      <StreamerModeProvider>
+        <OnboardingGate />
+      </StreamerModeProvider>
+    </PreferencesProvider>
   );
 }

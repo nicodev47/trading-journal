@@ -34,13 +34,14 @@ import { cn } from '@/lib/utils';
 import {
   CUSTOM_TAG_PREFIX,
   TRADE_TAGS,
-  VALID_TRADE_SETUPS,
   getEditableSetupValue,
   type Trade,
   type ScreenshotData,
 } from '@/lib/types/trade';
 import { generateId } from '@/lib/calculations';
 import { useStreamerMode } from '@/contexts/streamer-mode-context';
+import { usePreferences } from '@/contexts/preferences-context';
+import { getMenuOptions } from '@/lib/preferences';
 import { PROFILE_NAME_KEY } from '@/lib/export-filename';
 import {
   DEFAULT_TAG_COLOR,
@@ -144,6 +145,8 @@ function formatDialogDate(date: string | Date) {
 interface DayEditorDialogProps {
   isOpen: boolean;
   isTutorialMode?: boolean;
+  /** Shows the day without any way to change it (import preview). */
+  readOnly?: boolean;
   onClose: () => void;
   date: string;
   existingTrades: Trade[];
@@ -163,6 +166,7 @@ interface DayEditorDialogProps {
 export function DayEditorDialog({
   isOpen,
   isTutorialMode = false,
+  readOnly = false,
   onClose,
   date,
   existingTrades,
@@ -175,6 +179,7 @@ export function DayEditorDialog({
   onUpdateTagColor,
   onRemoveTag,
 }: DayEditorDialogProps) {
+  const { preferences } = usePreferences();
   const { streamerMode } = useStreamerMode();
   const [tradeRows, setTradeRows] = useState<TradeRow[]>([]);
   const [timeDrafts, setTimeDrafts] = useState<Record<string, string>>({});
@@ -185,6 +190,10 @@ export function DayEditorDialog({
   const [managedTagKey, setManagedTagKey] = useState<string | null>(null);
   const [tradeToDeleteId, setTradeToDeleteId] = useState<string | null>(null);
   const [tagToDelete, setTagToDelete] = useState<string | null>(null);
+  const [screenshotToDelete, setScreenshotToDelete] = useState<{
+    tradeId: string;
+    index: number;
+  } | null>(null);
   const [isDeleteDayConfirmOpen, setIsDeleteDayConfirmOpen] = useState(false);
   const [selectedShareTrade, setSelectedShareTrade] = useState<Trade | null>(null);
   const [editingScreenshot, setEditingScreenshot] = useState<{
@@ -343,7 +352,7 @@ export function DayEditorDialog({
   const persistCurrentRows = useCallback((
     options: { includePendingCustomTags?: boolean; force?: boolean } = {}
   ) => {
-    if (!isOpenRef.current) return;
+    if (readOnly || !isOpenRef.current) return;
 
     if (autosaveTimerRef.current) {
       clearTimeout(autosaveTimerRef.current);
@@ -368,7 +377,7 @@ export function DayEditorDialog({
     existingTradesByIdRef.current = new Map(trades.map(trade => [trade.id, trade]));
     lastSavedSignatureRef.current = signature;
     setAutosaveStatus(signature ? 'saved' : 'idle');
-  }, [buildTradesFromRows, onSave]);
+  }, [buildTradesFromRows, onSave, readOnly]);
 
   const scheduleAutosave = useCallback((delay = 400) => {
     if (!isOpenRef.current || !hasUserChangedRef.current) return;
@@ -535,6 +544,19 @@ export function DayEditorDialog({
     }
   };
 
+  const confirmRemoveScreenshot = () => {
+    if (screenshotToDelete) {
+      removeScreenshotFromTrade(screenshotToDelete.tradeId, screenshotToDelete.index);
+      if (
+        editingScreenshot?.tradeId === screenshotToDelete.tradeId &&
+        editingScreenshot.index === screenshotToDelete.index
+      ) {
+        setEditingScreenshot(null);
+      }
+      setScreenshotToDelete(null);
+    }
+  };
+
   const saveScreenshotName = () => {
     if (!editingScreenshot) return;
 
@@ -657,14 +679,14 @@ export function DayEditorDialog({
         data-tutorial="trade-editor"
         onOpenAutoFocus={(e) => e.preventDefault()}
         onEscapeKeyDown={(event) => {
-          if (isTutorialMode) event.preventDefault();
+          if (isTutorialMode || editingScreenshot) event.preventDefault();
         }}
         onInteractOutside={(event) => {
           if (isTutorialMode) event.preventDefault();
         }}
       >
         <DialogHeader className="border-b border-border px-4 py-3.5 text-left sm:px-6 sm:py-4">
-          <DialogTitle className="font-mono text-base font-medium tracking-wide">
+          <DialogTitle className="font-sans tabular-nums text-base font-medium tracking-wide">
             {formatDialogDate(date)}
           </DialogTitle>
           <DialogDescription className="sr-only">
@@ -673,6 +695,10 @@ export function DayEditorDialog({
         </DialogHeader>
 
         <div className="ej-scrollbar flex max-h-[calc(92dvh-116px)] flex-col gap-3 overflow-y-auto overscroll-contain p-3 sm:max-h-[calc(86vh-120px)] sm:gap-4 sm:p-4">
+          <fieldset
+            disabled={readOnly}
+            className="contents [&_:disabled]:!cursor-default [&_:disabled]:!opacity-100"
+          >
           <div className="flex flex-col gap-3 sm:gap-4">
             {tradeRows.map((row, rowIndex) => (
               <div
@@ -680,16 +706,17 @@ export function DayEditorDialog({
                 className="flex min-w-0 flex-col gap-3 rounded-[14px] border border-border bg-secondary/15 p-3 sm:gap-3.5 sm:p-4"
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-mono text-xs font-medium text-muted-foreground">
+                  <span className="font-sans tabular-nums text-xs font-medium text-muted-foreground">
                     Trade {rowIndex + 1}
                   </span>
 
                   <div className="flex items-center gap-2">
+                    {!readOnly && (
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="h-10 gap-2 rounded-xl border-[#0f8f6f] bg-[#06251f] px-3.5 font-mono text-sm font-semibold text-[#00f0aa] shadow-none transition-colors duration-150 hover:border-[#119979] hover:bg-[#073128] hover:text-[#00f0aa] hover:shadow-none"
+                      className="h-10 gap-2 rounded-lg border-[#0a84ff]/45 bg-[#0a84ff]/10 px-3.5 font-sans text-sm font-medium text-[#5cb8ff] shadow-none transition-colors duration-150 hover:border-[#0a84ff]/70 hover:bg-[#0a84ff]/20 hover:text-[#5cb8ff] hover:shadow-none dark:border-[#0a84ff]/45 dark:bg-[#0a84ff]/10 dark:hover:border-[#0a84ff]/70 dark:hover:bg-[#0a84ff]/20 dark:hover:text-[#5cb8ff]"
                       onClick={() => setSelectedShareTrade(getTradeFromRow(row))}
                     >
                       <span
@@ -700,6 +727,7 @@ export function DayEditorDialog({
                       </span>
                       Share
                     </Button>
+                    )}
 
                     <Button
                       type="button"
@@ -728,6 +756,7 @@ export function DayEditorDialog({
                       />
                     </Button>
 
+                    {!readOnly && (
                     <Button
                       type="button"
                       variant="ghost"
@@ -739,17 +768,18 @@ export function DayEditorDialog({
                     >
                       <Trash2 className="size-4" />
                     </Button>
+                    )}
                   </div>
                 </div>
 
-                <div className="rounded-xl border border-border/70 bg-background/30 p-3 sm:p-3.5">
-                  <p className="mb-3 font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                <div className="rounded-lg border border-border/70 bg-background/30 p-3 sm:p-3.5">
+                  <p className="mb-3 font-sans tabular-nums text-[11px] font-medium tracking-normal text-muted-foreground">
                     Dettagli trade
                   </p>
 
                   <div className="grid grid-cols-1 gap-3 md:grid-cols-[150px_120px_130px_120px_minmax(220px,1fr)]">
                   <div className="flex flex-col gap-1.5">
-                    <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    <Label className="text-xs font-medium tracking-normalr text-muted-foreground">
                       P&L
                     </Label>
 
@@ -769,7 +799,7 @@ export function DayEditorDialog({
                         onBlur={() => persistCurrentRows()}
                         placeholder="0"
                         className={cn(
-                          'h-9 w-full border-border bg-background pr-7 font-mono text-sm',
+                          'h-9 w-full border-border/70 bg-background/60 pr-7 font-sans tabular-nums text-sm',
                           getPnlNumber(row.pnl) > 0 && 'border-profit/50 text-profit',
                           getPnlNumber(row.pnl) < 0 && 'border-loss/50 text-loss'
                         )}
@@ -784,7 +814,7 @@ export function DayEditorDialog({
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    <Label className="text-xs font-medium tracking-normalr text-muted-foreground">
                       Simbolo
                     </Label>
 
@@ -792,21 +822,25 @@ export function DayEditorDialog({
                       value={row.symbol}
                       onValueChange={v => updateTradeRow(row.id, 'symbol', v, 0)}
                     >
-                      <SelectTrigger className="h-9 w-full border-border bg-background text-sm">
+                      <SelectTrigger className="h-9 w-full border-border/70 bg-background/60 text-sm">
                         <SelectValue placeholder="--" />
                       </SelectTrigger>
 
                       <SelectContent>
                         <SelectGroup>
-                          <SelectItem value="NQ">NQ</SelectItem>
-                          <SelectItem value="MNQ">MNQ</SelectItem>
+                          {getMenuOptions(preferences.assets, row.symbol).map(option => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.value}
+                              {option.orphan ? ' (non più nelle preferenze)' : ''}
+                            </SelectItem>
+                          ))}
                         </SelectGroup>
                       </SelectContent>
                     </Select>
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    <Label className="text-xs font-medium tracking-normalr text-muted-foreground">
                       Direzione
                     </Label>
 
@@ -814,7 +848,7 @@ export function DayEditorDialog({
                       value={row.direction}
                       onValueChange={v => updateTradeRow(row.id, 'direction', v, 0)}
                     >
-                      <SelectTrigger className="h-9 w-full border-border bg-background text-sm">
+                      <SelectTrigger className="h-9 w-full border-border/70 bg-background/60 text-sm">
                         <SelectValue placeholder="--" />
                       </SelectTrigger>
 
@@ -828,7 +862,7 @@ export function DayEditorDialog({
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    <Label className="text-xs font-medium tracking-normalr text-muted-foreground">
                       Orario
                     </Label>
 
@@ -885,7 +919,7 @@ export function DayEditorDialog({
                           persistCurrentRows();
                         }}
                         className={cn(
-                          'h-9 w-full border-border bg-background text-center font-mono text-sm placeholder:text-muted-foreground/70',
+                          'h-9 w-full border-border/70 bg-background/60 text-center font-sans tabular-nums text-sm placeholder:text-muted-foreground/70',
                           /\d/.test(timeDrafts[row.id] ?? row.time) &&
                             (timeDrafts[row.id] ?? row.time) !== '00:00'
                             ? 'text-foreground'
@@ -898,7 +932,7 @@ export function DayEditorDialog({
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    <Label className="text-xs font-medium tracking-normalr text-muted-foreground">
                       Setup
                     </Label>
 
@@ -908,15 +942,16 @@ export function DayEditorDialog({
                         updateTradeRow(row.id, 'setup', value, 0)
                       }
                     >
-                      <SelectTrigger className="h-9 w-full border-border bg-background text-sm">
+                      <SelectTrigger className="h-9 w-full border-border/70 bg-background/60 text-sm">
                         <SelectValue placeholder="Seleziona setup" />
                       </SelectTrigger>
 
                       <SelectContent>
                         <SelectGroup>
-                          {VALID_TRADE_SETUPS.map(setup => (
-                            <SelectItem key={setup} value={setup}>
-                              {setup}
+                          {getMenuOptions(preferences.setups, row.setup).map(option => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.value}
+                              {option.orphan ? ' (non più nelle preferenze)' : ''}
                             </SelectItem>
                           ))}
                         </SelectGroup>
@@ -925,9 +960,9 @@ export function DayEditorDialog({
                   </div>
                 </div>
                 </div>
-                <div className="flex min-w-0 flex-col gap-3 rounded-xl border border-border/70 bg-background/30 p-3 sm:p-3.5">
-                  <p className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-                    ANALISI TRADE
+                <div className="flex min-w-0 flex-col gap-3 rounded-lg border border-border/70 bg-background/30 p-3 sm:p-3.5">
+                  <p className="font-sans tabular-nums text-[11px] font-medium tracking-normal text-muted-foreground">
+                    Analisi trade
                   </p>
 
                   {row.screenshots.length > 0 && (
@@ -969,10 +1004,10 @@ export function DayEditorDialog({
                                     }
                                   }}
                                   aria-label="Modifica nome link"
-                                  className="h-8 min-w-0 flex-1 border-border bg-background font-mono text-xs"
+                                  className="h-8 min-w-0 flex-1 border-border/70 bg-background/60 font-sans tabular-nums text-xs"
                                 />
                               ) : (
-                                <span className="min-w-0 truncate font-mono text-xs font-medium text-foreground">
+                                <span className="min-w-0 truncate font-sans tabular-nums text-xs font-medium text-foreground">
                                   {screenshot.name || 'Link'}
                                 </span>
                               )}
@@ -984,7 +1019,7 @@ export function DayEditorDialog({
                                       type="button"
                                       onClick={saveScreenshotName}
                                       aria-label="Salva nome link"
-                                      className="inline-flex h-8 items-center gap-1 rounded-md border border-profit/20 bg-profit/5 px-2 font-mono text-[10px] text-muted-foreground transition-colors hover:border-profit/40 hover:bg-profit/10 hover:text-profit"
+                                      className="inline-flex h-8 items-center gap-1 rounded-lg border border-profit/20 bg-profit/5 px-2 font-sans tabular-nums text-[10px] text-muted-foreground transition-colors hover:border-highlight/40 hover:bg-primary/10 hover:text-highlight"
                                     >
                                       <Check className="size-3" />
                                       Salva
@@ -993,7 +1028,7 @@ export function DayEditorDialog({
                                       type="button"
                                       onClick={() => setEditingScreenshot(null)}
                                       aria-label="Annulla modifica nome link"
-                                      className="inline-flex h-8 items-center gap-1 rounded-md border border-border bg-background/70 px-2 font-mono text-[10px] text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                                      className="inline-flex h-8 items-center gap-1 rounded-lg border border-border bg-background/70 px-2 font-sans tabular-nums text-[10px] text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                                     >
                                       <X className="size-3" />
                                       Annulla
@@ -1010,7 +1045,7 @@ export function DayEditorDialog({
                                       })
                                     }
                                     aria-label="Modifica nome link"
-                                    className="rounded-md border border-transparent p-1.5 text-muted-foreground transition-colors hover:border-profit/30 hover:bg-profit/10 hover:text-profit"
+                                    className="rounded-lg border border-transparent p-1.5 text-muted-foreground transition-colors hover:border-highlight/30 hover:bg-primary/10 hover:text-highlight"
                                   >
                                     <Pencil className="size-3.5" />
                                   </button>
@@ -1018,14 +1053,11 @@ export function DayEditorDialog({
 
                                 <button
                                   type="button"
-                                  onClick={() => {
-                                    removeScreenshotFromTrade(row.id, index);
-                                    if (isEditingName) {
-                                      setEditingScreenshot(null);
-                                    }
-                                  }}
+                                  onClick={() =>
+                                    setScreenshotToDelete({ tradeId: row.id, index })
+                                  }
                                   aria-label="Elimina link"
-                                  className="rounded-md border border-transparent p-1.5 text-muted-foreground transition-colors hover:border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
+                                  className="rounded-lg border border-transparent p-1.5 text-muted-foreground transition-colors hover:border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
                                 >
                                   <Trash2 className="size-3.5" />
                                 </button>
@@ -1057,7 +1089,7 @@ export function DayEditorDialog({
                                 href={screenshot.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex items-center gap-1 text-foreground hover:text-profit"
+                                className="flex items-center gap-1 text-foreground hover:text-highlight"
                               >
                                 Apri <ExternalLink className="size-3" />
                               </a>
@@ -1084,7 +1116,7 @@ export function DayEditorDialog({
                           }))
                         }
                         placeholder="Inserisci il timeframe"
-                        className="h-8 border-border bg-background text-sm"
+                        className="h-8 border-border/70 bg-background/60 text-sm"
                       />
 
                       <Input
@@ -1101,7 +1133,7 @@ export function DayEditorDialog({
                           }))
                         }
                         placeholder="Inserisci il link di TradingView/Google Drive"
-                        className="h-8 border-border bg-background text-sm"
+                        className="h-8 border-border/70 bg-background/60 text-sm"
                         onKeyDown={e => e.key === 'Enter' && addScreenshotToTrade(row.id)}
                       />
 
@@ -1118,7 +1150,7 @@ export function DayEditorDialog({
                     </div>
 
                     {screenshotInputs[row.id]?.url?.trim() && (
-                      <div className="overflow-hidden rounded-md border border-border bg-background">
+                      <div className="overflow-hidden rounded-lg border border-border bg-background">
                         <div className="px-3 py-2 text-xs text-muted-foreground">
                           Anteprima
                         </div>
@@ -1138,7 +1170,7 @@ export function DayEditorDialog({
                           <button
                             type="button"
                           
-                            className="flex items-center gap-1 text-foreground hover:text-profit"
+                            className="flex items-center gap-1 text-foreground hover:text-highlight"
                           >
                             Apri <ExternalLink className="size-3" />
                           </button>
@@ -1148,8 +1180,8 @@ export function DayEditorDialog({
                   </div>
                 </div>
 
-                <div className="flex min-w-0 flex-col gap-2.5 rounded-xl border border-border/70 bg-background/30 p-3 sm:p-3.5">
-                  <Label className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                <div className="flex min-w-0 flex-col gap-2.5 rounded-lg border border-border/70 bg-background/30 p-3 sm:p-3.5">
+                  <Label className="text-[11px] font-medium tracking-normal text-muted-foreground">
                     TAGS
                   </Label>
 
@@ -1178,7 +1210,7 @@ export function DayEditorDialog({
                               updateTradeRow(row.id, 'tags', nextTags, 0);
                             }}
                             className={cn(
-                              'w-full rounded-md border px-2.5 py-1.5 text-left font-mono text-[13px] leading-4 transition-colors',
+                              'w-full rounded-lg border px-2.5 py-1.5 text-left font-sans tabular-nums text-[13px] leading-4 transition-colors',
                               isManaged && 'ring-1 ring-white/35',
                               !shouldShowTagColor &&
                                 'border-border bg-background/80 text-muted-foreground hover:bg-secondary hover:text-foreground'
@@ -1240,7 +1272,7 @@ export function DayEditorDialog({
                               updateTradeRow(row.id, 'tags', nextTags, 0);
                             }}
                             className={cn(
-                              'w-full rounded-md border px-2.5 py-1.5 text-left font-mono text-[13px] leading-4 transition-colors',
+                              'w-full rounded-lg border px-2.5 py-1.5 text-left font-sans tabular-nums text-[13px] leading-4 transition-colors',
                               isManaged && 'ring-1 ring-white/35',
                               !shouldShowTagColor &&
                                 'border-border bg-background/80 text-muted-foreground hover:bg-secondary hover:text-foreground'
@@ -1319,13 +1351,13 @@ export function DayEditorDialog({
                         }));
                       }}
                       placeholder="Crea un tag personalizzato"
-                      className="h-8 min-w-0 border-border/70 bg-background/60 font-mono text-[13px] placeholder:text-muted-foreground/60"
+                      className="h-8 min-w-0 border-border/70 bg-background/60 font-sans tabular-nums text-[13px] placeholder:text-muted-foreground/60"
                     />
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="h-8 px-3 font-mono text-xs"
+                      className="h-8 px-3 font-sans tabular-nums text-xs"
                       disabled={!customTagInputs[row.id]?.trim()}
                       onClick={() => {
                         const label = customTagInputs[row.id]?.trim();
@@ -1362,7 +1394,7 @@ export function DayEditorDialog({
                       type="button"
                       variant={isManagingTags ? 'default' : 'outline'}
                       size="sm"
-                      className="h-8 px-3 font-mono text-xs"
+                      className="h-8 px-3 font-sans tabular-nums text-xs"
                       disabled={!canManageTags}
                       onClick={() =>
                         setIsManagingTags((previous) => {
@@ -1417,8 +1449,8 @@ export function DayEditorDialog({
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-2 rounded-xl border border-border/70 bg-background/30 p-3 sm:p-3.5">
-                  <Label className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                <div className="flex flex-col gap-2 rounded-lg border border-border/70 bg-background/30 p-3 sm:p-3.5">
+                  <Label className="font-sans tabular-nums text-[11px] font-medium tracking-normal text-muted-foreground">
                     Note trade
                   </Label>
 
@@ -1431,14 +1463,15 @@ export function DayEditorDialog({
                     }}
                     onBlur={() => persistCurrentRows()}
                     placeholder="Cosa è successo in questo trade? Narrativa, Setup, Emozioni..."
-                    className="min-h-[72px] resize-none overflow-hidden border-border bg-background text-sm"
+                    className="min-h-[72px] resize-none overflow-hidden border-border/70 bg-background/60 text-sm"
                   />
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border/70 bg-background/30 px-3 py-3 sm:gap-4 sm:px-4">
+          <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border/70 bg-background/30 px-3 py-3 sm:gap-4 sm:px-4">
+            {!readOnly && (
             <Button
               variant="outline"
               size="sm"
@@ -1448,17 +1481,25 @@ export function DayEditorDialog({
               <Plus className="size-4" />
               Aggiungi trade
             </Button>
+            )}
 
-            <span className="min-w-0 break-words font-mono text-xs text-muted-foreground sm:text-sm">
+            <span className="min-w-0 break-words font-sans tabular-nums text-xs text-muted-foreground sm:text-sm">
               Trade: {tradeRows.length} | Totale giorno:{' '}
               <span className={cn(dayTotal > 0 && 'text-profit', dayTotal < 0 && 'text-loss')}>
                 {streamerMode ? '******' : `${dayTotal.toFixed(2)} USD`}
               </span>
             </span>
           </div>
-
+          </fieldset>
         </div>
 
+        {readOnly ? (
+          <div className="flex justify-end border-t border-border px-4 py-3.5 sm:px-6 sm:py-4">
+            <Button variant="outline" onClick={onClose}>
+              Chiudi
+            </Button>
+          </div>
+        ) : (
         <div className="flex flex-col-reverse gap-2 border-t border-border px-4 py-3.5 max-sm:[&_button]:w-full sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-4">
           <Button
             variant="destructive"
@@ -1470,7 +1511,7 @@ export function DayEditorDialog({
           <div className="flex items-center justify-end gap-3 max-sm:flex-col-reverse max-sm:items-stretch">
             <span
               className={cn(
-                'min-h-4 text-right font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground/70',
+                'min-h-4 text-right font-sans tabular-nums text-[11px] tracking-normal text-muted-foreground/70',
                 autosaveStatus === 'saving' && 'text-profit/80',
                 autosaveStatus === 'saved' && 'text-muted-foreground/80'
               )}
@@ -1479,7 +1520,7 @@ export function DayEditorDialog({
               {autosaveStatus === 'saving'
                 ? 'Salvataggio...'
                 : autosaveStatus === 'saved'
-                  ? 'Salvato'
+                  ? 'Salvato in automatico'
                   : ''}
             </span>
 
@@ -1488,6 +1529,7 @@ export function DayEditorDialog({
             </Button>
           </div>
         </div>
+        )}
       </DialogContent>
       <Dialog
         open={Boolean(tradeToDeleteId)}
@@ -1514,6 +1556,36 @@ export function DayEditorDialog({
               onClick={confirmRemoveTradeRow}
             >
               Elimina trade
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(screenshotToDelete)}
+        onOpenChange={(open) => !open && setScreenshotToDelete(null)}
+      >
+        <DialogContent className="max-h-[92dvh] w-[calc(100vw-1.75rem)] max-w-[460px] border-border bg-card">
+          <DialogHeader>
+            <DialogTitle>Eliminare questa immagine?</DialogTitle>
+            <DialogDescription>
+              Il link all&apos;immagine verrà rimosso dal trade.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="max-sm:[&_button]:w-full">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setScreenshotToDelete(null)}
+            >
+              Annulla
+            </Button>
+            <Button
+              type="button"
+              className="bg-loss text-white hover:bg-loss/90"
+              onClick={confirmRemoveScreenshot}
+            >
+              Elimina immagine
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1558,7 +1630,7 @@ export function DayEditorDialog({
           <DialogHeader>
             <DialogTitle>Eliminare questa giornata?</DialogTitle>
             <DialogDescription>
-              Questa azione cancellerà tutti i trade e le informazioni salvate per questa giornata. Ti consigliamo di avere un backup prima di continuare.
+              Questa azione cancellerà tutti i trade e le informazioni salvate per questa giornata.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="max-sm:[&_button]:w-full">

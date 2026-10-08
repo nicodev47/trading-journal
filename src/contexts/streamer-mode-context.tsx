@@ -167,6 +167,32 @@ export function StreamerModeProvider({ children }: { children: ReactNode }) {
   );
 }
 
+/** Default display settings, detached from the viewer's own (import preview). */
+export function DefaultDisplaySettingsProvider({ children }: { children: ReactNode }) {
+  const value = useMemo<StreamerModeContextValue>(
+    () => ({
+      streamerMode: false,
+      setStreamerMode: () => {},
+      toggleStreamerMode: () => {},
+      sundayWeekStart: true,
+      setSundayWeekStart: () => {},
+      showCalendarSetup: false,
+      setShowCalendarSetup: () => {},
+      showCalendarTags: false,
+      setShowCalendarTags: () => {},
+      showZeroPnlTradesInCalendar: true,
+      setShowZeroPnlTradesInCalendar: () => {},
+    }),
+    []
+  );
+
+  return (
+    <StreamerModeContext.Provider value={value}>
+      {children}
+    </StreamerModeContext.Provider>
+  );
+}
+
 export function useStreamerMode() {
   const context = useContext(StreamerModeContext);
 

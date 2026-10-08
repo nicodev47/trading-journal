@@ -54,7 +54,7 @@ export function ProfileShareDialog({
   const [isCopying, setIsCopying] = useState(false);
 
   const exportOptions = {
-    backgroundColor: '#05080c',
+    backgroundColor: '#0a0a0b',
     cacheBust: true,
     pixelRatio: 2,
   };
@@ -123,13 +123,13 @@ export function ProfileShareDialog({
               size="icon"
               onClick={() => onOpenChange(false)}
               aria-label="Torna al profilo"
-              className="h-10 w-10 shrink-0 rounded-xl border border-transparent bg-transparent text-muted-foreground hover:border-border hover:bg-secondary/40 hover:text-foreground focus-visible:ring-1 focus-visible:ring-profit/50"
+              className="h-10 w-10 shrink-0 rounded-lg border border-transparent bg-transparent text-muted-foreground hover:border-border hover:bg-secondary/40 hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring/50"
             >
               <ArrowLeft className="size-4" />
             </Button>
 
             <div className="min-w-0">
-              <DialogTitle className="font-mono text-lg">Profilo trader</DialogTitle>
+              <DialogTitle className="font-sans tabular-nums text-lg">Profilo trader</DialogTitle>
               <DialogDescription>
                 Card profilo pronta da salvare o condividere.
               </DialogDescription>
@@ -141,7 +141,8 @@ export function ProfileShareDialog({
           <div className="overflow-hidden rounded-2xl border border-border bg-card/60 p-2.5">
             <ShareCardPreview
               width={760}
-              height={760}
+              height={980}
+              desktopScale={0.68}
               exportRef={cardRef}
             >
               <ProfileShareCard
@@ -159,7 +160,7 @@ export function ProfileShareDialog({
             variant="outline"
             onClick={handleCopy}
             disabled={isCopying || isExporting}
-            className="gap-2 border-border bg-background/50 text-foreground hover:border-profit/40 hover:bg-secondary/70"
+            className="gap-2 border-border bg-background/50 text-foreground hover:border-highlight/40 hover:bg-secondary/70"
           >
             <Clipboard className="size-4" />
             {isCopying ? 'Copia...' : 'Copia negli appunti'}
@@ -168,7 +169,7 @@ export function ProfileShareDialog({
             type="button"
             onClick={handleDownload}
             disabled={isExporting || isCopying}
-            className="gap-2 bg-profit text-background hover:bg-profit/90"
+            className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
           >
             <Download className="size-4" />
             {isExporting ? 'Salvataggio...' : 'Salva come immagine'}

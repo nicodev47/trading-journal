@@ -14,34 +14,52 @@ interface WhatsNewDialogProps {
 
 const updates = [
   {
-    icon: "📥",
-    title: "Import ed Export sulla pagina aperta",
+    icon: "👋",
+    title: "Onboarding personalizzato",
     description:
-      "Import ed Export lavorano direttamente sul conto, Backtest o Preview che stai visualizzando. Non serve più scegliere una destinazione e gli altri spazi non vengono modificati.",
+      "Al primo accesso scegli nome e foto, gli asset che operi, i tuoi setup e le finestre operative. Il journal si adatta a te e il tutorial parte subito dopo.",
   },
   {
-    icon: "🛡️",
-    title: "Backup prima dell'importazione",
+    icon: "🧩",
+    title: "Asset, setup e finestre tuoi",
     description:
-      "Se la pagina contiene già dati, una nuova card viola permette di scaricare subito una copia di sicurezza prima di aggiungere o sovrascrivere i dati importati.",
+      "Menu, analisi, calendario e card di condivisione usano le tue scelte. Puoi modificarle in ogni momento dal profilo, nella scheda Impostazioni.",
   },
   {
-    icon: "📝",
-    title: "Note durante la creazione dei conti",
+    icon: "🪪",
+    title: "Profilo rinnovato",
     description:
-      "Quando crei un nuovo conto, una sessione Backtest o uno spazio Preview puoi aggiungere subito una nota facoltativa con obiettivi, regole e informazioni utili.",
+      "Foto o iniziali, livello e XP in un'unica card, con tre schede: Profilo, Impostazioni e Dati.",
   },
   {
-    icon: "🗂️",
-    title: "Gestione degli spazi più chiara",
+    icon: "📊",
+    title: "Nuove analisi",
     description:
-      "I flussi di creazione, modifica, backup e importazione mantengono sempre visibile il contesto della pagina corrente, riducendo il rischio di intervenire sul conto sbagliato.",
+      "Setup e finestra operativa migliori e peggiori, giorno e mese migliori con win rate, Long vs Short, RR, drawdown e profitto in una griglia ordinata.",
+  },
+  {
+    icon: "🖼️",
+    title: "Card Share ridisegnate",
+    description:
+      "Le card di trade e profilo hanno un nuovo formato verticale con foto o iniziali, pensato per essere condiviso.",
+  },
+  {
+    icon: "🎨",
+    title: "Nuovo stile grafico",
+    description:
+      "Interfaccia scura ispirata allo stile Apple: colori, font e bordi uniformi, calendario con il giorno corrente evidenziato.",
+  },
+  {
+    icon: "👀",
+    title: "Preview dei file importati",
+    description:
+      "Quando importi un file puoi aprirlo in Preview: vedi calendario, statistiche e analisi del file, e ne esci quando vuoi senza modificare il tuo journal.",
   },
   {
     icon: "🛠️",
     title: "Bug Fix & Improvements",
     description:
-      "• Tutorial e sezione Help aggiornati. • Flussi Import/Export semplificati. • Migliorata la chiarezza delle conferme. • Ottimizzazioni generali dell'interfaccia.",
+      "• Esc chiude solo il sottomenu aperto. • Conferma prima di eliminare un link immagine. • Salvataggio automatico nelle note. • Miglioramenti su mobile.",
   },
 ];
 
@@ -56,16 +74,16 @@ export function WhatsNewDialog({ open, onOpenChange }: WhatsNewDialogProps) {
           <div className="flex items-start justify-between gap-4">
             <div>
               <DialogTitle className="text-lg text-foreground sm:text-xl">
-                🚀 EclipseJournal v0.6
+                🚀 EclipseJournal v1.0
               </DialogTitle>
               <DialogDescription className="mt-1 text-sm text-muted-foreground">
-                Versione: v0.6
+                Versione: v1.0
               </DialogDescription>
             </div>
             <button
               type="button"
               onClick={() => onOpenChange(false)}
-              className="rounded-lg border border-border/70 p-2 text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground"
+              className="rounded-lg border border-border/70 p-2 text-muted-foreground transition-colors hover:border-highlight/50 hover:text-foreground"
               aria-label="Chiudi novità"
             >
               <X className="size-4" />
@@ -74,14 +92,14 @@ export function WhatsNewDialog({ open, onOpenChange }: WhatsNewDialogProps) {
         </DialogHeader>
 
         <div className="p-4 sm:p-5">
-          <h2 className="mb-4 font-mono text-xs font-semibold uppercase tracking-[0.16em] text-violet-200">
+          <h2 className="mb-4 font-sans tabular-nums text-xs font-semibold tracking-normal text-blue-200">
             ✨ Nuove funzionalità
           </h2>
           <div className="grid gap-3 sm:grid-cols-2">
             {updates.map((update) => (
               <article
                 key={update.title}
-                className="rounded-xl border border-border/70 bg-background/45 p-4 transition-colors hover:border-primary/35 hover:bg-primary/[0.03]"
+                className="rounded-lg border border-border/70 bg-background/45 p-4 transition-colors hover:border-highlight/35 hover:bg-primary/[0.03]"
               >
                 <span className="text-xl" aria-hidden="true">
                   {update.icon}
@@ -101,7 +119,7 @@ export function WhatsNewDialog({ open, onOpenChange }: WhatsNewDialogProps) {
           <button
             type="button"
             onClick={() => onOpenChange(false)}
-            className="rounded-lg border border-violet-300/30 bg-violet-300/10 px-4 py-2 font-sans text-xs font-semibold text-violet-100 transition hover:border-violet-200/50 hover:bg-violet-300/15"
+            className="rounded-lg border border-blue-300/30 bg-blue-300/10 px-4 py-2 font-sans text-xs font-semibold text-blue-100 transition hover:border-blue-200/50 hover:bg-blue-300/15"
           >
             Ho capito
           </button>

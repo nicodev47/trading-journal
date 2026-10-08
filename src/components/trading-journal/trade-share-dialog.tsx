@@ -78,7 +78,7 @@ export function TradeShareDialog({
   const profileHandle = normalizeHandleInput(initialHandle);
 
   const exportOptions = {
-    backgroundColor: '#05080c',
+    backgroundColor: '#0a0a0b',
     cacheBust: true,
     pixelRatio: 2,
   };
@@ -147,13 +147,13 @@ export function TradeShareDialog({
               size="icon"
               onClick={() => onOpenChange(false)}
               aria-label="Torna al trade"
-              className="h-10 w-10 shrink-0 rounded-xl border border-transparent bg-transparent text-muted-foreground hover:border-border hover:bg-secondary/40 hover:text-foreground focus-visible:ring-1 focus-visible:ring-profit/50"
+              className="h-10 w-10 shrink-0 rounded-lg border border-transparent bg-transparent text-muted-foreground hover:border-border hover:bg-secondary/40 hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring/50"
             >
               <ArrowLeft className="size-4" />
             </Button>
 
             <div className="min-w-0">
-              <DialogTitle className="font-mono text-lg">Trade Recap</DialogTitle>
+              <DialogTitle className="font-sans tabular-nums text-lg">Trade Recap</DialogTitle>
               <DialogDescription>
                 {trade ? formatDialogDate(trade, date) : 'Genera una card condivisibile del trade.'}
               </DialogDescription>
@@ -165,8 +165,9 @@ export function TradeShareDialog({
           <div className="overflow-hidden rounded-2xl border border-border bg-card/60 p-2.5">
             {trade && (
               <ShareCardPreview
-                width={840}
-                height={472.5}
+                width={760}
+                height={800}
+                desktopScale={0.68}
                 exportRef={cardRef}
               >
                 <TradeShareCard
@@ -174,7 +175,7 @@ export function TradeShareDialog({
                   date={date}
                   handle={profileHandle}
                   streamerMode={streamerMode}
-                  className="w-[840px]"
+                  className="w-[760px]"
                 />
               </ShareCardPreview>
             )}
@@ -187,7 +188,7 @@ export function TradeShareDialog({
             variant="outline"
             onClick={handleCopy}
             disabled={!trade || isCopying || isExporting}
-            className="gap-2 border-border bg-background/50 text-foreground hover:border-profit/40 hover:bg-secondary/70"
+            className="gap-2 border-border bg-background/50 text-foreground hover:border-highlight/40 hover:bg-secondary/70"
           >
             <Clipboard className="size-4" />
             {isCopying ? 'Copia...' : 'Copy to Clipboard'}
@@ -196,7 +197,7 @@ export function TradeShareDialog({
             type="button"
             onClick={handleDownload}
             disabled={!trade || isExporting || isCopying}
-            className="gap-2 bg-profit text-background hover:bg-profit/90"
+            className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
           >
             <Download className="size-4" />
             {isExporting ? 'Salvataggio...' : 'Save as Image'}

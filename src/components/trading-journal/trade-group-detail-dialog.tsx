@@ -90,11 +90,11 @@ function SummaryStat({
   children: ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-border/80 bg-background/35 p-3">
-      <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-muted-foreground">
+    <div className="rounded-lg border border-border/80 bg-background/35 p-3">
+      <p className="font-sans tabular-nums text-[9px] tracking-normal text-muted-foreground">
         {label}
       </p>
-      <div className="mt-2 font-mono text-sm font-semibold text-foreground">
+      <div className="mt-2 font-sans tabular-nums text-sm font-semibold text-foreground">
         {children}
       </div>
     </div>
@@ -153,11 +153,11 @@ export function TradeGroupDetailDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[92dvh] w-[calc(100vw-1.75rem)] max-w-[860px] gap-0 overflow-hidden border-border bg-card p-0 sm:max-h-[86vh] sm:w-[94vw]">
         <DialogHeader className="border-b border-border px-4 py-3.5 pr-12 text-left sm:px-6 sm:py-4">
-          <DialogTitle className="font-mono text-base font-semibold tracking-wide">
+          <DialogTitle className="font-sans tabular-nums text-base font-semibold tracking-wide">
             {title}
           </DialogTitle>
           {subtitle && (
-            <DialogDescription className="font-mono text-xs">
+            <DialogDescription className="font-sans tabular-nums text-xs">
               {subtitle}
             </DialogDescription>
           )}
@@ -180,7 +180,7 @@ export function TradeGroupDetailDialog({
 
           <div className="mt-4 space-y-2">
             {sortedTrades.length === 0 ? (
-              <div className="rounded-xl border border-border bg-background/35 p-4 text-center font-mono text-xs text-muted-foreground">
+              <div className="rounded-lg border border-border bg-background/35 p-4 text-center font-sans tabular-nums text-xs text-muted-foreground">
                 Nessun trade trovato per questo criterio.
               </div>
             ) : (
@@ -191,7 +191,7 @@ export function TradeGroupDetailDialog({
                 return (
                   <div
                     key={trade.id}
-                    className="grid grid-cols-2 items-center gap-2 rounded-xl border border-border/80 bg-background/35 p-3 font-mono text-xs sm:gap-3 md:grid-cols-[112px_64px_82px_86px_minmax(0,1fr)_96px_auto]"
+                    className="grid grid-cols-2 items-center gap-2 rounded-lg border border-border/80 bg-background/35 p-3 font-sans tabular-nums text-xs sm:gap-3 md:grid-cols-[112px_64px_82px_86px_minmax(0,1fr)_96px_auto]"
                   >
                     <span className="text-foreground">
                       {date
@@ -223,7 +223,7 @@ export function TradeGroupDetailDialog({
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="h-8 rounded-lg border-border bg-background/50 px-3 font-mono text-xs text-muted-foreground hover:bg-secondary hover:text-foreground"
+                      className="h-8 rounded-lg border-border bg-background/50 px-3 font-sans tabular-nums text-xs text-muted-foreground hover:bg-secondary hover:text-foreground"
                       onClick={() => onOpenTrade(trade)}
                     >
                       Apri
@@ -236,7 +236,7 @@ export function TradeGroupDetailDialog({
 
           {totalPages > 1 && (
             <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
-              <span className="font-mono text-[10px] text-muted-foreground">
+              <span className="font-sans tabular-nums text-[10px] text-muted-foreground">
                 Mostrati {visibleFrom}-{visibleTo} di {sortedTrades.length} trade
               </span>
               <div className="flex flex-wrap items-center justify-end gap-1.5">
@@ -244,7 +244,7 @@ export function TradeGroupDetailDialog({
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="h-9 w-9 rounded-lg border border-border bg-background/50 p-0 font-mono text-xs text-muted-foreground hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                  className="h-9 w-9 rounded-lg border border-border bg-background/50 p-0 font-sans tabular-nums text-xs text-muted-foreground hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
                   disabled={currentPage === 1}
                   onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
                 >
@@ -257,9 +257,9 @@ export function TradeGroupDetailDialog({
                     variant="outline"
                     size="sm"
                     className={cn(
-                      'h-9 w-9 rounded-lg border border-border bg-background/50 p-0 font-mono text-xs text-muted-foreground hover:bg-secondary hover:text-foreground',
+                      'h-9 w-9 rounded-lg border border-border bg-background/50 p-0 font-sans tabular-nums text-xs text-muted-foreground hover:bg-secondary hover:text-foreground',
                       page === currentPage &&
-                        'bg-profit/20 text-foreground hover:bg-profit/25'
+                        'bg-profit/20 text-foreground hover:bg-primary/25'
                     )}
                     onClick={() => setCurrentPage(page)}
                   >
@@ -270,7 +270,7 @@ export function TradeGroupDetailDialog({
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="h-9 w-9 rounded-lg border border-border bg-background/50 p-0 font-mono text-xs text-muted-foreground hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                  className="h-9 w-9 rounded-lg border border-border bg-background/50 p-0 font-sans tabular-nums text-xs text-muted-foreground hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
                   disabled={currentPage === totalPages}
                   onClick={() =>
                     setCurrentPage((page) => Math.min(totalPages, page + 1))

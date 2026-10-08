@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 're
 import {
   Check,
   ChevronDown,
+  ChevronRight,
   Download,
   Eye,
   FlaskConical,
@@ -12,6 +13,7 @@ import {
   Plus,
   Trash2,
   WalletCards,
+  X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -55,6 +57,11 @@ interface AccountSelectorProps {
   ) => { success: boolean; error?: string; workspace?: JournalWorkspaceMeta };
   onBackupWorkspace: (workspace: JournalWorkspace) => void;
   onDeleteWorkspace: (workspace: JournalWorkspace) => boolean;
+  /** Set while an imported file is shown in Preview. */
+  previewLabel?: string;
+  onExitPreview?: () => void;
+  /** Old Preview accounts that still hold data: kept reachable so nothing is lost. */
+  legacyPreviewWorkspaceIds?: string[];
 }
 
 export function AccountSelector({
@@ -67,7 +74,11 @@ export function AccountSelector({
   onUpdateWorkspace,
   onBackupWorkspace,
   onDeleteWorkspace,
+  previewLabel,
+  onExitPreview,
+  legacyPreviewWorkspaceIds = [],
 }: AccountSelectorProps) {
+  const isPreviewing = previewLabel !== undefined;
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [menuSection, setMenuSection] =
@@ -113,24 +124,12 @@ export function AccountSelector({
     ),
     [workspaces]
   );
-  const previewWorkspaces = useMemo(
-    () =>
-      workspaces.filter(
-        (workspace) =>
-          workspace.group === 'preview'
-      ),
-    [workspaces]
-  );
   const customWorkspaceCount = accountWorkspaces.filter(
     (workspace) => workspace.type === 'custom'
   ).length;
   const backtestWorkspaceCount = backtestWorkspaces.filter(
     (workspace) => workspace.type === 'custom'
   ).length;
-  const previewWorkspaceCount = previewWorkspaces.filter(
-    (workspace) => workspace.type === 'custom'
-  ).length;
-
   useEffect(() => {
     if (activeWorkspace === 'student' || activeWorkspace.startsWith('preview-')) {
       setMenuSection('preview');
@@ -224,7 +223,8 @@ export function AccountSelector({
         <button
           type="button"
           className={cn(
-            'flex min-h-11 w-full cursor-pointer items-center gap-2 rounded-lg border border-transparent px-2.5 text-left text-sm outline-none transition-colors hover:border-violet-500/35 hover:bg-violet-500/15 hover:text-violet-50 focus-visible:border-violet-400/50 focus-visible:bg-violet-500/15',
+            'flex min-h-10 w-full cursor-pointer items-center gap-2.5 rounded-[9px] px-2.5 text-left text-sm outline-none transition-colors hover:bg-white/10 hover:text-foreground focus-visible:bg-white/10',
+            activeWorkspace === workspace.id && !isPreviewing && 'bg-white/[0.07]',
             isEditable && 'pr-11'
           )}
           onClick={() => {
@@ -242,7 +242,7 @@ export function AccountSelector({
             setIsMenuOpen(false);
           }}
         >
-          <span className="flex size-7 items-center justify-center rounded-md bg-secondary text-muted-foreground transition-colors group-hover:bg-violet-500/20 group-hover:text-violet-200">
+          <span className="flex size-4 shrink-0 items-center justify-center">
             {icon}
           </span>
           <span className="min-w-0 flex-1">
@@ -250,15 +250,15 @@ export function AccountSelector({
               {workspace.name}
             </span>
             {isEditable && workspace.notes?.trim() && (
-              <span className="block truncate font-mono text-[10px] text-muted-foreground group-hover:text-violet-200/70">
+              <span className="block truncate font-sans tabular-nums text-[10px] text-muted-foreground group-hover:text-foreground">
                 {workspace.notes.trim()}
               </span>
             )}
           </span>
-          {activeWorkspace === workspace.id && (
+          {activeWorkspace === workspace.id && !isPreviewing && (
             <Check
               className={cn(
-                'absolute right-3 top-1/2 size-4 -translate-y-1/2 text-profit',
+                'absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground',
                 isEditable && 'group-hover:opacity-0'
               )}
             />
@@ -268,7 +268,7 @@ export function AccountSelector({
         {isEditable && (
           <button
             type="button"
-            className="absolute right-2 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-lg text-violet-200 opacity-0 transition hover:bg-violet-500/25 hover:text-white focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-violet-400 group-hover:opacity-100 max-md:opacity-100"
+            className="absolute right-2 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-lg text-foreground opacity-0 transition hover:bg-white/10 hover:text-white focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring group-hover:opacity-100 max-md:opacity-100"
             onClick={() => openEditDialog(workspace)}
             aria-label={`Modifica ${workspace.name}`}
             title={`Modifica ${workspace.name}`}
@@ -303,69 +303,123 @@ export function AccountSelector({
         <PopoverTrigger asChild>
           <Button
             type="button"
-            variant="outline"
+            variant="ghost"
             data-tutorial="workspace-tabs"
-            className="h-9 w-[190px] justify-between rounded-lg border-violet-500/55 bg-violet-500/10 px-3 text-left shadow-[0_0_0_1px_rgba(139,92,246,0.08)] hover:border-violet-400 hover:bg-violet-500/15 max-lg:w-[160px] max-md:w-auto max-md:min-w-0 max-md:flex-1"
+            className="h-8 w-auto max-w-[200px] justify-between gap-2 rounded-full bg-white/[0.06] px-3 text-left hover:bg-white/10 max-lg:max-w-[160px] max-md:min-w-0 max-md:flex-1 max-md:max-w-none"
           >
             <span className="flex min-w-0 items-center gap-2">
-              {activeWorkspace === 'student' || activeWorkspace.startsWith('preview-') ? (
-                <Eye className="size-4 shrink-0 text-violet-300" />
-              ) : activeWorkspace === 'backtest' || activeWorkspace.startsWith('backtest-') ? (
-                <FlaskConical className="size-4 shrink-0 text-violet-300" />
-              ) : (
-                <WalletCards className="size-4 shrink-0 text-violet-300" />
-              )}
-              <span className="truncate font-sans text-xs font-semibold">
-                {activeAccount?.name ?? 'Seleziona conto'}
+              <span
+                aria-hidden="true"
+                className={cn(
+                  'size-2 shrink-0 rounded-full',
+                  isPreviewing
+                    ? 'bg-violet-400'
+                    : activeWorkspace === 'backtest' || activeWorkspace.startsWith('backtest-')
+                      ? 'bg-muted-foreground'
+                      : 'bg-profit'
+                )}
+              />
+              <span className="truncate font-sans text-xs font-medium">
+                {isPreviewing ? 'Preview' : activeAccount?.name ?? 'Seleziona conto'}
               </span>
             </span>
-            <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
+            <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" />
           </Button>
         </PopoverTrigger>
 
-        <PopoverContent align="start" className="w-[290px] rounded-xl p-1.5">
-          <div className="px-2.5 pb-1 pt-2 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-            {menuSection === 'accounts'
-              ? 'I tuoi conti'
-              : menuSection === 'backtests'
-                ? 'I tuoi Backtest'
-                : 'Preview'}
-          </div>
-
-          {menuSection === 'accounts' ? (
+        <PopoverContent align="start" className="w-[290px] rounded-lg p-1.5">
+          {isPreviewing && (
             <>
-              {accountWorkspaces.map((workspace) =>
-                renderWorkspaceItem(
-                  workspace,
-                  <WalletCards className="size-3.5" />
-                )
-              )}
-
+              <div className="flex min-h-10 w-full items-center gap-2.5 rounded-[9px] bg-white/[0.07] px-2.5">
+                <span className="flex size-4 shrink-0 items-center justify-center">
+                  <span className="size-2 rounded-full bg-violet-400" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block font-sans text-xs font-semibold">Preview</span>
+                  {previewLabel && (
+                    <span className="block truncate font-sans text-[10px] text-muted-foreground">
+                      {previewLabel}
+                    </span>
+                  )}
+                </span>
+                <Check className="size-4 text-muted-foreground" />
+              </div>
               <button
                 type="button"
-                disabled={customWorkspaceCount >= maxCustomWorkspaces}
-                className="mt-1 flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-lg border border-dashed border-violet-500/35 px-2 text-left text-violet-200 outline-none transition-colors hover:bg-violet-500/15 focus-visible:bg-violet-500/15 disabled:pointer-events-none disabled:opacity-50"
-                onClick={() => openCreateDialog('account')}
+                className="mt-0.5 flex min-h-10 w-full cursor-pointer items-center gap-2.5 rounded-[9px] px-2.5 text-left text-muted-foreground outline-none transition-colors hover:bg-white/10 hover:text-foreground focus-visible:bg-white/10"
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  onExitPreview?.();
+                }}
               >
-                <Plus className="size-4" />
-                <span className="font-sans text-xs font-semibold">
-                  Aggiungi nuovo conto
-                </span>
+                <X className="size-4" />
+                <span className="font-sans text-xs font-semibold">Esci dalla preview</span>
               </button>
+              <div className="-mx-1 my-2 h-px bg-border" />
             </>
-          ) : menuSection === 'backtests' ? (
-            <>
+          )}
+
+          <div className="px-2.5 pb-1 pt-2 font-sans text-[11px] text-muted-foreground">
+            I tuoi conti
+          </div>
+
+          {accountWorkspaces.map((workspace) =>
+            renderWorkspaceItem(
+              workspace,
+              <span className="size-2 rounded-full bg-profit" />
+            )
+          )}
+
+          <button
+            type="button"
+            disabled={customWorkspaceCount >= maxCustomWorkspaces}
+            className="mt-0.5 flex min-h-10 w-full cursor-pointer items-center gap-2.5 rounded-[9px] px-2.5 text-left text-muted-foreground hover:text-foreground outline-none transition-colors hover:bg-white/10 focus-visible:bg-white/10 disabled:pointer-events-none disabled:opacity-50"
+            onClick={() => openCreateDialog('account')}
+          >
+            <Plus className="size-4" />
+            <span className="font-sans text-xs font-semibold">
+              Aggiungi nuovo conto
+            </span>
+          </button>
+
+          <div className="-mx-1 my-2 h-px bg-border" />
+          <div className="px-2.5 pb-1 font-sans text-[11px] text-muted-foreground">
+            Modalità
+          </div>
+
+          <button
+            type="button"
+            aria-expanded={menuSection === 'backtests'}
+            className="flex min-h-10 w-full cursor-pointer items-center gap-2.5 rounded-[9px] px-2.5 text-left outline-none transition-colors hover:bg-white/10 focus-visible:bg-white/10"
+            onClick={() =>
+              setMenuSection(menuSection === 'backtests' ? 'accounts' : 'backtests')
+            }
+          >
+            <span className="flex size-4 shrink-0 items-center justify-center">
+              <span className="size-2 rounded-full bg-muted-foreground" />
+            </span>
+            <span className="flex-1 font-sans text-xs font-semibold">Backtest</span>
+            <ChevronRight
+              className={cn(
+                'size-3.5 text-muted-foreground transition-transform',
+                menuSection === 'backtests' && 'rotate-90'
+              )}
+            />
+          </button>
+
+          {menuSection === 'backtests' && (
+            <div className="ml-4 border-l border-white/10 pl-1">
               {backtestWorkspaces.map((workspace) =>
                 renderWorkspaceItem(
                   workspace,
-                  <FlaskConical className="size-3.5" />
+                  <span className="size-2 rounded-full bg-muted-foreground" />
                 )
               )}
 
               <button
                 type="button"
                 disabled={backtestWorkspaceCount >= maxCustomWorkspaces}
-                className="mt-1 flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-lg border border-dashed border-violet-500/35 px-2 text-left text-violet-200 outline-none transition-colors hover:bg-violet-500/15 focus-visible:bg-violet-500/15 disabled:pointer-events-none disabled:opacity-50"
+                className="mt-0.5 flex min-h-10 w-full cursor-pointer items-center gap-2.5 rounded-[9px] px-2.5 text-left text-muted-foreground hover:text-foreground outline-none transition-colors hover:bg-white/10 focus-visible:bg-white/10 disabled:pointer-events-none disabled:opacity-50"
                 onClick={() => openCreateDialog('backtest')}
               >
                 <Plus className="size-4" />
@@ -373,83 +427,24 @@ export function AccountSelector({
                   Aggiungi conto Backtest
                 </span>
               </button>
-            </>
-          ) : (
+            </div>
+          )}
+
+          {legacyPreviewWorkspaceIds.length > 0 && (
             <>
-              {previewWorkspaces.map((workspace) =>
-                renderWorkspaceItem(
-                  workspace,
-                  <Eye className="size-3.5" />
-                )
-              )}
-
-              <button
-                type="button"
-                disabled={previewWorkspaceCount >= maxCustomWorkspaces}
-                className="mt-1 flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-lg border border-dashed border-violet-500/35 px-2 text-left text-violet-200 outline-none transition-colors hover:bg-violet-500/15 focus-visible:bg-violet-500/15 disabled:pointer-events-none disabled:opacity-50"
-                onClick={() => openCreateDialog('preview')}
-              >
-                <Plus className="size-4" />
-                <span className="font-sans text-xs font-semibold">
-                  Aggiungi conto Preview
-                </span>
-              </button>
+              <div className="-mx-1 my-2 h-px bg-border" />
+              <div className="px-2.5 pb-1 font-sans text-[11px] text-muted-foreground">
+                Preview precedenti
+              </div>
+              {workspaces
+                .filter(workspace => legacyPreviewWorkspaceIds.includes(workspace.id))
+                .map(workspace =>
+                  renderWorkspaceItem(
+                    workspace,
+                    <span className="size-2 rounded-full bg-violet-400" />
+                  )
+                )}
             </>
-          )}
-
-          <div className="-mx-1 my-2 h-px bg-border" />
-          <div className="px-2.5 pb-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-            Modalità
-          </div>
-
-          {menuSection === 'accounts' ? (
-            <button
-              type="button"
-              className="flex min-h-11 w-full items-center gap-2 rounded-lg border border-transparent px-2.5 text-left outline-none transition-colors hover:border-violet-500/35 hover:bg-violet-500/15 focus-visible:border-violet-400/50 focus-visible:bg-violet-500/15"
-              onClick={() => setMenuSection('backtests')}
-            >
-              <span className="flex size-7 items-center justify-center rounded-md bg-secondary text-muted-foreground">
-                <Folder className="size-3.5" />
-              </span>
-              <span className="flex-1 font-sans text-xs font-semibold">Backtest</span>
-            </button>
-          ) : (
-            <button
-              type="button"
-              className="flex min-h-11 w-full items-center gap-2 rounded-lg border border-transparent px-2.5 text-left outline-none transition-colors hover:border-violet-500/35 hover:bg-violet-500/15 focus-visible:border-violet-400/50 focus-visible:bg-violet-500/15"
-              onClick={() => setMenuSection('accounts')}
-            >
-              <span className="flex size-7 items-center justify-center rounded-md bg-secondary text-muted-foreground">
-                <WalletCards className="size-3.5" />
-              </span>
-              <span className="flex-1 font-sans text-xs font-semibold">I tuoi conti</span>
-            </button>
-          )}
-
-          {menuSection === 'preview' && (
-            <button
-              type="button"
-              className="flex min-h-11 w-full items-center gap-2 rounded-lg border border-transparent px-2.5 text-left outline-none transition-colors hover:border-violet-500/35 hover:bg-violet-500/15 focus-visible:border-violet-400/50 focus-visible:bg-violet-500/15"
-              onClick={() => setMenuSection('backtests')}
-            >
-              <span className="flex size-7 items-center justify-center rounded-md bg-secondary text-muted-foreground">
-                <Folder className="size-3.5" />
-              </span>
-              <span className="flex-1 font-sans text-xs font-semibold">Backtest</span>
-            </button>
-          )}
-
-          {menuSection !== 'preview' && showPreviewWorkspace && (
-            <button
-              type="button"
-              className="flex min-h-11 w-full items-center gap-2 rounded-lg border border-transparent px-2.5 text-left outline-none transition-colors hover:border-violet-500/35 hover:bg-violet-500/15 focus-visible:border-violet-400/50 focus-visible:bg-violet-500/15"
-              onClick={() => setMenuSection('preview')}
-            >
-              <span className="flex size-7 items-center justify-center rounded-md bg-secondary text-muted-foreground">
-                <Eye className="size-3.5" />
-              </span>
-              <span className="flex-1 font-sans text-xs font-semibold">Preview</span>
-            </button>
           )}
         </PopoverContent>
       </Popover>
@@ -570,18 +565,18 @@ export function AccountSelector({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="rounded-xl border border-violet-500/30 bg-violet-500/10 p-3.5">
-            <p className="font-sans text-sm font-semibold text-violet-100">
+          <div className="rounded-lg border border-white/15 bg-white/10 p-3.5">
+            <p className="font-sans text-sm font-semibold text-foreground">
               Ti consigliamo di creare prima un backup.
             </p>
-            <p className="mt-1 font-sans text-xs text-violet-200/70">
+            <p className="mt-1 font-sans text-xs text-foreground">
               Potrai ripristinare trade, strategie e piani in un secondo momento.
             </p>
             <Button
               type="button"
               variant="outline"
               size="sm"
-              className="mt-3 border-violet-400/35 bg-violet-500/10 text-violet-100 hover:bg-violet-500/20 hover:text-white"
+              className="mt-3 border-white/15 bg-white/10 text-foreground hover:bg-white/10 hover:text-white"
               onClick={() => deletionTarget && onBackupWorkspace(deletionTarget.id)}
             >
               <Download className="size-4" />
@@ -591,7 +586,7 @@ export function AccountSelector({
 
           <div className="grid gap-2">
             <Label htmlFor="delete-account-confirmation">
-              Digita <span className="font-mono font-bold text-loss">CONFERMA</span> per continuare
+              Digita <span className="font-sans tabular-nums font-semibold text-loss">CONFERMA</span> per continuare
             </Label>
             <Input
               id="delete-account-confirmation"

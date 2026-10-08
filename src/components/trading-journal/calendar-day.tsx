@@ -124,28 +124,28 @@ export function CalendarDay({
     if (!hasTrades) return {};
 
     if (pnl > 0) {
-      const alpha = 0.26 + intensity * 0.34;
+      const alpha = 0.12 + intensity * 0.2;
       return {
-        backgroundColor: `rgba(0, 214, 143, ${alpha})`,
-        boxShadow: `inset 0 0 0 1px rgba(0, 214, 143, ${
+        backgroundColor: `rgba(52, 210, 123, ${alpha})`,
+        boxShadow: `inset 0 0 0 1px rgba(52, 210, 123, ${
           0.12 + intensity * 0.22
         })`,
       };
     }
 
     if (pnl < 0) {
-      const alpha = 0.22 + intensity * 0.3;
+      const alpha = 0.12 + intensity * 0.2;
       return {
-        backgroundColor: `rgba(255, 77, 112, ${alpha})`,
-        boxShadow: `inset 0 0 0 1px rgba(255, 77, 112, ${
+        backgroundColor: `rgba(255, 101, 104, ${alpha})`,
+        boxShadow: `inset 0 0 0 1px rgba(255, 101, 104, ${
           0.16 + intensity * 0.24
         })`,
       };
     }
 
     return {
-      backgroundColor: 'rgba(148, 163, 184, 0.08)',
-      boxShadow: 'inset 0 0 0 1px rgba(148, 163, 184, 0.14)',
+      backgroundColor: 'rgba(255, 255, 255, 0.03)',
+      boxShadow: 'inset 0 0 0 1px rgba(255, 255, 255, 0.08)',
     };
   };
 
@@ -186,7 +186,7 @@ export function CalendarDay({
         aria-hidden="true"
         className="flex h-[78px] w-full bg-background p-1 min-[380px]:h-[84px] min-[380px]:p-1.5 sm:h-[92px] sm:p-2 md:h-[106px] md:p-2.5"
       >
-        <span className="font-sans text-[12px] font-bold leading-none tracking-[-0.04em] text-muted-foreground/25 min-[380px]:text-[13px] sm:text-[15px] md:text-[17px]">
+        <span className="font-sans text-[12px] font-semibold leading-none tracking-[-0.04em] text-muted-foreground/25 min-[380px]:text-[13px] sm:text-[15px] md:text-[17px]">
           {date.getDate()}
         </span>
       </div>
@@ -201,17 +201,16 @@ export function CalendarDay({
       onKeyDown={handleDayKeyDown}
       data-tutorial={tutorialTarget}
       className={cn(
-        'group relative flex h-[78px] w-full min-w-0 cursor-pointer flex-col bg-background p-1 pb-4 text-left transition-colors hover:bg-secondary/30 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-profit/80 min-[380px]:h-[84px] min-[380px]:p-1.5 min-[380px]:pb-4 sm:h-[92px] sm:p-2 sm:pb-5 md:h-[106px] md:p-2.5 md:pb-6',
-        isToday && 'ring-1 ring-inset ring-profit/80'
+        'group relative flex h-[78px] w-full min-w-0 cursor-pointer flex-col bg-background p-1 pb-4 text-left transition-colors hover:bg-secondary/30 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring min-[380px]:h-[84px] min-[380px]:p-1.5 min-[380px]:pb-4 sm:h-[92px] sm:p-2 sm:pb-5 md:h-[106px] md:p-2.5 md:pb-6',
+        isToday && 'ring-1 ring-inset ring-white/35'
       )}
       style={getBackgroundStyle()}
     >
       <div className="flex h-full w-full min-w-0 flex-col gap-1 sm:gap-1.5">
         <span
           className={cn(
-            'font-sans text-[12px] font-bold leading-none tracking-[-0.04em] min-[380px]:text-[13px] sm:text-[15px] md:text-[17px]',
-            isToday && 'text-profit',
-            !isToday && 'text-foreground'
+            'font-sans text-[12px] font-semibold leading-none tracking-[-0.04em] min-[380px]:text-[13px] sm:text-[15px] md:text-[17px]',
+            'text-foreground'
           )}
         >
           {date.getDate()}
@@ -221,7 +220,7 @@ export function CalendarDay({
           <>
             <span
               className={cn(
-                'block w-full min-w-0 truncate font-mono text-[8px] font-semibold leading-tight min-[380px]:text-[9px] sm:text-[11px] md:text-sm',
+                'block w-full min-w-0 truncate font-sans text-[8px] font-semibold leading-tight tabular-nums tracking-tight min-[380px]:text-[9px] sm:text-[11px] md:text-sm',
                 pnl > 0 && 'text-profit',
                 pnl < 0 && 'text-loss',
                 pnl === 0 && 'text-muted-foreground'
@@ -242,7 +241,7 @@ export function CalendarDay({
                 {canShowCalendarSetup && primarySetup && (
                   <span
                     className={cn(
-                      'inline-flex max-w-[46px] shrink items-center rounded-full border border-white/10 bg-background/55 px-1.5 py-[2px] font-mono text-[7px] font-semibold leading-none text-foreground/80 shadow-sm min-[380px]:max-w-[56px] min-[380px]:text-[8px] sm:max-w-[70px] sm:px-2 sm:text-[9px] md:max-w-[92px]'
+                      'inline-flex max-w-[46px] shrink items-center rounded-full border border-white/10 bg-background/55 px-1.5 py-[2px] font-sans tabular-nums text-[7px] font-semibold leading-none text-foreground/80 shadow-sm min-[380px]:max-w-[56px] min-[380px]:text-[8px] sm:max-w-[70px] sm:px-2 sm:text-[9px] md:max-w-[92px]'
                     )}
                     title={primarySetup}
                   >
@@ -255,7 +254,7 @@ export function CalendarDay({
                 {canShowCalendarTags && visibleTag && (
                   <span
                     className={cn(
-                      'inline-flex max-w-[46px] shrink items-center rounded-full border border-border/80 bg-secondary/45 px-1.5 py-[2px] font-mono text-[7px] font-semibold leading-none text-muted-foreground shadow-sm min-[380px]:max-w-[54px] min-[380px]:text-[8px] sm:max-w-[64px] sm:px-2 sm:text-[9px]'
+                      'inline-flex max-w-[46px] shrink items-center rounded-full border border-border/80 bg-secondary/45 px-1.5 py-[2px] font-sans tabular-nums text-[7px] font-semibold leading-none text-muted-foreground shadow-sm min-[380px]:max-w-[54px] min-[380px]:text-[8px] sm:max-w-[64px] sm:px-2 sm:text-[9px]'
                     )}
                     title={visibleTagTitle}
                   >
@@ -274,7 +273,7 @@ export function CalendarDay({
 
       {hasTrades && (
         <span
-          className="absolute bottom-1 left-1 font-mono text-[8px] leading-none text-muted-foreground min-[380px]:bottom-1.5 min-[380px]:left-1.5 min-[380px]:text-[9px] sm:bottom-2 sm:left-2 sm:text-[10px] md:bottom-2.5 md:left-2.5 md:text-xs"
+          className="absolute bottom-1 left-1 font-sans tabular-nums text-[8px] leading-none text-muted-foreground min-[380px]:bottom-1.5 min-[380px]:left-1.5 min-[380px]:text-[9px] sm:bottom-2 sm:left-2 sm:text-[10px] md:bottom-2.5 md:left-2.5 md:text-xs"
         >
           {tradeCount}
         </span>
@@ -288,7 +287,7 @@ export function CalendarDay({
         >
           <span
             className={cn(
-              'inline-flex items-center rounded-full border border-border/80 bg-background/65 px-1 py-[2px] font-mono text-[7px] font-semibold leading-none text-muted-foreground shadow-sm transition hover:border-border hover:bg-background/90 hover:text-foreground min-[380px]:text-[8px] sm:px-1.5 sm:text-[9px]'
+              'inline-flex items-center rounded-full border border-border/80 bg-background/65 px-1 py-[2px] font-sans tabular-nums text-[7px] font-semibold leading-none text-muted-foreground shadow-sm transition hover:border-border hover:bg-background/90 hover:text-foreground min-[380px]:text-[8px] sm:px-1.5 sm:text-[9px]'
             )}
             title={hiddenTagsTitle}
           >
@@ -296,7 +295,7 @@ export function CalendarDay({
           </span>
 
           <div
-            className="pointer-events-none absolute bottom-full right-0 z-50 mb-1 max-w-[min(150px,calc(100vw-2rem))] rounded-md border border-border/80 bg-background/95 px-1.5 py-1.5 text-left opacity-0 shadow-lg backdrop-blur transition group-hover/tag-menu:opacity-100"
+            className="pointer-events-none absolute bottom-full right-0 z-50 mb-1 max-w-[min(150px,calc(100vw-2rem))] rounded-lg border border-border/80 bg-background/95 px-1.5 py-1.5 text-left opacity-0 shadow-lg backdrop-blur transition group-hover/tag-menu:opacity-100"
           >
             <div className="flex max-w-full flex-col gap-0.5">
               {hiddenTags.map((tag) => (

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Download, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,11 +15,16 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { calculateStatistics } from '@/lib/calculations';
-import { PROFILE_NAME_KEY } from '@/lib/export-filename';
 import { getBestOperatingWindow } from '@/lib/operating-windows';
 import { TRADER_RANKS, getProfileLevelIcon } from '@/lib/profile-levels';
 import type { Trade } from '@/lib/types/trade';
 import { useStreamerMode } from '@/contexts/streamer-mode-context';
+import { usePreferences } from '@/contexts/preferences-context';
+import { AssetPicker } from '@/components/preferences/asset-picker';
+import { ProfileAvatar, ProfileFields } from '@/components/preferences/profile-fields';
+import { SetupInput } from '@/components/preferences/setup-input';
+import { WindowsEditor } from '@/components/preferences/windows-editor';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ProfileShareDialog } from './profile-share-dialog';
 import type { ProfileShareData } from './profile-share-card';
 
@@ -29,6 +34,8 @@ interface ProfileDialogProps {
   trades: Trade[];
   onExportAll: () => void;
   onClearAll: () => void;
+  /** Profile of an imported file: stats only, no settings or data tabs. */
+  readOnly?: boolean;
 }
 
 const formatCurrency = (value: number) =>
@@ -55,10 +62,12 @@ export function ProfileDialog({
   trades,
   onExportAll,
   onClearAll,
+  readOnly = false,
 }: ProfileDialogProps) {
   const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
   const [confirmationText, setConfirmationText] = useState('');
-  const [traderName, setTraderName] = useState('');
+  const { preferences, updatePreferences } = usePreferences();
+  const traderName = preferences.name;
   const [isShareOpen, setIsShareOpen] = useState(false);
   const {
     streamerMode,
@@ -73,10 +82,6 @@ export function ProfileDialog({
     setShowZeroPnlTradesInCalendar,
   } = useStreamerMode();
 
-  useEffect(() => {
-    setTraderName(localStorage.getItem(PROFILE_NAME_KEY) || '');
-  }, []);
-
   const profile = useMemo(() => {
     const stats = calculateStatistics(trades);
     const totalXP = stats.totalTrades * 10;
@@ -84,7 +89,7 @@ export function ProfileDialog({
     const currentLevelXP = totalXP % 100;
     const rank = TRADER_RANKS[Math.min(level, 10) - 1];
     const profileIcon = getProfileLevelIcon(level);
-    const bestOperatingWindow = getBestOperatingWindow(trades);
+    const bestOperatingWindow = getBestOperatingWindow(trades, preferences.windows);
     const nextRank =
       level >= 10 ? TRADER_RANKS[9] : TRADER_RANKS[level];
     const nextLevelLabel =
@@ -102,7 +107,7 @@ export function ProfileDialog({
       nextLevelLabel,
       bestOperatingWindow,
     };
-  }, [trades]);
+  }, [trades, preferences.windows]);
 
   const statCards = [
     {
@@ -152,18 +157,6 @@ export function ProfileDialog({
     closeClearDialog();
   };
 
-  const handleTraderNameChange = (value: string) => {
-    setTraderName(value);
-
-    const normalizedName = value.trim();
-
-    if (normalizedName) {
-      localStorage.setItem(PROFILE_NAME_KEY, normalizedName);
-    } else {
-      localStorage.removeItem(PROFILE_NAME_KEY);
-    }
-  };
-
   const shareProfileData: ProfileShareData = {
     traderName: traderName.trim() || 'Trader',
     rank: profile.rank,
@@ -195,36 +188,33 @@ export function ProfileDialog({
           onOpenAutoFocus={event => event.preventDefault()}
         >
           <DialogHeader className="border-b border-border px-4 py-3.5 text-left sm:px-5 sm:py-4">
-            <DialogTitle className="font-mono text-base sm:text-lg">Profilo trader</DialogTitle>
+            <DialogTitle className="font-sans tabular-nums text-base sm:text-lg">Profilo trader</DialogTitle>
             <DialogDescription>
-              Progressi e statistiche calcolati dal journal Personale.
+              {readOnly
+                ? 'Progressi e statistiche calcolati dal journal importato.'
+                : 'Progressi e statistiche calcolati dal journal Personale.'}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-3 p-4 sm:space-y-4 sm:p-5">
-            <section className="rounded-[14px] border border-profit/25 bg-gradient-to-br from-profit/10 via-background/60 to-background/30 p-3.5 sm:p-4">
-              <div className="mb-4 flex flex-wrap items-end justify-between gap-3 border-b border-border/70 pb-4">
-                <div className="min-w-0 flex-1 space-y-1.5 sm:min-w-[190px]">
-                  <Label
-                    htmlFor="trader-profile-name"
-                    className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground"
-                  >
-                    Nome trader
-                  </Label>
-                  <Input
-                    id="trader-profile-name"
-                    value={traderName}
-                    onChange={event => handleTraderNameChange(event.target.value)}
-                    placeholder="Il tuo nome"
-                    maxLength={50}
-                    className="h-9 border-border/80 bg-background/55 font-sans font-semibold"
-                  />
-                </div>
+          <Tabs defaultValue="profilo" className="gap-0">
+            {!readOnly && (
+            <TabsList className="mx-4 mt-4 grid h-10 w-auto grid-cols-3 sm:mx-5">
+              <TabsTrigger value="profilo">Profilo</TabsTrigger>
+              <TabsTrigger value="operativita">Impostazioni</TabsTrigger>
+              <TabsTrigger value="dati">Dati</TabsTrigger>
+            </TabsList>
+            )}
 
+            <TabsContent value="profilo" className="space-y-3 p-4 sm:space-y-4 sm:p-5">
+            <section className="rounded-[14px] border border-border bg-background/35 p-3.5 sm:p-4">
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <p className="font-sans text-xs font-semibold tracking-normal text-muted-foreground">
+                  {readOnly ? 'Profilo' : 'Il tuo profilo'}
+                </p>
                 <Button
                   type="button"
                   size="sm"
-                  className="gap-2 bg-profit text-background hover:bg-profit/90 max-sm:w-full"
+                  className="gap-2 bg-[#0a84ff] text-white hover:bg-[#0a84ff]/90"
                   onClick={handleShare}
                 >
                   <span className="text-base leading-none" aria-hidden="true">
@@ -234,46 +224,50 @@ export function ProfileDialog({
                 </Button>
               </div>
 
-              <div className="flex items-center gap-3 sm:gap-4">
-                <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl border border-profit/30 bg-profit/10 text-[40px] leading-none shadow-[0_0_24px_rgba(0,214,143,0.08)] sm:size-16 sm:text-[46px]">
-                  {profile.profileIcon}
+              {readOnly ? (
+                <div className="flex items-center gap-4">
+                  <ProfileAvatar name={preferences.name} photo={preferences.photo} />
+                  <p className="min-w-0 truncate font-sans text-lg font-semibold text-foreground">
+                    {preferences.name || 'Trader'}
+                  </p>
                 </div>
+              ) : (
+                <ProfileFields
+                  name={preferences.name}
+                  photo={preferences.photo}
+                  onChange={updatePreferences}
+                />
+              )}
 
-                <div className="min-w-0 flex-1">
-                  <div className="flex min-w-0 flex-wrap items-end justify-between gap-2">
-                    <div>
-                      <p className="truncate font-sans text-sm font-semibold text-muted-foreground">
-                        {traderName.trim() || 'Il tuo nome'}
-                      </p>
-                      <p className="mt-0.5 font-sans text-xl font-bold tracking-tight text-foreground sm:text-2xl">
-                        <span className="mr-2" aria-hidden="true">
-                          {profile.rank.emoji}
-                        </span>
-                        {profile.rank.name}
-                      </p>
-                      <p className="mt-1 font-mono text-xs uppercase tracking-[0.12em] text-profit">
-                        Livello {profile.level}
-                      </p>
-                    </div>
-
-                    <p className="font-mono text-sm text-profit">
-                      {profile.totalXP} XP totali
+              <div className="mt-6 border-t border-border/70 pt-5">
+                <div className="flex min-w-0 flex-wrap items-end justify-between gap-2">
+                  <div>
+                    <p className="font-sans text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+                      <span className="mr-2" aria-hidden="true">
+                        {profile.rank.emoji}
+                      </span>
+                      {profile.rank.name}
+                    </p>
+                    <p className="mt-1 font-sans tabular-nums text-xs tracking-normal text-profit">
+                      Livello {profile.level}
                     </p>
                   </div>
 
-                  <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-secondary">
-                    <div
-                      className="h-full rounded-full bg-profit transition-all"
-                      style={{ width: `${profile.currentLevelXP}%` }}
-                    />
-                  </div>
+                  <p className="font-sans tabular-nums text-sm text-profit">
+                    {profile.totalXP} XP totali
+                  </p>
+                </div>
 
-                  <div className="mt-2 flex items-center justify-between font-mono text-xs text-muted-foreground">
-                    <span>
-                      {profile.currentLevelXP} / 100 XP
-                    </span>
-                    <span className="text-right">{profile.nextLevelLabel}</span>
-                  </div>
+                <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-secondary">
+                  <div
+                    className="h-full rounded-full bg-profit transition-all"
+                    style={{ width: `${profile.currentLevelXP}%` }}
+                  />
+                </div>
+
+                <div className="mt-2 flex items-center justify-between font-sans tabular-nums text-xs text-muted-foreground">
+                  <span>{profile.currentLevelXP} / 100 XP</span>
+                  <span className="text-right">{profile.nextLevelLabel}</span>
                 </div>
               </div>
             </section>
@@ -282,13 +276,13 @@ export function ProfileDialog({
               {statCards.map(stat => (
                 <div
                   key={stat.label}
-                  className="min-w-0 rounded-xl border border-border bg-background/45 p-3"
+                  className="min-w-0 rounded-lg border border-border bg-background/45 p-3"
                 >
-                  <p className="font-sans text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+                  <p className="font-sans text-[11px] font-medium tracking-normal text-muted-foreground">
                     {stat.label}
                   </p>
                   <p
-                    className={`mt-2 break-words font-mono font-semibold ${
+                    className={`mt-2 break-words font-sans tabular-nums font-semibold ${
                       stat.label === 'Orario migliore'
                         ? 'text-xs leading-relaxed'
                         : 'text-sm'
@@ -305,7 +299,7 @@ export function ProfileDialog({
                     {stat.value}
                   </p>
                   {'subtitle' in stat && stat.subtitle && (
-                    <p className="mt-1 font-mono text-[10px] text-muted-foreground">
+                    <p className="mt-1 font-sans tabular-nums text-[10px] text-muted-foreground">
                       {stat.subtitle}
                     </p>
                   )}
@@ -313,8 +307,41 @@ export function ProfileDialog({
               ))}
             </section>
 
+            </TabsContent>
+
+            <TabsContent value="operativita" className="space-y-3 p-4 sm:space-y-4 sm:p-5">
             <section className="rounded-[14px] border border-border bg-background/35 p-3.5 sm:p-4">
-              <p className="flex items-center gap-2 font-mono text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+              <p className="mb-4 font-sans text-xs font-semibold tracking-normal text-muted-foreground">
+                I tuoi Asset
+              </p>
+              <AssetPicker
+                value={preferences.assets}
+                onChange={assets => updatePreferences({ assets })}
+              />
+            </section>
+            <section className="rounded-[14px] border border-border bg-background/35 p-3.5 sm:p-4">
+              <p className="mb-4 font-sans text-xs font-semibold tracking-normal text-muted-foreground">
+                I tuoi setup
+              </p>
+              <SetupInput
+                value={preferences.setups}
+                onChange={setups => updatePreferences({ setups })}
+              />
+              <p className="mt-3 text-xs text-muted-foreground">
+                Se elimini un setup, i trade che lo usano lo mantengono ma non potrai sceglierlo per quelli nuovi.
+              </p>
+            </section>
+            <section className="rounded-[14px] border border-border bg-background/35 p-3.5 sm:p-4">
+              <p className="mb-4 font-sans text-xs font-semibold tracking-normal text-muted-foreground">
+                Finestre operative
+              </p>
+              <WindowsEditor
+                value={preferences.windows}
+                onChange={windows => updatePreferences({ windows })}
+              />
+            </section>
+            <section className="rounded-[14px] border border-border bg-background/35 p-3.5 sm:p-4">
+              <p className="flex items-center gap-2 font-sans tabular-nums text-xs font-semibold tracking-normal text-muted-foreground">
                 <span>Impostazioni calendario</span>
                 <span className="text-xl leading-none">🗓️</span>
               </p>
@@ -324,7 +351,7 @@ export function ProfileDialog({
               </p>
 
               <div className="mt-3 space-y-2.5">
-                <div className="rounded-xl border border-border/70 bg-background/35 p-3">
+                <div className="rounded-lg border border-border/70 bg-background/35 p-3">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="min-w-0">
                       <p className="font-sans text-sm font-semibold text-foreground">
@@ -355,7 +382,7 @@ export function ProfileDialog({
                   </div>
                 </div>
 
-                <div className="rounded-xl border border-border/70 bg-background/35 p-3">
+                <div className="rounded-lg border border-border/70 bg-background/35 p-3">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="min-w-0">
                       <p className="font-sans text-sm font-semibold text-foreground">
@@ -386,7 +413,7 @@ export function ProfileDialog({
                   </div>
                 </div>
 
-                <div className="rounded-xl border border-border/70 bg-background/35 p-3">
+                <div className="rounded-lg border border-border/70 bg-background/35 p-3">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="min-w-0">
                       <p className="font-sans text-sm font-semibold text-foreground">
@@ -417,7 +444,7 @@ export function ProfileDialog({
                   </div>
                 </div>
 
-                <div className="rounded-xl border border-border/70 bg-background/35 p-3">
+                <div className="rounded-lg border border-border/70 bg-background/35 p-3">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="min-w-0">
                       <p className="font-sans text-sm font-semibold text-foreground">
@@ -457,8 +484,11 @@ export function ProfileDialog({
               </div>
             </section>
 
+            </TabsContent>
+
+            <TabsContent value="dati" className="space-y-3 p-4 sm:space-y-4 sm:p-5">
             <section className="rounded-[14px] border border-violet-400/35 bg-violet-500/5 p-3.5 sm:p-4">
-              <p className="flex items-center gap-2 font-mono text-xs font-semibold uppercase tracking-[0.14em] text-violet-300">
+              <p className="flex items-center gap-2 font-sans tabular-nums text-xs font-semibold tracking-normal text-violet-300">
                 <span>Modalità Streamer</span>
                 <span className="text-xl leading-none">🙈</span>
               </p>
@@ -483,20 +513,20 @@ export function ProfileDialog({
             </section>
 
             <section className="rounded-[14px] border border-profit/35 bg-profit/5 p-3.5 sm:p-4">
-              <p className="flex items-center gap-2 font-mono text-xs font-semibold uppercase tracking-[0.14em] text-profit">
+              <p className="flex items-center gap-2 font-sans tabular-nums text-xs font-semibold tracking-normal text-profit">
                 <span>Esporta tutto</span>
                 <span className="text-xl leading-none">📦</span>
               </p>
               <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
                 <p className="max-w-md font-sans text-xs leading-relaxed text-muted-foreground">
-                  Scarica in un unico file ZIP solo i journal che contengono dati,
-                  organizzati nelle cartelle I tuoi conti, Backtest e Preview.
+                  Scarica in un unico file JSON solo i journal che contengono dati,
+                  compresi i tuoi conti, i Backtest e le Preview.
                 </p>
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="gap-2 border-profit/50 bg-profit/10 text-profit hover:bg-profit/20 hover:text-profit max-sm:w-full"
+                  className="gap-2 border-profit/50 bg-profit/10 text-profit hover:bg-primary/20 hover:text-highlight max-sm:w-full"
                   onClick={onExportAll}
                 >
                   <Download className="size-3.5" />
@@ -506,7 +536,7 @@ export function ProfileDialog({
             </section>
 
             <section className="rounded-[14px] border border-loss/30 bg-loss/5 p-3.5 sm:p-4">
-              <p className="flex items-center gap-2 font-mono text-xs font-semibold uppercase tracking-[0.14em] text-loss">
+              <p className="flex items-center gap-2 font-sans tabular-nums text-xs font-semibold tracking-normal text-loss">
                 <span>Zona pericolosa</span>
                 <span className="text-xl leading-none">🚨</span>
               </p>
@@ -527,7 +557,9 @@ export function ProfileDialog({
                 </Button>
               </div>
             </section>
-          </div>
+
+            </TabsContent>
+          </Tabs>
         </DialogContent>
       </Dialog>
 
@@ -537,7 +569,7 @@ export function ProfileDialog({
       >
         <DialogContent className="max-h-[92dvh] w-[calc(100vw-1.75rem)] rounded-2xl border border-loss/35 bg-card sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="font-mono text-loss">
+            <DialogTitle className="font-sans tabular-nums text-loss">
               Elimina tutti i dati
             </DialogTitle>
             <DialogDescription>
@@ -548,14 +580,14 @@ export function ProfileDialog({
 
           <div className="space-y-2 py-2">
             <Label htmlFor="clear-all-confirmation" className="font-sans text-sm">
-              Digita <span className="font-mono font-bold text-foreground">ELIMINA TUTTO</span>{' '}
+              Digita <span className="font-sans tabular-nums font-semibold text-foreground">ELIMINA TUTTO</span>{' '}
               per confermare
             </Label>
             <Input
               id="clear-all-confirmation"
               value={confirmationText}
               onChange={event => setConfirmationText(event.target.value)}
-              className="border-loss/35 bg-background font-mono"
+              className="border-loss/35 bg-background font-sans tabular-nums"
               autoComplete="off"
               autoFocus
             />

@@ -143,7 +143,7 @@ export function ExecutionMap({ trades }: ExecutionMapProps) {
     <section className="max-w-full rounded-2xl border border-border bg-card p-3.5 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-6">
       <div className="mb-4 flex flex-col gap-3 sm:mb-5 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
-          <div className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+          <div className="font-sans tabular-nums text-xs font-medium tracking-normal text-muted-foreground">
             EXECUTION MAP
           </div>
           <p className="mt-1.5 font-sans text-xs leading-relaxed text-muted-foreground sm:mt-2 sm:text-sm">
@@ -184,7 +184,7 @@ export function ExecutionMap({ trades }: ExecutionMapProps) {
         {weekdayLabels.map((weekday) => (
           <div
             key={weekday}
-            className="px-0.5 pb-1 text-center font-mono text-[9px] font-semibold uppercase tracking-[0.08em] text-muted-foreground sm:px-1 sm:text-[10px] sm:tracking-[0.12em]"
+            className="px-0.5 pb-1 text-center font-sans tabular-nums text-[9px] font-semibold tracking-normal text-muted-foreground sm:px-1 sm:text-[10px]"
           >
             {weekday}
           </div>
@@ -208,9 +208,9 @@ export function ExecutionMap({ trades }: ExecutionMapProps) {
               <div
                 key={dateKey}
                 aria-hidden="true"
-                className="h-[54px] rounded-lg border border-border bg-background p-1.5 min-[380px]:h-[62px] sm:h-[80px] sm:rounded-xl sm:p-2.5"
+                className="h-[54px] rounded-lg border border-border bg-background p-1.5 min-[380px]:h-[62px] sm:h-[80px] sm:rounded-lg sm:p-2.5"
               >
-                <span className="font-mono text-[11px] font-semibold text-muted-foreground/25 sm:text-sm">
+                <span className="font-sans tabular-nums text-[11px] font-semibold text-muted-foreground/25 sm:text-sm">
                   {format(day, 'd')}
                 </span>
               </div>
@@ -221,12 +221,12 @@ export function ExecutionMap({ trades }: ExecutionMapProps) {
             <div
               key={dateKey}
               className={cn(
-                'group flex h-[54px] min-w-0 flex-col justify-between rounded-lg border border-border bg-secondary/20 p-1.5 text-muted-foreground transition min-[380px]:h-[62px] sm:h-[80px] sm:rounded-xl sm:p-2.5',
+                'group flex h-[54px] min-w-0 flex-col justify-between rounded-lg border border-border bg-secondary/20 p-1.5 text-muted-foreground transition min-[380px]:h-[62px] sm:h-[80px] sm:rounded-lg sm:p-2.5',
                 'bg-background/40',
                 hasTrades ? 'cursor-pointer hover:brightness-110' : 'cursor-default',
-                !hasTrades && 'hover:border-profit/40',
+                !hasTrades && 'hover:border-highlight/40',
                 status === 'profit' &&
-                  'border-profit/40 bg-profit/15 text-foreground hover:border-profit/70',
+                  'border-profit/40 bg-profit/15 text-foreground hover:border-highlight/70',
                 status === 'loss' &&
                   'border-loss/40 bg-loss/15 text-foreground hover:border-loss/70'
               )}
@@ -238,7 +238,7 @@ export function ExecutionMap({ trades }: ExecutionMapProps) {
               aria-label={`${dateKey}: ${getStatusLabel(status)}`}
             >
               <div className="flex items-start justify-between gap-1">
-                <span className="font-mono text-[11px] font-semibold sm:text-sm">
+                <span className="font-sans tabular-nums text-[11px] font-semibold sm:text-sm">
                   {format(day, 'd')}
                 </span>
                 {hasFavorite && (
@@ -251,7 +251,7 @@ export function ExecutionMap({ trades }: ExecutionMapProps) {
               {hasTrades && (
                 <span
                   className={cn(
-                    'truncate font-mono text-[8px] font-bold min-[380px]:text-[10px] sm:text-sm',
+                    'truncate font-sans tabular-nums text-[8px] font-semibold min-[380px]:text-[10px] sm:text-sm',
                     status === 'profit' && 'text-profit',
                     status === 'loss' && 'text-loss'
                   )}
@@ -263,7 +263,7 @@ export function ExecutionMap({ trades }: ExecutionMapProps) {
               {hasTrades && (
                 <span
                   className={cn(
-                    'self-end font-mono text-[9px] text-muted-foreground sm:text-xs',
+                    'self-end font-sans tabular-nums text-[9px] text-muted-foreground sm:text-xs',
                     (status === 'profit' || status === 'loss') &&
                       'text-foreground/60'
                   )}
@@ -276,7 +276,7 @@ export function ExecutionMap({ trades }: ExecutionMapProps) {
         })}
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 font-mono text-[10px] text-muted-foreground sm:mt-5 sm:gap-x-5 sm:text-[11px]">
+      <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 font-sans tabular-nums text-[10px] text-muted-foreground sm:mt-5 sm:gap-x-5 sm:text-[11px]">
         <LegendItem color="bg-profit/80" label="Profitto" />
         <LegendItem color="bg-loss/80" label="Perdita" />
         <LegendItem color="bg-secondary/40" label="Nessuna attività" />

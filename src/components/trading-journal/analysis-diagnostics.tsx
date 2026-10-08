@@ -8,13 +8,8 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
-  PolarAngleAxis,
-  PolarGrid,
-  PolarRadiusAxis,
   Pie,
   PieChart,
-  Radar,
-  RadarChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -31,31 +26,22 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useStreamerMode } from '@/contexts/streamer-mode-context';
+import { usePreferences } from '@/contexts/preferences-context';
 import { TradeDetailDialog } from '@/components/trading-journal/trade-detail-dialog';
 import { TradeGroupDetailDialog } from '@/components/trading-journal/trade-group-detail-dialog';
 import {
   CUSTOM_TAG_PREFIX,
   TRADE_TAGS,
-  VALID_TRADE_SETUPS,
   isValidTradeSetup,
   type Trade,
 } from '@/lib/types/trade';
 import { cn } from '@/lib/utils';
 import {
-  calculateEclipseScore,
-  calculateOperationalFrequency,
-  calculateRiskRewardRatio,
   calculateTradeWinRate,
-  formatRiskRewardRatio,
   getTradeOutcome,
   isValidStatTrade,
-  MIN_TRADES_PER_WEEK,
 } from '@/lib/calculations';
 import { formatMonthYear } from '@/lib/date-utils';
-import {
-  getOperatingWindowName,
-  type OperatingWindowName,
-} from '@/lib/operating-windows';
 
 interface AnalysisDiagnosticsProps {
   trades: Trade[];
@@ -68,8 +54,6 @@ type TradeGroupDialogState = {
   trades: Trade[];
 };
 
-const ECLIPSE_SCORE_MAX_RISK_REWARD = 1.2;
-const ECLIPSE_SCORE_TARGET_SESSION_CONSISTENCY = 0.7;
 
 type ChartClickState = {
   activePayload?: Array<{
@@ -82,7 +66,7 @@ type ChartClickState = {
 type TradeLogFilters = {
   direction: 'all' | 'long' | 'short';
   result: 'all' | 'profit' | 'loss' | 'missed';
-  asset: 'all' | 'NQ' | 'MNQ';
+  asset: string;
   setup: string;
   tag: string;
   favoritesOnly: 'yes' | 'no';
@@ -142,8 +126,8 @@ const WEEKDAYS = [
 ] as const;
 
 const SETUP_COLORS = [
-  '#00f0a8',
-  '#14b8a6',
+  '#34d27b',
+  '#8e8e93',
   '#0f766e',
   '#5eead4',
   '#4f8f84',
@@ -154,14 +138,6 @@ const SETUP_COLORS = [
 
 function netPnl(trade: Trade) {
   return trade.pnl - trade.commission;
-}
-
-function normalizeScore(value: number) {
-  if (!Number.isFinite(value) || Number.isNaN(value)) {
-    return 0;
-  }
-
-  return Math.min(Math.max(value, 0), 100);
 }
 
 function formatDateLabel(dateKey: string) {
@@ -196,13 +172,6 @@ function getTradeTime(trade: Trade) {
   const time =
     trade.exitDate?.split('T')[1] || trade.entryDate?.split('T')[1] || '';
   return time.slice(0, 5) || '—';
-}
-
-function getEclipseMetricCardLabel(metric: string) {
-  if (metric === 'Freq. operativa') return 'Frequenza operativa';
-  if (metric === 'Costanza operativa') return 'Costanza Operativa';
-  if (metric === 'Risk/Reward') return 'Risk-to-Reward Ratio';
-  return metric;
 }
 
 function getTradeDateKey(trade: Trade) {
@@ -272,7 +241,7 @@ function EconomicValue({
 
 function EmptyState({ children }: { children: string }) {
   return (
-    <div className="flex min-h-52 items-center justify-center rounded-xl border border-border/70 bg-background/30 px-4 text-center font-mono text-xs text-muted-foreground">
+    <div className="flex min-h-52 items-center justify-center rounded-lg border border-border/70 bg-background/30 px-4 text-center font-sans tabular-nums text-xs text-muted-foreground">
       {children}
     </div>
   );
@@ -287,7 +256,7 @@ function FilterField({
 }) {
   return (
     <label className="flex min-w-0 flex-col gap-1.5">
-      <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+      <span className="font-sans tabular-nums text-[10px] tracking-normal text-muted-foreground">
         {label}
       </span>
       {children}
@@ -306,9 +275,9 @@ function BreakdownTooltip({
 
   if (kind === 'setup') {
     return (
-      <div className="min-w-32 rounded-xl border border-teal-300/25 bg-[#20242d]/98 px-3 py-2.5 font-mono text-xs shadow-[0_10px_30px_rgba(0,0,0,0.45),0_0_18px_rgba(45,212,191,0.08)]">
+      <div className="min-w-32 rounded-lg border border-blue-300/25 bg-[#1c1c1f]/98 px-3 py-2.5 font-sans tabular-nums text-xs shadow-[0_10px_30px_rgba(0,0,0,0.45),0_0_18px_rgba(10,132,255,0.08)]">
         <p className="font-semibold text-white">{item.name || 'Untagged'}</p>
-        <p className="mt-1 text-[11px] text-teal-200">
+        <p className="mt-1 text-[11px] text-blue-200">
           {item.value ?? 0} trade · {Math.round(item.percentage ?? 0)}%
         </p>
       </div>
@@ -316,12 +285,12 @@ function BreakdownTooltip({
   }
 
   return (
-    <div className="min-w-36 rounded-xl border border-teal-300/25 bg-[#20242d]/98 px-3 py-2.5 font-mono text-xs shadow-[0_10px_30px_rgba(0,0,0,0.45),0_0_18px_rgba(45,212,191,0.08)]">
+    <div className="min-w-36 rounded-lg border border-blue-300/25 bg-[#1c1c1f]/98 px-3 py-2.5 font-sans tabular-nums text-xs shadow-[0_10px_30px_rgba(0,0,0,0.45),0_0_18px_rgba(10,132,255,0.08)]">
       <p className="font-semibold text-white">{item.direction || '—'}</p>
       <p className="mt-1 text-[11px] text-slate-200">
         {item.trades ?? 0} trade · {Math.round(item.winRate ?? 0)}% WR
       </p>
-      <p className="mt-1 text-[11px] font-semibold text-teal-200">
+      <p className="mt-1 text-[11px] font-semibold text-blue-200">
         P&amp;L:{' '}
         {streamerMode
           ? '******'
@@ -349,56 +318,14 @@ function DailyPnlTooltip({
   if (!active || !item) return null;
 
   return (
-    <div className="min-w-36 rounded-xl border border-teal-300/25 bg-[#20242d]/98 px-3 py-2.5 font-mono text-xs shadow-[0_10px_30px_rgba(0,0,0,0.45),0_0_18px_rgba(45,212,191,0.08)]">
+    <div className="min-w-36 rounded-lg border border-blue-300/25 bg-[#1c1c1f]/98 px-3 py-2.5 font-sans tabular-nums text-xs shadow-[0_10px_30px_rgba(0,0,0,0.45),0_0_18px_rgba(10,132,255,0.08)]">
       <p className="font-semibold text-white">{item.dateLabel || '—'}</p>
-      <p className="mt-1 text-[11px] font-semibold text-teal-200">
+      <p className="mt-1 text-[11px] font-semibold text-blue-200">
         P&amp;L:{' '}
         {streamerMode
           ? '******'
           : formatCurrency(item.dailyPnl ?? 0)}
       </p>
-    </div>
-  );
-}
-
-function EclipseScoreTooltip({
-  active,
-  payload,
-}: {
-  active?: boolean;
-  payload?: Array<{
-    payload?: {
-      metric?: string;
-      normalizedScore?: number;
-      displayValue?: string;
-      description?: string;
-      tooltipValue?: string;
-      targetValue?: string;
-    };
-  }>;
-}) {
-  const item = payload?.[0]?.payload;
-  if (!active || !item) return null;
-
-  return (
-    <div className="min-w-40 rounded-xl border border-border bg-[#20242d]/98 px-3 py-2.5 font-mono text-xs shadow-[0_10px_30px_rgba(0,0,0,0.45),0_0_18px_rgba(45,212,191,0.08)]">
-      <p className="font-semibold text-white">
-        {item.metric ? getEclipseMetricCardLabel(item.metric) : '—'}
-      </p>
-      <p className="mt-1 text-[11px] font-semibold text-teal-200">
-        Score: {Math.round(item.normalizedScore ?? 0)} / 100 ·{' '}
-        {getScoreEvaluation(item.normalizedScore ?? 0)}
-      </p>
-      {item.displayValue && (
-        <p className="mt-1 text-[11px] text-slate-200">
-          Valore reale: {item.tooltipValue ?? item.displayValue}
-        </p>
-      )}
-      {item.targetValue && (
-        <p className="mt-1 text-[11px] text-slate-300">
-          Target Eclipse: {item.targetValue}
-        </p>
-      )}
     </div>
   );
 }
@@ -429,7 +356,7 @@ function MonthChartSelector({
       >
         <ChevronLeft className="size-4" />
       </Button>
-      <span className="min-w-[112px] rounded-md border border-border bg-card px-3 py-2 text-center font-mono text-xs font-semibold capitalize text-foreground">
+      <span className="min-w-[112px] rounded-lg border border-border bg-card px-3 py-2 text-center font-sans tabular-nums text-xs font-semibold capitalize text-foreground">
         {label}
       </span>
       <Button
@@ -444,57 +371,6 @@ function MonthChartSelector({
         <ChevronRight className="size-4" />
       </Button>
     </div>
-  );
-}
-
-function EclipseScoreAngleTick({
-  x = 0,
-  y = 0,
-  payload,
-}: {
-  x?: number;
-  y?: number;
-  payload?: { value?: string };
-}) {
-  const label = payload?.value ?? '';
-  let nextX = x;
-  let nextY = y;
-  let nextAnchor: 'start' | 'middle' | 'end' = 'middle';
-
-  if (label === 'Winrate') {
-    nextY -= 12;
-  }
-
-  if (label === 'Risk/Reward') {
-    nextX += 22;
-    nextAnchor = 'start';
-  }
-
-  if (label === 'Costanza operativa') {
-    nextX -= 26;
-    nextAnchor = 'end';
-  }
-
-  if (label === 'Freq. operativa') {
-    nextY += 24;
-  }
-
-  return (
-    <text
-      x={nextX}
-      y={nextY}
-      textAnchor={nextAnchor}
-      dominantBaseline="middle"
-      fill="rgba(255,255,255,0.9)"
-      style={{
-        fontSize: 13,
-        fontWeight: 700,
-        pointerEvents: 'none',
-        userSelect: 'none',
-      }}
-    >
-      {label}
-    </text>
   );
 }
 
@@ -516,9 +392,9 @@ function CumulativePnlTooltip({
   if (!active || !item) return null;
 
   return (
-    <div className="min-w-40 rounded-xl border border-teal-300/25 bg-[#20242d]/98 px-3 py-2.5 font-mono text-xs shadow-[0_10px_30px_rgba(0,0,0,0.45),0_0_18px_rgba(45,212,191,0.08)]">
+    <div className="min-w-40 rounded-lg border border-blue-300/25 bg-[#1c1c1f]/98 px-3 py-2.5 font-sans tabular-nums text-xs shadow-[0_10px_30px_rgba(0,0,0,0.45),0_0_18px_rgba(10,132,255,0.08)]">
       <p className="font-semibold text-white">{item.dateLabel || '—'}</p>
-      <p className="mt-1 text-[11px] font-semibold text-teal-200">
+      <p className="mt-1 text-[11px] font-semibold text-blue-200">
         P&amp;L cumulativo:{' '}
         {streamerMode
           ? '******'
@@ -532,7 +408,8 @@ export function AnalysisDiagnostics({
   trades,
   onUpdateTrade,
 }: AnalysisDiagnosticsProps) {
-  const { streamerMode, sundayWeekStart } = useStreamerMode();
+  const { streamerMode } = useStreamerMode();
+  const { preferences } = usePreferences();
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
   const [tradeGroupDialog, setTradeGroupDialog] =
     useState<TradeGroupDialogState | null>(null);
@@ -624,120 +501,13 @@ export function AnalysisDiagnostics({
           (sum, trade) => sum + netPnl(trade),
           0
         ),
-        fill: direction === 'long' ? '#00f0a8' : '#ff4d70',
+        fill: direction === 'long' ? '#34d27b' : '#ff6568',
       };
     });
 
     const tradeLog = [...trades].sort(
       (a, b) => getTradeSortTime(b) - getTradeSortTime(a)
     );
-    const winRate = calculateTradeWinRate(validStatTrades);
-    const winRateScore = validStatTrades.length
-      ? normalizeScore((winRate / 80) * 100)
-      : 0;
-    const riskRewardRatio = calculateRiskRewardRatio(validStatTrades).value;
-    const riskRewardScore = riskRewardRatio === null
-      ? 0
-      : normalizeScore(
-          (riskRewardRatio / ECLIPSE_SCORE_MAX_RISK_REWARD) * 100
-        );
-    const operationalFrequency = calculateOperationalFrequency(
-      validStatTrades,
-      sundayWeekStart ? 0 : 1
-    );
-    const frequencyScore = operationalFrequency.score;
-    const sessionStats = new Map<
-      OperatingWindowName,
-      { trades: number; totalPnl: number }
-    >();
-
-    validStatTrades.forEach((trade) => {
-      const label = getOperatingWindowName(trade);
-      if (!label) return;
-
-      const current = sessionStats.get(label) ?? { trades: 0, totalPnl: 0 };
-      current.trades += 1;
-      current.totalPnl += netPnl(trade);
-      sessionStats.set(label, current);
-    });
-
-    const bestSessionEntry =
-      Array.from(sessionStats.entries()).sort(
-        (a, b) =>
-          b[1].trades - a[1].trades ||
-          b[1].totalPnl - a[1].totalPnl
-      )[0];
-    const bestSessionWindow = bestSessionEntry?.[0] ?? null;
-    const bestSessionTradeCount = bestSessionEntry?.[1].trades ?? 0;
-    const sessionTradeCount = Array.from(sessionStats.values()).reduce(
-      (sum, session) => sum + session.trades,
-      0
-    );
-    const hasSessionData =
-      bestSessionWindow !== null && sessionTradeCount > 0;
-    const sessionConsistency = hasSessionData
-      ? bestSessionTradeCount / sessionTradeCount
-      : 0;
-    const sessionWindowScore = hasSessionData
-      ? normalizeScore(
-          (sessionConsistency /
-            ECLIPSE_SCORE_TARGET_SESSION_CONSISTENCY) *
-            100
-        )
-      : 0;
-    const eclipseScoreComponents = [
-      winRateScore,
-      riskRewardScore,
-      frequencyScore,
-      sessionWindowScore,
-    ];
-    const eclipseScore = validStatTrades.length
-      ? calculateEclipseScore(eclipseScoreComponents)
-      : null;
-    const eclipseRadarData = [
-      {
-        metric: 'Winrate',
-        normalizedScore: winRateScore,
-        displayValue: validStatTrades.length ? formatPercent(winRate) : '—',
-        description: validStatTrades.length
-          ? 'Percentuale trade vincenti'
-          : 'Nessun dato disponibile',
-      },
-      {
-        metric: 'Risk/Reward',
-        normalizedScore: riskRewardScore,
-        displayValue: formatRiskRewardRatio(riskRewardRatio),
-        description: 'Rapporto Rischio / Rendimento',
-        targetValue: ECLIPSE_SCORE_MAX_RISK_REWARD.toFixed(2),
-      },
-      {
-        metric: 'Freq. operativa',
-        normalizedScore: frequencyScore,
-        displayValue: operationalFrequency.totalWeeks > 0
-          ? `${operationalFrequency.weeksWithMinimumTrades}/${operationalFrequency.totalWeeks} settimane`
-          : '—',
-        description: operationalFrequency.totalWeeks > 0
-          ? `Settimane con almeno ${MIN_TRADES_PER_WEEK} trade`
-          : 'Nessun dato disponibile',
-        tooltipValue: `${operationalFrequency.weeksWithMinimumTrades}/${operationalFrequency.totalWeeks} settimane con almeno ${MIN_TRADES_PER_WEEK} trade statistici validi`,
-        targetValue: `Almeno ${MIN_TRADES_PER_WEEK} trade a settimana`,
-      },
-      {
-        metric: 'Costanza operativa',
-        normalizedScore: sessionWindowScore,
-        displayValue: bestSessionWindow ?? '—',
-        description: hasSessionData
-          ? 'Fascia con la maggiore concentrazione di trade'
-          : 'Nessun dato disponibile',
-        tooltipValue: hasSessionData
-          ? `${Math.round(
-              sessionConsistency * 100
-            )}% dei trade in ${bestSessionWindow} (${bestSessionTradeCount}/${sessionTradeCount})`
-          : undefined,
-        targetValue:
-          'Almeno il 70% dei trade nella fascia più utilizzata',
-      },
-    ];
     const dailyPnlMap = new Map<string, number>();
 
     validStatTrades.forEach((trade) => {
@@ -782,13 +552,11 @@ export function AnalysisDiagnostics({
       })),
       directionStats,
       tradeLog,
-      eclipseRadarData,
-      eclipseScore,
       dailyPnlData,
       finalCumulativePnl,
       totalTrades: validStatTrades.length,
     };
-  }, [sundayWeekStart, trades]);
+  }, [trades]);
 
   const availableDailyPnlMonths = useMemo(
     () =>
@@ -878,14 +646,36 @@ export function AnalysisDiagnostics({
         return !isValidTradeSetup(setup);
       });
 
+      const usedSetups = Array.from(
+        new Set(
+          data.tradeLog
+            .map(trade => trade.strategy?.trim() ?? '')
+            .filter(isValidTradeSetup)
+        )
+      );
+      const orderedSetups = [
+        ...preferences.setups.filter(setup => usedSetups.includes(setup)),
+        ...usedSetups
+          .filter(setup => !preferences.setups.includes(setup))
+          .sort((a, b) => a.localeCompare(b, 'it')),
+      ];
+
       return [
-        ...VALID_TRADE_SETUPS.filter(setup =>
-          data.tradeLog.some(trade => trade.strategy?.trim() === setup)
-        ),
+        ...orderedSetups,
         ...(hasTradesWithoutSetup ? ['Senza Setup'] : []),
       ];
     },
-    [data.tradeLog]
+    [data.tradeLog, preferences.setups]
+  );
+  const availableAssets = useMemo(
+    () => {
+      const tradeAssets = data.tradeLog
+        .map(trade => trade.pair)
+        .filter((pair): pair is string => Boolean(pair));
+
+      return Array.from(new Set([...preferences.assets, ...tradeAssets]));
+    },
+    [data.tradeLog, preferences.assets]
   );
   const availableTags = useMemo(
     () =>
@@ -1029,7 +819,7 @@ export function AnalysisDiagnostics({
   }, [currentPage, totalTradeLogPages]);
 
   const cumulativeColor =
-    monthlyFinalCumulativePnl >= 0 ? '#00f0a8' : '#ff4d70';
+    monthlyFinalCumulativePnl >= 0 ? '#34d27b' : '#ff6568';
   const cumulativeGradientId =
     monthlyFinalCumulativePnl >= 0
       ? 'cumulativePnlProfitGradient'
@@ -1070,26 +860,26 @@ export function AnalysisDiagnostics({
 
     if (value > 0) {
       if (intensity > 0.75) {
-        return { top: '#00d68f', bottom: '#008f64' };
+        return { top: '#3aa66f', bottom: '#1f6b46' };
       }
 
       if (intensity > 0.45) {
-        return { top: '#00b87a', bottom: '#007a55' };
+        return { top: '#2f8a5c', bottom: '#1b5a3b' };
       }
 
-      return { top: '#008f64', bottom: '#00684d' };
+      return { top: '#26704b', bottom: '#17482f' };
     }
 
     if (value < 0) {
       if (intensity > 0.75) {
-        return { top: '#ff4d70', bottom: '#a92d4b' };
+        return { top: '#ff6568', bottom: '#c0332b' };
       }
 
       if (intensity > 0.45) {
         return { top: '#d93b5f', bottom: '#8f263f' };
       }
 
-      return { top: '#a92d4b', bottom: '#7f2239' };
+      return { top: '#c0332b', bottom: '#8f2620' };
     }
 
     return { top: '#1f2937', bottom: '#111827' };
@@ -1156,7 +946,7 @@ export function AnalysisDiagnostics({
   return (
     <section className="space-y-4">
       <div className="rounded-2xl border border-border bg-card/95 p-4 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
-        <h2 className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+        <h2 className="font-sans tabular-nums text-xs font-medium tracking-normal text-muted-foreground">
           Performance per giorno della settimana
         </h2>
 
@@ -1167,7 +957,7 @@ export function AnalysisDiagnostics({
               className={cn(
                 'rounded-[14px] border border-border bg-background/35 p-3 transition-colors',
                 day.trades > 0 &&
-                  'cursor-pointer hover:border-profit/40 hover:bg-secondary/25'
+                  'cursor-pointer hover:border-highlight/40 hover:bg-secondary/25'
               )}
               onClick={() =>
                 openTradeGroup(
@@ -1181,14 +971,14 @@ export function AnalysisDiagnostics({
                 )
               }
             >
-              <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+              <p className="font-sans tabular-nums text-[10px] font-semibold tracking-normal text-muted-foreground">
                 {day.short}
                 {bestWeekday?.short === day.short && (
                   <span className="ml-1 text-amber-300">👑</span>
                 )}
               </p>
               {day.trades === 0 ? (
-                <p className="mt-3 font-mono text-lg font-semibold text-muted-foreground">
+                <p className="mt-3 font-sans tabular-nums text-lg font-semibold text-muted-foreground">
                   —
                 </p>
               ) : (
@@ -1196,9 +986,9 @@ export function AnalysisDiagnostics({
                   <EconomicValue
                     value={day.totalPnl}
                     streamerMode={streamerMode}
-                    className="mt-3 block font-mono text-sm font-semibold"
+                    className="mt-3 block font-sans tabular-nums text-sm font-semibold"
                   />
-                  <p className="mt-1 font-mono text-[10px] text-muted-foreground">
+                  <p className="mt-1 font-sans tabular-nums text-[10px] text-muted-foreground">
                     {day.trades}T · {formatPercent(day.winRate)} WR
                   </p>
                 </>
@@ -1209,13 +999,13 @@ export function AnalysisDiagnostics({
       </div>
 
       <div>
-        <h2 className="mb-3 font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+        <h2 className="mb-3 font-sans tabular-nums text-xs font-medium tracking-normal text-muted-foreground">
           Breakdown
         </h2>
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <div className="rounded-2xl border border-border bg-card/95 p-4 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
-            <h3 className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+            <h3 className="font-sans tabular-nums text-xs font-medium tracking-normal text-muted-foreground">
               Trade per setup
             </h3>
 
@@ -1281,7 +1071,7 @@ export function AnalysisDiagnostics({
                             fill={`url(#setupGradient-${index})`}
                             stroke="transparent"
                             strokeWidth={1}
-                            className="cursor-pointer outline-none transition-all duration-200 focus:outline-none hover:brightness-125 hover:[filter:drop-shadow(0_0_7px_rgba(45,212,191,0.45))]"
+                            className="cursor-pointer outline-none transition-all duration-200 focus:outline-none hover:brightness-125 hover:[filter:drop-shadow(0_0_7px_rgba(10,132,255,0.45))]"
                             tabIndex={-1}
                             focusable={false}
                           />
@@ -1304,7 +1094,7 @@ export function AnalysisDiagnostics({
                   {data.setupChartData.map((setup, index) => (
                     <div
                       key={setup.name}
-                      className="flex cursor-pointer items-center justify-between gap-3 rounded-lg px-2 py-1.5 font-mono text-xs transition-colors hover:bg-secondary/30"
+                      className="flex cursor-pointer items-center justify-between gap-3 rounded-lg px-2 py-1.5 font-sans tabular-nums text-xs transition-colors hover:bg-secondary/30"
                       onClick={() => openSetupTradeGroup(setup.name)}
                     >
                       <span className="flex min-w-0 items-center gap-2 text-muted-foreground">
@@ -1328,7 +1118,7 @@ export function AnalysisDiagnostics({
           </div>
 
           <div className="rounded-2xl border border-border bg-card/95 p-4 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
-            <h3 className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+            <h3 className="font-sans tabular-nums text-xs font-medium tracking-normal text-muted-foreground">
               Long vs Short
             </h3>
 
@@ -1353,7 +1143,7 @@ export function AnalysisDiagnostics({
                           y2="0"
                         >
                           <stop offset="0%" stopColor="#064e3b" />
-                          <stop offset="100%" stopColor="#00f0a8" />
+                          <stop offset="100%" stopColor="#34d27b" />
                         </linearGradient>
                         <linearGradient
                           id="shortDirectionGradient"
@@ -1363,7 +1153,7 @@ export function AnalysisDiagnostics({
                           y2="0"
                         >
                           <stop offset="0%" stopColor="#7f1d3b" />
-                          <stop offset="100%" stopColor="#ff4d70" />
+                          <stop offset="100%" stopColor="#ff6568" />
                         </linearGradient>
                       </defs>
                       <CartesianGrid
@@ -1372,14 +1162,14 @@ export function AnalysisDiagnostics({
                       />
                       <XAxis
                         dataKey="direction"
-                        tick={{ fill: '#9ca3af', fontSize: 11 }}
+                        tick={{ fill: '#8e8e93', fontSize: 11 }}
                         tickLine={false}
                         axisLine={false}
                       />
                       <YAxis
                         allowDecimals={false}
                         domain={[0, maxDirectionTrades]}
-                        tick={{ fill: '#9ca3af', fontSize: 10 }}
+                        tick={{ fill: '#8e8e93', fontSize: 10 }}
                         tickLine={false}
                         axisLine={false}
                       />
@@ -1411,7 +1201,7 @@ export function AnalysisDiagnostics({
                                 ? 'url(#longDirectionGradient)'
                                 : 'url(#shortDirectionGradient)'
                             }
-                            className="cursor-pointer transition-all duration-200 hover:brightness-125 hover:[filter:drop-shadow(0_0_7px_rgba(45,212,191,0.38))]"
+                            className="cursor-pointer transition-all duration-200 hover:brightness-125 hover:[filter:drop-shadow(0_0_7px_rgba(10,132,255,0.38))]"
                           />
                         ))}
                       </Bar>
@@ -1424,24 +1214,24 @@ export function AnalysisDiagnostics({
                     <div
                       key={item.direction}
                       className={cn(
-                        'rounded-xl border border-border bg-background/35 p-3 transition-colors',
+                        'rounded-lg border border-border bg-background/35 p-3 transition-colors',
                         item.trades > 0 &&
-                          'cursor-pointer hover:border-profit/40 hover:bg-secondary/25'
+                          'cursor-pointer hover:border-highlight/40 hover:bg-secondary/25'
                       )}
                       onClick={() => openDirectionTradeGroup(item.direction)}
                     >
                       <div className="flex items-center gap-2">
-                        <p className="font-mono text-xs font-semibold text-foreground">
+                        <p className="font-sans tabular-nums text-xs font-semibold text-foreground">
                           {item.direction}
                         </p>
-                        <span className="inline-flex min-w-6 items-center justify-center rounded-full border border-border bg-background/80 px-2 py-0.5 font-mono text-[10px] font-semibold text-foreground">
+                        <span className="inline-flex min-w-6 items-center justify-center rounded-full border border-border bg-background/80 px-2 py-0.5 font-sans tabular-nums text-[10px] font-semibold text-foreground">
                           {item.trades}
                         </span>
                       </div>
                       <EconomicValue
                         value={item.totalPnl}
                         streamerMode={streamerMode}
-                        className="mt-1 block font-mono text-xs font-semibold"
+                        className="mt-1 block font-sans tabular-nums text-xs font-semibold"
                       />
                     </div>
                   ))}
@@ -1453,116 +1243,10 @@ export function AnalysisDiagnostics({
       </div>
 
       <div className="space-y-4">
-        <div className="grid grid-cols-1">
-          <div className="rounded-2xl border border-border bg-card/95 p-4 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
-            <h2 className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-              ECLIPSE SCORE
-            </h2>
-
-            {data.eclipseScore === null ? (
-              <div className="mt-4">
-                <EmptyState>Nessun dato disponibile.</EmptyState>
-              </div>
-            ) : (
-              <div className="mx-auto mt-4 h-[340px] max-w-5xl sm:h-[380px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RadarChart
-                    data={data.eclipseRadarData}
-                    outerRadius="72%"
-                    margin={{ top: 38, right: 70, bottom: 52, left: 70 }}
-                  >
-                    <defs>
-                      <linearGradient
-                        id="eclipseScoreFill"
-                        x1="0"
-                        y1="0"
-                        x2="0"
-                        y2="1"
-                      >
-                        <stop
-                          offset="0%"
-                          stopColor="#00f0a8"
-                          stopOpacity={0.42}
-                        />
-                        <stop
-                          offset="100%"
-                          stopColor="#00f0a8"
-                          stopOpacity={0.08}
-                        />
-                      </linearGradient>
-                    </defs>
-                    <PolarGrid
-                      stroke="rgba(94,234,212,0.18)"
-                      radialLines
-                    />
-                    <PolarAngleAxis
-                      dataKey="metric"
-                      tick={<EclipseScoreAngleTick />}
-                    />
-                    <PolarRadiusAxis
-                      angle={90}
-                      domain={[0, 100]}
-                      tick={false}
-                      axisLine={false}
-                      tickCount={5}
-                    />
-                    <Radar
-                      dataKey="normalizedScore"
-                      stroke="#00f0a8"
-                      strokeWidth={2}
-                      fill="url(#eclipseScoreFill)"
-                      fillOpacity={1}
-                      dot={{ r: 3, fill: '#00f0a8', strokeWidth: 0 }}
-                      isAnimationActive
-                      animationDuration={650}
-                    />
-                    <Tooltip
-                      cursor={false}
-                      content={<EclipseScoreTooltip />}
-                      wrapperStyle={{ zIndex: 30, outline: 'none' }}
-                      allowEscapeViewBox={{ x: false, y: false }}
-                    />
-                  </RadarChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-
-            <div className="mt-3 text-center">
-              <p className="font-mono text-sm font-semibold text-foreground">
-                Eclipse Score:{' '}
-                {data.eclipseScore === null
-                  ? '—'
-                  : data.eclipseScore.toFixed(1)}
-              </p>
-              <p className="mt-1 font-sans text-xs text-muted-foreground">
-                Basato su winrate, risk-to-reward ratio, frequenza e costanza operativa.
-              </p>
-            </div>
-            <div className="mt-4 grid grid-cols-2 gap-2 lg:grid-cols-4">
-              {data.eclipseRadarData.map((metric) => (
-                <div
-                  key={metric.metric}
-                  className="min-w-0 rounded-xl border border-border bg-background/35 p-3"
-                >
-                  <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-muted-foreground">
-                    {getEclipseMetricCardLabel(metric.metric)}
-                  </p>
-                  <p className="mt-2 break-words font-mono text-sm font-semibold leading-tight text-foreground">
-                    {metric.displayValue}
-                  </p>
-                  <p className="mt-1 break-words font-mono text-[10px] leading-snug text-muted-foreground">
-                    {metric.description}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
         <div className="grid grid-cols-2 gap-4">
           <div className="min-w-0 rounded-2xl border border-border bg-card/95 p-4 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+              <h2 className="font-sans tabular-nums text-xs font-medium tracking-normal text-muted-foreground">
                 P&amp;L CUMULATIVO GIORNALIERO
               </h2>
               <MonthChartSelector
@@ -1639,12 +1323,12 @@ export function AnalysisDiagnostics({
                     />
                     <XAxis
                       dataKey="dateLabel"
-                      tick={{ fill: '#9ca3af', fontSize: 10 }}
+                      tick={{ fill: '#8e8e93', fontSize: 10 }}
                       tickLine={false}
                       axisLine={false}
                     />
                     <YAxis
-                      tick={{ fill: '#9ca3af', fontSize: 10 }}
+                      tick={{ fill: '#8e8e93', fontSize: 10 }}
                       tickLine={false}
                       axisLine={false}
                       tickFormatter={(value) =>
@@ -1654,7 +1338,7 @@ export function AnalysisDiagnostics({
                       }
                     />
                     <Tooltip
-                      cursor={{ stroke: 'rgba(94,234,212,0.22)' }}
+                      cursor={{ stroke: 'rgba(10,132,255,0.22)' }}
                       content={
                         <CumulativePnlTooltip streamerMode={streamerMode} />
                       }
@@ -1683,7 +1367,7 @@ export function AnalysisDiagnostics({
 
           <div className="min-w-0 rounded-2xl border border-border bg-card/95 p-4 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+              <h2 className="font-sans tabular-nums text-xs font-medium tracking-normal text-muted-foreground">
                 P&amp;L NETTO GIORNALIERO
               </h2>
               <MonthChartSelector
@@ -1742,12 +1426,12 @@ export function AnalysisDiagnostics({
                     />
                     <XAxis
                       dataKey="dateLabel"
-                      tick={{ fill: '#9ca3af', fontSize: 10 }}
+                      tick={{ fill: '#8e8e93', fontSize: 10 }}
                       tickLine={false}
                       axisLine={false}
                     />
                     <YAxis
-                      tick={{ fill: '#9ca3af', fontSize: 10 }}
+                      tick={{ fill: '#8e8e93', fontSize: 10 }}
                       tickLine={false}
                       axisLine={false}
                       tickFormatter={(value) =>
@@ -1784,7 +1468,7 @@ export function AnalysisDiagnostics({
                             `url(#dailyPnlGradient-${item.date})`
                           }
                           fillOpacity={1}
-                          className="cursor-pointer transition-all duration-200 hover:brightness-125 hover:[filter:drop-shadow(0_0_7px_rgba(45,212,191,0.38))]"
+                          className="cursor-pointer transition-all duration-200 hover:brightness-125 hover:[filter:drop-shadow(0_0_7px_rgba(10,132,255,0.38))]"
                         />
                       ))}
                     </Bar>
@@ -1798,7 +1482,7 @@ export function AnalysisDiagnostics({
 
       <div className="overflow-hidden rounded-2xl border border-border bg-card/95 shadow-[0_16px_36px_rgba(0,0,0,0.22)]">
         <div className="border-b border-border px-4 py-4 sm:px-5">
-          <h2 className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+          <h2 className="font-sans tabular-nums text-xs font-medium tracking-normal text-muted-foreground">
             Setup breakdown
           </h2>
         </div>
@@ -1809,9 +1493,9 @@ export function AnalysisDiagnostics({
           </div>
         ) : (
           <div className="ej-scrollbar overflow-x-auto">
-            <table className="w-full min-w-[900px] font-mono text-xs">
+            <table className="w-full min-w-[900px] font-sans tabular-nums text-xs">
               <thead>
-                <tr className="border-b border-border text-left text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                <tr className="border-b border-border text-left text-[10px] tracking-normal text-muted-foreground">
                   <th className="px-4 py-3 font-medium">Setup</th>
                   <th className="px-4 py-3 font-medium">Trades</th>
                   <th className="px-4 py-3 font-medium">Winrate</th>
@@ -1859,7 +1543,7 @@ export function AnalysisDiagnostics({
                         type="button"
                         variant="outline"
                         size="sm"
-                        className="h-9 rounded-lg border-border bg-background/50 px-3 font-mono text-xs text-muted-foreground hover:border-profit/50 hover:bg-secondary hover:text-foreground"
+                        className="h-9 rounded-lg border-border bg-background/50 px-3 font-sans tabular-nums text-xs text-muted-foreground hover:border-highlight/50 hover:bg-secondary hover:text-foreground"
                         onClick={() => openSetupTradeGroup(setup.setup)}
                       >
                         Apri
@@ -1875,7 +1559,7 @@ export function AnalysisDiagnostics({
 
       <div className="overflow-hidden rounded-2xl border border-border bg-card/95 shadow-[0_16px_36px_rgba(0,0,0,0.22)]">
         <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-4 sm:px-5">
-          <h2 className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+          <h2 className="font-sans tabular-nums text-xs font-medium tracking-normal text-muted-foreground">
             Trade log
           </h2>
           <Button
@@ -1902,7 +1586,7 @@ export function AnalysisDiagnostics({
                       direction: event.target.value as TradeLogFilters['direction'],
                     }))
                   }
-                  className="ej-filter-select h-9 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-profit/60"
+                  className="ej-filter-select h-9 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-ring/60"
                 >
                   <option value="all">Tutti</option>
                   <option value="long">Long</option>
@@ -1919,7 +1603,7 @@ export function AnalysisDiagnostics({
                       result: event.target.value as TradeLogFilters['result'],
                     }))
                   }
-                  className="ej-filter-select h-9 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-profit/60"
+                  className="ej-filter-select h-9 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-ring/60"
                 >
                   <option value="all">Tutti</option>
                   <option value="profit">Profit</option>
@@ -1934,14 +1618,17 @@ export function AnalysisDiagnostics({
                   onChange={(event) =>
                     setTradeLogFilters((filters) => ({
                       ...filters,
-                      asset: event.target.value as TradeLogFilters['asset'],
+                      asset: event.target.value,
                     }))
                   }
-                  className="ej-filter-select h-9 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-profit/60"
+                  className="ej-filter-select h-9 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-ring/60"
                 >
                   <option value="all">Tutti</option>
-                  <option value="NQ">NQ</option>
-                  <option value="MNQ">MNQ</option>
+                  {availableAssets.map(asset => (
+                    <option key={asset} value={asset}>
+                      {asset}
+                    </option>
+                  ))}
                 </select>
               </FilterField>
 
@@ -1954,7 +1641,7 @@ export function AnalysisDiagnostics({
                       setup: event.target.value,
                     }))
                   }
-                  className="ej-filter-select h-9 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-profit/60"
+                  className="ej-filter-select h-9 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-ring/60"
                 >
                   <option value="all">Tutti</option>
                   {availableSetups.map((setup) => (
@@ -1974,7 +1661,7 @@ export function AnalysisDiagnostics({
                       tag: event.target.value,
                     }))
                   }
-                  className="ej-filter-select h-9 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-profit/60"
+                  className="ej-filter-select h-9 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-ring/60"
                 >
                   <option value="all">Tutti</option>
                   {availableTags.map((tag) => (
@@ -1995,7 +1682,7 @@ export function AnalysisDiagnostics({
                         .value as TradeLogFilters['favoritesOnly'],
                     }))
                   }
-                  className="ej-filter-select h-9 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-profit/60"
+                  className="ej-filter-select h-9 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-ring/60"
                 >
                   <option value="no">No</option>
                   <option value="yes">Sì</option>
@@ -2012,7 +1699,7 @@ export function AnalysisDiagnostics({
                         .value as TradeLogFilters['displayOrder'],
                     }))
                   }
-                  className="ej-filter-select h-9 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-profit/60"
+                  className="ej-filter-select h-9 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-ring/60"
                 >
                   <option value="latest">Trade più recente</option>
                   <option value="earliest">Trade meno recente</option>
@@ -2032,7 +1719,7 @@ export function AnalysisDiagnostics({
                         dateFrom: event.target.value,
                       }))
                     }
-                    className="ej-date-input-no-indicator h-9 min-w-0 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-profit/60"
+                    className="ej-date-input-no-indicator h-9 min-w-0 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-ring/60"
                   />
                 </FilterField>
                 <FilterField label="A">
@@ -2045,14 +1732,14 @@ export function AnalysisDiagnostics({
                         dateTo: event.target.value,
                       }))
                     }
-                    className="ej-date-input-no-indicator h-9 min-w-0 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-profit/60"
+                    className="ej-date-input-no-indicator h-9 min-w-0 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-ring/60"
                   />
                 </FilterField>
               </div>
             </div>
 
             <div className="mt-3 flex items-center justify-between gap-3">
-              <span className="font-mono text-[10px] text-muted-foreground">
+              <span className="font-sans tabular-nums text-[10px] text-muted-foreground">
                 {filteredTradeLog.length} / {data.tradeLog.length} trade
               </span>
               <Button
@@ -2080,7 +1767,7 @@ export function AnalysisDiagnostics({
         ) : (
           <>
             <div className="ej-scrollbar overflow-x-auto">
-              <table className="w-full min-w-[1080px] table-fixed font-mono text-xs">
+              <table className="w-full min-w-[1080px] table-fixed font-sans tabular-nums text-xs">
                 <colgroup>
                   <col className="w-[118px]" />
                   <col className="w-[126px]" />
@@ -2092,7 +1779,7 @@ export function AnalysisDiagnostics({
                   <col className="w-[92px]" />
                 </colgroup>
                 <thead>
-                  <tr className="border-b border-border text-left text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                  <tr className="border-b border-border text-left text-[10px] tracking-normal text-muted-foreground">
                     <th className="px-4 py-3 font-medium">Data</th>
                     <th className="px-4 py-3 font-medium">P&amp;L</th>
                     <th className="px-4 py-3 font-medium">Direzione</th>
@@ -2157,7 +1844,7 @@ export function AnalysisDiagnostics({
                             type="button"
                             variant="outline"
                             size="sm"
-                            className="h-9 rounded-[10px] px-3 font-mono text-xs"
+                            className="h-9 rounded-[10px] px-3 font-sans tabular-nums text-xs"
                             onClick={() => {
                               setReturnToTradeGroup(false);
                               setSelectedTrade(trade);
@@ -2174,7 +1861,7 @@ export function AnalysisDiagnostics({
             </div>
 
             <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3 sm:px-5">
-              <span className="font-mono text-[10px] text-muted-foreground">
+              <span className="font-sans tabular-nums text-[10px] text-muted-foreground">
                 {isPaginationMode
                   ? `Mostrati ${visibleTradeLogFrom}-${visibleTradeLogTo} di ${filteredTradeLog.length}`
                   : `Mostrati ${visibleTradeLog.length} di ${filteredTradeLog.length}`}{' '}
@@ -2186,7 +1873,7 @@ export function AnalysisDiagnostics({
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="h-8 min-w-8 rounded-lg border-border bg-background/50 px-2 font-mono text-xs text-muted-foreground hover:bg-secondary hover:text-foreground"
+                  className="h-8 min-w-8 rounded-lg border-border bg-background/50 px-2 font-sans tabular-nums text-xs text-muted-foreground hover:bg-secondary hover:text-foreground"
                   onClick={() => {
                     setIsPaginationMode(true);
                     setCurrentPage(1);
@@ -2202,7 +1889,7 @@ export function AnalysisDiagnostics({
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="h-8 min-w-8 rounded-lg border border-border bg-background/50 px-2 font-mono text-xs text-muted-foreground hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                    className="h-8 min-w-8 rounded-lg border border-border bg-background/50 px-2 font-sans tabular-nums text-xs text-muted-foreground hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
                     disabled={currentPage === 1}
                     onClick={() =>
                       setCurrentPage((page) => Math.max(1, page - 1))
@@ -2219,8 +1906,8 @@ export function AnalysisDiagnostics({
                       size="sm"
                       className={
                         page === currentPage && page !== 1
-                          ? 'h-8 min-w-8 rounded-lg border border-profit bg-profit px-2 font-mono text-xs font-bold text-background hover:bg-profit hover:text-background'
-                          : 'h-8 min-w-8 rounded-lg border border-border bg-background/50 px-2 font-mono text-xs text-muted-foreground hover:bg-secondary hover:text-foreground'
+                          ? 'h-8 min-w-8 rounded-lg border border-transparent bg-primary px-2 font-sans tabular-nums text-xs font-semibold text-primary-foreground hover:bg-primary hover:text-primary-foreground'
+                          : 'h-8 min-w-8 rounded-lg border border-border bg-background/50 px-2 font-sans tabular-nums text-xs text-muted-foreground hover:bg-secondary hover:text-foreground'
                       }
                       onClick={() => setCurrentPage(page)}
                     >
@@ -2232,7 +1919,7 @@ export function AnalysisDiagnostics({
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="h-8 min-w-8 rounded-lg border border-border bg-background/50 px-2 font-mono text-xs text-muted-foreground hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                    className="h-8 min-w-8 rounded-lg border border-border bg-background/50 px-2 font-sans tabular-nums text-xs text-muted-foreground hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
                     disabled={currentPage === totalTradeLogPages}
                     onClick={() =>
                       setCurrentPage((page) =>

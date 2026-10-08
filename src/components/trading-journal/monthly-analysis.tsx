@@ -452,10 +452,10 @@ export function MonthlyAnalysis({
     <section className="max-w-full pb-6 md:pb-8" data-tutorial="analysis-section">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3 md:mb-4">
         <div className="min-w-0">
-          <h2 className="font-mono text-base font-semibold tracking-wide text-foreground">
+          <h2 className="font-sans tabular-nums text-base font-semibold tracking-wide text-foreground">
             Analisi annuale
           </h2>
-          <p className="mt-1 font-mono text-xs text-muted-foreground">
+          <p className="mt-1 font-sans tabular-nums text-xs text-muted-foreground">
             Analisi annuale delle performance operative e dei pattern del journal.
           </p>
         </div>
@@ -464,7 +464,7 @@ export function MonthlyAnalysis({
           <Button variant="outline" size="icon" className="size-8" onClick={goPreviousYear}>
             <ChevronLeft className="size-4" />
           </Button>
-          <span className="min-w-16 rounded-md border border-border bg-card px-3 py-2 text-center font-mono text-xs font-semibold">
+          <span className="min-w-16 rounded-lg border border-border bg-card px-3 py-2 text-center font-sans tabular-nums text-xs font-semibold">
             {selectedYear}
           </span>
           <Button variant="outline" size="icon" className="size-8" onClick={goNextYear}>
@@ -517,7 +517,7 @@ export function MonthlyAnalysis({
       </div>
 
       <div className="mb-4 rounded-2xl border border-border bg-card/95 p-3.5 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
-        <div className="mb-4 font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+        <div className="mb-4 font-sans tabular-nums text-xs font-medium tracking-normal text-muted-foreground">
           P&L mensile
         </div>
         <div className="ej-scrollbar w-full overflow-x-auto">
@@ -548,7 +548,7 @@ export function MonthlyAnalysis({
                       <>
                         <div
                           className={cn(
-                            'pointer-events-none absolute top-1 z-10 whitespace-nowrap rounded-xl border border-teal-300/20 bg-[#20242d]/98 px-2.5 py-1.5 font-mono text-[10px] text-slate-200 opacity-0 shadow-[0_10px_30px_rgba(0,0,0,0.45),0_0_18px_rgba(45,212,191,0.08)] transition-all duration-200 group-hover:translate-y-1 group-hover:opacity-100',
+                            'pointer-events-none absolute top-1 z-10 whitespace-nowrap rounded-lg border border-blue-300/20 bg-[#1c1c1f]/98 px-2.5 py-1.5 font-sans tabular-nums text-[10px] text-slate-200 opacity-0 shadow-[0_10px_30px_rgba(0,0,0,0.45),0_0_18px_rgba(10,132,255,0.08)] transition-all duration-200 group-hover:translate-y-1 group-hover:opacity-100',
                             month.monthIndex === 0
                               ? 'left-0'
                               : month.monthIndex === 11
@@ -562,7 +562,7 @@ export function MonthlyAnalysis({
                           <span
                             className={cn(
                               'font-semibold',
-                              month.totalPnl > 0 && 'text-teal-200',
+                              month.totalPnl > 0 && 'text-blue-200',
                               month.totalPnl < 0 && 'text-rose-200'
                             )}
                           >
@@ -575,16 +575,16 @@ export function MonthlyAnalysis({
                           className={cn(
                             'w-11 rounded-t-lg transition-all duration-200 group-hover:scale-x-105 group-hover:brightness-110 sm:w-12',
                             month.totalPnl > 0 &&
-                              'bg-[linear-gradient(to_top,rgba(0,214,143,0.25),#00d68f)] shadow-[0_0_12px_rgba(0,214,143,0.18)] group-hover:shadow-[0_0_22px_rgba(0,214,143,0.34)]',
+                              'bg-[linear-gradient(to_top,rgba(52,210,123,0.25),#34d27b)] shadow-[0_0_12px_rgba(52,210,123,0.18)] group-hover:shadow-[0_0_22px_rgba(52,210,123,0.34)]',
                             month.totalPnl < 0 &&
-                              'bg-[linear-gradient(to_top,rgba(255,77,112,0.25),#ff4d70)] shadow-[0_0_12px_rgba(255,77,112,0.16)] group-hover:shadow-[0_0_22px_rgba(255,77,112,0.32)]'
+                              'bg-[linear-gradient(to_top,rgba(255,101,104,0.25),#ff6568)] shadow-[0_0_12px_rgba(255,101,104,0.16)] group-hover:shadow-[0_0_22px_rgba(255,101,104,0.32)]'
                           )}
                           style={{ height }}
                         />
                       </>
                     )}
                   </div>
-                  <span className="font-mono text-[10px] text-muted-foreground">
+                  <span className="font-sans tabular-nums text-[10px] text-muted-foreground">
                     {month.monthName.slice(0, 3)}
                   </span>
                 </div>
@@ -595,20 +595,20 @@ export function MonthlyAnalysis({
       </div>
 
       <div className="mb-4 rounded-2xl border border-border bg-card/95 p-3.5 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
-        <div className="mb-4 font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+        <div className="mb-4 font-sans tabular-nums text-xs font-medium tracking-normal text-muted-foreground">
           Distribuzione operazioni
         </div>
 
         {yearTrades === 0 ? (
-          <div className="flex h-52 items-center justify-center rounded-xl border border-border/70 bg-background/30">
-            <p className="font-mono text-xs text-muted-foreground">
+          <div className="flex h-52 items-center justify-center rounded-lg border border-border/70 bg-background/30">
+            <p className="font-sans tabular-nums text-xs text-muted-foreground">
               Nessuna operazione inserita.
             </p>
           </div>
         ) : (
           <div className="ej-scrollbar w-full overflow-x-auto">
             <div className="flex min-w-[760px] gap-3 sm:min-w-0">
-              <div className="flex h-60 w-7 shrink-0 flex-col justify-between pb-7 pt-1 text-right font-mono text-[9px] text-muted-foreground">
+              <div className="flex h-60 w-7 shrink-0 flex-col justify-between pb-7 pt-1 text-right font-sans tabular-nums text-[9px] text-muted-foreground">
                 <span>{maxMonthlyTrades}</span>
                 <span>{Math.round(maxMonthlyTrades / 2)}</span>
                 <span>0</span>
@@ -641,7 +641,7 @@ export function MonthlyAnalysis({
                           <>
                             <div
                               className={cn(
-                                'pointer-events-none absolute top-1 z-10 whitespace-nowrap rounded-xl border border-teal-300/20 bg-[#20242d]/98 px-2.5 py-1.5 font-mono text-[10px] text-slate-200 opacity-0 shadow-[0_10px_30px_rgba(0,0,0,0.45),0_0_18px_rgba(45,212,191,0.08)] transition-all duration-200 group-hover:translate-y-1 group-hover:opacity-100',
+                                'pointer-events-none absolute top-1 z-10 whitespace-nowrap rounded-lg border border-blue-300/20 bg-[#1c1c1f]/98 px-2.5 py-1.5 font-sans tabular-nums text-[10px] text-slate-200 opacity-0 shadow-[0_10px_30px_rgba(0,0,0,0.45),0_0_18px_rgba(10,132,255,0.08)] transition-all duration-200 group-hover:translate-y-1 group-hover:opacity-100',
                                 month.monthIndex === 0
                                   ? 'left-0'
                                   : month.monthIndex === 11
@@ -652,18 +652,18 @@ export function MonthlyAnalysis({
                               <span className="mr-1 text-foreground">
                                 {month.monthName}:
                               </span>
-                              <span className="font-semibold text-teal-200">
+                              <span className="font-semibold text-blue-200">
                                 {month.trades} trade
                               </span>
                             </div>
                             <div
-                              className="w-11 rounded-t-lg bg-[linear-gradient(to_top,rgba(0,214,143,0.25),#00d68f)] shadow-[0_0_12px_rgba(0,214,143,0.16)] transition-all duration-200 group-hover:scale-x-105 group-hover:brightness-110 group-hover:shadow-[0_0_22px_rgba(0,214,143,0.32)] sm:w-12"
+                              className="w-11 rounded-t-lg bg-[linear-gradient(to_top,rgba(52,210,123,0.25),#34d27b)] shadow-[0_0_12px_rgba(52,210,123,0.16)] transition-all duration-200 group-hover:scale-x-105 group-hover:brightness-110 group-hover:shadow-[0_0_22px_rgba(52,210,123,0.32)] sm:w-12"
                               style={{ height }}
                             />
                           </>
                         )}
                       </div>
-                      <span className="font-mono text-[10px] text-muted-foreground">
+                      <span className="font-sans tabular-nums text-[10px] text-muted-foreground">
                         {month.monthName.slice(0, 3)}
                       </span>
                     </div>
@@ -684,7 +684,7 @@ export function MonthlyAnalysis({
       <div className="mb-4 overflow-hidden rounded-2xl border border-border bg-card/95 shadow-[0_16px_36px_rgba(0,0,0,0.22)]">
         <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
           <div>
-            <div className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+            <div className="font-sans tabular-nums text-xs font-medium tracking-normal text-muted-foreground">
               Performance mese per mese
             </div>
             <p className="mt-1 font-sans text-xs text-muted-foreground">
@@ -694,7 +694,7 @@ export function MonthlyAnalysis({
         </div>
         <div className="ej-scrollbar w-full overflow-x-auto">
           <div className="min-w-[960px]">
-        <div className="grid grid-cols-[1.2fr_1fr_0.8fr_0.8fr_0.9fr_0.9fr_1fr_1fr_64px] border-b border-border px-4 py-3 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+        <div className="grid grid-cols-[1.2fr_1fr_0.8fr_0.8fr_0.9fr_0.9fr_1fr_1fr_64px] border-b border-border px-4 py-3 font-sans tabular-nums text-[10px] tracking-normal text-muted-foreground">
           <span>Mese</span>
           <span>P&L netto</span>
           <span>Trade</span>
@@ -727,9 +727,9 @@ export function MonthlyAnalysis({
               openMonthDetail(month.monthIndex);
             }}
             className={cn(
-              'grid grid-cols-[1.2fr_1fr_0.8fr_0.8fr_0.9fr_0.9fr_1fr_1fr_64px] items-center border-b border-border/70 px-4 py-3 font-mono text-xs outline-none last:border-b-0',
+              'grid grid-cols-[1.2fr_1fr_0.8fr_0.8fr_0.9fr_0.9fr_1fr_1fr_64px] items-center border-b border-border/70 px-4 py-3 font-sans tabular-nums text-xs outline-none last:border-b-0',
               isClickable
-                ? 'cursor-pointer transition hover:bg-profit/[0.035] hover:shadow-[inset_3px_0_0_rgba(0,240,168,0.55)] focus-visible:bg-profit/[0.06] focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-profit/60'
+                ? 'cursor-pointer transition hover:bg-primary/[0.035] hover:shadow-[inset_3px_0_0_rgba(52,210,123,0.55)] focus-visible:bg-primary/[0.06] focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring/60'
                 : 'text-muted-foreground/55'
             )}
           >
@@ -765,7 +765,7 @@ export function MonthlyAnalysis({
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="h-8 rounded-lg border-border bg-background/50 px-3 font-mono text-xs text-muted-foreground hover:border-profit/50 hover:bg-secondary hover:text-foreground"
+                  className="h-8 rounded-lg border-border bg-background/50 px-3 font-sans tabular-nums text-xs text-muted-foreground hover:border-highlight/50 hover:bg-secondary hover:text-foreground"
                   onClick={(event) => {
                     event.stopPropagation();
                     openMonthDetail(month.monthIndex);
@@ -792,7 +792,7 @@ export function MonthlyAnalysis({
       <div className="mb-4">
         <div className="rounded-2xl border border-border bg-card/95 p-3.5 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
           <div className="mb-4 flex items-center justify-between gap-3">
-            <div className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+            <div className="font-sans tabular-nums text-xs font-medium tracking-normal text-muted-foreground">
               TAG ANALYTICS
             </div>
             <Button
@@ -810,9 +810,9 @@ export function MonthlyAnalysis({
           </div>
 
           {isTagAnalyticsFilterOpen && (
-            <div className="mb-4 rounded-xl border border-border bg-background/25 p-3">
+            <div className="mb-4 rounded-lg border border-border bg-background/25 p-3">
               <label className="grid gap-1.5">
-                <span className="font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                <span className="font-sans tabular-nums text-xs font-medium tracking-normal text-muted-foreground">
                   Ordine di visualizzazione
                 </span>
                 <select
@@ -822,7 +822,7 @@ export function MonthlyAnalysis({
                       event.target.value as TagAnalyticsOrder
                     )
                   }
-                  className="ej-filter-select h-9 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-profit/60"
+                  className="ej-filter-select h-9 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-ring/60"
                 >
                   <option value="most-used">Più utilizzato</option>
                   <option value="least-used">Meno utilizzato</option>
@@ -843,9 +843,9 @@ export function MonthlyAnalysis({
                 return (
                   <div
                     key={tag.value}
-                    className="space-y-2 rounded-xl p-2 transition-colors hover:bg-secondary/10"
+                    className="space-y-2 rounded-lg p-2 transition-colors hover:bg-secondary/10"
                   >
-                  <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 font-mono text-xs sm:grid-cols-[minmax(0,1fr)_auto_auto_auto_auto] sm:gap-3">
+                  <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 font-sans tabular-nums text-xs sm:grid-cols-[minmax(0,1fr)_auto_auto_auto_auto] sm:gap-3">
                     <span className="truncate text-foreground">{tag.label}</span>
                     <span className="text-muted-foreground">
                       {tag.tradeCount} trade
@@ -867,7 +867,7 @@ export function MonthlyAnalysis({
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="h-9 rounded-lg border-border bg-background/50 px-3 font-mono text-xs text-muted-foreground hover:border-profit/50 hover:bg-secondary hover:text-foreground max-sm:col-span-2 max-sm:w-full"
+                      className="h-9 rounded-lg border-border bg-background/50 px-3 font-sans tabular-nums text-xs text-muted-foreground hover:border-highlight/50 hover:bg-secondary hover:text-foreground max-sm:col-span-2 max-sm:w-full"
                       onClick={() =>
                         openTradeGroup(
                           `Tag: ${tag.label}`,
@@ -892,7 +892,7 @@ export function MonthlyAnalysis({
                 );
               })
             ) : (
-              <div className="rounded-xl border border-border bg-background/50 p-4 font-mono text-xs text-muted-foreground">
+              <div className="rounded-lg border border-border bg-background/50 p-4 font-sans tabular-nums text-xs text-muted-foreground">
                 Nessun tag registrato per questo anno.
               </div>
             )}
@@ -904,7 +904,7 @@ export function MonthlyAnalysis({
                 type="button"
                 variant="outline"
                 size="sm"
-                className="h-8 min-w-8 rounded-lg border border-border bg-background/50 px-2 font-mono text-xs text-muted-foreground hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                className="h-8 min-w-8 rounded-lg border border-border bg-background/50 px-2 font-sans tabular-nums text-xs text-muted-foreground hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
                 disabled={tagAnalyticsPage === 1}
                 onClick={() =>
                   setTagAnalyticsPage((page) => Math.max(1, page - 1))
@@ -921,8 +921,8 @@ export function MonthlyAnalysis({
                   size="sm"
                   className={
                     page === tagAnalyticsPage
-                      ? 'h-8 min-w-8 rounded-lg border border-profit bg-profit px-2 font-mono text-xs font-bold text-background hover:bg-profit hover:text-background'
-                      : 'h-8 min-w-8 rounded-lg border border-border bg-background/50 px-2 font-mono text-xs text-muted-foreground hover:bg-secondary hover:text-foreground'
+                      ? 'h-8 min-w-8 rounded-lg border border-transparent bg-primary px-2 font-sans tabular-nums text-xs font-semibold text-primary-foreground hover:bg-primary hover:text-primary-foreground'
+                      : 'h-8 min-w-8 rounded-lg border border-border bg-background/50 px-2 font-sans tabular-nums text-xs text-muted-foreground hover:bg-secondary hover:text-foreground'
                   }
                   onClick={() => setTagAnalyticsPage(page)}
                 >
@@ -934,7 +934,7 @@ export function MonthlyAnalysis({
                 type="button"
                 variant="outline"
                 size="sm"
-                className="h-8 min-w-8 rounded-lg border border-border bg-background/50 px-2 font-mono text-xs text-muted-foreground hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                className="h-8 min-w-8 rounded-lg border border-border bg-background/50 px-2 font-sans tabular-nums text-xs text-muted-foreground hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
                 disabled={tagAnalyticsPage === tagAnalyticsTotalPages}
                 onClick={() =>
                   setTagAnalyticsPage((page) =>
@@ -965,7 +965,7 @@ export function MonthlyAnalysis({
         {selectedMonthDetail && selectedMonthStats && (
           <DialogContent className="max-h-[92dvh] w-[calc(100vw-1.75rem)] max-w-5xl overflow-hidden rounded-2xl border border-border bg-card p-0 shadow-[0_20px_50px_rgba(0,0,0,0.35)]">
             <DialogHeader className="border-b border-border px-4 py-3.5 text-left sm:px-5 sm:py-4">
-              <DialogTitle className="font-mono text-base text-foreground sm:text-lg">
+              <DialogTitle className="font-sans tabular-nums text-base text-foreground sm:text-lg">
                 Performance — {selectedMonthDetail.monthName} {selectedYear}
               </DialogTitle>
               <DialogDescription className="font-sans text-sm">
@@ -1078,7 +1078,7 @@ export function MonthlyAnalysis({
 
               <section className="mt-5 rounded-2xl border border-border bg-background/25">
                 <div className="border-b border-border px-4 py-3">
-                  <p className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                  <p className="font-sans tabular-nums text-xs font-medium tracking-normal text-muted-foreground">
                     Trade del mese
                   </p>
                 </div>
@@ -1093,7 +1093,7 @@ export function MonthlyAnalysis({
                         key={trade.id}
                         role="button"
                         tabIndex={0}
-                        className="grid w-full grid-cols-1 gap-2 px-4 py-3 text-left transition hover:bg-profit/[0.035] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-profit/60 md:grid-cols-[96px_120px_72px_84px_64px_minmax(0,1fr)_64px]"
+                        className="grid w-full grid-cols-1 gap-2 px-4 py-3 text-left transition hover:bg-primary/[0.035] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring/60 md:grid-cols-[96px_120px_72px_84px_64px_minmax(0,1fr)_64px]"
                         onClick={() => {
                           setSelectedMonthIndex(null);
                           setSelectedTrade(trade);
@@ -1110,12 +1110,12 @@ export function MonthlyAnalysis({
                           setReturnToTradeGroup(false);
                         }}
                       >
-                        <div className="font-mono text-xs text-foreground">
+                        <div className="font-sans tabular-nums text-xs text-foreground">
                           {getTradeDateLabel(trade)}
                         </div>
                         <div
                           className={cn(
-                            'font-mono text-xs font-semibold',
+                            'font-sans tabular-nums text-xs font-semibold',
                             pnl > 0 && 'text-profit',
                             pnl < 0 && 'text-loss',
                             pnl === 0 && 'text-muted-foreground'
@@ -1123,17 +1123,17 @@ export function MonthlyAnalysis({
                         >
                           {streamerMode ? '******' : formatSignedCurrency(pnl)}
                         </div>
-                        <div className="font-mono text-xs text-muted-foreground">
+                        <div className="font-sans tabular-nums text-xs text-muted-foreground">
                           {trade.pair?.trim() || '—'}
                         </div>
-                        <div className="font-mono text-xs capitalize text-muted-foreground">
+                        <div className="font-sans tabular-nums text-xs capitalize text-muted-foreground">
                           {trade.direction || '—'}
                         </div>
-                        <div className="font-mono text-xs text-muted-foreground">
+                        <div className="font-sans tabular-nums text-xs text-muted-foreground">
                           {getTradeTime(trade)}
                         </div>
                         <div className="min-w-0 space-y-1">
-                          <p className="truncate font-mono text-xs text-foreground">
+                          <p className="truncate font-sans tabular-nums text-xs text-foreground">
                             {trade.strategy?.trim() || '—'}
                           </p>
                           {trade.tags?.length > 0 && (
@@ -1141,13 +1141,13 @@ export function MonthlyAnalysis({
                               {trade.tags.slice(0, 3).map((tag) => (
                                 <span
                                   key={tag}
-                                  className="rounded-md border border-profit/20 bg-profit/5 px-1.5 py-0.5 font-mono text-[10px] text-profit"
+                                  className="rounded-lg border border-profit/20 bg-profit/5 px-1.5 py-0.5 font-sans tabular-nums text-[10px] text-profit"
                                 >
                                   {getTagLabel(tag)}
                                 </span>
                               ))}
                               {trade.tags.length > 3 && (
-                                <span className="font-mono text-[10px] text-muted-foreground">
+                                <span className="font-sans tabular-nums text-[10px] text-muted-foreground">
                                   +{trade.tags.length - 3}
                                 </span>
                               )}
@@ -1164,7 +1164,7 @@ export function MonthlyAnalysis({
                             type="button"
                             variant="outline"
                             size="sm"
-                            className="h-8 rounded-lg border-border bg-background/50 px-3 font-mono text-xs text-muted-foreground hover:border-profit/50 hover:bg-secondary hover:text-foreground max-md:w-full"
+                            className="h-8 rounded-lg border-border bg-background/50 px-3 font-sans tabular-nums text-xs text-muted-foreground hover:border-highlight/50 hover:bg-secondary hover:text-foreground max-md:w-full"
                             onClick={(event) => {
                               event.stopPropagation();
                               setSelectedMonthIndex(null);
@@ -1181,7 +1181,7 @@ export function MonthlyAnalysis({
                 </div>
 
                 <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3">
-                  <span className="font-mono text-[10px] text-muted-foreground">
+                  <span className="font-sans tabular-nums text-[10px] text-muted-foreground">
                     Mostrati {monthlyTradesStartIndex + 1}-
                     {Math.min(
                       monthlyTradesStartIndex + MONTHLY_TRADES_PAGE_SIZE,
@@ -1196,7 +1196,7 @@ export function MonthlyAnalysis({
                         type="button"
                         variant="outline"
                         size="sm"
-                        className="h-8 min-w-8 rounded-lg border border-border bg-background/50 px-2 font-mono text-xs text-muted-foreground hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                        className="h-8 min-w-8 rounded-lg border border-border bg-background/50 px-2 font-sans tabular-nums text-xs text-muted-foreground hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
                         disabled={monthlyTradesPage === 1}
                         onClick={() =>
                           setMonthlyTradesPage((page) =>
@@ -1219,8 +1219,8 @@ export function MonthlyAnalysis({
                           size="sm"
                           className={
                             page === monthlyTradesPage && page !== 1
-                              ? 'h-8 min-w-8 rounded-lg border border-profit bg-profit px-2 font-mono text-xs font-bold text-background hover:bg-profit hover:text-background'
-                              : 'h-8 min-w-8 rounded-lg border border-border bg-background/50 px-2 font-mono text-xs text-muted-foreground hover:bg-secondary hover:text-foreground'
+                              ? 'h-8 min-w-8 rounded-lg border border-transparent bg-primary px-2 font-sans tabular-nums text-xs font-semibold text-primary-foreground hover:bg-primary hover:text-primary-foreground'
+                              : 'h-8 min-w-8 rounded-lg border border-border bg-background/50 px-2 font-sans tabular-nums text-xs text-muted-foreground hover:bg-secondary hover:text-foreground'
                           }
                           onClick={() => setMonthlyTradesPage(page)}
                         >
@@ -1232,7 +1232,7 @@ export function MonthlyAnalysis({
                         type="button"
                         variant="outline"
                         size="sm"
-                        className="h-8 min-w-8 rounded-lg border border-border bg-background/50 px-2 font-mono text-xs text-muted-foreground hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                        className="h-8 min-w-8 rounded-lg border border-border bg-background/50 px-2 font-sans tabular-nums text-xs text-muted-foreground hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
                         disabled={
                           monthlyTradesPage === monthlyTradesTotalPages
                         }
@@ -1322,7 +1322,7 @@ function SummaryBox({
 }) {
   const getPillClass = (tone: SummaryPill['tone'] = 'default') =>
     cn(
-      'rounded-full border px-3 py-1 font-mono text-[11px] font-medium',
+      'rounded-full border px-3 py-1 font-sans tabular-nums text-[11px] font-medium',
       tone === 'profit' && 'border-profit/40 bg-profit/10 text-profit',
       tone === 'loss' && 'border-loss/40 bg-loss/10 text-loss',
       tone === 'default' &&
@@ -1332,11 +1332,11 @@ function SummaryBox({
   return (
     <div className="max-w-full rounded-2xl border border-border bg-card/95 shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
       <div className="flex min-h-[104px] min-w-0 flex-col justify-between gap-2 p-3 md:min-h-[118px] md:p-3.5">
-      <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground md:tracking-[0.18em]">{title}</div>
+      <div className="font-sans tabular-nums text-[10px] tracking-normal text-muted-foreground">{title}</div>
       <div className="flex min-w-0 flex-wrap items-center gap-2">
         <div
           className={cn(
-            'break-words font-mono text-lg font-semibold tracking-tight text-foreground md:text-xl',
+            'break-words font-sans tabular-nums text-lg font-semibold tracking-tight text-foreground md:text-xl',
             color === 'profit' && 'text-profit',
             color === 'loss' && 'text-loss',
             color === 'neutral' && 'text-muted-foreground'
@@ -1354,14 +1354,14 @@ function SummaryBox({
         ))}
       </div>
       {description && (
-        <p className="font-mono text-[11px] text-muted-foreground">
+        <p className="font-sans tabular-nums text-[11px] text-muted-foreground">
           {description}
         </p>
       )}
       {subtitle && (
         <div className="flex flex-wrap gap-1.5">
           {subtitle && (
-            <span className="rounded-full border border-border bg-background/50 px-2 py-1 font-mono text-[10px] text-muted-foreground">
+            <span className="rounded-full border border-border bg-background/50 px-2 py-1 font-sans tabular-nums text-[10px] text-muted-foreground">
               {subtitle}
             </span>
           )}
@@ -1392,13 +1392,13 @@ function MonthlyMetric({
   tone?: 'default' | 'profit' | 'loss';
 }) {
   return (
-    <div className="min-w-0 rounded-xl border border-border bg-background/45 p-3">
-      <p className="font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+    <div className="min-w-0 rounded-lg border border-border bg-background/45 p-3">
+      <p className="font-sans tabular-nums text-xs font-medium tracking-normal text-muted-foreground">
         {label}
       </p>
       <p
         className={cn(
-          'mt-2 break-words font-mono text-base font-semibold text-foreground',
+          'mt-2 break-words font-sans tabular-nums text-base font-semibold text-foreground',
           tone === 'profit' && 'text-profit',
           tone === 'loss' && 'text-loss'
         )}
@@ -1406,7 +1406,7 @@ function MonthlyMetric({
         {value}
       </p>
       {detail && (
-        <p className="mt-1 font-mono text-[11px] text-muted-foreground">
+        <p className="mt-1 font-sans tabular-nums text-[11px] text-muted-foreground">
           {detail}
         </p>
       )}

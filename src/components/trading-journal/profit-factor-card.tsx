@@ -54,8 +54,8 @@ export function RiskRewardCard({
   return (
     <Card
       className={cn(
-        'max-w-full rounded-2xl border border-border bg-card/95 shadow-[0_10px_24px_rgba(0,0,0,0.18)]',
-        isAnalysis && 'self-start py-0'
+        'max-w-full rounded-2xl border border-border bg-card',
+        isAnalysis ? 'self-start py-0' : 'max-md:gap-0 max-md:py-0'
       )}
     >
       <CardContent
@@ -66,7 +66,7 @@ export function RiskRewardCard({
             : 'min-h-[68px] p-3 md:min-h-[72px] md:p-3.5'
         )}
       >
-        <span className="font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground md:tracking-[0.18em]">
+        <span className="font-sans tabular-nums text-xs font-medium tracking-normal text-muted-foreground">
           Risk-to-Reward Ratio
         </span>
 
@@ -77,7 +77,7 @@ export function RiskRewardCard({
               'grid grid-cols-[minmax(3.25rem,1fr)_minmax(8rem,10rem)] items-center gap-3 md:grid-cols-[minmax(3.25rem,1fr)_10rem]'
           )}
         >
-          <span className="min-w-0 font-mono text-lg font-semibold tracking-tight text-foreground md:text-xl">
+          <span className="min-w-0 font-sans tabular-nums text-lg font-semibold tracking-tight text-foreground md:text-xl">
             {value}
           </span>
 
@@ -94,7 +94,7 @@ export function RiskRewardCard({
           )}
         </div>
 
-        <span className="font-mono text-[11px] text-muted-foreground">
+        <span className="font-sans tabular-nums text-[11px] text-muted-foreground">
           {description}
         </span>
 

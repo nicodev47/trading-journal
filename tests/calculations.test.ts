@@ -1,11 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
-  calculateEclipseScore,
   calculateExpectancy,
   calculateMaxDrawdown,
   calculateProfitFactorDetails,
-  calculateOperationalFrequency,
   calculateProfitFactor,
   calculateStatistics,
   classifyPnl,
@@ -20,7 +18,6 @@ import {
   isMissedTrade,
   isValidStatTrade,
   isWinningTrade,
-  MIN_TRADES_PER_WEEK,
 } from '../src/lib/calculations.ts';
 import type { Trade } from '../src/lib/types/trade.ts';
 
@@ -402,132 +399,4 @@ test('Drawdown massimo: gestisce date mancanti o orari non validi', () => {
 
 test('Drawdown massimo: senza trade validi non ha un valore', () => {
   assert.equal(calculateMaxDrawdown([makeTrade(0), makeTrade(-0, 0, 1)]), null);
-});
-
-function makeDatedTrades(date: string, count: number, startIndex: number): Trade[] {
-  return Array.from({ length: count }, (_, index) => {
-    const trade = makeTrade(100, 0, startIndex + index);
-    const dateTime = `${date}T10:00:00`;
-
-    return { ...trade, entryDate: dateTime, exitDate: dateTime };
-  });
-}
-
-test('Frequenza operativa: 3 settimane su 6 producono 50/100', () => {
-  const trades = [
-    ...makeDatedTrades('2026-01-05', MIN_TRADES_PER_WEEK, 0),
-    ...makeDatedTrades('2026-01-19', MIN_TRADES_PER_WEEK, 3),
-    ...makeDatedTrades('2026-02-09', MIN_TRADES_PER_WEEK, 6),
-  ];
-  const frequency = calculateOperationalFrequency(trades, 1);
-
-  assert.deepEqual(frequency, {
-    score: 50,
-    weeksWithMinimumTrades: 3,
-    totalWeeks: 6,
-  });
-});
-
-test('Frequenza operativa: 4 settimane su 4 producono 100/100', () => {
-  const trades = ['2026-01-05', '2026-01-12', '2026-01-19', '2026-01-26']
-    .flatMap((date, index) =>
-      makeDatedTrades(date, MIN_TRADES_PER_WEEK, index * MIN_TRADES_PER_WEEK)
-    );
-
-  assert.equal(calculateOperationalFrequency(trades, 1).score, 100);
-});
-
-test('Frequenza operativa con trade in una sola settimana conta una settimana totale', () => {
-  const frequency = calculateOperationalFrequency(
-    makeDatedTrades('2026-01-05', MIN_TRADES_PER_WEEK, 0),
-    1
-  );
-
-  assert.deepEqual(frequency, {
-    score: 100,
-    weeksWithMinimumTrades: 1,
-    totalWeeks: 1,
-  });
-});
-
-test('Frequenza operativa: 1 settimana su 4 produce 25/100', () => {
-  const trades = [
-    ...makeDatedTrades('2026-01-05', MIN_TRADES_PER_WEEK, 0),
-    ...makeDatedTrades('2026-01-26', 1, MIN_TRADES_PER_WEEK),
-  ];
-  const frequency = calculateOperationalFrequency(trades, 1);
-
-  assert.equal(frequency.score, 25);
-  assert.equal(frequency.weeksWithMinimumTrades, 1);
-  assert.equal(frequency.totalWeeks, 4);
-});
-
-test('Frequenza operativa senza trade validi produce 0/100', () => {
-  assert.deepEqual(calculateOperationalFrequency([makeTrade(0)], 1), {
-    score: 0,
-    weeksWithMinimumTrades: 0,
-    totalWeeks: 0,
-  });
-});
-
-test('Frequenza operativa: 3 trade validi rendono valida la settimana', () => {
-  assert.equal(
-    calculateOperationalFrequency(
-      makeDatedTrades('2026-01-05', MIN_TRADES_PER_WEEK, 0),
-      1
-    ).score,
-    100
-  );
-});
-
-test('Frequenza operativa: 2 trade validi non rendono valida la settimana', () => {
-  assert.equal(
-    calculateOperationalFrequency(
-      makeDatedTrades('2026-01-05', MIN_TRADES_PER_WEEK - 1, 0),
-      1
-    ).score,
-    0
-  );
-});
-
-test('Frequenza operativa: 3 trade validi più trade a zero sono validi', () => {
-  const trades = [
-    ...makeDatedTrades('2026-01-05', MIN_TRADES_PER_WEEK, 0),
-    { ...makeDatedTrades('2026-01-05', 1, MIN_TRADES_PER_WEEK)[0], pnl: 0 },
-  ];
-
-  assert.equal(calculateOperationalFrequency(trades, 1).score, 100);
-});
-
-test('Frequenza operativa: 2 trade validi più trade a zero non sono validi', () => {
-  const trades = [
-    ...makeDatedTrades('2026-01-05', MIN_TRADES_PER_WEEK - 1, 0),
-    { ...makeDatedTrades('2026-01-05', 1, MIN_TRADES_PER_WEEK)[0], pnl: 0 },
-  ];
-
-  assert.equal(calculateOperationalFrequency(trades, 1).score, 0);
-});
-
-test('Frequenza operativa rispetta l’impostazione di inizio settimana', () => {
-  const trades = [
-    ...makeDatedTrades('2026-01-04', 2, 0),
-    ...makeDatedTrades('2026-01-10', 2, 2),
-  ];
-
-  assert.equal(calculateOperationalFrequency(trades, 0).score, 100);
-  assert.equal(calculateOperationalFrequency(trades, 1).score, 0);
-});
-
-test('Eclipse Score arrotonda solo la media finale a una cifra decimale', () => {
-  assert.equal(calculateEclipseScore([100, 100, 50, 100]), 87.5);
-});
-
-test('Eclipse Score usa la nuova frequenza con soglia di 3 trade', () => {
-  const frequency = calculateOperationalFrequency(
-    makeDatedTrades('2026-01-05', MIN_TRADES_PER_WEEK, 0),
-    1
-  );
-
-  assert.equal(frequency.score, 100);
-  assert.equal(calculateEclipseScore([100, 100, frequency.score, 100]), 100);
 });

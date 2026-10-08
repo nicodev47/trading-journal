@@ -105,8 +105,12 @@ export function createWorkspaceExportData(
   exportedAt = new Date(),
   workspaceMetadata?: JournalWorkspaceMeta
 ): string {
+  // Only the journal is exported: drop profile data left over from older versions.
+  const { preferences: _preferences, ...journal } = data as JournalState & {
+    preferences?: unknown;
+  };
   const payload: WorkspaceJournalExport = {
-    ...data,
+    ...journal,
     exportMetadata: {
       formatVersion: JOURNAL_EXPORT_FORMAT_VERSION,
       exportType: 'workspace',

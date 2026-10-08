@@ -44,6 +44,8 @@ interface TradingCalendarProps {
   onExport: () => void;
   importTargetMonth?: Date | null;
   tutorialDemoDateKey?: string;
+  /** Hides import and reset (export stays): used by the import preview. */
+  readOnly?: boolean;
 }
 
 const WEEKDAYS = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
@@ -100,6 +102,7 @@ export function TradingCalendar({
   onExport,
   importTargetMonth,
   tutorialDemoDateKey,
+  readOnly = false,
 }: TradingCalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const { sundayWeekStart, showZeroPnlTradesInCalendar } = useStreamerMode();
@@ -204,7 +207,7 @@ export function TradingCalendar({
 
   return (
     <div
-      className="flex max-w-full flex-col overflow-hidden rounded-lg border border-border bg-card shadow-[0_18px_50px_rgba(0,0,0,0.25)]"
+      className="flex max-w-full flex-col overflow-hidden rounded-2xl border border-border bg-card"
       data-tutorial="calendar"
     >
       <div className="flex flex-wrap items-center gap-3 border-b border-border px-4 py-3 max-md:gap-2 max-md:px-3 max-md:py-2.5">
@@ -212,11 +215,11 @@ export function TradingCalendar({
           className="flex min-w-0 flex-wrap items-center gap-2 max-md:w-full"
           data-tutorial="workspace-tabs"
         >
-          <h2 className="mr-1 font-sans text-[15px] font-bold tracking-[-0.03em] text-foreground max-md:w-full">
+          <h2 className="mr-1 font-sans text-[15px] font-semibold tracking-[-0.03em] text-foreground max-md:w-full">
             Calendario P/L
           </h2>
 
-          {activeWorkspace === 'backtest' && showResetButton && (
+          {!readOnly && activeWorkspace === 'backtest' && showResetButton && (
             <Button
               type="button"
               variant="outline"
@@ -229,7 +232,8 @@ export function TradingCalendar({
             </Button>
           )}
 
-          {(activeWorkspace === 'student' || activeWorkspace.startsWith('preview-')) &&
+          {!readOnly &&
+            (activeWorkspace === 'student' || activeWorkspace.startsWith('preview-')) &&
             showPreviewWorkspace && (
             <Button
               type="button"
@@ -261,7 +265,7 @@ export function TradingCalendar({
             showTodayButton
             firstTradeMonth={firstTradeMonth}
             lastTradeMonth={lastTradeMonth}
-            triggerClassName="inline-flex items-center justify-center gap-2 whitespace-nowrap disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive has-[>svg]:px-3 capitalize h-auto min-w-[150px] rounded-xl border border-transparent bg-transparent px-4 py-1 text-base font-semibold text-foreground shadow-none ring-0 transition-colors duration-200 hover:bg-white/10 hover:text-foreground dark:bg-transparent dark:hover:bg-white/10 dark:hover:text-foreground max-md:min-w-0 max-md:flex-1 max-md:px-2 max-md:text-sm"
+            triggerClassName="inline-flex items-center justify-center gap-2 whitespace-nowrap disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive has-[>svg]:px-3 capitalize h-auto min-w-[150px] rounded-lg border border-transparent bg-transparent px-4 py-1 text-base font-semibold text-foreground shadow-none ring-0 transition-colors duration-200 hover:bg-white/10 hover:text-foreground dark:bg-transparent dark:hover:bg-white/10 dark:hover:text-foreground max-md:min-w-0 max-md:flex-1 max-md:px-2 max-md:text-sm"
           />
 
           <Button
@@ -274,30 +278,34 @@ export function TradingCalendar({
           </Button>
         </div>
 
-        <div
-          className="flex items-center gap-2 max-md:w-full"
-          data-tutorial="import-export-buttons"
-        >
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onImport}
-            className="h-9 gap-2 rounded-lg font-sans text-xs font-semibold max-md:flex-1"
+        {(
+          <div
+            className="flex items-center gap-2 max-md:w-full"
+            data-tutorial="import-export-buttons"
           >
-            <Upload className="size-3" />
-            Importa
-          </Button>
+            {!readOnly && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onImport}
+              className="h-9 gap-2 rounded-lg border-white/[0.07] font-sans text-xs font-semibold dark:border-white/[0.07] max-md:flex-1"
+            >
+              <Upload className="size-3" />
+              Importa
+            </Button>
+            )}
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onExport}
-            className="h-9 gap-2 rounded-lg font-sans text-xs font-semibold max-md:flex-1"
-          >
-            <Download className="size-3" />
-            Esporta
-          </Button>
-        </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onExport}
+              className="h-9 gap-2 rounded-lg border-white/[0.07] font-sans text-xs font-semibold dark:border-white/[0.07] max-md:flex-1"
+            >
+              <Download className="size-3" />
+              Esporta
+            </Button>
+          </div>
+        )}
       </div>
 
       <div className="w-full overflow-hidden">
@@ -306,13 +314,13 @@ export function TradingCalendar({
             {weekdayLabels.map((day) => (
               <div
                 key={day}
-                className="bg-card px-1 py-1.5 font-sans text-[11px] font-bold tracking-[-0.02em] text-muted-foreground/85 sm:px-2 sm:py-2 sm:text-xs"
+                className="bg-card px-1 py-1.5 font-sans text-[11px] font-semibold tracking-[-0.02em] text-muted-foreground/85 sm:px-2 sm:py-2 sm:text-xs"
               >
                 {day}
               </div>
             ))}
 
-            <div className="hidden bg-card px-1 py-1.5 text-right font-sans text-[10px] font-bold uppercase tracking-[0.08em] text-muted-foreground/85 sm:block sm:px-2.5 sm:py-2.5 sm:text-xs lg:text-sm">
+            <div className="hidden bg-card px-1 py-1.5 text-right font-sans text-[10px] font-semibold tracking-normal text-muted-foreground/85 sm:block sm:px-2.5 sm:py-2.5 sm:text-xs lg:text-sm">
               <span className="sm:hidden">Sett</span>
               <span className="hidden sm:inline">Settimana</span>
             </div>
@@ -381,7 +389,7 @@ export function TradingCalendar({
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="size-3 rounded-sm bg-[#ff4d70]/70" />
+          <div className="size-3 rounded-sm bg-loss/70" />
           <span className="font-sans text-xs font-medium text-muted-foreground">
             Negativo
           </span>

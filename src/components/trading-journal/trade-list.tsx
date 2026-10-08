@@ -57,7 +57,7 @@ export function TradeList({
           <div>
             <p className="text-xs text-muted-foreground">Day P&L</p>
             <p className={cn(
-              'font-mono text-xl font-bold',
+              'font-sans tabular-nums text-xl font-semibold',
               totalPnl > 0 && 'text-profit',
               totalPnl < 0 && 'text-loss',
               totalPnl === 0 && 'text-muted-foreground'
@@ -70,7 +70,7 @@ export function TradeList({
           <div className="text-right">
             <p className="text-xs text-muted-foreground">Total Pips</p>
             <p className={cn(
-              'font-mono text-xl font-bold',
+              'font-sans tabular-nums text-xl font-semibold',
               totalPips > 0 && 'text-profit',
               totalPips < 0 && 'text-loss',
               totalPips === 0 && 'text-muted-foreground'
@@ -82,7 +82,7 @@ export function TradeList({
           </div>
           <div className="text-right">
             <p className="text-xs text-muted-foreground">Trades</p>
-            <p className="font-mono text-xl font-bold">{trades.length}</p>
+            <p className="font-sans tabular-nums text-xl font-semibold">{trades.length}</p>
           </div>
         </div>
 
@@ -132,7 +132,7 @@ export function TradeList({
                     </div>
                     <div className="text-right">
                       <p className={cn(
-                        'font-mono font-semibold',
+                        'font-sans tabular-nums font-semibold',
                         (trade.pnl - trade.commission) > 0 && 'text-profit',
                         (trade.pnl - trade.commission) < 0 && 'text-loss'
                       )}>
@@ -143,7 +143,7 @@ export function TradeList({
                             ).toFixed(2)}`}
                       </p>
                       <p className={cn(
-                        'font-mono text-xs',
+                        'font-sans tabular-nums text-xs',
                         trade.pips > 0 && 'text-profit/70',
                         trade.pips < 0 && 'text-loss/70'
                       )}>
