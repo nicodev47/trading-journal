@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Check, Search, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { ASSET_CATALOG } from '@/lib/asset-catalog';
+import { ALL_CATALOG_ASSETS, ASSET_CATALOG, toggleAssetItem } from '@/lib/asset-catalog';
 import { addAsset } from '@/lib/preferences';
 import { cn } from '@/lib/utils';
 
@@ -18,21 +18,14 @@ export function AssetPicker({ value, onChange }: AssetPickerProps) {
     () =>
       ASSET_CATALOG.map(group => ({
         ...group,
-        items: group.items.filter(item => item.includes(normalizedQuery)),
+        items: group.items.filter(item =>
+          item.symbols.some(symbol => symbol.includes(normalizedQuery))
+        ),
       })).filter(group => group.items.length > 0),
     [normalizedQuery]
   );
 
-  const toggle = (asset: string) =>
-    onChange(
-      value.includes(asset)
-        ? value.filter(item => item !== asset)
-        : [...value, asset]
-    );
-
-  const customAssets = value.filter(
-    asset => !ASSET_CATALOG.some(group => group.items.includes(asset))
-  );
+  const customAssets = value.filter(asset => !ALL_CATALOG_ASSETS.includes(asset));
 
   return (
     <div className="flex flex-col gap-4">
@@ -42,7 +35,7 @@ export function AssetPicker({ value, onChange }: AssetPickerProps) {
             <button
               key={asset}
               type="button"
-              onClick={() => toggle(asset)}
+              onClick={() => onChange(value.filter(item => item !== asset))}
               className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#0a0a0b]"
             >
               {asset}
@@ -76,14 +69,14 @@ export function AssetPicker({ value, onChange }: AssetPickerProps) {
               {group.group}
             </div>
             <div className="flex flex-wrap gap-2">
-              {group.items.map(asset => {
-                const selected = value.includes(asset);
+              {group.items.map(item => {
+                const selected = item.symbols.every(symbol => value.includes(symbol));
 
                 return (
                   <button
-                    key={asset}
+                    key={item.label}
                     type="button"
-                    onClick={() => toggle(asset)}
+                    onClick={() => onChange(toggleAssetItem(value, item))}
                     className={cn(
                       'inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors',
                       selected
@@ -92,7 +85,7 @@ export function AssetPicker({ value, onChange }: AssetPickerProps) {
                     )}
                   >
                     {selected && <Check className="size-3" />}
-                    {asset}
+                    {item.label}
                   </button>
                 );
               })}

@@ -11,15 +11,15 @@ import { cn } from '@/lib/utils';
 import { OnboardingIntro } from './onboarding-intro';
 import { OnboardingPreview } from './onboarding-preview';
 
-const STEPS: { title: string; description?: string; why: string }[] = [
+const STEPS: { title: string; description?: string; why?: string }[] = [
   {
     title: 'Incominciamo con le presentazioni, come ti chiami?',
     why: 'Ti chiediamo questi dati solo per un punto di vista estetico e di personalizzazione del tuo profilo. I tuoi dati non vengono condivisi con nessuno: per i nostri trader la privacy è al primo posto.',
   },
   {
     title: 'Su quali asset operi?',
-    description: 'Scegli quelli che operi: sono gli unici che vedrai nei menu, nel calendario e nelle statistiche.',
-    why: 'Il journal mostra solo i tuoi asset, senza menu pieni di cose che non operi.',
+    description:
+      'Scegli su quale asset si basa la tua operatività in modo da avere sempre a portata di mano i tuoi asset preferiti.',
   },
   {
     title: 'Che setup usi?',
@@ -94,10 +94,12 @@ export function OnboardingScreen() {
               {STEPS[step].description && (
                 <p className="mt-3 text-sm text-muted-foreground">{STEPS[step].description}</p>
               )}
-              <p className="mt-3 text-xs text-muted-foreground/80">
-                <span className="font-medium text-muted-foreground">Perché te lo chiediamo: </span>
-                {STEPS[step].why}
-              </p>
+              {STEPS[step].why && (
+                <p className="mt-3 text-xs text-muted-foreground/80">
+                  <span className="font-medium text-muted-foreground">Perché te lo chiediamo: </span>
+                  {STEPS[step].why}
+                </p>
+              )}
 
               <div className="mt-8">
                 {step === 0 && (
