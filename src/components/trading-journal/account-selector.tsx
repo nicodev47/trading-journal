@@ -224,7 +224,7 @@ export function AccountSelector({
         <button
           type="button"
           className={cn(
-            'flex min-h-11 w-full cursor-pointer items-center gap-2 rounded-lg border border-transparent px-2.5 text-left text-sm outline-none transition-colors hover:border-blue-500/35 hover:bg-blue-500/15 hover:text-blue-50 focus-visible:border-blue-400/50 focus-visible:bg-blue-500/15',
+            'flex min-h-11 w-full cursor-pointer items-center gap-2 rounded-lg border border-transparent px-2.5 text-left text-sm outline-none transition-colors hover:border-white/15 hover:bg-white/10 hover:text-foreground focus-visible:border-white/15 focus-visible:bg-white/10',
             isEditable && 'pr-11'
           )}
           onClick={() => {
@@ -242,7 +242,7 @@ export function AccountSelector({
             setIsMenuOpen(false);
           }}
         >
-          <span className="flex size-7 items-center justify-center rounded-lg bg-secondary text-muted-foreground transition-colors group-hover:bg-blue-500/20 group-hover:text-blue-200">
+          <span className="flex size-7 items-center justify-center rounded-lg bg-secondary text-muted-foreground transition-colors group-hover:bg-white/10 group-hover:text-foreground">
             {icon}
           </span>
           <span className="min-w-0 flex-1">
@@ -250,7 +250,7 @@ export function AccountSelector({
               {workspace.name}
             </span>
             {isEditable && workspace.notes?.trim() && (
-              <span className="block truncate font-sans tabular-nums text-[10px] text-muted-foreground group-hover:text-blue-200/70">
+              <span className="block truncate font-sans tabular-nums text-[10px] text-muted-foreground group-hover:text-foreground">
                 {workspace.notes.trim()}
               </span>
             )}
@@ -268,7 +268,7 @@ export function AccountSelector({
         {isEditable && (
           <button
             type="button"
-            className="absolute right-2 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-lg text-blue-200 opacity-0 transition hover:bg-blue-500/25 hover:text-white focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-400 group-hover:opacity-100 max-md:opacity-100"
+            className="absolute right-2 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-lg text-foreground opacity-0 transition hover:bg-white/10 hover:text-white focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring group-hover:opacity-100 max-md:opacity-100"
             onClick={() => openEditDialog(workspace)}
             aria-label={`Modifica ${workspace.name}`}
             title={`Modifica ${workspace.name}`}
@@ -303,23 +303,27 @@ export function AccountSelector({
         <PopoverTrigger asChild>
           <Button
             type="button"
-            variant="outline"
+            variant="ghost"
             data-tutorial="workspace-tabs"
-            className="h-9 w-[190px] justify-between rounded-lg border-blue-500/55 bg-blue-500/10 px-3 text-left shadow-[0_0_0_1px_rgba(10,132,255,0.08)] hover:border-blue-400 hover:bg-blue-500/15 max-lg:w-[160px] max-md:w-auto max-md:min-w-0 max-md:flex-1"
+            className="h-8 w-auto max-w-[200px] justify-between gap-2 rounded-full bg-white/[0.06] px-3 text-left hover:bg-white/10 max-lg:max-w-[160px] max-md:min-w-0 max-md:flex-1 max-md:max-w-none"
           >
             <span className="flex min-w-0 items-center gap-2">
-              {activeWorkspace === 'student' || activeWorkspace.startsWith('preview-') ? (
-                <Eye className="size-4 shrink-0 text-blue-300" />
-              ) : activeWorkspace === 'backtest' || activeWorkspace.startsWith('backtest-') ? (
-                <FlaskConical className="size-4 shrink-0 text-blue-300" />
-              ) : (
-                <WalletCards className="size-4 shrink-0 text-blue-300" />
-              )}
-              <span className="truncate font-sans text-xs font-semibold">
+              <span
+                aria-hidden="true"
+                className={cn(
+                  'size-2 shrink-0 rounded-full',
+                  activeWorkspace === 'student' || activeWorkspace.startsWith('preview-')
+                    ? 'bg-violet-400'
+                    : activeWorkspace === 'backtest' || activeWorkspace.startsWith('backtest-')
+                      ? 'bg-muted-foreground'
+                      : 'bg-profit'
+                )}
+              />
+              <span className="truncate font-sans text-xs font-medium">
                 {activeAccount?.name ?? 'Seleziona conto'}
               </span>
             </span>
-            <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
+            <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" />
           </Button>
         </PopoverTrigger>
 
@@ -344,7 +348,7 @@ export function AccountSelector({
               <button
                 type="button"
                 disabled={customWorkspaceCount >= maxCustomWorkspaces}
-                className="mt-1 flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-lg border border-dashed border-blue-500/35 px-2 text-left text-blue-200 outline-none transition-colors hover:bg-blue-500/15 focus-visible:bg-blue-500/15 disabled:pointer-events-none disabled:opacity-50"
+                className="mt-1 flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-lg border border-dashed border-white/15 px-2 text-left text-foreground outline-none transition-colors hover:bg-white/10 focus-visible:bg-white/10 disabled:pointer-events-none disabled:opacity-50"
                 onClick={() => openCreateDialog('account')}
               >
                 <Plus className="size-4" />
@@ -365,7 +369,7 @@ export function AccountSelector({
               <button
                 type="button"
                 disabled={backtestWorkspaceCount >= maxCustomWorkspaces}
-                className="mt-1 flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-lg border border-dashed border-blue-500/35 px-2 text-left text-blue-200 outline-none transition-colors hover:bg-blue-500/15 focus-visible:bg-blue-500/15 disabled:pointer-events-none disabled:opacity-50"
+                className="mt-1 flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-lg border border-dashed border-white/15 px-2 text-left text-foreground outline-none transition-colors hover:bg-white/10 focus-visible:bg-white/10 disabled:pointer-events-none disabled:opacity-50"
                 onClick={() => openCreateDialog('backtest')}
               >
                 <Plus className="size-4" />
@@ -386,7 +390,7 @@ export function AccountSelector({
               <button
                 type="button"
                 disabled={previewWorkspaceCount >= maxCustomWorkspaces}
-                className="mt-1 flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-lg border border-dashed border-blue-500/35 px-2 text-left text-blue-200 outline-none transition-colors hover:bg-blue-500/15 focus-visible:bg-blue-500/15 disabled:pointer-events-none disabled:opacity-50"
+                className="mt-1 flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-lg border border-dashed border-white/15 px-2 text-left text-foreground outline-none transition-colors hover:bg-white/10 focus-visible:bg-white/10 disabled:pointer-events-none disabled:opacity-50"
                 onClick={() => openCreateDialog('preview')}
               >
                 <Plus className="size-4" />
@@ -405,7 +409,7 @@ export function AccountSelector({
           {menuSection === 'accounts' ? (
             <button
               type="button"
-              className="flex min-h-11 w-full items-center gap-2 rounded-lg border border-transparent px-2.5 text-left outline-none transition-colors hover:border-blue-500/35 hover:bg-blue-500/15 focus-visible:border-blue-400/50 focus-visible:bg-blue-500/15"
+              className="flex min-h-11 w-full items-center gap-2 rounded-lg border border-transparent px-2.5 text-left outline-none transition-colors hover:border-white/15 hover:bg-white/10 focus-visible:border-white/15 focus-visible:bg-white/10"
               onClick={() => setMenuSection('backtests')}
             >
               <span className="flex size-7 items-center justify-center rounded-lg bg-secondary text-muted-foreground">
@@ -416,7 +420,7 @@ export function AccountSelector({
           ) : (
             <button
               type="button"
-              className="flex min-h-11 w-full items-center gap-2 rounded-lg border border-transparent px-2.5 text-left outline-none transition-colors hover:border-blue-500/35 hover:bg-blue-500/15 focus-visible:border-blue-400/50 focus-visible:bg-blue-500/15"
+              className="flex min-h-11 w-full items-center gap-2 rounded-lg border border-transparent px-2.5 text-left outline-none transition-colors hover:border-white/15 hover:bg-white/10 focus-visible:border-white/15 focus-visible:bg-white/10"
               onClick={() => setMenuSection('accounts')}
             >
               <span className="flex size-7 items-center justify-center rounded-lg bg-secondary text-muted-foreground">
@@ -429,7 +433,7 @@ export function AccountSelector({
           {menuSection === 'preview' && (
             <button
               type="button"
-              className="flex min-h-11 w-full items-center gap-2 rounded-lg border border-transparent px-2.5 text-left outline-none transition-colors hover:border-blue-500/35 hover:bg-blue-500/15 focus-visible:border-blue-400/50 focus-visible:bg-blue-500/15"
+              className="flex min-h-11 w-full items-center gap-2 rounded-lg border border-transparent px-2.5 text-left outline-none transition-colors hover:border-white/15 hover:bg-white/10 focus-visible:border-white/15 focus-visible:bg-white/10"
               onClick={() => setMenuSection('backtests')}
             >
               <span className="flex size-7 items-center justify-center rounded-lg bg-secondary text-muted-foreground">
@@ -442,7 +446,7 @@ export function AccountSelector({
           {menuSection !== 'preview' && showPreviewWorkspace && (
             <button
               type="button"
-              className="flex min-h-11 w-full items-center gap-2 rounded-lg border border-transparent px-2.5 text-left outline-none transition-colors hover:border-blue-500/35 hover:bg-blue-500/15 focus-visible:border-blue-400/50 focus-visible:bg-blue-500/15"
+              className="flex min-h-11 w-full items-center gap-2 rounded-lg border border-transparent px-2.5 text-left outline-none transition-colors hover:border-white/15 hover:bg-white/10 focus-visible:border-white/15 focus-visible:bg-white/10"
               onClick={() => setMenuSection('preview')}
             >
               <span className="flex size-7 items-center justify-center rounded-lg bg-secondary text-muted-foreground">
@@ -570,18 +574,18 @@ export function AccountSelector({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="rounded-lg border border-blue-500/30 bg-blue-500/10 p-3.5">
-            <p className="font-sans text-sm font-semibold text-blue-100">
+          <div className="rounded-lg border border-white/15 bg-white/10 p-3.5">
+            <p className="font-sans text-sm font-semibold text-foreground">
               Ti consigliamo di creare prima un backup.
             </p>
-            <p className="mt-1 font-sans text-xs text-blue-200/70">
+            <p className="mt-1 font-sans text-xs text-foreground">
               Potrai ripristinare trade, strategie e piani in un secondo momento.
             </p>
             <Button
               type="button"
               variant="outline"
               size="sm"
-              className="mt-3 border-blue-400/35 bg-blue-500/10 text-blue-100 hover:bg-blue-500/20 hover:text-white"
+              className="mt-3 border-white/15 bg-white/10 text-foreground hover:bg-white/10 hover:text-white"
               onClick={() => deletionTarget && onBackupWorkspace(deletionTarget.id)}
             >
               <Download className="size-4" />
