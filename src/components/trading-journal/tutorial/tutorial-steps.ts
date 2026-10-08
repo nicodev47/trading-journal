@@ -67,7 +67,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     target: 'profile-button',
     title: 'Le tue impostazioni',
     description:
-      'Nella scheda Impostazioni del profilo modifichi quando vuoi gli asset, i setup e le finestre operative scelti all’inizio: menu, analisi e calendario si aggiornano di conseguenza.\n\nLì trovi anche il backup delle preferenze, mentre nella scheda Dati puoi esportare tutti i tuoi journal.',
+      'Nella scheda Impostazioni del profilo modifichi quando vuoi gli asset, i setup e le finestre operative scelti all’inizio: menu, analisi e calendario si aggiornano di conseguenza.\n\nNella scheda Dati puoi esportare tutti i tuoi journal.',
     cta: 'Avanti',
   },
   {
