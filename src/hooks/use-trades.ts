@@ -140,6 +140,8 @@ export const parseImportedJournal = (jsonString: string): JournalState | null =>
     const journalData = { ...data };
 
     delete journalData.exportMetadata;
+    // Profile/preferences are never part of a journal.
+    delete (journalData as Record<string, unknown>).preferences;
 
     return {
       ...initialState,

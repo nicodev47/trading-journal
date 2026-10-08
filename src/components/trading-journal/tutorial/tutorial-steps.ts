@@ -32,7 +32,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     target: 'import-export-buttons',
     title: 'Dati e backup',
     description:
-      'I dati del journal sono salvati nella cache del tuo browser, non su un server: se la cancelli o cambi dispositivo, li perdi. Per questo è importante fare backup regolari.\n\nExport scarica un file con i dati della pagina aperta e il tuo profilo, senza toccare gli altri conti. Con Import scegli se aggiungere i dati al profilo oppure aprire il file in Preview, una pagina a parte che non cambia nulla nel tuo journal.',
+      'I dati del journal sono salvati nella cache del tuo browser, non su un server: se la cancelli o cambi dispositivo, li perdi. Per questo è importante fare backup regolari.\n\nExport scarica un file con i dati della pagina aperta, senza toccare gli altri conti. Con Import scegli se aggiungere i dati al profilo oppure aprire il file in Preview, una pagina a parte che non cambia nulla nel tuo journal.',
     cta: 'Avanti',
   },
   {

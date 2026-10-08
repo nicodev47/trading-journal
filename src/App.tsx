@@ -543,14 +543,8 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
   };
 
   const getWorkspaceExportData = useCallback((workspace: JournalWorkspace) => {
-    return createWorkspaceExportData(
-      workspace,
-      getWorkspaceData(workspace),
-      new Date(),
-      undefined,
-      preferences
-    );
-  }, [getWorkspaceData, preferences]);
+    return createWorkspaceExportData(workspace, getWorkspaceData(workspace));
+  }, [getWorkspaceData]);
 
   const getWorkspaceHasImportData = useCallback((workspace: JournalWorkspace) => {
     return hasWorkspaceContent(getWorkspaceData(workspace));
@@ -736,10 +730,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
       toast.info('Non ci sono dati da esportare');
       return;
     }
-    const blob = createZipBlob([
-      ...files,
-      { path: 'Preferenze/preferenze.json', content: JSON.stringify(preferences, null, 2) },
-    ]);
+    const blob = createZipBlob(files);
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     const date = new Date();
@@ -1378,7 +1369,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
                   description: 'Gestisci i dati della pagina aperta in modo semplice e sicuro.',
                   bullets: [
                     'Import ed Export lavorano sempre sulla pagina attualmente aperta.',
-                    'Export scarica il file JSON del conto o Backtest corrente, con il tuo profilo.',
+                    'Export scarica il file JSON del conto o Backtest corrente.',
                     'Import permette di aggiungere i dati al profilo oppure aprire il file in Preview.',
                     'I dati sono salvati nella cache del browser: fai backup regolari per non perderli.',
                     'Il backup salva trade, note, setup, tag, piani e link.',

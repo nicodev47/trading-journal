@@ -68,7 +68,7 @@ function PreviewContent({ data, fileName, view, onClose }: ImportPreviewProps) {
 
   const handleExport = () => {
     const blob = new Blob(
-      [createWorkspaceExportData('personal', journal, new Date(), undefined, preferences)],
+      [createWorkspaceExportData('personal', journal)],
       { type: 'application/json' }
     );
     const url = URL.createObjectURL(blob);
@@ -174,7 +174,7 @@ function PreviewContent({ data, fileName, view, onClose }: ImportPreviewProps) {
           <DialogHeader className="border-b border-border px-4 py-3.5 text-left sm:px-5 sm:py-4">
             <DialogTitle className="font-sans text-base">Esportare questo journal?</DialogTitle>
             <DialogDescription className="font-sans text-sm">
-              Verrà scaricato un file con i dati e il profilo di {preferences.name || 'questo trader'}.
+              Verrà scaricato un file con i dati di questo journal.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="px-4 py-3.5 max-sm:[&_button]:w-full sm:px-5 sm:py-4">
@@ -238,7 +238,10 @@ export function ImportPreview(props: ImportPreviewProps) {
   // Snapshot taken when the preview opens: later edits to the user's own
   // preferences must not change what the preview shows.
   const [preferences] = useState(() =>
-    withImportedChoices(extractImportedPreferences(props.data) ?? own, props.data)
+    withImportedChoices(
+      extractImportedPreferences(props.data) ?? { ...own, name: '', photo: null },
+      props.data
+    )
   );
 
   return (
