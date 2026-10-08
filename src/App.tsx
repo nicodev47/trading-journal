@@ -43,7 +43,7 @@ import {
 } from '@/lib/export-filename';
 import { extractImportedPreferences, planPreferencesImport } from '@/lib/import-preferences';
 import { ImportPreview } from '@/components/trading-journal/import-preview';
-import { createZipBlob } from '@/lib/zip-export';
+import { createFullBackupExportData } from '@/lib/journal-export';
 import {
   getBackupBaseline,
   setBackupBaseline,
@@ -722,46 +722,33 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
   };
 
   const handleExportAllJournals = () => {
-    const folderNames = {
-      account: 'I tuoi conti',
-      backtest: 'Backtest',
-      preview: 'Preview',
-    } as const;
-    const files = workspaces.flatMap((workspace) => {
-      const workspaceData = getWorkspaceData(workspace.id);
+    const included = workspaces.filter(workspace =>
+      hasWorkspaceContent(getWorkspaceData(workspace.id))
+    );
 
-      if (!hasWorkspaceContent(workspaceData)) return [];
-
-      const folder = folderNames[workspace.group ?? 'account'];
-      const fileName = normalizeExportName(workspace.name, workspace.id);
-
-      return [{
-        path: `${folder}/${fileName}.json`,
-        content: createWorkspaceExportData(
-          workspace.id,
-          workspaceData,
-          new Date(),
-          workspace
-        ),
-      }];
-    });
-
-    if (files.length === 0) {
+    if (included.length === 0) {
       toast.info('Non ci sono dati da esportare');
       return;
     }
-    const blob = createZipBlob(files);
+
+    const journals = Object.fromEntries(
+      included.map(workspace => {
+        // Profile data left over from older versions is never exported.
+        const { preferences: _preferences, ...journal } = getWorkspaceData(
+          workspace.id
+        ) as JournalState & { preferences?: unknown };
+
+        return [workspace.id, journal];
+      })
+    );
+    const blob = new Blob([createFullBackupExportData(journals, included)], {
+      type: 'application/json',
+    });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
-    const date = new Date();
-    const dateSlug = [
-      date.getFullYear(),
-      String(date.getMonth() + 1).padStart(2, '0'),
-      String(date.getDate()).padStart(2, '0'),
-    ].join('-');
 
     anchor.href = url;
-    anchor.download = `eclipsejournal-tutti-i-dati-${dateSlug}.zip`;
+    anchor.download = `${getGuidedExportBaseName('full-backup')}.json`;
     document.body.appendChild(anchor);
     anchor.click();
     document.body.removeChild(anchor);

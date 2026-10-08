@@ -519,8 +519,8 @@ export function ProfileDialog({
               </p>
               <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
                 <p className="max-w-md font-sans text-xs leading-relaxed text-muted-foreground">
-                  Scarica in un unico file ZIP solo i journal che contengono dati,
-                  organizzati nelle cartelle I tuoi conti, Backtest e Preview.
+                  Scarica in un unico file JSON solo i journal che contengono dati,
+                  compresi i tuoi conti, i Backtest e le Preview.
                 </p>
                 <Button
                   type="button"
