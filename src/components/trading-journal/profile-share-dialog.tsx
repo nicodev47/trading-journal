@@ -140,14 +140,14 @@ export function ProfileShareDialog({
         <div className="ej-scrollbar flex max-h-[calc(90vh-132px)] flex-col overflow-y-auto overscroll-contain p-3">
           <div className="overflow-hidden rounded-2xl border border-border bg-card/60 p-2.5">
             <ShareCardPreview
-              width={760}
-              height={760}
+              width={840}
+              height={472.5}
               exportRef={cardRef}
             >
               <ProfileShareCard
                 profile={profile}
                 streamerMode={streamerMode}
-                className="w-[760px]"
+                className="w-[840px]"
               />
             </ShareCardPreview>
           </div>

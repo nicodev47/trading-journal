@@ -47,39 +47,16 @@ const formatPercent = (value: number) =>
     maximumFractionDigits: 1,
   })}%`;
 
-function ProfileMetric({
-  label,
-  value,
-  subtitle,
-  tone = 'neutral',
-}: {
-  label: string;
-  value: string;
-  subtitle?: string;
-  tone?: 'profit' | 'loss' | 'neutral';
-}) {
+const getPnlFontSize = (text: string) =>
+  text.length <= 12 ? 96 : text.length <= 14 ? 80 : 66;
+
+function ProfileMetric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="border-t border-white/10 pt-4">
-      <div className="font-sans text-[14px] font-medium leading-none text-white/45">
-        {label}
+    <div>
+      <div className="text-[14px] font-medium text-white/45">{label}</div>
+      <div className="mt-2 whitespace-nowrap text-[28px] font-semibold leading-none tracking-tight text-white">
+        {value || '--'}
       </div>
-      <div
-        className={cn(
-          'mt-3 break-words font-sans tabular-nums text-[28px] font-semibold leading-tight tracking-tight',
-          tone === 'profit'
-            ? 'text-[#34d27b]'
-            : tone === 'loss'
-              ? 'text-[#ff6568]'
-              : 'text-white'
-        )}
-      >
-        {value}
-      </div>
-      {subtitle && (
-        <div className="mt-1 font-sans tabular-nums text-[13px] leading-none text-white/45">
-          {subtitle}
-        </div>
-      )}
     </div>
   );
 }
@@ -90,79 +67,48 @@ export function ProfileShareCard({
   className,
 }: ProfileShareCardProps) {
   const displayName = profile.traderName.trim() || 'Trader';
-  const pnlTone = profile.totalPnl < 0 ? 'loss' : 'profit';
-  const progressWidth = Math.max(0, Math.min(100, profile.currentLevelXP));
-  const bestWindowTone =
-    profile.bestOperatingWindowName === '—' ? 'neutral' : 'profit';
+  const accent = profile.totalPnl < 0 ? '#ff6568' : '#34d27b';
+  const pnlText = formatCurrency(profile.totalPnl, streamerMode);
 
   return (
     <div
       className={cn(
-        'relative aspect-square w-[760px] max-w-full overflow-hidden rounded-[28px] border border-white/10 bg-[#0a0a0b] p-10 text-white',
+        'relative aspect-[16/9] w-[840px] max-w-full overflow-hidden rounded-[28px] border border-white/10 bg-[#0a0a0b] p-12 text-white',
         className
       )}
     >
-      <div className="flex h-full flex-col">
-        <header className="flex items-center justify-between">
+      <div className="relative z-10 flex h-full flex-col">
+        <header className="flex items-center justify-between gap-6">
           <div className="flex items-center gap-3">
-            <div className="flex size-9 items-center justify-center rounded-xl bg-white/10">
-              <Moon className="size-[18px] text-white" />
+            <div className="flex size-10 items-center justify-center rounded-xl bg-white/10">
+              <Moon className="size-5 text-white" />
             </div>
-            <div className="font-sans text-[20px] font-semibold tracking-tight text-white">
+            <div className="text-[22px] font-semibold tracking-tight text-white">
               EclipseJournal
             </div>
           </div>
-          <div className="font-sans text-[16px] font-medium text-white/50">
-            Profilo trader
-          </div>
+          <div className="text-[18px] font-medium text-white/50">Profilo trader</div>
         </header>
 
-        <section className="mt-9 flex items-center gap-6">
-          <div className="flex size-[84px] shrink-0 items-center justify-center overflow-hidden rounded-[22px] bg-white/[0.07] text-[48px] leading-none">
-            {profile.profileIcon}
+        <main className="flex flex-1 flex-col justify-center">
+          <div className="text-[22px] font-medium text-white/55">
+            {profile.rank.emoji} {profile.rank.name} · Livello {profile.level}
           </div>
-          <div className="min-w-0 flex-1">
-            <div className="break-words font-sans text-[18px] font-medium leading-tight text-white/55">
-              {displayName}
-            </div>
-            <div className="mt-1 flex flex-wrap items-center gap-x-2 break-words font-sans text-[34px] font-semibold leading-tight tracking-tight text-white">
-              <span aria-hidden="true">{profile.rank.emoji}</span>
-              <span>{profile.rank.name}</span>
-            </div>
-            <div className="mt-1 font-sans tabular-nums text-[16px] font-medium text-white/50">
-              Livello {profile.level} · {profile.totalXP} XP totali
-            </div>
+          <div
+            className="mt-3 whitespace-nowrap font-semibold leading-none tracking-[-0.03em]"
+            style={{ color: accent, fontSize: getPnlFontSize(pnlText) }}
+          >
+            {pnlText}
           </div>
-        </section>
+          <div className="mt-10 flex gap-14">
+            <ProfileMetric label="Winrate" value={formatPercent(profile.winRate)} />
+            <ProfileMetric label="Trade totali" value={profile.totalTrades.toString()} />
+            <ProfileMetric label="Streak migliore" value={`${profile.longestWinStreak} win`} />
+            <ProfileMetric label="Giorni positivi" value={profile.greenDays.toString()} />
+          </div>
+        </main>
 
-        <section className="mt-6">
-          <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
-            <div
-              className="h-full rounded-full bg-white"
-              style={{ width: `${progressWidth}%` }}
-            />
-          </div>
-          <div className="mt-3 flex items-start justify-between gap-6 font-sans tabular-nums text-[14px] font-medium leading-snug text-white/45">
-            <span>{profile.currentLevelXP} / 100 XP</span>
-            <span className="max-w-[420px] text-right">{profile.nextLevelLabel}</span>
-          </div>
-        </section>
-
-        <section className="mt-9 grid grid-cols-2 gap-x-10 gap-y-6">
-          <ProfileMetric label="P&L totale" value={formatCurrency(profile.totalPnl, streamerMode)} tone={pnlTone} />
-          <ProfileMetric label="Winrate" value={formatPercent(profile.winRate)} />
-          <ProfileMetric label="Trade totali" value={profile.totalTrades.toString()} />
-          <ProfileMetric label="Streak migliore" value={`${profile.longestWinStreak} win`} />
-          <ProfileMetric label="Giorni positivi" value={profile.greenDays.toString()} tone="profit" />
-          <ProfileMetric label="Giorni negativi" value={profile.redDays.toString()} tone="loss" />
-          <ProfileMetric label="Vincita media" value={formatCurrency(profile.avgWin, streamerMode)} />
-          <ProfileMetric
-            label="Orario migliore"
-            value={profile.bestOperatingWindowName}
-            subtitle={profile.bestOperatingWindowDescription}
-            tone={bestWindowTone}
-          />
-        </section>
+        <footer className="text-[22px] font-medium text-white/70">{displayName}</footer>
       </div>
     </div>
   );

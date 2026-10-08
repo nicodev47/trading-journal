@@ -47,6 +47,9 @@ const formatPnl = (pnl: number, streamerMode: boolean) => {
   return `${sign}${absoluteValue} USD`;
 };
 
+const getPnlFontSize = (text: string) =>
+  text.length <= 12 ? 96 : text.length <= 14 ? 80 : 66;
+
 const getTradeTime = (trade: Trade) => {
   return (trade.exitDate?.split('T')[1] || trade.entryDate?.split('T')[1] || '')
     .slice(0, 5) || '--:--';
@@ -116,8 +119,8 @@ export function TradeShareCard({
             {trade.pair || '--'} · {directionLabel}
           </div>
           <div
-            className="mt-3 whitespace-nowrap text-[clamp(64px,9vw,104px)] font-semibold leading-none tracking-[-0.03em]"
-            style={{ color: accent }}
+            className="mt-3 whitespace-nowrap font-semibold leading-none tracking-[-0.03em]"
+            style={{ color: accent, fontSize: getPnlFontSize(formatPnl(netPnl, streamerMode)) }}
           >
             {formatPnl(netPnl, streamerMode)}
           </div>
