@@ -282,7 +282,7 @@ export function TradingCalendar({
             variant="outline"
             size="sm"
             onClick={onImport}
-            className="h-9 gap-2 rounded-lg font-sans text-xs font-semibold max-md:flex-1"
+            className="h-9 gap-2 rounded-lg border-white/[0.07] font-sans text-xs font-semibold dark:border-white/[0.07] max-md:flex-1"
           >
             <Upload className="size-3" />
             Importa
@@ -292,7 +292,7 @@ export function TradingCalendar({
             variant="outline"
             size="sm"
             onClick={onExport}
-            className="h-9 gap-2 rounded-lg font-sans text-xs font-semibold max-md:flex-1"
+            className="h-9 gap-2 rounded-lg border-white/[0.07] font-sans text-xs font-semibold dark:border-white/[0.07] max-md:flex-1"
           >
             <Download className="size-3" />
             Esporta
