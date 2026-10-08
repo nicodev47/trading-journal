@@ -35,7 +35,10 @@ const STEPS: { title: string; description?: string; why?: string }[] = [
 export function OnboardingScreen() {
   const { completeOnboarding } = usePreferences();
   const [step, setStep] = useState(-1);
-  const [draft, setDraft] = useState<JournalPreferences>(EMPTY_PREFERENCES);
+  const [draft, setDraft] = useState<JournalPreferences>({
+    ...EMPTY_PREFERENCES,
+    windows: [{ id: 'w-suggested', name: '', start: '', end: '' }],
+  });
 
   const isLast = step === STEPS.length - 1;
   const canContinue = step !== 1 || draft.assets.length > 0;
@@ -49,7 +52,7 @@ export function OnboardingScreen() {
       completeOnboarding({
         ...draft,
         windows: draft.windows
-          .filter(window => window.name.trim())
+          .filter(window => window.name.trim() && window.start && window.end)
           .map(window => ({ ...window, name: capitalizeSetup(window.name) })),
       });
       return;

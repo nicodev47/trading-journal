@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,11 +24,17 @@ const isValidClock = (value: string) => {
 function TimeInput({
   value,
   label,
+  placeholder = '00:00',
+  inputRef,
   onCommit,
+  onComplete,
 }: {
   value: string;
   label: string;
+  placeholder?: string;
+  inputRef?: React.Ref<HTMLInputElement>;
   onCommit: (value: string) => void;
+  onComplete?: () => void;
 }) {
   const [draft, setDraft] = useState(value);
 
@@ -36,10 +42,11 @@ function TimeInput({
 
   return (
     <Input
+      ref={inputRef}
       value={draft}
       inputMode="numeric"
       maxLength={5}
-      placeholder="00:00"
+      placeholder={placeholder}
       aria-label={label}
       onChange={event => {
         const digits = event.target.value.replace(/\D/g, '').slice(0, 4);
@@ -47,13 +54,68 @@ function TimeInput({
 
         setDraft(formatted);
 
-        if (isValidClock(formatted)) onCommit(formatted);
+        if (isValidClock(formatted)) {
+          onCommit(formatted);
+          if (formatted.length === 5) onComplete?.();
+        }
       }}
       onBlur={() => {
         if (!isValidClock(draft)) setDraft(value);
       }}
       className="w-[96px] text-center tabular-nums max-sm:w-full"
     />
+  );
+}
+
+function WindowRow({
+  window,
+  index,
+  onUpdate,
+  onRemove,
+}: {
+  window: OperatingWindowConfig;
+  index: number;
+  onUpdate: (patch: Partial<OperatingWindowConfig>) => void;
+  onRemove: () => void;
+}) {
+  const endRef = useRef<HTMLInputElement>(null);
+  const suggest = index === 0;
+
+  return (
+    <div className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-2 max-sm:grid-cols-[1fr_auto]">
+      <Input
+        value={window.name}
+        maxLength={MAX_LABEL_LENGTH}
+        placeholder={suggest ? 'Apertura NY' : 'Nome (es. Apertura)'}
+        onChange={event => onUpdate({ name: event.target.value })}
+        onBlur={event => onUpdate({ name: capitalizeSetup(event.target.value) })}
+        className="max-sm:col-span-1"
+      />
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        aria-label="Rimuovi finestra"
+        className="text-muted-foreground sm:order-last"
+        onClick={onRemove}
+      >
+        <Trash2 className="size-4" />
+      </Button>
+      <TimeInput
+        value={window.start}
+        label="Inizio"
+        placeholder={suggest ? '15:30' : '00:00'}
+        onCommit={start => onUpdate({ start })}
+        onComplete={() => endRef.current?.focus()}
+      />
+      <TimeInput
+        value={window.end}
+        label="Fine"
+        placeholder={suggest ? '16:10' : '00:00'}
+        inputRef={endRef}
+        onCommit={end => onUpdate({ end })}
+      />
+    </div>
   );
 }
 
@@ -69,40 +131,14 @@ export function WindowsEditor({ value, onChange }: WindowsEditorProps) {
 
   return (
     <div className="flex flex-col gap-3">
-      {value.map(window => (
-        <div
+      {value.map((window, index) => (
+        <WindowRow
           key={window.id}
-          className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-2 max-sm:grid-cols-[1fr_auto]"
-        >
-          <Input
-            value={window.name}
-            maxLength={MAX_LABEL_LENGTH}
-            placeholder="Nome (es. Apertura)"
-            onChange={event => update(window.id, { name: event.target.value })}
-            onBlur={event => update(window.id, { name: capitalizeSetup(event.target.value) })}
-            className="max-sm:col-span-1"
-          />
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            aria-label="Rimuovi finestra"
-            className="text-muted-foreground sm:order-last"
-            onClick={() => onChange(value.filter(item => item.id !== window.id))}
-          >
-            <Trash2 className="size-4" />
-          </Button>
-          <TimeInput
-            value={window.start}
-            label="Inizio"
-            onCommit={start => update(window.id, { start })}
-          />
-          <TimeInput
-            value={window.end}
-            label="Fine"
-            onCommit={end => update(window.id, { end })}
-          />
-        </div>
+          window={window}
+          index={index}
+          onUpdate={patch => update(window.id, patch)}
+          onRemove={() => onChange(value.filter(item => item.id !== window.id))}
+        />
       ))}
 
       <Button type="button" variant="outline" size="sm" className="w-fit gap-2" onClick={add}>
