@@ -514,7 +514,7 @@ export function ImportExportDialog({
                 <Button
                   type="button"
                   onClick={() => setIsAppendConfirmOpen(true)}
-                  className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground"
+                  className="gap-2 bg-profit text-background hover:bg-profit/90 hover:text-background"
                 >
                   <Upload className="size-4" />
                   Aggiungi ai dati attuali
@@ -635,7 +635,7 @@ export function ImportExportDialog({
             <Button
               type="button"
               onClick={handleAppendImport}
-              className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground"
+              className="gap-2 bg-profit text-background hover:bg-profit/90 hover:text-background"
             >
               <Upload className="size-4" />
               Aggiungi dati
@@ -682,7 +682,7 @@ export function ImportExportDialog({
             <Button
               type="button"
               onClick={() => handleBackupDownload(true)}
-              className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground"
+              className="gap-2 bg-[#0a84ff] text-white hover:bg-[#0a84ff]/90 hover:text-white"
             >
               <Download className="size-4" />
               Esporta backup
