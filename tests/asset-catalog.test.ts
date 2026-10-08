@@ -40,3 +40,14 @@ test('toggleAssetItem aggiunge e rimuove NQ e MNQ insieme', async () => {
   assert.deepEqual(toggleAssetItem(['ES', 'NQ'], nq), ['ES', 'NQ', 'MNQ']);
   assert.deepEqual(toggleAssetItem(['ES', 'NQ', 'MNQ'], nq), ['ES']);
 });
+
+test('getCalendarAssets mostra solo il primo simbolo delle voci abbinate', async () => {
+  const { getCalendarAssets } = await import('../src/lib/asset-catalog.ts');
+
+  assert.deepEqual(getCalendarAssets(['NQ', 'MNQ']), ['NQ']);
+  assert.deepEqual(getCalendarAssets(['NQ', 'MNQ', 'ES', 'MES']), ['NQ', 'ES']);
+  assert.deepEqual(getCalendarAssets(['MNQ']), ['MNQ']);
+  assert.deepEqual(getCalendarAssets(['EURUSD', 'NQ', 'MNQ']), ['EURUSD', 'NQ']);
+  assert.deepEqual(getCalendarAssets(['MIOASSET']), ['MIOASSET']);
+  assert.deepEqual(getCalendarAssets([]), []);
+});

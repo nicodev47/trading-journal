@@ -1,6 +1,7 @@
 import { Moon } from 'lucide-react';
 import { ProfileAvatar } from '@/components/preferences/profile-fields';
 import { getShareIdentity } from '@/components/trading-journal/share-card-parts';
+import { getCalendarAssets } from '@/lib/asset-catalog';
 import type { JournalPreferences } from '@/lib/preferences';
 import { cn } from '@/lib/utils';
 
@@ -29,7 +30,8 @@ function Chips({ items, empty }: { items: string[]; empty: string }) {
 
 export function OnboardingPreview({ draft }: { draft: JournalPreferences }) {
   const identity = getShareIdentity(draft.name);
-  const assets = draft.assets.length > 0 ? draft.assets : ['NQ'];
+  const calendarAssets = getCalendarAssets(draft.assets);
+  const assets = calendarAssets.length > 0 ? calendarAssets : ['NQ'];
   const outcomeDays = Object.keys(SAMPLE_DAYS).map(Number);
 
   return (
@@ -83,10 +85,6 @@ export function OnboardingPreview({ draft }: { draft: JournalPreferences }) {
             const outcome = SAMPLE_DAYS[day];
             const outcomeIndex = outcomeDays.indexOf(day);
             const asset = assets[outcomeIndex % assets.length];
-            const setup =
-              draft.setups.length > 0 && outcomeIndex % 2 === 0
-                ? draft.setups[Math.floor(outcomeIndex / 2) % draft.setups.length]
-                : undefined;
 
             return (
               <div
@@ -102,7 +100,6 @@ export function OnboardingPreview({ draft }: { draft: JournalPreferences }) {
                 {outcome && (
                   <span className="mt-auto truncate text-[9px] font-medium leading-tight">
                     {asset}
-                    {setup ? ` · ${setup}` : ''}
                   </span>
                 )}
               </div>

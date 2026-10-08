@@ -90,3 +90,30 @@ export function toggleAssetItem(selected: string[], item: AssetItem): string[] {
 
   return [...selected, ...item.symbols.filter(symbol => !selected.includes(symbol))];
 }
+
+/**
+ * Assets to display in the calendar: for paired futures (NQ/MNQ) only the
+ * first selected symbol of the pair is shown.
+ */
+export function getCalendarAssets(selected: string[]): string[] {
+  const shown: string[] = [];
+  const seenItems = new Set<string>();
+
+  selected.forEach(symbol => {
+    const item = ASSET_CATALOG.flatMap(group => group.items).find(entry =>
+      entry.symbols.includes(symbol)
+    );
+
+    if (!item) {
+      shown.push(symbol);
+      return;
+    }
+
+    if (seenItems.has(item.label)) return;
+
+    seenItems.add(item.label);
+    shown.push(item.symbols.find(candidate => selected.includes(candidate)) ?? symbol);
+  });
+
+  return shown;
+}
