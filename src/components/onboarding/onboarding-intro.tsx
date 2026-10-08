@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 const INTRO_POINTS = [
   {
     icon: Target,
-    title: 'I tuoi Asset preferiti a portata di mano',
+    title: 'Watchlist con i tuoi Asset preferiti',
     text: 'Scegli gli strumenti che operi e ritrovali subito nei menu, nel calendario e nei filtri.',
   },
   {
@@ -15,7 +15,7 @@ const INTRO_POINTS = [
   },
   {
     icon: Clock,
-    title: 'Le tue sessioni operative',
+    title: 'Ottimizzare le tue Sessioni Operative',
     text: 'Indica i tuoi orari e scopri in quali fasce funzioni meglio.',
   },
   {
