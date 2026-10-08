@@ -39,7 +39,7 @@ export function StatsCard({
   );
 
   return (
-    <Card className="max-w-full rounded-2xl border border-border bg-card">
+    <Card className="max-w-full rounded-2xl border border-border bg-card max-md:gap-0 max-md:py-0">
       <CardContent className="flex min-h-[68px] min-w-0 flex-col justify-between gap-2 p-3 md:min-h-[72px] md:p-3.5">
         <span className="font-sans tabular-nums text-xs font-medium tracking-normal text-muted-foreground">
           {title}

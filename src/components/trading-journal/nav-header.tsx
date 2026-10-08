@@ -69,12 +69,12 @@ export function NavHeader({
         )}
       >
         <div className="grid min-h-9 w-full grid-cols-[1fr_auto_1fr] items-center gap-2 max-md:grid-cols-[minmax(0,1fr)_auto] max-md:gap-y-2">
-        <div className="flex min-w-0 items-center gap-2 justify-self-start max-md:col-span-2 max-md:w-full max-md:pr-24">
+        <div className="flex min-w-0 items-center gap-2 justify-self-start max-md:col-span-2 max-md:w-full max-md:gap-1.5 max-md:pr-[4.75rem]">
           <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-white/10">
             <Moon className="size-4 text-foreground" />
           </div>
 
-          <span className="min-w-0 truncate font-sans text-base font-semibold tracking-tight max-[360px]:text-sm">
+          <span className="min-w-0 truncate font-sans text-base font-semibold tracking-tight max-md:text-[15px] max-[360px]:text-sm">
             EclipseJournal
           </span>
 
