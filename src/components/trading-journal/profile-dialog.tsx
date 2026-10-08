@@ -21,7 +21,7 @@ import type { Trade } from '@/lib/types/trade';
 import { useStreamerMode } from '@/contexts/streamer-mode-context';
 import { usePreferences } from '@/contexts/preferences-context';
 import { AssetPicker } from '@/components/preferences/asset-picker';
-import { ProfileAvatar, ProfileFields } from '@/components/preferences/profile-fields';
+import { ProfileFields } from '@/components/preferences/profile-fields';
 import { SetupInput } from '@/components/preferences/setup-input';
 import { WindowsEditor } from '@/components/preferences/windows-editor';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -200,21 +200,14 @@ export function ProfileDialog({
 
             <TabsContent value="profilo" className="space-y-3 p-4 sm:space-y-4 sm:p-5">
             <section className="rounded-[14px] border border-border bg-background/35 p-3.5 sm:p-4">
-              <p className="mb-4 font-sans text-xs font-semibold tracking-normal text-muted-foreground">
-                Il tuo profilo
-              </p>
-              <ProfileFields
-                name={preferences.name}
-                photo={preferences.photo}
-                onChange={updatePreferences}
-              />
-            </section>
-            <section className="rounded-[14px] border border-profit/25 bg-gradient-to-br from-profit/10 via-background/60 to-background/30 p-3.5 sm:p-4">
-              <div className="mb-4 flex justify-end border-b border-border/70 pb-4">
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <p className="font-sans text-xs font-semibold tracking-normal text-muted-foreground">
+                  Il tuo profilo
+                </p>
                 <Button
                   type="button"
                   size="sm"
-                  className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90 max-sm:w-full"
+                  className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
                   onClick={handleShare}
                 >
                   <span className="text-base leading-none" aria-hidden="true">
@@ -224,44 +217,41 @@ export function ProfileDialog({
                 </Button>
               </div>
 
-              <div className="flex items-center gap-3 sm:gap-4">
-                <ProfileAvatar name={traderName} photo={preferences.photo} className="size-14 text-lg" />
+              <ProfileFields
+                name={preferences.name}
+                photo={preferences.photo}
+                onChange={updatePreferences}
+              />
 
-                <div className="min-w-0 flex-1">
-                  <div className="flex min-w-0 flex-wrap items-end justify-between gap-2">
-                    <div>
-                      <p className="truncate font-sans text-sm font-semibold text-muted-foreground">
-                        {traderName.trim() || 'Il tuo nome'}
-                      </p>
-                      <p className="mt-0.5 font-sans text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
-                        <span className="mr-2" aria-hidden="true">
-                          {profile.rank.emoji}
-                        </span>
-                        {profile.rank.name}
-                      </p>
-                      <p className="mt-1 font-sans tabular-nums text-xs tracking-normal text-profit">
-                        Livello {profile.level}
-                      </p>
-                    </div>
-
-                    <p className="font-sans tabular-nums text-sm text-profit">
-                      {profile.totalXP} XP totali
+              <div className="mt-6 border-t border-border/70 pt-5">
+                <div className="flex min-w-0 flex-wrap items-end justify-between gap-2">
+                  <div>
+                    <p className="font-sans text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+                      <span className="mr-2" aria-hidden="true">
+                        {profile.rank.emoji}
+                      </span>
+                      {profile.rank.name}
+                    </p>
+                    <p className="mt-1 font-sans tabular-nums text-xs tracking-normal text-profit">
+                      Livello {profile.level}
                     </p>
                   </div>
 
-                  <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-secondary">
-                    <div
-                      className="h-full rounded-full bg-profit transition-all"
-                      style={{ width: `${profile.currentLevelXP}%` }}
-                    />
-                  </div>
+                  <p className="font-sans tabular-nums text-sm text-profit">
+                    {profile.totalXP} XP totali
+                  </p>
+                </div>
 
-                  <div className="mt-2 flex items-center justify-between font-sans tabular-nums text-xs text-muted-foreground">
-                    <span>
-                      {profile.currentLevelXP} / 100 XP
-                    </span>
-                    <span className="text-right">{profile.nextLevelLabel}</span>
-                  </div>
+                <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-secondary">
+                  <div
+                    className="h-full rounded-full bg-profit transition-all"
+                    style={{ width: `${profile.currentLevelXP}%` }}
+                  />
+                </div>
+
+                <div className="mt-2 flex items-center justify-between font-sans tabular-nums text-xs text-muted-foreground">
+                  <span>{profile.currentLevelXP} / 100 XP</span>
+                  <span className="text-right">{profile.nextLevelLabel}</span>
                 </div>
               </div>
             </section>
