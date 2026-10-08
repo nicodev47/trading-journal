@@ -3,9 +3,9 @@
 import { useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import {
-  OUT_OF_SESSION_NAME,
   getBestOperatingWindow,
   getOperatingWindowName,
+  isAutomaticWindowName,
   type OperatingWindowName,
 } from '@/lib/operating-windows';
 import { isValidTradeSetup, type Trade } from '@/lib/types/trade';
@@ -165,7 +165,7 @@ export function AdvancedStatsGrid({
     const mostUsedOperatingWindow = Array.from(
       operatingWindowStats.entries()
     )
-      .filter(([name]) => name !== OUT_OF_SESSION_NAME)
+      .filter(([name]) => !isAutomaticWindowName(name))
       .sort((a, b) => b[1] - a[1])[0];
     const timedTrades = Array.from(operatingWindowStats.values()).reduce(
       (sum, count) => sum + count,

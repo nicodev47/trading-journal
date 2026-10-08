@@ -9,6 +9,10 @@ import type { OperatingWindowConfig } from './preferences.ts';
 export type OperatingWindowName = string;
 
 export const OUT_OF_SESSION_NAME = 'Fuori sessione';
+export const PRE_SESSION_NAME = 'Pre sessione';
+
+export const isAutomaticWindowName = (name: string) =>
+  name === OUT_OF_SESSION_NAME || name === PRE_SESSION_NAME;
 
 interface OperatingWindowDefinition {
   name: OperatingWindowName;
@@ -101,12 +105,16 @@ export function getOperatingWindowName(
 
   if (timeInMinutes === null) return null;
 
-  return (
-    resolveWindowDefinitions(windows).find(
-      window =>
-        timeInMinutes >= window.start && timeInMinutes < window.end
-    )?.name ?? OUT_OF_SESSION_NAME
+  const definitions = resolveWindowDefinitions(windows);
+  const matching = definitions.find(
+    window => timeInMinutes >= window.start && timeInMinutes < window.end
   );
+
+  if (matching) return matching.name;
+
+  const firstStart = Math.min(...definitions.map(window => window.start));
+
+  return timeInMinutes < firstStart ? PRE_SESSION_NAME : OUT_OF_SESSION_NAME;
 }
 
 export function getBestOperatingWindow(

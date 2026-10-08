@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   OUT_OF_SESSION_NAME,
+  PRE_SESSION_NAME,
+  isAutomaticWindowName,
   getBestOperatingWindow,
   getOperatingWindowName,
 } from '../src/lib/operating-windows.ts';
@@ -71,4 +73,35 @@ test('le finestre legacy riproducono il comportamento attuale', () => {
   assert.equal(getOperatingWindowName(makeTrade('15:40', 10), LEGACY_WINDOWS), 'Inizio sessione');
   assert.equal(getOperatingWindowName(makeTrade('23:50', 10), LEGACY_WINDOWS), 'Late New York / Asia');
   assert.equal(getOperatingWindowName(makeTrade('03:00', 10), LEGACY_WINDOWS), 'Sessione di Londra');
+});
+
+test('prima dell\'inizio della prima finestra il trade è pre sessione', () => {
+  assert.equal(PRE_SESSION_NAME, 'Pre sessione');
+  assert.equal(getOperatingWindowName(makeTrade('08:59', 100), custom), 'Pre sessione');
+  assert.equal(getOperatingWindowName(makeTrade('00:00', 100), custom), 'Pre sessione');
+});
+
+test('tra due finestre e dopo l\'ultima il trade è fuori sessione, non pre sessione', () => {
+  assert.equal(getOperatingWindowName(makeTrade('13:00', 100), custom), 'Fuori sessione');
+  assert.equal(getOperatingWindowName(makeTrade('19:30', 100), custom), 'Fuori sessione');
+});
+
+test('pre sessione non può essere la finestra migliore', () => {
+  const best = getBestOperatingWindow(
+    [makeTrade('10:00', 50), makeTrade('08:00', 900)],
+    custom
+  );
+
+  assert.equal(best?.name, 'Londra');
+  assert.equal(getBestOperatingWindow([makeTrade('08:00', 900)], custom), null);
+});
+
+test('isAutomaticWindowName riconosce pre sessione e fuori sessione', () => {
+  assert.equal(isAutomaticWindowName('Pre sessione'), true);
+  assert.equal(isAutomaticWindowName('Fuori sessione'), true);
+  assert.equal(isAutomaticWindowName('Londra'), false);
+});
+
+test('senza finestre definite nessun trade è pre sessione', () => {
+  assert.notEqual(getOperatingWindowName(makeTrade('01:00', 10), []), 'Pre sessione');
 });

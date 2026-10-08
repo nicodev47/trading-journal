@@ -53,8 +53,8 @@ import {
 } from '@/lib/calculations';
 import { formatMonthYear } from '@/lib/date-utils';
 import {
-  OUT_OF_SESSION_NAME,
   getOperatingWindowName,
+  isAutomaticWindowName,
   type OperatingWindowName,
 } from '@/lib/operating-windows';
 
@@ -665,7 +665,7 @@ export function AnalysisDiagnostics({
 
     const bestSessionEntry =
       Array.from(sessionStats.entries())
-        .filter(([name]) => name !== OUT_OF_SESSION_NAME)
+        .filter(([name]) => !isAutomaticWindowName(name))
         .sort(
         (a, b) =>
           b[1].trades - a[1].trades ||
