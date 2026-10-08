@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Download, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,11 +15,16 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { calculateStatistics } from '@/lib/calculations';
-import { PROFILE_NAME_KEY } from '@/lib/export-filename';
 import { getBestOperatingWindow } from '@/lib/operating-windows';
 import { TRADER_RANKS, getProfileLevelIcon } from '@/lib/profile-levels';
 import type { Trade } from '@/lib/types/trade';
 import { useStreamerMode } from '@/contexts/streamer-mode-context';
+import { usePreferences } from '@/contexts/preferences-context';
+import { AssetPicker } from '@/components/preferences/asset-picker';
+import { ProfileAvatar, ProfileFields } from '@/components/preferences/profile-fields';
+import { SetupInput } from '@/components/preferences/setup-input';
+import { WindowsEditor } from '@/components/preferences/windows-editor';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ProfileShareDialog } from './profile-share-dialog';
 import type { ProfileShareData } from './profile-share-card';
 
@@ -58,7 +63,8 @@ export function ProfileDialog({
 }: ProfileDialogProps) {
   const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
   const [confirmationText, setConfirmationText] = useState('');
-  const [traderName, setTraderName] = useState('');
+  const { preferences, updatePreferences } = usePreferences();
+  const traderName = preferences.name;
   const [isShareOpen, setIsShareOpen] = useState(false);
   const {
     streamerMode,
@@ -73,10 +79,6 @@ export function ProfileDialog({
     setShowZeroPnlTradesInCalendar,
   } = useStreamerMode();
 
-  useEffect(() => {
-    setTraderName(localStorage.getItem(PROFILE_NAME_KEY) || '');
-  }, []);
-
   const profile = useMemo(() => {
     const stats = calculateStatistics(trades);
     const totalXP = stats.totalTrades * 10;
@@ -84,7 +86,7 @@ export function ProfileDialog({
     const currentLevelXP = totalXP % 100;
     const rank = TRADER_RANKS[Math.min(level, 10) - 1];
     const profileIcon = getProfileLevelIcon(level);
-    const bestOperatingWindow = getBestOperatingWindow(trades);
+    const bestOperatingWindow = getBestOperatingWindow(trades, preferences.windows);
     const nextRank =
       level >= 10 ? TRADER_RANKS[9] : TRADER_RANKS[level];
     const nextLevelLabel =
@@ -102,7 +104,7 @@ export function ProfileDialog({
       nextLevelLabel,
       bestOperatingWindow,
     };
-  }, [trades]);
+  }, [trades, preferences.windows]);
 
   const statCards = [
     {
@@ -152,18 +154,6 @@ export function ProfileDialog({
     closeClearDialog();
   };
 
-  const handleTraderNameChange = (value: string) => {
-    setTraderName(value);
-
-    const normalizedName = value.trim();
-
-    if (normalizedName) {
-      localStorage.setItem(PROFILE_NAME_KEY, normalizedName);
-    } else {
-      localStorage.removeItem(PROFILE_NAME_KEY);
-    }
-  };
-
   const shareProfileData: ProfileShareData = {
     traderName: traderName.trim() || 'Trader',
     rank: profile.rank,
@@ -201,26 +191,26 @@ export function ProfileDialog({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-3 p-4 sm:space-y-4 sm:p-5">
-            <section className="rounded-[14px] border border-profit/25 bg-gradient-to-br from-profit/10 via-background/60 to-background/30 p-3.5 sm:p-4">
-              <div className="mb-4 flex flex-wrap items-end justify-between gap-3 border-b border-border/70 pb-4">
-                <div className="min-w-0 flex-1 space-y-1.5 sm:min-w-[190px]">
-                  <Label
-                    htmlFor="trader-profile-name"
-                    className="font-sans tabular-nums text-[11px] tracking-normal text-muted-foreground"
-                  >
-                    Nome trader
-                  </Label>
-                  <Input
-                    id="trader-profile-name"
-                    value={traderName}
-                    onChange={event => handleTraderNameChange(event.target.value)}
-                    placeholder="Il tuo nome"
-                    maxLength={50}
-                    className="h-9 border-border/80 bg-background/55 font-sans font-semibold"
-                  />
-                </div>
+          <Tabs defaultValue="profilo" className="gap-0">
+            <TabsList className="mx-4 mt-4 grid h-10 w-auto grid-cols-3 sm:mx-5">
+              <TabsTrigger value="profilo">Profilo</TabsTrigger>
+              <TabsTrigger value="operativita">Operatività</TabsTrigger>
+              <TabsTrigger value="dati">Dati</TabsTrigger>
+            </TabsList>
 
+            <TabsContent value="profilo" className="space-y-3 p-4 sm:space-y-4 sm:p-5">
+            <section className="rounded-[14px] border border-border bg-background/35 p-3.5 sm:p-4">
+              <p className="mb-4 font-sans text-xs font-semibold tracking-normal text-muted-foreground">
+                Il tuo profilo
+              </p>
+              <ProfileFields
+                name={preferences.name}
+                photo={preferences.photo}
+                onChange={updatePreferences}
+              />
+            </section>
+            <section className="rounded-[14px] border border-profit/25 bg-gradient-to-br from-profit/10 via-background/60 to-background/30 p-3.5 sm:p-4">
+              <div className="mb-4 flex justify-end border-b border-border/70 pb-4">
                 <Button
                   type="button"
                   size="sm"
@@ -235,9 +225,7 @@ export function ProfileDialog({
               </div>
 
               <div className="flex items-center gap-3 sm:gap-4">
-                <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl border border-profit/30 bg-profit/10 text-[40px] leading-none shadow-[0_0_24px_rgba(52,210,123,0.08)] sm:size-16 sm:text-[46px]">
-                  {profile.profileIcon}
-                </div>
+                <ProfileAvatar name={traderName} photo={preferences.photo} className="size-14 text-lg" />
 
                 <div className="min-w-0 flex-1">
                   <div className="flex min-w-0 flex-wrap items-end justify-between gap-2">
@@ -313,6 +301,39 @@ export function ProfileDialog({
               ))}
             </section>
 
+            </TabsContent>
+
+            <TabsContent value="operativita" className="space-y-3 p-4 sm:space-y-4 sm:p-5">
+            <section className="rounded-[14px] border border-border bg-background/35 p-3.5 sm:p-4">
+              <p className="mb-4 font-sans text-xs font-semibold tracking-normal text-muted-foreground">
+                Asset che operi
+              </p>
+              <AssetPicker
+                value={preferences.assets}
+                onChange={assets => updatePreferences({ assets })}
+              />
+            </section>
+            <section className="rounded-[14px] border border-border bg-background/35 p-3.5 sm:p-4">
+              <p className="mb-4 font-sans text-xs font-semibold tracking-normal text-muted-foreground">
+                I tuoi setup
+              </p>
+              <SetupInput
+                value={preferences.setups}
+                onChange={setups => updatePreferences({ setups })}
+              />
+              <p className="mt-3 text-xs text-muted-foreground">
+                Se elimini un setup, i trade che lo usano lo mantengono ma non potrai sceglierlo per quelli nuovi.
+              </p>
+            </section>
+            <section className="rounded-[14px] border border-border bg-background/35 p-3.5 sm:p-4">
+              <p className="mb-4 font-sans text-xs font-semibold tracking-normal text-muted-foreground">
+                Finestre operative
+              </p>
+              <WindowsEditor
+                value={preferences.windows}
+                onChange={windows => updatePreferences({ windows })}
+              />
+            </section>
             <section className="rounded-[14px] border border-border bg-background/35 p-3.5 sm:p-4">
               <p className="flex items-center gap-2 font-sans tabular-nums text-xs font-semibold tracking-normal text-muted-foreground">
                 <span>Impostazioni calendario</span>
@@ -457,6 +478,9 @@ export function ProfileDialog({
               </div>
             </section>
 
+            </TabsContent>
+
+            <TabsContent value="dati" className="space-y-3 p-4 sm:space-y-4 sm:p-5">
             <section className="rounded-[14px] border border-violet-400/35 bg-violet-500/5 p-3.5 sm:p-4">
               <p className="flex items-center gap-2 font-sans tabular-nums text-xs font-semibold tracking-normal text-violet-300">
                 <span>Modalità Streamer</span>
@@ -527,7 +551,9 @@ export function ProfileDialog({
                 </Button>
               </div>
             </section>
-          </div>
+
+            </TabsContent>
+          </Tabs>
         </DialogContent>
       </Dialog>
 
