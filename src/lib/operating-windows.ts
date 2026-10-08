@@ -56,10 +56,11 @@ const HOURLY_WINDOWS: OperatingWindowDefinition[] = Array.from(
   })
 );
 
-export function resolveWindowDefinitions(
+/** Windows with a name and a valid, non-empty time range; no hourly fallback. */
+export function getConfiguredWindowDefinitions(
   windows: OperatingWindowConfig[]
 ): OperatingWindowDefinition[] {
-  const definitions = windows.flatMap(window => {
+  return windows.flatMap(window => {
     const start = parseClock(window.start);
     const end = parseClock(window.end);
 
@@ -69,6 +70,12 @@ export function resolveWindowDefinitions(
 
     return [{ name: window.name.trim(), start, end }];
   });
+}
+
+export function resolveWindowDefinitions(
+  windows: OperatingWindowConfig[]
+): OperatingWindowDefinition[] {
+  const definitions = getConfiguredWindowDefinitions(windows);
 
   return definitions.length > 0 ? definitions : HOURLY_WINDOWS;
 }

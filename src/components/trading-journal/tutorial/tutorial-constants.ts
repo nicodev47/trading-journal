@@ -1,6 +1,6 @@
 import type { Trade } from '@/lib/types/trade';
 import type { JournalPreferences } from '../../../lib/preferences.ts';
-import { resolveWindowDefinitions } from '../../../lib/operating-windows.ts';
+import { getConfiguredWindowDefinitions } from '../../../lib/operating-windows.ts';
 
 export const TUTORIAL_SEEN_KEY = 'eclipsejournal-simple-tutorial-seen';
 export const TUTORIAL_DEMO_PNLS = [520, 575, -450, 600, 540] as const;
@@ -93,9 +93,7 @@ export function personalizeDemoTrades<
 >(demoTrades: T[], preferences?: Pick<JournalPreferences, 'assets' | 'setups' | 'windows'>): T[] {
   if (!preferences) return demoTrades;
 
-  const window = preferences.windows.length
-    ? resolveWindowDefinitions(preferences.windows)[0]
-    : undefined;
+  const [window] = getConfiguredWindowDefinitions(preferences.windows);
   const offsets = [5, 15, 25, 10, 20];
 
   return demoTrades.map((trade, index) => ({

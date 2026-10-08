@@ -140,7 +140,8 @@ export function ImportExportDialog({
     anchor.click();
     document.body.removeChild(anchor);
     URL.revokeObjectURL(url);
-    markBackupDone();
+    // A censored (streamer mode) export is not a usable backup.
+    if (!streamerMode) markBackupDone();
   };
 
   const handleDownload = () => {

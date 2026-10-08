@@ -34,3 +34,13 @@ test('gli orari demo cadono nella prima finestra operativa', () => {
   assert.deepEqual(result.map(trade => trade.time), ['15:35', '15:45', '15:55']);
   assert.deepEqual(result.map(trade => trade.pair), ['NQ', 'MNQ', 'NQ']);
 });
+
+test('finestre incomplete non alterano gli orari demo', () => {
+  const result = personalizeDemoTrades(demo, {
+    assets: [],
+    setups: [],
+    windows: [{ id: 'w', name: '', start: '', end: '' }],
+  });
+
+  assert.deepEqual(result.map(trade => trade.time), ['15:35', '10:20', '16:05']);
+});
