@@ -68,7 +68,7 @@ export function ProfileShareCard({
   });
 
   return (
-    <ShareCardFrame className={className} glow={`${accent}2e`}>
+    <ShareCardFrame className={className} glow={`${accent}26`}>
       <ShareCardHeader dateLabel={todayLabel} />
 
       <ShareGlowAmount
