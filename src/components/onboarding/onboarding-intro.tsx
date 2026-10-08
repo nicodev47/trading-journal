@@ -15,8 +15,8 @@ const INTRO_POINTS = [
   },
   {
     icon: Clock,
-    title: 'Ottimizzare le tue Sessioni Operative',
-    text: 'Sessioni Operative sviluppate sui tuoi orari abituali.',
+    title: 'Sessioni Operative personalizzate',
+    text: 'I tuoi orari di trading, in modo da tenere traccia della tua attività a grafico.',
   },
   {
     icon: UserRound,
