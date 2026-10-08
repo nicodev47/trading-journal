@@ -1070,14 +1070,14 @@ export function AnalysisDiagnostics({
 
     if (value > 0) {
       if (intensity > 0.75) {
-        return { top: '#34d27b', bottom: '#248a3d' };
+        return { top: '#3aa66f', bottom: '#1f6b46' };
       }
 
       if (intensity > 0.45) {
-        return { top: '#00b87a', bottom: '#007a55' };
+        return { top: '#2f8a5c', bottom: '#1b5a3b' };
       }
 
-      return { top: '#248a3d', bottom: '#1a6b2e' };
+      return { top: '#26704b', bottom: '#17482f' };
     }
 
     if (value < 0) {
