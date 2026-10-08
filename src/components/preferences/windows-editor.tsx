@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,7 +9,52 @@ interface WindowsEditorProps {
   onChange: (windows: OperatingWindowConfig[]) => void;
 }
 
-const displayTime = (time: string) => (time === '24:00' ? '23:59' : time);
+const isValidClock = (value: string) => {
+  const match = /^(\d{2}):(\d{2})$/.exec(value);
+
+  if (!match) return false;
+
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+
+  return (hours <= 23 && minutes <= 59) || (hours === 24 && minutes === 0);
+};
+
+function TimeInput({
+  value,
+  label,
+  onCommit,
+}: {
+  value: string;
+  label: string;
+  onCommit: (value: string) => void;
+}) {
+  const [draft, setDraft] = useState(value);
+
+  useEffect(() => setDraft(value), [value]);
+
+  return (
+    <Input
+      value={draft}
+      inputMode="numeric"
+      maxLength={5}
+      placeholder="00:00"
+      aria-label={label}
+      onChange={event => {
+        const digits = event.target.value.replace(/\D/g, '').slice(0, 4);
+        const formatted = digits.length > 2 ? `${digits.slice(0, 2)}:${digits.slice(2)}` : digits;
+
+        setDraft(formatted);
+
+        if (isValidClock(formatted)) onCommit(formatted);
+      }}
+      onBlur={() => {
+        if (!isValidClock(draft)) setDraft(value);
+      }}
+      className="w-[96px] text-center tabular-nums max-sm:w-full"
+    />
+  );
+}
 
 export function WindowsEditor({ value, onChange }: WindowsEditorProps) {
   const update = (id: string, patch: Partial<OperatingWindowConfig>) =>
@@ -45,17 +91,15 @@ export function WindowsEditor({ value, onChange }: WindowsEditorProps) {
           >
             <Trash2 className="size-4" />
           </Button>
-          <Input
-            type="time"
-            value={displayTime(window.start)}
-            onChange={event => update(window.id, { start: event.target.value })}
-            className="w-[110px] max-sm:w-full"
+          <TimeInput
+            value={window.start}
+            label="Inizio"
+            onCommit={start => update(window.id, { start })}
           />
-          <Input
-            type="time"
-            value={displayTime(window.end)}
-            onChange={event => update(window.id, { end: event.target.value })}
-            className="w-[110px] max-sm:w-full"
+          <TimeInput
+            value={window.end}
+            label="Fine"
+            onCommit={end => update(window.id, { end })}
           />
         </div>
       ))}
@@ -64,6 +108,10 @@ export function WindowsEditor({ value, onChange }: WindowsEditorProps) {
         <Plus className="size-4" />
         Aggiungi finestra
       </Button>
+
+      <p className="text-xs text-muted-foreground">
+        Questi orari seguono il fuso orario di Roma (UTC+2).
+      </p>
 
       {value.length === 0 && (
         <p className="text-xs text-muted-foreground">
