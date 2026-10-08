@@ -27,8 +27,8 @@ const STEPS: { title: string; description?: string; why?: string }[] = [
   },
   {
     title: 'Hai una finestra operativa?',
-    description: 'Indica gli orari in cui di solito operi. Le statistiche ti diranno quando funzioni meglio.',
-    why: 'Capiamo se rispetti i tuoi orari e in quale fascia ottieni i risultati migliori.',
+    description:
+      'Indica gli orari in cui di solito sei a mercato. Se non hai una finestra definita, passa direttamente allo step successivo.',
   },
 ];
 
