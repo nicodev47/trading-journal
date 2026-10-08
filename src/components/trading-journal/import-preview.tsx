@@ -182,9 +182,10 @@ function PreviewContent({ data, fileName, view, onClose }: ImportPreviewProps) {
 /** Read-only view of an exported journal, with the exporter's own preferences. */
 export function ImportPreview(props: ImportPreviewProps) {
   const { preferences: own } = usePreferences();
-  const preferences = useMemo(
-    () => withImportedChoices(extractImportedPreferences(props.data) ?? own, props.data),
-    [own, props.data]
+  // Snapshot taken when the preview opens: later edits to the user's own
+  // preferences must not change what the preview shows.
+  const [preferences] = useState(() =>
+    withImportedChoices(extractImportedPreferences(props.data) ?? own, props.data)
   );
 
   return (

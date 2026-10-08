@@ -931,6 +931,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
 
       {importPreview ? (
         <ImportPreview
+          key={`${importPreview.fileName}-${importPreview.data.length}`}
           data={importPreview.data}
           fileName={importPreview.fileName}
           view={activeView}
