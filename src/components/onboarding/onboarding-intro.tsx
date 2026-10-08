@@ -49,18 +49,17 @@ export function OnboardingIntro({ onStart }: { onStart: () => void }) {
           </p>
         </Reveal>
 
-        <Reveal delay={600} className="mt-10 flex items-start gap-3 text-left text-sm text-muted-foreground">
-          <ShieldCheck className="mt-0.5 size-4 shrink-0" />
-          <span>
-            Puoi modificare queste impostazioni quando vuoi successivamente all&apos;interno del tuo profilo.
-          </span>
-        </Reveal>
-
-        <Reveal delay={800} className="mt-10">
+        <Reveal delay={600} className="mt-10">
           <Button type="button" size="lg" className="gap-2 px-8" onClick={onStart}>
             Iniziamo
             <ArrowRight className="size-4" />
           </Button>
+        </Reveal>
+        <Reveal delay={800} className="mx-auto mt-6 flex max-w-[420px] items-start justify-center gap-3 text-left text-sm text-muted-foreground">
+          <ShieldCheck className="mt-0.5 size-4 shrink-0" />
+          <span>
+            Puoi modificare queste impostazioni quando vuoi successivamente all&apos;interno del tuo profilo.
+          </span>
         </Reveal>
       </div>
     </div>
