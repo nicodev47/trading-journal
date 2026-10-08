@@ -3,10 +3,10 @@ import { ArrowRight, BarChart3, Clock, Moon, ShieldCheck, Target, UserRound } fr
 import { Button } from '@/components/ui/button';
 
 const INTRO_POINTS = [
-  { icon: Target, title: 'I tuoi Asset preferiti a portata di mano', text: 'Menu, calendario e filtri mostrano solo quello che operi.' },
-  { icon: BarChart3, title: 'Statistiche basate sulle tue performance', text: 'Parlano la tua lingua, con i nomi che scegli tu.' },
-  { icon: Clock, title: 'Le tue sessioni operative', text: 'Vediamo in quali finestre funzioni meglio.' },
-  { icon: UserRound, title: 'Un profilo personalizzato', text: 'Nome e foto compaiono nelle card che condividi.' },
+  { icon: Target, title: 'I tuoi Asset preferiti a portata di mano', text: 'Scegli gli strumenti che operi e ritrovali subito nei menu, nel calendario e nei filtri.' },
+  { icon: BarChart3, title: 'Statistiche basate sulle tue performance', text: 'Analisi su misura che leggono i tuoi trade, i tuoi setup e i tuoi risultati.' },
+  { icon: Clock, title: 'Le tue sessioni operative', text: 'Indica i tuoi orari e scopri in quali fasce funzioni meglio.' },
+  { icon: UserRound, title: 'Un profilo personalizzato', text: 'Nome e foto per riconoscerti nel journal e nelle card che condividi.' },
 ];
 
 function Reveal({
