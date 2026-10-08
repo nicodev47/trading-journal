@@ -371,7 +371,7 @@ export function ImportExportDialog({
                       handleDownload();
                     }
                   }}
-                  className="h-10 border-border bg-background/70 font-sans tabular-nums text-sm"
+                  className="h-10 border-border bg-background/70 font-sans tabular-nums text-sm focus-visible:border-[#0a84ff] focus-visible:ring-[#0a84ff]/40"
                   autoFocus
                 />
                 <p className="font-sans text-xs text-muted-foreground">
@@ -390,7 +390,7 @@ export function ImportExportDialog({
                   type="button"
                   disabled={!selectedExportData}
                   onClick={handleDownload}
-                  className="gap-2"
+                  className="gap-2 bg-[#0a84ff] text-white hover:bg-[#0a84ff]/90"
                 >
                   <Download className="size-4" />
                   Scarica file
@@ -738,7 +738,7 @@ export function ImportExportDialog({
                   confirmBackupDownload();
                 }
               }}
-              className="h-10 border-border bg-background/70 font-sans tabular-nums text-sm"
+              className="h-10 border-border bg-background/70 font-sans tabular-nums text-sm focus-visible:border-[#0a84ff] focus-visible:ring-[#0a84ff]/40"
               autoFocus
             />
             <p className="font-sans text-xs text-muted-foreground">
@@ -763,7 +763,11 @@ export function ImportExportDialog({
             >
               Indietro
             </Button>
-            <Button type="button" onClick={confirmBackupDownload} className="gap-2">
+            <Button
+              type="button"
+              onClick={confirmBackupDownload}
+              className="gap-2 bg-[#0a84ff] text-white hover:bg-[#0a84ff]/90"
+            >
               <Download className="size-4" />
               Scarica file
             </Button>
