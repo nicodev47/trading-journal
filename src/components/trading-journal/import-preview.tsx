@@ -5,8 +5,9 @@ import { ProfileAvatar } from '@/components/preferences/profile-fields';
 import { PreferencesOverrideProvider, usePreferences } from '@/contexts/preferences-context';
 import { DefaultDisplaySettingsProvider, useStreamerMode } from '@/contexts/streamer-mode-context';
 import { parseImportedJournal } from '@/hooks/use-trades';
-import { extractImportedPreferences } from '@/lib/import-preferences';
+import { extractImportedPreferences, withImportedChoices } from '@/lib/import-preferences';
 import type { Trade } from '@/lib/types/trade';
+import { DayEditorDialog } from './day-editor-dialog';
 import { AdvancedStatsGrid } from './advanced-stats-grid';
 import { EquityCurve } from './equity-curve';
 import { MonthlyAnalysis } from './monthly-analysis';
@@ -26,14 +27,6 @@ type GroupDialog = { title: string; subtitle?: string; trades: Trade[] };
 
 const noop = () => {};
 
-const formatDay = (dateKey: string) => {
-  const date = new Date(`${dateKey}T12:00:00`);
-
-  return Number.isNaN(date.getTime())
-    ? dateKey
-    : date.toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' });
-};
-
 const getTradeDay = (trade: Trade) =>
   (trade.exitDate || trade.entryDate || '').split('T')[0];
 
@@ -42,6 +35,7 @@ function PreviewContent({ data, fileName, view, onClose }: ImportPreviewProps) {
   const { streamerMode } = useStreamerMode();
   const journal = useMemo(() => parseImportedJournal(data), [data]);
   const [group, setGroup] = useState<GroupDialog | null>(null);
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
   const [returnToGroup, setReturnToGroup] = useState(false);
 
@@ -100,12 +94,7 @@ function PreviewContent({ data, fileName, view, onClose }: ImportPreviewProps) {
               weeklyPlans={journal.weeklyPlans}
               activeWorkspace="personal"
               onResetStudentJournal={noop}
-              onDayClick={date =>
-                openGroup({
-                  title: formatDay(date),
-                  trades: journal.trades.filter(trade => getTradeDay(trade) === date),
-                })
-              }
+              onDayClick={setSelectedDay}
               onWeekPlanClick={noop}
               onImport={noop}
               onExport={noop}
@@ -124,6 +113,27 @@ function PreviewContent({ data, fileName, view, onClose }: ImportPreviewProps) {
           />
         )}
       </main>
+
+      {selectedDay && (
+        <DayEditorDialog
+          readOnly
+          isOpen
+          onClose={() => setSelectedDay(null)}
+          date={selectedDay}
+          existingTrades={journal.trades.filter(trade => getTradeDay(trade) === selectedDay)}
+          onSave={noop}
+          onDeleteDay={noop}
+          strategies={journal.strategies}
+          availableStandardTags={journal.tags}
+          customTags={journal.customTags}
+          tagColors={journal.tagColors}
+          onAddStrategy={noop}
+          onRemoveStrategy={noop}
+          onAddCustomTag={noop}
+          onUpdateTagColor={noop}
+          onRemoveTag={noop}
+        />
+      )}
 
       <TradeDetailDialog
         trade={selectedTrade}
@@ -156,10 +166,13 @@ function PreviewContent({ data, fileName, view, onClose }: ImportPreviewProps) {
 /** Read-only view of an exported journal, with the exporter's own preferences. */
 export function ImportPreview(props: ImportPreviewProps) {
   const { preferences: own } = usePreferences();
-  const imported = useMemo(() => extractImportedPreferences(props.data), [props.data]);
+  const preferences = useMemo(
+    () => withImportedChoices(extractImportedPreferences(props.data) ?? own, props.data),
+    [own, props.data]
+  );
 
   return (
-    <PreferencesOverrideProvider preferences={imported ?? own}>
+    <PreferencesOverrideProvider preferences={preferences}>
       <DefaultDisplaySettingsProvider>
         <PreviewContent {...props} />
       </DefaultDisplaySettingsProvider>

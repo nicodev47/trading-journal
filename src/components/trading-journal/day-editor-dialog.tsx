@@ -145,6 +145,8 @@ function formatDialogDate(date: string | Date) {
 interface DayEditorDialogProps {
   isOpen: boolean;
   isTutorialMode?: boolean;
+  /** Shows the day without any way to change it (import preview). */
+  readOnly?: boolean;
   onClose: () => void;
   date: string;
   existingTrades: Trade[];
@@ -164,6 +166,7 @@ interface DayEditorDialogProps {
 export function DayEditorDialog({
   isOpen,
   isTutorialMode = false,
+  readOnly = false,
   onClose,
   date,
   existingTrades,
@@ -349,7 +352,7 @@ export function DayEditorDialog({
   const persistCurrentRows = useCallback((
     options: { includePendingCustomTags?: boolean; force?: boolean } = {}
   ) => {
-    if (!isOpenRef.current) return;
+    if (readOnly || !isOpenRef.current) return;
 
     if (autosaveTimerRef.current) {
       clearTimeout(autosaveTimerRef.current);
@@ -374,7 +377,7 @@ export function DayEditorDialog({
     existingTradesByIdRef.current = new Map(trades.map(trade => [trade.id, trade]));
     lastSavedSignatureRef.current = signature;
     setAutosaveStatus(signature ? 'saved' : 'idle');
-  }, [buildTradesFromRows, onSave]);
+  }, [buildTradesFromRows, onSave, readOnly]);
 
   const scheduleAutosave = useCallback((delay = 400) => {
     if (!isOpenRef.current || !hasUserChangedRef.current) return;
@@ -692,6 +695,10 @@ export function DayEditorDialog({
         </DialogHeader>
 
         <div className="ej-scrollbar flex max-h-[calc(92dvh-116px)] flex-col gap-3 overflow-y-auto overscroll-contain p-3 sm:max-h-[calc(86vh-120px)] sm:gap-4 sm:p-4">
+          <fieldset
+            disabled={readOnly}
+            className="contents [&_:disabled]:!cursor-default [&_:disabled]:!opacity-100"
+          >
           <div className="flex flex-col gap-3 sm:gap-4">
             {tradeRows.map((row, rowIndex) => (
               <div
@@ -704,6 +711,7 @@ export function DayEditorDialog({
                   </span>
 
                   <div className="flex items-center gap-2">
+                    {!readOnly && (
                     <Button
                       type="button"
                       variant="outline"
@@ -719,6 +727,7 @@ export function DayEditorDialog({
                       </span>
                       Share
                     </Button>
+                    )}
 
                     <Button
                       type="button"
@@ -747,6 +756,7 @@ export function DayEditorDialog({
                       />
                     </Button>
 
+                    {!readOnly && (
                     <Button
                       type="button"
                       variant="ghost"
@@ -758,6 +768,7 @@ export function DayEditorDialog({
                     >
                       <Trash2 className="size-4" />
                     </Button>
+                    )}
                   </div>
                 </div>
 
@@ -1460,6 +1471,7 @@ export function DayEditorDialog({
           </div>
 
           <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border/70 bg-background/30 px-3 py-3 sm:gap-4 sm:px-4">
+            {!readOnly && (
             <Button
               variant="outline"
               size="sm"
@@ -1469,6 +1481,7 @@ export function DayEditorDialog({
               <Plus className="size-4" />
               Aggiungi trade
             </Button>
+            )}
 
             <span className="min-w-0 break-words font-sans tabular-nums text-xs text-muted-foreground sm:text-sm">
               Trade: {tradeRows.length} | Totale giorno:{' '}
@@ -1477,9 +1490,16 @@ export function DayEditorDialog({
               </span>
             </span>
           </div>
-
+          </fieldset>
         </div>
 
+        {readOnly ? (
+          <div className="flex justify-end border-t border-border px-4 py-3.5 sm:px-6 sm:py-4">
+            <Button variant="outline" onClick={onClose}>
+              Chiudi
+            </Button>
+          </div>
+        ) : (
         <div className="flex flex-col-reverse gap-2 border-t border-border px-4 py-3.5 max-sm:[&_button]:w-full sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-4">
           <Button
             variant="destructive"
@@ -1509,6 +1529,7 @@ export function DayEditorDialog({
             </Button>
           </div>
         </div>
+        )}
       </DialogContent>
       <Dialog
         open={Boolean(tradeToDeleteId)}

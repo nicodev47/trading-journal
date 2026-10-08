@@ -121,3 +121,17 @@ export function planPreferencesImport(
     addedSetups: missing.setups,
   };
 }
+
+/** Preferences extended with every asset/setup the imported trades use. */
+export function withImportedChoices(
+  preferences: JournalPreferences,
+  json: string
+): JournalPreferences {
+  const missing = getMissingChoices(preferences, collectImportedChoices(json));
+
+  return {
+    ...preferences,
+    assets: [...preferences.assets, ...missing.assets],
+    setups: [...preferences.setups, ...missing.setups],
+  };
+}

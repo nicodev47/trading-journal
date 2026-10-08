@@ -5,6 +5,7 @@ import {
   extractImportedPreferences,
   getMissingChoices,
   planPreferencesImport,
+  withImportedChoices,
 } from '../src/lib/import-preferences.ts';
 
 const file = JSON.stringify({
@@ -81,4 +82,12 @@ test('journal vuoto ma file senza preferenze: si aggiunge soltanto ciò che manc
 
   assert.equal(plan.restored, false);
   assert.deepEqual(plan.addedAssets, ['ES', 'GC']);
+});
+
+test('la preview completa le preferenze con asset e setup usati dai trade', () => {
+  const result = withImportedChoices(mine, file);
+
+  assert.deepEqual(result.assets, ['NQ', 'ES', 'GC']);
+  assert.deepEqual(result.setups, ['Mio', 'Breakout']);
+  assert.equal(result.name, 'Io');
 });
