@@ -3,7 +3,7 @@ import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ProfileAvatar } from '@/components/preferences/profile-fields';
 import { PreferencesOverrideProvider, usePreferences } from '@/contexts/preferences-context';
-import { useStreamerMode } from '@/contexts/streamer-mode-context';
+import { DefaultDisplaySettingsProvider, useStreamerMode } from '@/contexts/streamer-mode-context';
 import { parseImportedJournal } from '@/hooks/use-trades';
 import { extractImportedPreferences } from '@/lib/import-preferences';
 import type { Trade } from '@/lib/types/trade';
@@ -44,6 +44,18 @@ function PreviewContent({ data, fileName, view, onClose }: ImportPreviewProps) {
   const [group, setGroup] = useState<GroupDialog | null>(null);
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
   const [returnToGroup, setReturnToGroup] = useState(false);
+
+  const latestMonth = useMemo(() => {
+    const times = (journal?.trades ?? [])
+      .map(trade => new Date(trade.exitDate || trade.entryDate).getTime())
+      .filter(time => !Number.isNaN(time));
+
+    if (times.length === 0) return null;
+
+    const latest = new Date(Math.max(...times));
+
+    return new Date(latest.getFullYear(), latest.getMonth(), 1);
+  }, [journal]);
 
   if (!journal) return null;
 
@@ -97,6 +109,7 @@ function PreviewContent({ data, fileName, view, onClose }: ImportPreviewProps) {
               onWeekPlanClick={noop}
               onImport={noop}
               onExport={noop}
+              importTargetMonth={latestMonth}
             />
             <AdvancedStatsGrid trades={journal.trades} />
             <div className="pb-5 pt-3 sm:pb-6 sm:pt-4">
@@ -147,7 +160,9 @@ export function ImportPreview(props: ImportPreviewProps) {
 
   return (
     <PreferencesOverrideProvider preferences={imported ?? own}>
-      <PreviewContent {...props} />
+      <DefaultDisplaySettingsProvider>
+        <PreviewContent {...props} />
+      </DefaultDisplaySettingsProvider>
     </PreferencesOverrideProvider>
   );
 }
