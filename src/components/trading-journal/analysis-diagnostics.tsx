@@ -143,7 +143,7 @@ const WEEKDAYS = [
 
 const SETUP_COLORS = [
   '#34d27b',
-  '#0a84ff',
+  '#8e8e93',
   '#0f766e',
   '#5eead4',
   '#4f8f84',
