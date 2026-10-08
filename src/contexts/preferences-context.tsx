@@ -74,7 +74,31 @@ const persistName = (name: string) => {
   }
 };
 
+const getOnboardingOverride = (): 'preview' | 'force' | null => {
+  try {
+    const value = new URLSearchParams(window.location.search).get('onboarding');
+
+    if (value === 'preview') return 'preview';
+
+    return value !== null ? 'force' : null;
+  } catch {
+    return null;
+  }
+};
+
+const clearOnboardingParam = () => {
+  try {
+    const url = new URL(window.location.href);
+
+    url.searchParams.delete('onboarding');
+    window.history.replaceState(null, '', url.toString());
+  } catch {
+    // The address bar keeps the parameter; harmless.
+  }
+};
+
 export function PreferencesProvider({ children }: { children: ReactNode }) {
+  const [override] = useState(getOnboardingOverride);
   const [state, setState] = useState(() => {
     const stored = loadStoredPreferences();
     const resolved = resolveInitialPreferences(
@@ -90,7 +114,10 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
       saveStoredPreferences(preferences);
     }
 
-    return { preferences, needsOnboarding: resolved.needsOnboarding };
+    return {
+      preferences,
+      needsOnboarding: resolved.needsOnboarding || override !== null,
+    };
   });
 
   const updatePreferences = useCallback((patch: Partial<JournalPreferences>) => {
@@ -106,12 +133,20 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const completeOnboarding = useCallback((preferences: JournalPreferences) => {
+    if (override === 'preview') {
+      clearOnboardingParam();
+      setState(current => ({ ...current, needsOnboarding: false }));
+      return;
+    }
+
+    clearOnboardingParam();
+
     const completed = { ...preferences, onboardingCompleted: true };
 
     saveStoredPreferences(completed);
     persistName(completed.name);
     setState({ preferences: completed, needsOnboarding: false });
-  }, []);
+  }, [override]);
 
   const value = useMemo(
     () => ({
