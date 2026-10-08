@@ -64,7 +64,7 @@ export function OnboardingIntro({ onStart }: { onStart: () => void }) {
 
         <Reveal delay={300}>
           <p className="mt-3 text-lg text-muted-foreground max-sm:text-base">
-            Il tuo software di journal che ti guiderà verso i tuoi obiettivi.
+            Il tuo software di journaling che ti guiderà verso i tuoi obiettivi.
           </p>
         </Reveal>
 
