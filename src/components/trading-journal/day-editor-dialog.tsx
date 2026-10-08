@@ -664,7 +664,7 @@ export function DayEditorDialog({
         }}
       >
         <DialogHeader className="border-b border-border px-4 py-3.5 text-left sm:px-6 sm:py-4">
-          <DialogTitle className="font-mono text-base font-medium tracking-wide">
+          <DialogTitle className="font-sans tabular-nums text-base font-medium tracking-wide">
             {formatDialogDate(date)}
           </DialogTitle>
           <DialogDescription className="sr-only">
@@ -680,7 +680,7 @@ export function DayEditorDialog({
                 className="flex min-w-0 flex-col gap-3 rounded-[14px] border border-border bg-secondary/15 p-3 sm:gap-3.5 sm:p-4"
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-mono text-xs font-medium text-muted-foreground">
+                  <span className="font-sans tabular-nums text-xs font-medium text-muted-foreground">
                     Trade {rowIndex + 1}
                   </span>
 
@@ -689,7 +689,7 @@ export function DayEditorDialog({
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="h-10 gap-2 rounded-xl border-border bg-white/[0.04] px-3.5 font-sans text-sm font-medium text-foreground shadow-none transition-colors duration-150 hover:bg-white/10 hover:text-foreground hover:shadow-none"
+                      className="h-10 gap-2 rounded-lg border-border bg-white/[0.04] px-3.5 font-sans text-sm font-medium text-foreground shadow-none transition-colors duration-150 hover:bg-white/10 hover:text-foreground hover:shadow-none"
                       onClick={() => setSelectedShareTrade(getTradeFromRow(row))}
                     >
                       <span
@@ -706,7 +706,7 @@ export function DayEditorDialog({
                       variant="ghost"
                       size="icon"
                       className={cn(
-                        'size-7 rounded-xl text-muted-foreground hover:bg-secondary/70 hover:text-foreground focus-visible:ring-1 focus-visible:ring-yellow-400/70',
+                        'size-7 rounded-lg text-muted-foreground hover:bg-secondary/70 hover:text-foreground focus-visible:ring-1 focus-visible:ring-yellow-400/70',
                         row.isFavorite &&
                           'text-yellow-400 hover:text-yellow-300'
                       )}
@@ -732,7 +732,7 @@ export function DayEditorDialog({
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="size-7 rounded-xl border border-transparent text-muted-foreground hover:border-loss/80 hover:bg-loss/90 hover:text-white"
+                      className="size-7 rounded-lg border border-transparent text-muted-foreground hover:border-loss/80 hover:bg-loss/90 hover:text-white"
                       onClick={() => setTradeToDeleteId(row.id)}
                       disabled={tradeRows.length === 1}
                       aria-label={`Elimina trade ${rowIndex + 1}`}
@@ -742,8 +742,8 @@ export function DayEditorDialog({
                   </div>
                 </div>
 
-                <div className="rounded-xl border border-border/70 bg-background/30 p-3 sm:p-3.5">
-                  <p className="mb-3 font-mono text-[11px] font-medium tracking-normal text-muted-foreground">
+                <div className="rounded-lg border border-border/70 bg-background/30 p-3 sm:p-3.5">
+                  <p className="mb-3 font-sans tabular-nums text-[11px] font-medium tracking-normal text-muted-foreground">
                     Dettagli trade
                   </p>
 
@@ -769,7 +769,7 @@ export function DayEditorDialog({
                         onBlur={() => persistCurrentRows()}
                         placeholder="0"
                         className={cn(
-                          'h-9 w-full border-border bg-background pr-7 font-mono text-sm',
+                          'h-9 w-full border-border bg-background pr-7 font-sans tabular-nums text-sm',
                           getPnlNumber(row.pnl) > 0 && 'border-profit/50 text-profit',
                           getPnlNumber(row.pnl) < 0 && 'border-loss/50 text-loss'
                         )}
@@ -885,7 +885,7 @@ export function DayEditorDialog({
                           persistCurrentRows();
                         }}
                         className={cn(
-                          'h-9 w-full border-border bg-background text-center font-mono text-sm placeholder:text-muted-foreground/70',
+                          'h-9 w-full border-border bg-background text-center font-sans tabular-nums text-sm placeholder:text-muted-foreground/70',
                           /\d/.test(timeDrafts[row.id] ?? row.time) &&
                             (timeDrafts[row.id] ?? row.time) !== '00:00'
                             ? 'text-foreground'
@@ -925,8 +925,8 @@ export function DayEditorDialog({
                   </div>
                 </div>
                 </div>
-                <div className="flex min-w-0 flex-col gap-3 rounded-xl border border-border/70 bg-background/30 p-3 sm:p-3.5">
-                  <p className="font-mono text-[11px] font-medium tracking-normal text-muted-foreground">
+                <div className="flex min-w-0 flex-col gap-3 rounded-lg border border-border/70 bg-background/30 p-3 sm:p-3.5">
+                  <p className="font-sans tabular-nums text-[11px] font-medium tracking-normal text-muted-foreground">
                     Analisi trade
                   </p>
 
@@ -941,7 +941,7 @@ export function DayEditorDialog({
                         return (
                           <div
                             key={index}
-                            className="flex flex-col gap-2 rounded-xl border border-border/80 bg-card/60 p-3"
+                            className="flex flex-col gap-2 rounded-lg border border-border/80 bg-card/60 p-3"
                           >
                             <div className="flex items-center justify-between gap-2">
                               {isEditingName ? (
@@ -969,10 +969,10 @@ export function DayEditorDialog({
                                     }
                                   }}
                                   aria-label="Modifica nome link"
-                                  className="h-8 min-w-0 flex-1 border-border bg-background font-mono text-xs"
+                                  className="h-8 min-w-0 flex-1 border-border bg-background font-sans tabular-nums text-xs"
                                 />
                               ) : (
-                                <span className="min-w-0 truncate font-mono text-xs font-medium text-foreground">
+                                <span className="min-w-0 truncate font-sans tabular-nums text-xs font-medium text-foreground">
                                   {screenshot.name || 'Link'}
                                 </span>
                               )}
@@ -984,7 +984,7 @@ export function DayEditorDialog({
                                       type="button"
                                       onClick={saveScreenshotName}
                                       aria-label="Salva nome link"
-                                      className="inline-flex h-8 items-center gap-1 rounded-lg border border-profit/20 bg-profit/5 px-2 font-mono text-[10px] text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/10 hover:text-primary"
+                                      className="inline-flex h-8 items-center gap-1 rounded-lg border border-profit/20 bg-profit/5 px-2 font-sans tabular-nums text-[10px] text-muted-foreground transition-colors hover:border-highlight/40 hover:bg-primary/10 hover:text-highlight"
                                     >
                                       <Check className="size-3" />
                                       Salva
@@ -993,7 +993,7 @@ export function DayEditorDialog({
                                       type="button"
                                       onClick={() => setEditingScreenshot(null)}
                                       aria-label="Annulla modifica nome link"
-                                      className="inline-flex h-8 items-center gap-1 rounded-lg border border-border bg-background/70 px-2 font-mono text-[10px] text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                                      className="inline-flex h-8 items-center gap-1 rounded-lg border border-border bg-background/70 px-2 font-sans tabular-nums text-[10px] text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                                     >
                                       <X className="size-3" />
                                       Annulla
@@ -1010,7 +1010,7 @@ export function DayEditorDialog({
                                       })
                                     }
                                     aria-label="Modifica nome link"
-                                    className="rounded-lg border border-transparent p-1.5 text-muted-foreground transition-colors hover:border-primary/30 hover:bg-primary/10 hover:text-primary"
+                                    className="rounded-lg border border-transparent p-1.5 text-muted-foreground transition-colors hover:border-highlight/30 hover:bg-primary/10 hover:text-highlight"
                                   >
                                     <Pencil className="size-3.5" />
                                   </button>
@@ -1057,7 +1057,7 @@ export function DayEditorDialog({
                                 href={screenshot.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex items-center gap-1 text-foreground hover:text-primary"
+                                className="flex items-center gap-1 text-foreground hover:text-highlight"
                               >
                                 Apri <ExternalLink className="size-3" />
                               </a>
@@ -1138,7 +1138,7 @@ export function DayEditorDialog({
                           <button
                             type="button"
                           
-                            className="flex items-center gap-1 text-foreground hover:text-primary"
+                            className="flex items-center gap-1 text-foreground hover:text-highlight"
                           >
                             Apri <ExternalLink className="size-3" />
                           </button>
@@ -1148,7 +1148,7 @@ export function DayEditorDialog({
                   </div>
                 </div>
 
-                <div className="flex min-w-0 flex-col gap-2.5 rounded-xl border border-border/70 bg-background/30 p-3 sm:p-3.5">
+                <div className="flex min-w-0 flex-col gap-2.5 rounded-lg border border-border/70 bg-background/30 p-3 sm:p-3.5">
                   <Label className="text-[11px] font-medium tracking-normal text-muted-foreground">
                     TAGS
                   </Label>
@@ -1178,7 +1178,7 @@ export function DayEditorDialog({
                               updateTradeRow(row.id, 'tags', nextTags, 0);
                             }}
                             className={cn(
-                              'w-full rounded-lg border px-2.5 py-1.5 text-left font-mono text-[13px] leading-4 transition-colors',
+                              'w-full rounded-lg border px-2.5 py-1.5 text-left font-sans tabular-nums text-[13px] leading-4 transition-colors',
                               isManaged && 'ring-1 ring-white/35',
                               !shouldShowTagColor &&
                                 'border-border bg-background/80 text-muted-foreground hover:bg-secondary hover:text-foreground'
@@ -1240,7 +1240,7 @@ export function DayEditorDialog({
                               updateTradeRow(row.id, 'tags', nextTags, 0);
                             }}
                             className={cn(
-                              'w-full rounded-lg border px-2.5 py-1.5 text-left font-mono text-[13px] leading-4 transition-colors',
+                              'w-full rounded-lg border px-2.5 py-1.5 text-left font-sans tabular-nums text-[13px] leading-4 transition-colors',
                               isManaged && 'ring-1 ring-white/35',
                               !shouldShowTagColor &&
                                 'border-border bg-background/80 text-muted-foreground hover:bg-secondary hover:text-foreground'
@@ -1276,7 +1276,7 @@ export function DayEditorDialog({
                     })}
                   </div>
 
-                  <div className="grid grid-cols-1 items-center gap-2 rounded-xl border border-border/70 bg-background/35 p-2 min-[430px]:grid-cols-[minmax(0,1fr)_auto_auto]">
+                  <div className="grid grid-cols-1 items-center gap-2 rounded-lg border border-border/70 bg-background/35 p-2 min-[430px]:grid-cols-[minmax(0,1fr)_auto_auto]">
                     <Input
                       value={customTagInputs[row.id] ?? ''}
                       onChange={(event) =>
@@ -1319,13 +1319,13 @@ export function DayEditorDialog({
                         }));
                       }}
                       placeholder="Crea un tag personalizzato"
-                      className="h-8 min-w-0 border-border/70 bg-background/60 font-mono text-[13px] placeholder:text-muted-foreground/60"
+                      className="h-8 min-w-0 border-border/70 bg-background/60 font-sans tabular-nums text-[13px] placeholder:text-muted-foreground/60"
                     />
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="h-8 px-3 font-mono text-xs"
+                      className="h-8 px-3 font-sans tabular-nums text-xs"
                       disabled={!customTagInputs[row.id]?.trim()}
                       onClick={() => {
                         const label = customTagInputs[row.id]?.trim();
@@ -1362,7 +1362,7 @@ export function DayEditorDialog({
                       type="button"
                       variant={isManagingTags ? 'default' : 'outline'}
                       size="sm"
-                      className="h-8 px-3 font-mono text-xs"
+                      className="h-8 px-3 font-sans tabular-nums text-xs"
                       disabled={!canManageTags}
                       onClick={() =>
                         setIsManagingTags((previous) => {
@@ -1417,8 +1417,8 @@ export function DayEditorDialog({
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-2 rounded-xl border border-border/70 bg-background/30 p-3 sm:p-3.5">
-                  <Label className="font-mono text-[11px] font-medium tracking-normal text-muted-foreground">
+                <div className="flex flex-col gap-2 rounded-lg border border-border/70 bg-background/30 p-3 sm:p-3.5">
+                  <Label className="font-sans tabular-nums text-[11px] font-medium tracking-normal text-muted-foreground">
                     Note trade
                   </Label>
 
@@ -1438,7 +1438,7 @@ export function DayEditorDialog({
             ))}
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border/70 bg-background/30 px-3 py-3 sm:gap-4 sm:px-4">
+          <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border/70 bg-background/30 px-3 py-3 sm:gap-4 sm:px-4">
             <Button
               variant="outline"
               size="sm"
@@ -1449,7 +1449,7 @@ export function DayEditorDialog({
               Aggiungi trade
             </Button>
 
-            <span className="min-w-0 break-words font-mono text-xs text-muted-foreground sm:text-sm">
+            <span className="min-w-0 break-words font-sans tabular-nums text-xs text-muted-foreground sm:text-sm">
               Trade: {tradeRows.length} | Totale giorno:{' '}
               <span className={cn(dayTotal > 0 && 'text-profit', dayTotal < 0 && 'text-loss')}>
                 {streamerMode ? '******' : `${dayTotal.toFixed(2)} USD`}
@@ -1470,7 +1470,7 @@ export function DayEditorDialog({
           <div className="flex items-center justify-end gap-3 max-sm:flex-col-reverse max-sm:items-stretch">
             <span
               className={cn(
-                'min-h-4 text-right font-mono text-[11px] tracking-normal text-muted-foreground/70',
+                'min-h-4 text-right font-sans tabular-nums text-[11px] tracking-normal text-muted-foreground/70',
                 autosaveStatus === 'saving' && 'text-profit/80',
                 autosaveStatus === 'saved' && 'text-muted-foreground/80'
               )}

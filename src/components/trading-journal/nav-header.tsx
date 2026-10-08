@@ -70,8 +70,8 @@ export function NavHeader({
       >
         <div className="grid min-h-9 w-full grid-cols-[1fr_auto_1fr] items-center gap-2 max-md:grid-cols-[minmax(0,1fr)_auto] max-md:gap-y-2">
         <div className="flex min-w-0 items-center gap-2 justify-self-start max-md:col-span-2 max-md:w-full max-md:pr-24">
-          <div className="flex size-7 shrink-0 items-center justify-center rounded-xl bg-primary/20">
-            <Moon className="size-4 text-primary" />
+          <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-highlight/20">
+            <Moon className="size-4 text-highlight" />
           </div>
 
           <span className="min-w-0 truncate font-sans text-base font-semibold tracking-tight max-[360px]:text-sm">

@@ -346,13 +346,13 @@ export function TradeForm({
             </div>
 
             {/* Auto-calculated fields display */}
-            <div className="rounded-xl border border-border bg-secondary/30 p-4">
+            <div className="rounded-lg border border-border bg-secondary/30 p-4">
               <h4 className="mb-3 text-sm font-medium">Calculated Results</h4>
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <p className="text-xs text-muted-foreground">Pips</p>
                   <p className={cn(
-                    'font-mono text-lg font-semibold',
+                    'font-sans tabular-nums text-lg font-semibold',
                     trade.pips > 0 && 'text-profit',
                     trade.pips < 0 && 'text-loss'
                   )}>
@@ -364,7 +364,7 @@ export function TradeForm({
                 <div>
                   <p className="text-xs text-muted-foreground">P&L</p>
                   <p className={cn(
-                    'font-mono text-lg font-semibold',
+                    'font-sans tabular-nums text-lg font-semibold',
                     trade.pnl > 0 && 'text-profit',
                     trade.pnl < 0 && 'text-loss'
                   )}>
@@ -375,7 +375,7 @@ export function TradeForm({
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">R:R</p>
-                  <p className="font-mono text-lg font-semibold">
+                  <p className="font-sans tabular-nums text-lg font-semibold">
                     {trade.riskReward.toFixed(2)}R
                   </p>
                 </div>
@@ -436,7 +436,7 @@ export function TradeForm({
                         updateField('tags', nextTags);
                       }}
                       className={cn(
-                        'rounded-xl border px-3 py-2 text-left font-mono text-[11px] transition-colors',
+                        'rounded-lg border px-3 py-2 text-left font-sans tabular-nums text-[11px] transition-colors',
                         isSelected
                           ? 'border-loss/50 bg-loss/10 text-loss'
                           : 'border-border bg-background text-muted-foreground hover:bg-secondary'
@@ -472,7 +472,7 @@ export function TradeForm({
                         updateField('tags', nextTags);
                       }}
                       className={cn(
-                        'rounded-xl border px-3 py-2 text-left font-mono text-[11px] transition-colors',
+                        'rounded-lg border px-3 py-2 text-left font-sans tabular-nums text-[11px] transition-colors',
                         isSelected
                           ? 'border-loss/50 bg-loss/10 text-loss'
                           : 'border-border bg-background text-muted-foreground hover:bg-secondary'
@@ -511,13 +511,13 @@ export function TradeForm({
                     setCustomTagInput('');
                   }}
                   placeholder="✏️ Crea un tag personalizzato"
-                  className="h-8 font-mono text-[11px]"
+                  className="h-8 font-sans tabular-nums text-[11px]"
                 />
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="h-8 px-3 font-mono text-[11px]"
+                  className="h-8 px-3 font-sans tabular-nums text-[11px]"
                   disabled={!customTagInput.trim()}
                   onClick={() => {
                     const value = `${CUSTOM_TAG_PREFIX}${customTagInput.trim()}`;

@@ -191,11 +191,11 @@ export function ProfileDialog({
     <>
       <Dialog open={isOpen} onOpenChange={open => !open && onClose()}>
         <DialogContent
-          className="ej-scrollbar max-h-[90dvh] w-[calc(100vw-1.75rem)] overflow-y-auto overscroll-contain rounded-[20px] border border-border bg-card p-0 shadow-[0_20px_50px_rgba(0,0,0,0.35)] sm:max-w-2xl"
+          className="ej-scrollbar max-h-[90dvh] w-[calc(100vw-1.75rem)] overflow-y-auto overscroll-contain rounded-2xl border border-border bg-card p-0 shadow-[0_20px_50px_rgba(0,0,0,0.35)] sm:max-w-2xl"
           onOpenAutoFocus={event => event.preventDefault()}
         >
           <DialogHeader className="border-b border-border px-4 py-3.5 text-left sm:px-5 sm:py-4">
-            <DialogTitle className="font-mono text-base sm:text-lg">Profilo trader</DialogTitle>
+            <DialogTitle className="font-sans tabular-nums text-base sm:text-lg">Profilo trader</DialogTitle>
             <DialogDescription>
               Progressi e statistiche calcolati dal journal Personale.
             </DialogDescription>
@@ -207,7 +207,7 @@ export function ProfileDialog({
                 <div className="min-w-0 flex-1 space-y-1.5 sm:min-w-[190px]">
                   <Label
                     htmlFor="trader-profile-name"
-                    className="font-mono text-[11px] tracking-normal text-muted-foreground"
+                    className="font-sans tabular-nums text-[11px] tracking-normal text-muted-foreground"
                   >
                     Nome trader
                   </Label>
@@ -235,7 +235,7 @@ export function ProfileDialog({
               </div>
 
               <div className="flex items-center gap-3 sm:gap-4">
-                <div className="flex size-14 shrink-0 items-center justify-center rounded-[20px] border border-profit/30 bg-profit/10 text-[40px] leading-none shadow-[0_0_24px_rgba(48,209,88,0.08)] sm:size-16 sm:text-[46px]">
+                <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl border border-profit/30 bg-profit/10 text-[40px] leading-none shadow-[0_0_24px_rgba(52,210,123,0.08)] sm:size-16 sm:text-[46px]">
                   {profile.profileIcon}
                 </div>
 
@@ -245,18 +245,18 @@ export function ProfileDialog({
                       <p className="truncate font-sans text-sm font-semibold text-muted-foreground">
                         {traderName.trim() || 'Il tuo nome'}
                       </p>
-                      <p className="mt-0.5 font-sans text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+                      <p className="mt-0.5 font-sans text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
                         <span className="mr-2" aria-hidden="true">
                           {profile.rank.emoji}
                         </span>
                         {profile.rank.name}
                       </p>
-                      <p className="mt-1 font-mono text-xs tracking-normal text-profit">
+                      <p className="mt-1 font-sans tabular-nums text-xs tracking-normal text-profit">
                         Livello {profile.level}
                       </p>
                     </div>
 
-                    <p className="font-mono text-sm text-profit">
+                    <p className="font-sans tabular-nums text-sm text-profit">
                       {profile.totalXP} XP totali
                     </p>
                   </div>
@@ -268,7 +268,7 @@ export function ProfileDialog({
                     />
                   </div>
 
-                  <div className="mt-2 flex items-center justify-between font-mono text-xs text-muted-foreground">
+                  <div className="mt-2 flex items-center justify-between font-sans tabular-nums text-xs text-muted-foreground">
                     <span>
                       {profile.currentLevelXP} / 100 XP
                     </span>
@@ -282,13 +282,13 @@ export function ProfileDialog({
               {statCards.map(stat => (
                 <div
                   key={stat.label}
-                  className="min-w-0 rounded-xl border border-border bg-background/45 p-3"
+                  className="min-w-0 rounded-lg border border-border bg-background/45 p-3"
                 >
                   <p className="font-sans text-[11px] font-medium tracking-normal text-muted-foreground">
                     {stat.label}
                   </p>
                   <p
-                    className={`mt-2 break-words font-mono font-semibold ${
+                    className={`mt-2 break-words font-sans tabular-nums font-semibold ${
                       stat.label === 'Orario migliore'
                         ? 'text-xs leading-relaxed'
                         : 'text-sm'
@@ -305,7 +305,7 @@ export function ProfileDialog({
                     {stat.value}
                   </p>
                   {'subtitle' in stat && stat.subtitle && (
-                    <p className="mt-1 font-mono text-[10px] text-muted-foreground">
+                    <p className="mt-1 font-sans tabular-nums text-[10px] text-muted-foreground">
                       {stat.subtitle}
                     </p>
                   )}
@@ -314,7 +314,7 @@ export function ProfileDialog({
             </section>
 
             <section className="rounded-[14px] border border-border bg-background/35 p-3.5 sm:p-4">
-              <p className="flex items-center gap-2 font-mono text-xs font-semibold tracking-normal text-muted-foreground">
+              <p className="flex items-center gap-2 font-sans tabular-nums text-xs font-semibold tracking-normal text-muted-foreground">
                 <span>Impostazioni calendario</span>
                 <span className="text-xl leading-none">🗓️</span>
               </p>
@@ -324,7 +324,7 @@ export function ProfileDialog({
               </p>
 
               <div className="mt-3 space-y-2.5">
-                <div className="rounded-xl border border-border/70 bg-background/35 p-3">
+                <div className="rounded-lg border border-border/70 bg-background/35 p-3">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="min-w-0">
                       <p className="font-sans text-sm font-semibold text-foreground">
@@ -355,7 +355,7 @@ export function ProfileDialog({
                   </div>
                 </div>
 
-                <div className="rounded-xl border border-border/70 bg-background/35 p-3">
+                <div className="rounded-lg border border-border/70 bg-background/35 p-3">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="min-w-0">
                       <p className="font-sans text-sm font-semibold text-foreground">
@@ -386,7 +386,7 @@ export function ProfileDialog({
                   </div>
                 </div>
 
-                <div className="rounded-xl border border-border/70 bg-background/35 p-3">
+                <div className="rounded-lg border border-border/70 bg-background/35 p-3">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="min-w-0">
                       <p className="font-sans text-sm font-semibold text-foreground">
@@ -417,7 +417,7 @@ export function ProfileDialog({
                   </div>
                 </div>
 
-                <div className="rounded-xl border border-border/70 bg-background/35 p-3">
+                <div className="rounded-lg border border-border/70 bg-background/35 p-3">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="min-w-0">
                       <p className="font-sans text-sm font-semibold text-foreground">
@@ -458,7 +458,7 @@ export function ProfileDialog({
             </section>
 
             <section className="rounded-[14px] border border-blue-400/35 bg-blue-500/5 p-3.5 sm:p-4">
-              <p className="flex items-center gap-2 font-mono text-xs font-semibold tracking-normal text-blue-300">
+              <p className="flex items-center gap-2 font-sans tabular-nums text-xs font-semibold tracking-normal text-blue-300">
                 <span>Modalità Streamer</span>
                 <span className="text-xl leading-none">🙈</span>
               </p>
@@ -483,7 +483,7 @@ export function ProfileDialog({
             </section>
 
             <section className="rounded-[14px] border border-profit/35 bg-profit/5 p-3.5 sm:p-4">
-              <p className="flex items-center gap-2 font-mono text-xs font-semibold tracking-normal text-profit">
+              <p className="flex items-center gap-2 font-sans tabular-nums text-xs font-semibold tracking-normal text-profit">
                 <span>Esporta tutto</span>
                 <span className="text-xl leading-none">📦</span>
               </p>
@@ -496,7 +496,7 @@ export function ProfileDialog({
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="gap-2 border-profit/50 bg-profit/10 text-profit hover:bg-primary/20 hover:text-primary max-sm:w-full"
+                  className="gap-2 border-profit/50 bg-profit/10 text-profit hover:bg-primary/20 hover:text-highlight max-sm:w-full"
                   onClick={onExportAll}
                 >
                   <Download className="size-3.5" />
@@ -506,7 +506,7 @@ export function ProfileDialog({
             </section>
 
             <section className="rounded-[14px] border border-loss/30 bg-loss/5 p-3.5 sm:p-4">
-              <p className="flex items-center gap-2 font-mono text-xs font-semibold tracking-normal text-loss">
+              <p className="flex items-center gap-2 font-sans tabular-nums text-xs font-semibold tracking-normal text-loss">
                 <span>Zona pericolosa</span>
                 <span className="text-xl leading-none">🚨</span>
               </p>
@@ -535,9 +535,9 @@ export function ProfileDialog({
         open={isClearDialogOpen}
         onOpenChange={open => !open && closeClearDialog()}
       >
-        <DialogContent className="max-h-[92dvh] w-[calc(100vw-1.75rem)] rounded-[20px] border border-loss/35 bg-card sm:max-w-md">
+        <DialogContent className="max-h-[92dvh] w-[calc(100vw-1.75rem)] rounded-2xl border border-loss/35 bg-card sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="font-mono text-loss">
+            <DialogTitle className="font-sans tabular-nums text-loss">
               Elimina tutti i dati
             </DialogTitle>
             <DialogDescription>
@@ -548,14 +548,14 @@ export function ProfileDialog({
 
           <div className="space-y-2 py-2">
             <Label htmlFor="clear-all-confirmation" className="font-sans text-sm">
-              Digita <span className="font-mono font-bold text-foreground">ELIMINA TUTTO</span>{' '}
+              Digita <span className="font-sans tabular-nums font-semibold text-foreground">ELIMINA TUTTO</span>{' '}
               per confermare
             </Label>
             <Input
               id="clear-all-confirmation"
               value={confirmationText}
               onChange={event => setConfirmationText(event.target.value)}
-              className="border-loss/35 bg-background font-mono"
+              className="border-loss/35 bg-background font-sans tabular-nums"
               autoComplete="off"
               autoFocus
             />

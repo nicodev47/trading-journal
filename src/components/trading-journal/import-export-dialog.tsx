@@ -310,9 +310,9 @@ export function ImportExportDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={open => !open && handleClose()}>
-      <DialogContent className="max-h-[92dvh] w-[calc(100vw-1.75rem)] max-w-[560px] overflow-hidden rounded-[20px] border border-border bg-card p-0 shadow-[0_16px_36px_rgba(0,0,0,0.28)] outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0 sm:max-w-[560px]">
+      <DialogContent className="max-h-[92dvh] w-[calc(100vw-1.75rem)] max-w-[560px] overflow-hidden rounded-2xl border border-border bg-card p-0 shadow-[0_16px_36px_rgba(0,0,0,0.28)] outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0 sm:max-w-[560px]">
         <DialogHeader className="border-b border-border px-4 py-3.5 sm:px-5 sm:py-4">
-          <DialogTitle className="flex items-center gap-2 font-mono text-base">
+          <DialogTitle className="flex items-center gap-2 font-sans tabular-nums text-base">
             {mode === 'export' ? (
               <>
                 <Download className="size-4 text-profit" />
@@ -338,7 +338,7 @@ export function ImportExportDialog({
           <>
               <div className="ej-scrollbar max-h-[calc(92dvh-9rem)] space-y-3 overflow-y-auto px-4 py-4 sm:px-5 sm:py-5">
                 {streamerMode && (
-                  <div className="rounded-xl border border-blue-400/35 bg-blue-500/10 p-3.5">
+                  <div className="rounded-lg border border-blue-400/35 bg-blue-500/10 p-3.5">
                     <div className="flex items-start gap-3">
                       <span className="text-lg leading-none" aria-hidden="true">🙈</span>
                       <div>
@@ -355,7 +355,7 @@ export function ImportExportDialog({
                   </div>
                 )}
 
-                <Label htmlFor="export-file-name" className="font-mono text-xs tracking-normalr">
+                <Label htmlFor="export-file-name" className="font-sans tabular-nums text-xs tracking-normalr">
                   Nome del file
                 </Label>
                 <Input
@@ -371,12 +371,12 @@ export function ImportExportDialog({
                       handleDownload();
                     }
                   }}
-                  className="h-10 border-border bg-background/70 font-mono text-sm"
+                  className="h-10 border-border bg-background/70 font-sans tabular-nums text-sm"
                   autoFocus
                 />
                 <p className="font-sans text-xs text-muted-foreground">
                   Il file verrà salvato come{' '}
-                  <span className="break-all font-mono text-foreground">
+                  <span className="break-all font-sans tabular-nums text-foreground">
                     {normalizeExportFileName(exportFileName, suggestedExportFileName)}
                   </span>
                 </p>
@@ -400,10 +400,10 @@ export function ImportExportDialog({
         ) : pendingImportData ? (
           <>
             <div className="ej-scrollbar max-h-[calc(92dvh-9rem)] space-y-4 overflow-y-auto px-4 py-4 sm:px-5 sm:py-5">
-              <div className="flex items-center gap-3 rounded-xl border border-border bg-background/45 p-3">
+              <div className="flex items-center gap-3 rounded-lg border border-border bg-background/45 p-3">
                 <FileJson className="size-6 shrink-0 text-profit" />
                 <div className="min-w-0">
-                  <span className="block truncate font-mono text-sm text-foreground">
+                  <span className="block truncate font-sans tabular-nums text-sm text-foreground">
                     {selectedFileName}
                   </span>
                   <span className="mt-0.5 block font-sans text-xs text-muted-foreground">
@@ -412,7 +412,7 @@ export function ImportExportDialog({
                 </div>
               </div>
 
-              <div className="rounded-xl border border-border bg-background/35 p-4">
+              <div className="rounded-lg border border-border bg-background/35 p-4">
                 {!selectedWorkspaceHasData ? (
                   <div className="space-y-2 font-sans text-sm">
                     <p className="text-foreground">
@@ -467,7 +467,7 @@ export function ImportExportDialog({
               </div>
 
               {selectedWorkspaceHasData && (
-                <div className="rounded-xl border border-profit/30 bg-profit/10 p-3.5">
+                <div className="rounded-lg border border-profit/30 bg-profit/10 p-3.5">
                   <p className="font-sans text-xs leading-relaxed text-muted-foreground">
                     L’import modifica solo la pagina attualmente aperta.
                     Gli altri spazi non verranno modificati.
@@ -476,7 +476,7 @@ export function ImportExportDialog({
               )}
 
               {selectedWorkspaceHasData && (
-                <div className="rounded-xl border border-blue-400/35 bg-blue-500/10 p-4">
+                <div className="rounded-lg border border-blue-400/35 bg-blue-500/10 p-4">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="min-w-0">
                       <p className="font-sans text-sm font-semibold text-blue-200">
@@ -500,7 +500,7 @@ export function ImportExportDialog({
               )}
 
               {importError && (
-                <p className="rounded-xl border border-loss/40 bg-loss/10 px-3 py-2 font-sans text-xs text-loss">
+                <p className="rounded-lg border border-loss/40 bg-loss/10 px-3 py-2 font-sans text-xs text-loss">
                   {importError}
                 </p>
               )}
@@ -561,10 +561,10 @@ export function ImportExportDialog({
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
                 className={cn(
-                  'h-32 w-full flex-col gap-2 rounded-xl border-dashed transition-colors',
+                  'h-32 w-full flex-col gap-2 rounded-lg border-dashed transition-colors',
                   isDragging
                     ? 'border-profit bg-profit/10 text-profit'
-                    : 'border-border bg-background/35 hover:border-primary/70 hover:bg-primary/5'
+                    : 'border-border bg-background/35 hover:border-highlight/70 hover:bg-primary/5'
                 )}
               >
                 <Upload
@@ -573,13 +573,13 @@ export function ImportExportDialog({
                     isDragging ? 'text-profit' : 'text-muted-foreground'
                   )}
                 />
-                <span className="font-mono text-sm">
+                <span className="font-sans tabular-nums text-sm">
                   {isDragging ? 'Rilascia qui il file JSON' : 'Scegli o trascina un file JSON'}
                 </span>
               </Button>
 
               {importError && (
-                <p className="rounded-xl border border-loss/40 bg-loss/10 px-3 py-2 font-sans text-xs text-loss">
+                <p className="rounded-lg border border-loss/40 bg-loss/10 px-3 py-2 font-sans text-xs text-loss">
                   {importError}
                 </p>
               )}
@@ -598,9 +598,9 @@ export function ImportExportDialog({
         open={isAppendConfirmOpen}
         onOpenChange={setIsAppendConfirmOpen}
       >
-        <DialogContent className="max-h-[92dvh] w-[calc(100vw-1.75rem)] max-w-[500px] overflow-hidden rounded-[20px] border border-border bg-card p-0 shadow-[0_20px_48px_rgba(0,0,0,0.36)] outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0">
+        <DialogContent className="max-h-[92dvh] w-[calc(100vw-1.75rem)] max-w-[500px] overflow-hidden rounded-2xl border border-border bg-card p-0 shadow-[0_20px_48px_rgba(0,0,0,0.36)] outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0">
           <DialogHeader className="border-b border-border px-4 py-3.5 sm:px-5 sm:py-4">
-            <DialogTitle className="font-mono text-base text-profit">
+            <DialogTitle className="font-sans tabular-nums text-base text-profit">
               Conferma import
             </DialogTitle>
             <DialogDescription className="font-sans text-sm">
@@ -616,7 +616,7 @@ export function ImportExportDialog({
               precedenza.
             </p>
 
-            <div className="rounded-xl border border-profit/30 bg-profit/10 p-4">
+            <div className="rounded-lg border border-profit/30 bg-profit/10 p-4">
               <p className="font-sans text-sm leading-relaxed text-muted-foreground">
                 Ti consigliamo di controllare il file prima in Preview oppure
                 esportare un backup dei dati attuali.
@@ -648,9 +648,9 @@ export function ImportExportDialog({
         open={isOverwriteConfirmOpen}
         onOpenChange={setIsOverwriteConfirmOpen}
       >
-        <DialogContent className="max-h-[92dvh] w-[calc(100vw-1.75rem)] max-w-[500px] overflow-hidden rounded-[20px] border border-border bg-card p-0 shadow-[0_20px_48px_rgba(0,0,0,0.36)] outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0">
+        <DialogContent className="max-h-[92dvh] w-[calc(100vw-1.75rem)] max-w-[500px] overflow-hidden rounded-2xl border border-border bg-card p-0 shadow-[0_20px_48px_rgba(0,0,0,0.36)] outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0">
           <DialogHeader className="border-b border-border px-4 py-3.5 sm:px-5 sm:py-4">
-            <DialogTitle className="font-mono text-base text-loss">
+            <DialogTitle className="font-sans tabular-nums text-base text-loss">
               Prima di sovrascrivere
             </DialogTitle>
             <DialogDescription className="font-sans text-sm">
@@ -659,7 +659,7 @@ export function ImportExportDialog({
           </DialogHeader>
 
           <div className="ej-scrollbar max-h-[calc(92dvh-9rem)] space-y-3 overflow-y-auto px-4 py-4 sm:px-5 sm:py-5">
-            <div className="rounded-xl border border-loss/30 bg-loss/10 p-4">
+            <div className="rounded-lg border border-loss/30 bg-loss/10 p-4">
               <p className="font-sans text-sm leading-relaxed text-foreground">
                 Prima di continuare, ti consigliamo di esportare un backup dei dati attuali.
               </p>
@@ -708,9 +708,9 @@ export function ImportExportDialog({
           }
         }}
       >
-        <DialogContent className="max-h-[92dvh] w-[calc(100vw-1.75rem)] max-w-[500px] overflow-hidden rounded-[20px] border border-border bg-card p-0 shadow-[0_20px_48px_rgba(0,0,0,0.36)] outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0">
+        <DialogContent className="max-h-[92dvh] w-[calc(100vw-1.75rem)] max-w-[500px] overflow-hidden rounded-2xl border border-border bg-card p-0 shadow-[0_20px_48px_rgba(0,0,0,0.36)] outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0">
           <DialogHeader className="border-b border-border px-4 py-3.5 sm:px-5 sm:py-4">
-            <DialogTitle className="flex items-center gap-2 font-mono text-base">
+            <DialogTitle className="flex items-center gap-2 font-sans tabular-nums text-base">
               <Download className="size-4 text-profit" />
               Salva esportazione
             </DialogTitle>
@@ -720,7 +720,7 @@ export function ImportExportDialog({
           </DialogHeader>
 
           <div className="space-y-3 px-4 py-4 sm:px-5 sm:py-5">
-            <Label htmlFor="backup-file-name" className="font-mono text-xs tracking-normalr">
+            <Label htmlFor="backup-file-name" className="font-sans tabular-nums text-xs tracking-normalr">
               Nome del file
             </Label>
             <Input
@@ -738,12 +738,12 @@ export function ImportExportDialog({
                   confirmBackupDownload();
                 }
               }}
-              className="h-10 border-border bg-background/70 font-mono text-sm"
+              className="h-10 border-border bg-background/70 font-sans tabular-nums text-sm"
               autoFocus
             />
             <p className="font-sans text-xs text-muted-foreground">
               Il file verrà salvato come{' '}
-              <span className="break-all font-mono text-foreground">
+              <span className="break-all font-sans tabular-nums text-foreground">
                 {normalizeExportFileName(
                   backupFileName,
                   getGuidedExportBaseName(activeWorkspace)

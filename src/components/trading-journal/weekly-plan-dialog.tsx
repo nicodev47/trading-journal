@@ -176,7 +176,7 @@ export function WeeklyPlanDialog({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="ej-scrollbar max-h-[92dvh] w-[calc(100vw-1.75rem)] max-w-2xl overflow-y-auto overscroll-contain border-border bg-card sm:w-[95vw] sm:max-h-[90vh]">
         <DialogHeader className="border-b border-border px-4 py-3.5 text-left sm:px-6 sm:py-4">
-          <DialogTitle className="font-mono text-base font-medium tracking-wide">
+          <DialogTitle className="font-sans tabular-nums text-base font-medium tracking-wide">
             Piano settimanale - {weekLabel}
           </DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground">
@@ -187,7 +187,7 @@ export function WeeklyPlanDialog({
         <div className="flex flex-col gap-4 p-4 sm:gap-6 sm:p-6">
           {/* Approccio trading - with bordered buttons */}
           <div className="flex flex-col gap-3">
-            <Label className="font-mono text-xs tracking-normalr text-muted-foreground">
+            <Label className="font-sans tabular-nums text-xs tracking-normalr text-muted-foreground">
               Approccio trading
             </Label>
             <div className="flex flex-col gap-2 min-[420px]:flex-row">
@@ -195,7 +195,7 @@ export function WeeklyPlanDialog({
                 type="button"
                 onClick={() => setApproach(approach === 'intraday' ? '' : 'intraday')}
                 className={cn(
-                  'rounded-lg border px-4 py-2 font-mono text-sm transition-colors max-[419px]:w-full',
+                  'rounded-lg border px-4 py-2 font-sans tabular-nums text-sm transition-colors max-[419px]:w-full',
                   approach === 'intraday'
                     ? 'border-profit bg-primary text-primary-foreground'
                     : 'border-border bg-background text-foreground hover:bg-secondary'
@@ -207,7 +207,7 @@ export function WeeklyPlanDialog({
                 type="button"
                 onClick={() => setApproach(approach === 'swing' ? '' : 'swing')}
                 className={cn(
-                  'rounded-lg border px-4 py-2 font-mono text-sm transition-colors max-[419px]:w-full',
+                  'rounded-lg border px-4 py-2 font-sans tabular-nums text-sm transition-colors max-[419px]:w-full',
                   approach === 'swing'
                     ? 'border-profit bg-primary text-primary-foreground'
                     : 'border-border bg-background text-foreground hover:bg-secondary'
@@ -220,7 +220,7 @@ export function WeeklyPlanDialog({
 
           {/* Screenshot calendario economico */}
           <div className="flex flex-col gap-3">
-            <Label className="font-mono text-xs tracking-normalr text-muted-foreground">
+            <Label className="font-sans tabular-nums text-xs tracking-normalr text-muted-foreground">
               Screenshot calendario economico
             </Label>
             
@@ -232,9 +232,9 @@ export function WeeklyPlanDialog({
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               className={cn(
-                'flex min-h-[100px] flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed transition-colors outline-none',
+                'flex min-h-[100px] flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed transition-colors outline-none',
                 isDragging ? 'border-profit bg-profit/5' : 'border-border',
-                'focus:border-primary focus:ring-1 focus:ring-primary'
+                'focus:border-highlight focus:ring-1 focus:ring-highlight'
               )}
             >
               <div className="flex items-center gap-2 text-muted-foreground">
@@ -280,7 +280,7 @@ export function WeeklyPlanDialog({
             {screenshots.length > 0 && (
               <div className="flex flex-col gap-3">
                 {screenshots.map((src, index) => (
-                  <div key={index} className="relative rounded-xl border border-border bg-background p-2">
+                  <div key={index} className="relative rounded-lg border border-border bg-background p-2">
                     <img
                       src={src}
                       alt={`Calendario economico ${index + 1}`}
@@ -292,7 +292,7 @@ export function WeeklyPlanDialog({
                         <button
                           type="button"
                           onClick={() => openScreenshotInNewTab(src)}
-                          className="flex items-center gap-1 text-foreground hover:text-primary"
+                          className="flex items-center gap-1 text-foreground hover:text-highlight"
                         >
                           Apri <ExternalLink className="size-3" />
                         </button>
@@ -312,7 +312,7 @@ export function WeeklyPlanDialog({
 
           {/* Weekly Notes */}
           <div className="flex flex-col gap-3">
-            <Label className="font-mono text-xs tracking-normalr text-muted-foreground">
+            <Label className="font-sans tabular-nums text-xs tracking-normalr text-muted-foreground">
               Note piano settimanale
             </Label>
             <Textarea

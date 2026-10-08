@@ -78,7 +78,7 @@ export function TradeShareDialog({
   const profileHandle = normalizeHandleInput(initialHandle);
 
   const exportOptions = {
-    backgroundColor: '#0a0a0b',
+    backgroundColor: '#161616',
     cacheBust: true,
     pixelRatio: 2,
   };
@@ -147,13 +147,13 @@ export function TradeShareDialog({
               size="icon"
               onClick={() => onOpenChange(false)}
               aria-label="Torna al trade"
-              className="h-10 w-10 shrink-0 rounded-xl border border-transparent bg-transparent text-muted-foreground hover:border-border hover:bg-secondary/40 hover:text-foreground focus-visible:ring-1 focus-visible:ring-primary/50"
+              className="h-10 w-10 shrink-0 rounded-lg border border-transparent bg-transparent text-muted-foreground hover:border-border hover:bg-secondary/40 hover:text-foreground focus-visible:ring-1 focus-visible:ring-highlight/50"
             >
               <ArrowLeft className="size-4" />
             </Button>
 
             <div className="min-w-0">
-              <DialogTitle className="font-mono text-lg">Trade Recap</DialogTitle>
+              <DialogTitle className="font-sans tabular-nums text-lg">Trade Recap</DialogTitle>
               <DialogDescription>
                 {trade ? formatDialogDate(trade, date) : 'Genera una card condivisibile del trade.'}
               </DialogDescription>
@@ -162,7 +162,7 @@ export function TradeShareDialog({
         </DialogHeader>
 
         <div className="ej-scrollbar flex max-h-[calc(90vh-132px)] flex-col overflow-y-auto overscroll-contain p-3">
-          <div className="overflow-hidden rounded-[20px] border border-border bg-card/60 p-2.5">
+          <div className="overflow-hidden rounded-2xl border border-border bg-card/60 p-2.5">
             {trade && (
               <ShareCardPreview
                 width={840}
@@ -187,7 +187,7 @@ export function TradeShareDialog({
             variant="outline"
             onClick={handleCopy}
             disabled={!trade || isCopying || isExporting}
-            className="gap-2 border-border bg-background/50 text-foreground hover:border-primary/40 hover:bg-secondary/70"
+            className="gap-2 border-border bg-background/50 text-foreground hover:border-highlight/40 hover:bg-secondary/70"
           >
             <Clipboard className="size-4" />
             {isCopying ? 'Copia...' : 'Copy to Clipboard'}

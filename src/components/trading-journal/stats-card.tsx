@@ -25,7 +25,7 @@ export function StatsCard({
   showNoTradesIndicator = false,
 }: StatsCardProps) {
   const valueClassName = cn(
-    'break-words font-mono text-lg font-semibold tracking-tight md:text-xl',
+    'break-words font-sans tabular-nums text-lg font-semibold tracking-tight md:text-xl',
     valueColor === 'profit' && 'text-profit',
     valueColor === 'loss' && 'text-loss',
     valueColor === 'neutral' && 'text-muted-foreground',
@@ -39,16 +39,16 @@ export function StatsCard({
   );
 
   return (
-    <Card className="max-w-full rounded-[20px] border border-border bg-card">
+    <Card className="max-w-full rounded-2xl border border-border bg-card">
       <CardContent className="flex min-h-[68px] min-w-0 flex-col justify-between gap-2 p-3 md:min-h-[72px] md:p-3.5">
-        <span className="font-mono text-xs font-medium tracking-normal text-muted-foreground">
+        <span className="font-sans tabular-nums text-xs font-medium tracking-normal text-muted-foreground">
           {title}
         </span>
 
         <div className="flex min-w-0 items-center gap-3">
           {showNoTradesIndicator && (
             <div className="flex size-8 items-center justify-center rounded-full border-2 border-muted-foreground/50">
-              <span className="font-mono text-base text-muted-foreground">-</span>
+              <span className="font-sans tabular-nums text-base text-muted-foreground">-</span>
             </div>
           )}
 
@@ -56,7 +56,7 @@ export function StatsCard({
         </div>
 
         {subtitle && (
-          <span className="font-mono text-[11px] text-muted-foreground">
+          <span className="font-sans tabular-nums text-[11px] text-muted-foreground">
             {subtitle}
           </span>
         )}

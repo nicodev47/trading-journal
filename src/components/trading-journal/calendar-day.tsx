@@ -126,8 +126,8 @@ export function CalendarDay({
     if (pnl > 0) {
       const alpha = 0.12 + intensity * 0.2;
       return {
-        backgroundColor: `rgba(48, 209, 88, ${alpha})`,
-        boxShadow: `inset 0 0 0 1px rgba(48, 209, 88, ${
+        backgroundColor: `rgba(52, 210, 123, ${alpha})`,
+        boxShadow: `inset 0 0 0 1px rgba(52, 210, 123, ${
           0.12 + intensity * 0.22
         })`,
       };
@@ -136,8 +136,8 @@ export function CalendarDay({
     if (pnl < 0) {
       const alpha = 0.12 + intensity * 0.2;
       return {
-        backgroundColor: `rgba(255, 69, 58, ${alpha})`,
-        boxShadow: `inset 0 0 0 1px rgba(255, 69, 58, ${
+        backgroundColor: `rgba(255, 101, 104, ${alpha})`,
+        boxShadow: `inset 0 0 0 1px rgba(255, 101, 104, ${
           0.16 + intensity * 0.24
         })`,
       };
@@ -186,7 +186,7 @@ export function CalendarDay({
         aria-hidden="true"
         className="flex h-[78px] w-full bg-background p-1 min-[380px]:h-[84px] min-[380px]:p-1.5 sm:h-[92px] sm:p-2 md:h-[106px] md:p-2.5"
       >
-        <span className="font-sans text-[12px] font-bold leading-none tracking-[-0.04em] text-muted-foreground/25 min-[380px]:text-[13px] sm:text-[15px] md:text-[17px]">
+        <span className="font-sans text-[12px] font-semibold leading-none tracking-[-0.04em] text-muted-foreground/25 min-[380px]:text-[13px] sm:text-[15px] md:text-[17px]">
           {date.getDate()}
         </span>
       </div>
@@ -201,16 +201,16 @@ export function CalendarDay({
       onKeyDown={handleDayKeyDown}
       data-tutorial={tutorialTarget}
       className={cn(
-        'group relative flex h-[78px] w-full min-w-0 cursor-pointer flex-col bg-background p-1 pb-4 text-left transition-colors hover:bg-secondary/30 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-primary min-[380px]:h-[84px] min-[380px]:p-1.5 min-[380px]:pb-4 sm:h-[92px] sm:p-2 sm:pb-5 md:h-[106px] md:p-2.5 md:pb-6',
-        isToday && 'ring-1 ring-inset ring-primary'
+        'group relative flex h-[78px] w-full min-w-0 cursor-pointer flex-col bg-background p-1 pb-4 text-left transition-colors hover:bg-secondary/30 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-highlight min-[380px]:h-[84px] min-[380px]:p-1.5 min-[380px]:pb-4 sm:h-[92px] sm:p-2 sm:pb-5 md:h-[106px] md:p-2.5 md:pb-6',
+        isToday && 'ring-1 ring-inset ring-highlight'
       )}
       style={getBackgroundStyle()}
     >
       <div className="flex h-full w-full min-w-0 flex-col gap-1 sm:gap-1.5">
         <span
           className={cn(
-            'font-sans text-[12px] font-bold leading-none tracking-[-0.04em] min-[380px]:text-[13px] sm:text-[15px] md:text-[17px]',
-            isToday && 'text-primary',
+            'font-sans text-[12px] font-semibold leading-none tracking-[-0.04em] min-[380px]:text-[13px] sm:text-[15px] md:text-[17px]',
+            isToday && 'text-highlight',
             !isToday && 'text-foreground'
           )}
         >
@@ -242,7 +242,7 @@ export function CalendarDay({
                 {canShowCalendarSetup && primarySetup && (
                   <span
                     className={cn(
-                      'inline-flex max-w-[46px] shrink items-center rounded-full border border-white/10 bg-background/55 px-1.5 py-[2px] font-mono text-[7px] font-semibold leading-none text-foreground/80 shadow-sm min-[380px]:max-w-[56px] min-[380px]:text-[8px] sm:max-w-[70px] sm:px-2 sm:text-[9px] md:max-w-[92px]'
+                      'inline-flex max-w-[46px] shrink items-center rounded-full border border-white/10 bg-background/55 px-1.5 py-[2px] font-sans tabular-nums text-[7px] font-semibold leading-none text-foreground/80 shadow-sm min-[380px]:max-w-[56px] min-[380px]:text-[8px] sm:max-w-[70px] sm:px-2 sm:text-[9px] md:max-w-[92px]'
                     )}
                     title={primarySetup}
                   >
@@ -255,7 +255,7 @@ export function CalendarDay({
                 {canShowCalendarTags && visibleTag && (
                   <span
                     className={cn(
-                      'inline-flex max-w-[46px] shrink items-center rounded-full border border-border/80 bg-secondary/45 px-1.5 py-[2px] font-mono text-[7px] font-semibold leading-none text-muted-foreground shadow-sm min-[380px]:max-w-[54px] min-[380px]:text-[8px] sm:max-w-[64px] sm:px-2 sm:text-[9px]'
+                      'inline-flex max-w-[46px] shrink items-center rounded-full border border-border/80 bg-secondary/45 px-1.5 py-[2px] font-sans tabular-nums text-[7px] font-semibold leading-none text-muted-foreground shadow-sm min-[380px]:max-w-[54px] min-[380px]:text-[8px] sm:max-w-[64px] sm:px-2 sm:text-[9px]'
                     )}
                     title={visibleTagTitle}
                   >
@@ -274,7 +274,7 @@ export function CalendarDay({
 
       {hasTrades && (
         <span
-          className="absolute bottom-1 left-1 font-mono text-[8px] leading-none text-muted-foreground min-[380px]:bottom-1.5 min-[380px]:left-1.5 min-[380px]:text-[9px] sm:bottom-2 sm:left-2 sm:text-[10px] md:bottom-2.5 md:left-2.5 md:text-xs"
+          className="absolute bottom-1 left-1 font-sans tabular-nums text-[8px] leading-none text-muted-foreground min-[380px]:bottom-1.5 min-[380px]:left-1.5 min-[380px]:text-[9px] sm:bottom-2 sm:left-2 sm:text-[10px] md:bottom-2.5 md:left-2.5 md:text-xs"
         >
           {tradeCount}
         </span>
@@ -288,7 +288,7 @@ export function CalendarDay({
         >
           <span
             className={cn(
-              'inline-flex items-center rounded-full border border-border/80 bg-background/65 px-1 py-[2px] font-mono text-[7px] font-semibold leading-none text-muted-foreground shadow-sm transition hover:border-border hover:bg-background/90 hover:text-foreground min-[380px]:text-[8px] sm:px-1.5 sm:text-[9px]'
+              'inline-flex items-center rounded-full border border-border/80 bg-background/65 px-1 py-[2px] font-sans tabular-nums text-[7px] font-semibold leading-none text-muted-foreground shadow-sm transition hover:border-border hover:bg-background/90 hover:text-foreground min-[380px]:text-[8px] sm:px-1.5 sm:text-[9px]'
             )}
             title={hiddenTagsTitle}
           >

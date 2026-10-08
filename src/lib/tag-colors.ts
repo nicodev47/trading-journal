@@ -1,5 +1,5 @@
 export const TAG_COLOR_PALETTE = [
-  '#30d158',
+  '#34d27b',
   '#0a84ff',
   '#38bdf8',
   '#818cf8',

@@ -21,7 +21,7 @@ export function WeeklyPlanCell({ hasData, approach, onClick }: WeeklyPlanCellPro
         <div className="flex flex-col items-center gap-1">
           <CalendarDays className="size-4 text-profit" />
           {approach && (
-            <span className="font-mono text-[9px] capitalize text-profit">
+            <span className="font-sans tabular-nums text-[9px] capitalize text-profit">
               {approach}
             </span>
           )}

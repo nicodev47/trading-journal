@@ -224,7 +224,7 @@ export function AccountSelector({
         <button
           type="button"
           className={cn(
-            'flex min-h-11 w-full cursor-pointer items-center gap-2 rounded-xl border border-transparent px-2.5 text-left text-sm outline-none transition-colors hover:border-blue-500/35 hover:bg-blue-500/15 hover:text-blue-50 focus-visible:border-blue-400/50 focus-visible:bg-blue-500/15',
+            'flex min-h-11 w-full cursor-pointer items-center gap-2 rounded-lg border border-transparent px-2.5 text-left text-sm outline-none transition-colors hover:border-blue-500/35 hover:bg-blue-500/15 hover:text-blue-50 focus-visible:border-blue-400/50 focus-visible:bg-blue-500/15',
             isEditable && 'pr-11'
           )}
           onClick={() => {
@@ -250,7 +250,7 @@ export function AccountSelector({
               {workspace.name}
             </span>
             {isEditable && workspace.notes?.trim() && (
-              <span className="block truncate font-mono text-[10px] text-muted-foreground group-hover:text-blue-200/70">
+              <span className="block truncate font-sans tabular-nums text-[10px] text-muted-foreground group-hover:text-blue-200/70">
                 {workspace.notes.trim()}
               </span>
             )}
@@ -268,7 +268,7 @@ export function AccountSelector({
         {isEditable && (
           <button
             type="button"
-            className="absolute right-2 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-xl text-blue-200 opacity-0 transition hover:bg-blue-500/25 hover:text-white focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-400 group-hover:opacity-100 max-md:opacity-100"
+            className="absolute right-2 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-lg text-blue-200 opacity-0 transition hover:bg-blue-500/25 hover:text-white focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-400 group-hover:opacity-100 max-md:opacity-100"
             onClick={() => openEditDialog(workspace)}
             aria-label={`Modifica ${workspace.name}`}
             title={`Modifica ${workspace.name}`}
@@ -305,7 +305,7 @@ export function AccountSelector({
             type="button"
             variant="outline"
             data-tutorial="workspace-tabs"
-            className="h-9 w-[190px] justify-between rounded-xl border-blue-500/55 bg-blue-500/10 px-3 text-left shadow-[0_0_0_1px_rgba(10,132,255,0.08)] hover:border-blue-400 hover:bg-blue-500/15 max-lg:w-[160px] max-md:w-auto max-md:min-w-0 max-md:flex-1"
+            className="h-9 w-[190px] justify-between rounded-lg border-blue-500/55 bg-blue-500/10 px-3 text-left shadow-[0_0_0_1px_rgba(10,132,255,0.08)] hover:border-blue-400 hover:bg-blue-500/15 max-lg:w-[160px] max-md:w-auto max-md:min-w-0 max-md:flex-1"
           >
             <span className="flex min-w-0 items-center gap-2">
               {activeWorkspace === 'student' || activeWorkspace.startsWith('preview-') ? (
@@ -323,8 +323,8 @@ export function AccountSelector({
           </Button>
         </PopoverTrigger>
 
-        <PopoverContent align="start" className="w-[290px] rounded-xl p-1.5">
-          <div className="px-2.5 pb-1 pt-2 font-mono text-[10px] tracking-normal text-muted-foreground">
+        <PopoverContent align="start" className="w-[290px] rounded-lg p-1.5">
+          <div className="px-2.5 pb-1 pt-2 font-sans tabular-nums text-[10px] tracking-normal text-muted-foreground">
             {menuSection === 'accounts'
               ? 'I tuoi conti'
               : menuSection === 'backtests'
@@ -344,7 +344,7 @@ export function AccountSelector({
               <button
                 type="button"
                 disabled={customWorkspaceCount >= maxCustomWorkspaces}
-                className="mt-1 flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-xl border border-dashed border-blue-500/35 px-2 text-left text-blue-200 outline-none transition-colors hover:bg-blue-500/15 focus-visible:bg-blue-500/15 disabled:pointer-events-none disabled:opacity-50"
+                className="mt-1 flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-lg border border-dashed border-blue-500/35 px-2 text-left text-blue-200 outline-none transition-colors hover:bg-blue-500/15 focus-visible:bg-blue-500/15 disabled:pointer-events-none disabled:opacity-50"
                 onClick={() => openCreateDialog('account')}
               >
                 <Plus className="size-4" />
@@ -365,7 +365,7 @@ export function AccountSelector({
               <button
                 type="button"
                 disabled={backtestWorkspaceCount >= maxCustomWorkspaces}
-                className="mt-1 flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-xl border border-dashed border-blue-500/35 px-2 text-left text-blue-200 outline-none transition-colors hover:bg-blue-500/15 focus-visible:bg-blue-500/15 disabled:pointer-events-none disabled:opacity-50"
+                className="mt-1 flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-lg border border-dashed border-blue-500/35 px-2 text-left text-blue-200 outline-none transition-colors hover:bg-blue-500/15 focus-visible:bg-blue-500/15 disabled:pointer-events-none disabled:opacity-50"
                 onClick={() => openCreateDialog('backtest')}
               >
                 <Plus className="size-4" />
@@ -386,7 +386,7 @@ export function AccountSelector({
               <button
                 type="button"
                 disabled={previewWorkspaceCount >= maxCustomWorkspaces}
-                className="mt-1 flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-xl border border-dashed border-blue-500/35 px-2 text-left text-blue-200 outline-none transition-colors hover:bg-blue-500/15 focus-visible:bg-blue-500/15 disabled:pointer-events-none disabled:opacity-50"
+                className="mt-1 flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-lg border border-dashed border-blue-500/35 px-2 text-left text-blue-200 outline-none transition-colors hover:bg-blue-500/15 focus-visible:bg-blue-500/15 disabled:pointer-events-none disabled:opacity-50"
                 onClick={() => openCreateDialog('preview')}
               >
                 <Plus className="size-4" />
@@ -398,14 +398,14 @@ export function AccountSelector({
           )}
 
           <div className="-mx-1 my-2 h-px bg-border" />
-          <div className="px-2.5 pb-1 font-mono text-[10px] tracking-normal text-muted-foreground">
+          <div className="px-2.5 pb-1 font-sans tabular-nums text-[10px] tracking-normal text-muted-foreground">
             Modalità
           </div>
 
           {menuSection === 'accounts' ? (
             <button
               type="button"
-              className="flex min-h-11 w-full items-center gap-2 rounded-xl border border-transparent px-2.5 text-left outline-none transition-colors hover:border-blue-500/35 hover:bg-blue-500/15 focus-visible:border-blue-400/50 focus-visible:bg-blue-500/15"
+              className="flex min-h-11 w-full items-center gap-2 rounded-lg border border-transparent px-2.5 text-left outline-none transition-colors hover:border-blue-500/35 hover:bg-blue-500/15 focus-visible:border-blue-400/50 focus-visible:bg-blue-500/15"
               onClick={() => setMenuSection('backtests')}
             >
               <span className="flex size-7 items-center justify-center rounded-lg bg-secondary text-muted-foreground">
@@ -416,7 +416,7 @@ export function AccountSelector({
           ) : (
             <button
               type="button"
-              className="flex min-h-11 w-full items-center gap-2 rounded-xl border border-transparent px-2.5 text-left outline-none transition-colors hover:border-blue-500/35 hover:bg-blue-500/15 focus-visible:border-blue-400/50 focus-visible:bg-blue-500/15"
+              className="flex min-h-11 w-full items-center gap-2 rounded-lg border border-transparent px-2.5 text-left outline-none transition-colors hover:border-blue-500/35 hover:bg-blue-500/15 focus-visible:border-blue-400/50 focus-visible:bg-blue-500/15"
               onClick={() => setMenuSection('accounts')}
             >
               <span className="flex size-7 items-center justify-center rounded-lg bg-secondary text-muted-foreground">
@@ -429,7 +429,7 @@ export function AccountSelector({
           {menuSection === 'preview' && (
             <button
               type="button"
-              className="flex min-h-11 w-full items-center gap-2 rounded-xl border border-transparent px-2.5 text-left outline-none transition-colors hover:border-blue-500/35 hover:bg-blue-500/15 focus-visible:border-blue-400/50 focus-visible:bg-blue-500/15"
+              className="flex min-h-11 w-full items-center gap-2 rounded-lg border border-transparent px-2.5 text-left outline-none transition-colors hover:border-blue-500/35 hover:bg-blue-500/15 focus-visible:border-blue-400/50 focus-visible:bg-blue-500/15"
               onClick={() => setMenuSection('backtests')}
             >
               <span className="flex size-7 items-center justify-center rounded-lg bg-secondary text-muted-foreground">
@@ -442,7 +442,7 @@ export function AccountSelector({
           {menuSection !== 'preview' && showPreviewWorkspace && (
             <button
               type="button"
-              className="flex min-h-11 w-full items-center gap-2 rounded-xl border border-transparent px-2.5 text-left outline-none transition-colors hover:border-blue-500/35 hover:bg-blue-500/15 focus-visible:border-blue-400/50 focus-visible:bg-blue-500/15"
+              className="flex min-h-11 w-full items-center gap-2 rounded-lg border border-transparent px-2.5 text-left outline-none transition-colors hover:border-blue-500/35 hover:bg-blue-500/15 focus-visible:border-blue-400/50 focus-visible:bg-blue-500/15"
               onClick={() => setMenuSection('preview')}
             >
               <span className="flex size-7 items-center justify-center rounded-lg bg-secondary text-muted-foreground">
@@ -461,7 +461,7 @@ export function AccountSelector({
           if (!open) resetForm();
         }}
       >
-        <DialogContent className="max-w-md rounded-[20px] border-border bg-card">
+        <DialogContent className="max-w-md rounded-2xl border-border bg-card">
           <form onSubmit={handleSubmit}>
             <DialogHeader>
               <DialogTitle>
@@ -558,7 +558,7 @@ export function AccountSelector({
           }
         }}
       >
-        <DialogContent className="max-w-md rounded-[20px] border-loss/30 bg-card">
+        <DialogContent className="max-w-md rounded-2xl border-loss/30 bg-card">
           <DialogHeader>
             <DialogTitle className="text-loss">
               Elimina {deletionTarget?.name ?? 'conto'}?
@@ -570,7 +570,7 @@ export function AccountSelector({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="rounded-xl border border-blue-500/30 bg-blue-500/10 p-3.5">
+          <div className="rounded-lg border border-blue-500/30 bg-blue-500/10 p-3.5">
             <p className="font-sans text-sm font-semibold text-blue-100">
               Ti consigliamo di creare prima un backup.
             </p>
@@ -591,7 +591,7 @@ export function AccountSelector({
 
           <div className="grid gap-2">
             <Label htmlFor="delete-account-confirmation">
-              Digita <span className="font-mono font-bold text-loss">CONFERMA</span> per continuare
+              Digita <span className="font-sans tabular-nums font-semibold text-loss">CONFERMA</span> per continuare
             </Label>
             <Input
               id="delete-account-confirmation"

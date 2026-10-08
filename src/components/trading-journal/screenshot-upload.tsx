@@ -56,7 +56,7 @@ export function ScreenshotUpload({
         {screenshots.map((screenshot, index) => (
           <div
             key={index}
-            className="group relative size-20 overflow-hidden rounded-xl border border-border"
+            className="group relative size-20 overflow-hidden rounded-lg border border-border"
           >
             <img
               src={screenshot}
@@ -91,7 +91,7 @@ export function ScreenshotUpload({
             type="button"
             onClick={() => inputRef.current?.click()}
             className={cn(
-              'flex size-20 flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-muted-foreground/25',
+              'flex size-20 flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-muted-foreground/25',
               'text-muted-foreground transition-colors hover:border-muted-foreground/50 hover:text-foreground'
             )}
           >

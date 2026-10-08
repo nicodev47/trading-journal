@@ -59,23 +59,23 @@ function ProfileMetric({
 }) {
   return (
     <div className="flex min-h-[64px] flex-col justify-center rounded-[12px] border border-white/10 bg-[#0b1214] px-4 py-3">
-      <div className="font-sans text-[11px] font-bold uppercase leading-none text-white/52">
+      <div className="font-sans text-[11px] font-semibold uppercase leading-none text-white/52">
         {label}
       </div>
       <div
         className={cn(
-          'mt-2 break-words font-mono text-[20px] font-black leading-tight',
+          'mt-2 break-words font-sans tabular-nums text-[20px] font-black leading-tight',
           tone === 'profit'
-            ? 'text-[#30d158]'
+            ? 'text-[#34d27b]'
             : tone === 'loss'
-              ? 'text-[#ff453a]'
+              ? 'text-[#ff6568]'
               : 'text-white'
         )}
       >
         {value}
       </div>
       {subtitle && (
-        <div className="mt-1 font-mono text-[11px] font-semibold leading-none text-white/44">
+        <div className="mt-1 font-sans tabular-nums text-[11px] font-semibold leading-none text-white/44">
           {subtitle}
         </div>
       )}
@@ -102,7 +102,7 @@ export function ProfileShareCard({
       )}
       style={{
         boxShadow:
-          '0 0 0 1px rgba(48,209,88,0.18), 0 24px 86px rgba(48,209,88,0.12)',
+          '0 0 0 1px rgba(52,210,123,0.18), 0 24px 86px rgba(52,210,123,0.12)',
       }}
     >
       <div className="flex h-full flex-col rounded-[22px]">
@@ -114,12 +114,12 @@ export function ProfileShareCard({
 
         <section className="mt-6 rounded-[22px] border border-[#28a745] bg-[#063f30] px-7 py-6">
           <div className="flex items-center gap-6">
-            <div className="flex size-[82px] shrink-0 items-center justify-center overflow-hidden rounded-[18px] border border-[#30d158]/35 bg-[#30d158]/10 text-[52px] leading-none shadow-[0_0_28px_rgba(48,209,88,0.10)]">
+            <div className="flex size-[82px] shrink-0 items-center justify-center overflow-hidden rounded-[18px] border border-[#34d27b]/35 bg-[#34d27b]/10 text-[52px] leading-none shadow-[0_0_28px_rgba(52,210,123,0.10)]">
               {profile.profileIcon}
             </div>
 
             <div className="min-w-0 flex-1">
-              <div className="break-words font-sans text-[18px] font-bold leading-tight text-white/58">
+              <div className="break-words font-sans text-[18px] font-semibold leading-tight text-white/58">
                 {displayName}
               </div>
               <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 break-words font-sans text-[31px] font-black leading-tight text-white">
@@ -127,7 +127,7 @@ export function ProfileShareCard({
                 <span>{profile.rank.name}</span>
               </div>
 
-              <div className="mt-3 flex flex-wrap items-center justify-between gap-x-6 gap-y-1 font-mono text-[17px] font-black uppercase text-[#30d158]">
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-x-6 gap-y-1 font-sans tabular-nums text-[17px] font-black uppercase text-[#34d27b]">
                 <span>LIVELLO {profile.level}</span>
                 <span>{profile.totalXP} XP TOTALI</span>
               </div>
@@ -141,7 +141,7 @@ export function ProfileShareCard({
             />
           </div>
 
-          <div className="mt-4 flex items-start justify-between gap-6 font-mono text-[13px] font-bold uppercase leading-snug text-white/52">
+          <div className="mt-4 flex items-start justify-between gap-6 font-sans tabular-nums text-[13px] font-semibold uppercase leading-snug text-white/52">
             <span>
               {profile.currentLevelXP} / 100 XP
             </span>
@@ -190,7 +190,7 @@ export function ProfileShareCard({
           />
         </section>
 
-        <footer className="mt-auto text-center font-sans text-[13px] font-bold text-white/55">
+        <footer className="mt-auto text-center font-sans text-[13px] font-semibold text-white/55">
           Generato da EclipseJournal 🌙
         </footer>
       </div>

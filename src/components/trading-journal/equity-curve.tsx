@@ -104,7 +104,7 @@ function CustomEquityTooltip({
   if (!active || !item) return null;
 
   return (
-    <div className="min-w-36 rounded-xl border border-border bg-popover px-3 py-2.5 font-mono text-xs shadow-[0_10px_30px_rgba(0,0,0,0.45)]">
+    <div className="min-w-36 rounded-lg border border-border bg-popover px-3 py-2.5 font-sans tabular-nums text-xs shadow-[0_10px_30px_rgba(0,0,0,0.45)]">
       <p className="font-semibold text-foreground">
         {item.displayDate ?? item.date ?? '—'}
       </p>
@@ -237,8 +237,8 @@ export function EquityCurve({
 
   // Use explicit colors that will show as white/light on dark backgrounds
   const strokeColor = isPositive ? '#22c55e' : '#ef4444';
-  const fillColorStart = isPositive ? 'rgba(48,209,88, 0.38)' : 'rgba(255,69,58, 0.38)';
-  const fillColorEnd = isPositive ? 'rgba(48,209,88, 0.05)' : 'rgba(255,69,58, 0.05)';
+  const fillColorStart = isPositive ? 'rgba(52,210,123, 0.38)' : 'rgba(255,101,104, 0.38)';
+  const fillColorEnd = isPositive ? 'rgba(52,210,123, 0.05)' : 'rgba(255,101,104, 0.05)';
 
   // White color for axis text
   const axisTextColor = '#e5e5e5';
@@ -300,9 +300,9 @@ export function EquityCurve({
   const canClickPoints = Boolean(onOpenTradeGroup || onOpenTrade);
 
   return (
-    <div className="max-w-full overflow-hidden rounded-[20px] border border-border bg-card/95 shadow-[0_16px_36px_rgba(0,0,0,0.22)]">
+    <div className="max-w-full overflow-hidden rounded-2xl border border-border bg-card/95 shadow-[0_16px_36px_rgba(0,0,0,0.22)]">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-3 py-3 sm:px-4">
-        <h2 className="font-sans text-[15px] font-bold tracking-[-0.03em] text-foreground">
+        <h2 className="font-sans text-[15px] font-semibold tracking-[-0.03em] text-foreground">
           Curva Equity
         </h2>
 
@@ -311,7 +311,7 @@ export function EquityCurve({
             type="button"
             variant="ghost"
             size="icon"
-            className="size-7 rounded-xl text-muted-foreground hover:bg-secondary/70 hover:text-foreground"
+            className="size-7 rounded-lg text-muted-foreground hover:bg-secondary/70 hover:text-foreground"
             onClick={() => changeMonth(-1)}
             aria-label="Mese precedente"
           >
@@ -327,14 +327,14 @@ export function EquityCurve({
             showTodayButton
             actionLabel="Visualizza equity totale"
             onActionClick={handleShowTotalEquity}
-            triggerClassName="inline-flex items-center justify-center gap-2 whitespace-nowrap disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive has-[>svg]:px-3 capitalize h-auto min-w-0 flex-1 rounded-xl border border-transparent bg-transparent px-2 py-1 text-center text-[13px] font-bold tracking-[-0.04em] text-foreground shadow-none ring-0 transition-colors duration-200 hover:bg-white/10 hover:text-foreground dark:bg-transparent dark:hover:bg-white/10 dark:hover:text-foreground sm:min-w-[150px] sm:flex-none sm:px-4 sm:text-[15px]"
+            triggerClassName="inline-flex items-center justify-center gap-2 whitespace-nowrap disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive has-[>svg]:px-3 capitalize h-auto min-w-0 flex-1 rounded-lg border border-transparent bg-transparent px-2 py-1 text-center text-[13px] font-semibold tracking-[-0.04em] text-foreground shadow-none ring-0 transition-colors duration-200 hover:bg-white/10 hover:text-foreground dark:bg-transparent dark:hover:bg-white/10 dark:hover:text-foreground sm:min-w-[150px] sm:flex-none sm:px-4 sm:text-[15px]"
           />
 
           <Button
             type="button"
             variant="ghost"
             size="icon"
-            className="size-7 rounded-xl text-muted-foreground hover:bg-secondary/70 hover:text-foreground"
+            className="size-7 rounded-lg text-muted-foreground hover:bg-secondary/70 hover:text-foreground"
             onClick={() => changeMonth(1)}
             aria-label="Mese successivo"
           >
@@ -346,7 +346,7 @@ export function EquityCurve({
       <div className="p-3 sm:p-6">
         {data.length === 0 ? (
           <div className="flex h-[180px] items-center justify-center">
-            <p className="font-mono text-sm text-muted-foreground">
+            <p className="font-sans tabular-nums text-sm text-muted-foreground">
               {selectedMonth
                 ? `Nessun trade disponibile per ${selectedMonthLabel}.`
                 : 'Nessun trade disponibile per generare la curva equity.'}
@@ -430,7 +430,7 @@ export function EquityCurve({
         )}
 
         {canClickPoints && data.length > 0 && (
-          <p className="mt-3 text-center font-mono text-[10px] text-muted-foreground">
+          <p className="mt-3 text-center font-sans tabular-nums text-[10px] text-muted-foreground">
             Clicca su un punto per vedere i dettagli del trade
           </p>
         )}

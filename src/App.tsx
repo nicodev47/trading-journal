@@ -766,7 +766,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
   if (!isLoaded) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
-        <div className="font-mono text-sm text-muted-foreground">Caricamento...</div>
+        <div className="font-sans tabular-nums text-sm text-muted-foreground">Caricamento...</div>
       </div>
     );
   }
@@ -882,7 +882,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
 
       <footer className="border-t border-border bg-card py-4">
         <div className="mx-auto max-w-6xl px-4 text-center">
-          <span className="font-mono text-xs text-muted-foreground">
+          <span className="font-sans tabular-nums text-xs text-muted-foreground">
             Powered by{' '}
             <a
               href="https://eclipsetradingclub.it"
@@ -1002,7 +1002,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
         open={isResetPreviewConfirmOpen}
         onOpenChange={setIsResetPreviewConfirmOpen}
       >
-        <DialogContent className="max-h-[92dvh] w-[calc(100vw-1.75rem)] max-w-md rounded-[20px] border border-border bg-background shadow-xl">
+        <DialogContent className="max-h-[92dvh] w-[calc(100vw-1.75rem)] max-w-md rounded-2xl border border-border bg-background shadow-xl">
           <DialogHeader>
             <DialogTitle className="font-sans text-lg font-semibold text-foreground">
               Reset Preview?
@@ -1036,7 +1036,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
         open={isBacktestResetDialogOpen}
         onOpenChange={setIsBacktestResetDialogOpen}
       >
-        <DialogContent className="max-h-[92dvh] w-[calc(100vw-1.75rem)] max-w-[520px] overflow-hidden rounded-[20px] border border-border bg-card p-0">
+        <DialogContent className="max-h-[92dvh] w-[calc(100vw-1.75rem)] max-w-[520px] overflow-hidden rounded-2xl border border-border bg-card p-0">
           <DialogHeader className="border-b border-border px-4 py-3.5 sm:px-5 sm:py-4">
             <div className="flex items-start gap-3">
               <div className="flex size-10 shrink-0 items-center justify-center rounded-full border border-loss/30 bg-loss/10 text-loss">
@@ -1054,7 +1054,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
           </DialogHeader>
 
           <div className="ej-scrollbar max-h-[calc(92dvh-9rem)] overflow-y-auto px-4 py-4 sm:px-5 sm:py-5">
-            <div className="rounded-xl border border-loss/30 bg-loss/10 p-4">
+            <div className="rounded-lg border border-loss/30 bg-loss/10 p-4">
               <p className="font-sans text-sm leading-relaxed text-foreground">
                 Questa azione cancellerà trade, strategie e piani salvati nel Backtest.
                 Il journal Personale e Preview non verranno modificati.
@@ -1104,10 +1104,10 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
             if (event.target === event.currentTarget) setIsHelpOpen(false);
           }}
         >
-          <div className="ej-scrollbar max-h-[90dvh] w-full max-w-4xl overflow-y-auto overscroll-contain rounded-[20px] border border-border bg-card shadow-2xl">
+          <div className="ej-scrollbar max-h-[90dvh] w-full max-w-4xl overflow-y-auto overscroll-contain rounded-2xl border border-border bg-card shadow-2xl">
             <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-border bg-card/95 px-4 py-3.5 backdrop-blur md:px-6 md:py-4">
               <div>
-                <h2 id="help-dialog-title" className="font-mono text-lg font-semibold text-foreground">
+                <h2 id="help-dialog-title" className="font-sans tabular-nums text-lg font-semibold text-foreground">
                   Guida EclipseJournal
                 </h2>
                 <p className="mt-1 max-w-xl font-sans text-xs text-muted-foreground sm:text-sm">
@@ -1118,7 +1118,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
               <button
                 type="button"
                 onClick={() => setIsHelpOpen(false)}
-                className="rounded-lg border border-border bg-background px-3 py-1.5 font-mono text-xs text-muted-foreground transition hover:border-primary/50 hover:text-foreground"
+                className="rounded-lg border border-border bg-background px-3 py-1.5 font-sans tabular-nums text-xs text-muted-foreground transition hover:border-highlight/50 hover:text-foreground"
               >
                 Chiudi
               </button>
@@ -1128,7 +1128,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
               <section className="rounded-[14px] border border-profit/30 bg-profit/5 p-4 md:col-span-2">
                 <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
                   <div>
-                    <h3 className="font-sans text-sm font-bold text-foreground">
+                    <h3 className="font-sans text-sm font-semibold text-foreground">
                       Tutorial
                     </h3>
                     <p className="mt-1 font-sans text-xs leading-relaxed text-muted-foreground">
@@ -1138,7 +1138,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
                   <button
                     type="button"
                     onClick={handleRestartTutorial}
-                    className="shrink-0 rounded-xl border border-profit/30 bg-profit/10 px-3 py-2 font-sans text-xs font-semibold text-profit transition hover:border-primary/60 hover:bg-primary/15"
+                    className="shrink-0 rounded-lg border border-profit/30 bg-profit/10 px-3 py-2 font-sans text-xs font-semibold text-profit transition hover:border-highlight/60 hover:bg-primary/15"
                   >
                     Riavvia tutorial
                   </button>
@@ -1148,7 +1148,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
               <section className="rounded-[14px] border border-blue-400/30 bg-blue-500/[0.06] p-4 md:col-span-2">
                 <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
                   <div>
-                    <h3 className="font-sans text-sm font-bold text-foreground">
+                    <h3 className="font-sans text-sm font-semibold text-foreground">
                       EclipseJournal v0.6 — Conti, Import e backup
                     </h3>
                     <p className="mt-1 font-sans text-xs leading-relaxed text-muted-foreground">
@@ -1158,7 +1158,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
                   <button
                     type="button"
                     onClick={handleOpenWhatsNewFromHelp}
-                    className="shrink-0 rounded-xl border border-blue-300/30 bg-blue-300/10 px-3 py-2 font-sans text-xs font-semibold text-blue-100 transition hover:border-blue-200/50 hover:bg-blue-300/15"
+                    className="shrink-0 rounded-lg border border-blue-300/30 bg-blue-300/10 px-3 py-2 font-sans text-xs font-semibold text-blue-100 transition hover:border-blue-200/50 hover:bg-blue-300/15"
                   >
                     Visualizza novità
                   </button>
@@ -1290,7 +1290,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
                 >
                   <div className="flex items-start gap-3">
                     <div
-                      className={`flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-xl border text-lg leading-none ${
+                      className={`flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg border text-lg leading-none ${
                         section.danger
                           ? 'border-loss/30 bg-loss/10'
                           : 'border-border bg-secondary/45'
@@ -1302,7 +1302,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
 
                     <div className="min-w-0">
                       <h3
-                        className={`font-sans text-sm font-bold ${
+                        className={`font-sans text-sm font-semibold ${
                           section.danger ? 'text-loss' : 'text-foreground'
                         }`}
                       >

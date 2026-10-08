@@ -165,14 +165,14 @@ function DetailCard({
   return (
     <div
       className={cn(
-        'rounded-xl border border-border/80 bg-background/35 p-3',
+        'rounded-lg border border-border/80 bg-background/35 p-3',
         className
       )}
     >
-      <p className="font-mono text-[9px] tracking-normal text-muted-foreground">
+      <p className="font-sans tabular-nums text-[9px] tracking-normal text-muted-foreground">
         {label}
       </p>
-      <div className="mt-2 font-mono text-xs text-foreground">{children}</div>
+      <div className="mt-2 font-sans tabular-nums text-xs text-foreground">{children}</div>
     </div>
   );
 }
@@ -190,12 +190,12 @@ function AttachmentItem({
 
   if (!showPreview) {
     return (
-      <div className="flex items-center gap-3 rounded-xl border border-border bg-card/60 px-3 py-2.5 transition-colors hover:bg-secondary/40">
+      <div className="flex items-center gap-3 rounded-lg border border-border bg-card/60 px-3 py-2.5 transition-colors hover:bg-secondary/40">
         <div className="min-w-0 flex-1">
-          <p className="truncate font-mono text-xs font-semibold text-foreground">
+          <p className="truncate font-sans tabular-nums text-xs font-semibold text-foreground">
             {name}
           </p>
-          <p className="mt-0.5 truncate font-mono text-[10px] text-muted-foreground">
+          <p className="mt-0.5 truncate font-sans tabular-nums text-[10px] text-muted-foreground">
             {getLinkLabel(screenshot.url)}
           </p>
         </div>
@@ -203,7 +203,7 @@ function AttachmentItem({
           href={screenshot.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex h-8 shrink-0 items-center gap-1 rounded-xl border border-border bg-background px-2.5 font-mono text-[10px] text-foreground transition-colors hover:border-primary/40 hover:text-primary"
+          className="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg border border-border bg-background px-2.5 font-sans tabular-nums text-[10px] text-foreground transition-colors hover:border-highlight/40 hover:text-highlight"
         >
           Apri <ExternalLink className="size-3" />
         </a>
@@ -212,7 +212,7 @@ function AttachmentItem({
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-border bg-card/70">
+    <div className="overflow-hidden rounded-lg border border-border bg-card/70">
       <div className="flex items-center justify-between gap-3 border-b border-border px-3 py-2">
         <span className="truncate text-xs text-foreground">{name}</span>
         <a
@@ -290,24 +290,24 @@ export function TradeDetailDialog({
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="h-10 w-10 rounded-xl border border-border bg-background/60 text-muted-foreground hover:border-border hover:bg-secondary/70 hover:text-foreground focus-visible:ring-1 focus-visible:ring-primary/50"
+                className="h-10 w-10 rounded-lg border border-border bg-background/60 text-muted-foreground hover:border-border hover:bg-secondary/70 hover:text-foreground focus-visible:ring-1 focus-visible:ring-highlight/50"
                 onClick={handleBack}
                 aria-label="Torna alla lista trade"
               >
                 <ArrowLeft className="h-4 w-4" />
               </Button>
             )}
-            <DialogTitle className="font-mono text-base font-semibold tracking-wide">
+            <DialogTitle className="font-sans tabular-nums text-base font-semibold tracking-wide">
               Dettaglio trade
             </DialogTitle>
             {trade.isFavorite && (
-              <span className="inline-flex items-center gap-1 rounded-full border border-amber-400/30 bg-amber-400/10 px-2 py-1 font-mono text-[10px] text-amber-300">
+              <span className="inline-flex items-center gap-1 rounded-full border border-amber-400/30 bg-amber-400/10 px-2 py-1 font-sans tabular-nums text-[10px] text-amber-300">
                 <Star className="size-3 fill-current" />
                 Preferito
               </span>
             )}
           </div>
-          <DialogDescription className="font-mono text-xs">
+          <DialogDescription className="font-sans tabular-nums text-xs">
             Tutti i dati registrati per l’operazione selezionata.
           </DialogDescription>
         </DialogHeader>
@@ -338,7 +338,7 @@ export function TradeDetailDialog({
                 <select
                   value={setupDraft}
                   onChange={(event) => setSetupDraft(event.target.value)}
-                  className="ej-filter-select h-9 w-full rounded-xl border border-border bg-background/70 px-3 font-mono text-xs text-foreground outline-none transition-colors focus:border-primary/60"
+                  className="ej-filter-select h-9 w-full rounded-lg border border-border bg-background/70 px-3 font-sans tabular-nums text-xs text-foreground outline-none transition-colors focus:border-highlight/60"
                 >
                   <option value="">Seleziona setup</option>
                   {VALID_TRADE_SETUPS.map((setup) => (
@@ -369,7 +369,7 @@ export function TradeDetailDialog({
                 {tags.map((tag) => (
                   <span
                     key={tag}
-                    className="rounded-lg border border-blue-300/25 bg-blue-300/10 px-2.5 py-1.5 font-mono text-xs text-blue-100"
+                    className="rounded-lg border border-blue-300/25 bg-blue-300/10 px-2.5 py-1.5 font-sans tabular-nums text-xs text-blue-100"
                   >
                     {getTagLabel(tag)}
                   </span>
