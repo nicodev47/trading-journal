@@ -66,7 +66,7 @@ export function RiskRewardCard({
             : 'min-h-[68px] p-3 md:min-h-[72px] md:p-3.5'
         )}
       >
-        <span className="font-mono text-[10px] font-medium tracking-normal text-muted-foreground md:tracking-[0.18em]">
+        <span className="font-mono text-xs font-medium tracking-normal text-muted-foreground">
           Risk-to-Reward Ratio
         </span>
 

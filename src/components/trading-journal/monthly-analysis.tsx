@@ -517,7 +517,7 @@ export function MonthlyAnalysis({
       </div>
 
       <div className="mb-4 rounded-[20px] border border-border bg-card/95 p-3.5 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
-        <div className="mb-4 font-mono text-[10px] font-medium tracking-normal text-muted-foreground">
+        <div className="mb-4 font-mono text-xs font-medium tracking-normal text-muted-foreground">
           P&L mensile
         </div>
         <div className="ej-scrollbar w-full overflow-x-auto">
@@ -595,7 +595,7 @@ export function MonthlyAnalysis({
       </div>
 
       <div className="mb-4 rounded-[20px] border border-border bg-card/95 p-3.5 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
-        <div className="mb-4 font-mono text-[10px] font-medium tracking-normal text-muted-foreground">
+        <div className="mb-4 font-mono text-xs font-medium tracking-normal text-muted-foreground">
           Distribuzione operazioni
         </div>
 
@@ -684,7 +684,7 @@ export function MonthlyAnalysis({
       <div className="mb-4 overflow-hidden rounded-[20px] border border-border bg-card/95 shadow-[0_16px_36px_rgba(0,0,0,0.22)]">
         <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
           <div>
-            <div className="font-mono text-[10px] font-medium tracking-normal text-muted-foreground">
+            <div className="font-mono text-xs font-medium tracking-normal text-muted-foreground">
               Performance mese per mese
             </div>
             <p className="mt-1 font-sans text-xs text-muted-foreground">
@@ -792,7 +792,7 @@ export function MonthlyAnalysis({
       <div className="mb-4">
         <div className="rounded-[20px] border border-border bg-card/95 p-3.5 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
           <div className="mb-4 flex items-center justify-between gap-3">
-            <div className="font-mono text-[10px] font-medium tracking-normal text-muted-foreground">
+            <div className="font-mono text-xs font-medium tracking-normal text-muted-foreground">
               TAG ANALYTICS
             </div>
             <Button
@@ -812,7 +812,7 @@ export function MonthlyAnalysis({
           {isTagAnalyticsFilterOpen && (
             <div className="mb-4 rounded-xl border border-border bg-background/25 p-3">
               <label className="grid gap-1.5">
-                <span className="font-mono text-[10px] font-medium tracking-normal text-muted-foreground">
+                <span className="font-mono text-xs font-medium tracking-normal text-muted-foreground">
                   Ordine di visualizzazione
                 </span>
                 <select
@@ -1078,7 +1078,7 @@ export function MonthlyAnalysis({
 
               <section className="mt-5 rounded-[20px] border border-border bg-background/25">
                 <div className="border-b border-border px-4 py-3">
-                  <p className="font-mono text-[10px] font-medium tracking-normal text-muted-foreground">
+                  <p className="font-mono text-xs font-medium tracking-normal text-muted-foreground">
                     Trade del mese
                   </p>
                 </div>
@@ -1332,7 +1332,7 @@ function SummaryBox({
   return (
     <div className="max-w-full rounded-[20px] border border-border bg-card/95 shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
       <div className="flex min-h-[104px] min-w-0 flex-col justify-between gap-2 p-3 md:min-h-[118px] md:p-3.5">
-      <div className="font-mono text-[10px] tracking-normal text-muted-foreground md:tracking-[0.18em]">{title}</div>
+      <div className="font-mono text-[10px] tracking-normal text-muted-foreground">{title}</div>
       <div className="flex min-w-0 flex-wrap items-center gap-2">
         <div
           className={cn(
@@ -1393,7 +1393,7 @@ function MonthlyMetric({
 }) {
   return (
     <div className="min-w-0 rounded-xl border border-border bg-background/45 p-3">
-      <p className="font-mono text-[10px] font-medium tracking-normal text-muted-foreground">
+      <p className="font-mono text-xs font-medium tracking-normal text-muted-foreground">
         {label}
       </p>
       <p

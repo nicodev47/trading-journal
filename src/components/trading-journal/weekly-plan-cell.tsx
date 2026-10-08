@@ -14,7 +14,7 @@ export function WeeklyPlanCell({ hasData, approach, onClick }: WeeklyPlanCellPro
       onClick={onClick}
       className="flex h-24 w-full flex-col items-center justify-center gap-1 border-b border-r border-border bg-muted/20 transition-colors hover:bg-muted/40"
     >
-      <span className="font-sans text-[10px] font-medium tracking-normal text-muted-foreground">
+      <span className="font-sans text-xs font-medium tracking-normal text-muted-foreground">
         Plan
       </span>
       {hasData ? (

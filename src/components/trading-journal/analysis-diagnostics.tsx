@@ -1156,7 +1156,7 @@ export function AnalysisDiagnostics({
   return (
     <section className="space-y-4">
       <div className="rounded-[20px] border border-border bg-card/95 p-4 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
-        <h2 className="font-mono text-[10px] font-medium tracking-normal text-muted-foreground">
+        <h2 className="font-mono text-xs font-medium tracking-normal text-muted-foreground">
           Performance per giorno della settimana
         </h2>
 
@@ -1209,13 +1209,13 @@ export function AnalysisDiagnostics({
       </div>
 
       <div>
-        <h2 className="mb-3 font-mono text-[10px] font-medium tracking-normal text-muted-foreground">
+        <h2 className="mb-3 font-mono text-xs font-medium tracking-normal text-muted-foreground">
           Breakdown
         </h2>
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <div className="rounded-[20px] border border-border bg-card/95 p-4 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
-            <h3 className="font-mono text-[10px] font-medium tracking-normal text-muted-foreground">
+            <h3 className="font-mono text-xs font-medium tracking-normal text-muted-foreground">
               Trade per setup
             </h3>
 
@@ -1328,7 +1328,7 @@ export function AnalysisDiagnostics({
           </div>
 
           <div className="rounded-[20px] border border-border bg-card/95 p-4 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
-            <h3 className="font-mono text-[10px] font-medium tracking-normal text-muted-foreground">
+            <h3 className="font-mono text-xs font-medium tracking-normal text-muted-foreground">
               Long vs Short
             </h3>
 
@@ -1455,7 +1455,7 @@ export function AnalysisDiagnostics({
       <div className="space-y-4">
         <div className="grid grid-cols-1">
           <div className="rounded-[20px] border border-border bg-card/95 p-4 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
-            <h2 className="font-mono text-[10px] font-medium tracking-normal text-muted-foreground">
+            <h2 className="font-mono text-xs font-medium tracking-normal text-muted-foreground">
               ECLIPSE SCORE
             </h2>
 
@@ -1562,7 +1562,7 @@ export function AnalysisDiagnostics({
         <div className="grid grid-cols-2 gap-4">
           <div className="min-w-0 rounded-[20px] border border-border bg-card/95 p-4 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="font-mono text-[10px] font-medium tracking-normal text-muted-foreground">
+              <h2 className="font-mono text-xs font-medium tracking-normal text-muted-foreground">
                 P&amp;L CUMULATIVO GIORNALIERO
               </h2>
               <MonthChartSelector
@@ -1683,7 +1683,7 @@ export function AnalysisDiagnostics({
 
           <div className="min-w-0 rounded-[20px] border border-border bg-card/95 p-4 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="font-mono text-[10px] font-medium tracking-normal text-muted-foreground">
+              <h2 className="font-mono text-xs font-medium tracking-normal text-muted-foreground">
                 P&amp;L NETTO GIORNALIERO
               </h2>
               <MonthChartSelector
@@ -1798,7 +1798,7 @@ export function AnalysisDiagnostics({
 
       <div className="overflow-hidden rounded-[20px] border border-border bg-card/95 shadow-[0_16px_36px_rgba(0,0,0,0.22)]">
         <div className="border-b border-border px-4 py-4 sm:px-5">
-          <h2 className="font-mono text-[10px] font-medium tracking-normal text-muted-foreground">
+          <h2 className="font-mono text-xs font-medium tracking-normal text-muted-foreground">
             Setup breakdown
           </h2>
         </div>
@@ -1875,7 +1875,7 @@ export function AnalysisDiagnostics({
 
       <div className="overflow-hidden rounded-[20px] border border-border bg-card/95 shadow-[0_16px_36px_rgba(0,0,0,0.22)]">
         <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-4 sm:px-5">
-          <h2 className="font-mono text-[10px] font-medium tracking-normal text-muted-foreground">
+          <h2 className="font-mono text-xs font-medium tracking-normal text-muted-foreground">
             Trade log
           </h2>
           <Button

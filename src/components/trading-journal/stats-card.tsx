@@ -41,7 +41,7 @@ export function StatsCard({
   return (
     <Card className="max-w-full rounded-[20px] border border-border bg-card">
       <CardContent className="flex min-h-[68px] min-w-0 flex-col justify-between gap-2 p-3 md:min-h-[72px] md:p-3.5">
-        <span className="font-mono text-[10px] font-medium tracking-normal text-muted-foreground md:tracking-[0.18em]">
+        <span className="font-mono text-xs font-medium tracking-normal text-muted-foreground">
           {title}
         </span>
 

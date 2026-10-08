@@ -143,7 +143,7 @@ export function ExecutionMap({ trades }: ExecutionMapProps) {
     <section className="max-w-full rounded-[20px] border border-border bg-card p-3.5 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-6">
       <div className="mb-4 flex flex-col gap-3 sm:mb-5 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
-          <div className="font-mono text-[10px] font-medium tracking-normal text-muted-foreground">
+          <div className="font-mono text-xs font-medium tracking-normal text-muted-foreground">
             EXECUTION MAP
           </div>
           <p className="mt-1.5 font-sans text-xs leading-relaxed text-muted-foreground sm:mt-2 sm:text-sm">
@@ -184,7 +184,7 @@ export function ExecutionMap({ trades }: ExecutionMapProps) {
         {weekdayLabels.map((weekday) => (
           <div
             key={weekday}
-            className="px-0.5 pb-1 text-center font-mono text-[9px] font-semibold tracking-normal text-muted-foreground sm:px-1 sm:text-[10px] sm:tracking-[0.12em]"
+            className="px-0.5 pb-1 text-center font-mono text-[9px] font-semibold tracking-normal text-muted-foreground sm:px-1 sm:text-[10px]"
           >
             {weekday}
           </div>

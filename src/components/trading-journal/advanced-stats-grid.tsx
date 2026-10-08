@@ -306,7 +306,7 @@ export function AdvancedStatsGrid({
     >
       <Card className="self-start rounded-[20px] border border-border bg-card/95 py-0 shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
         <CardContent className="flex min-h-[112px] min-w-0 flex-col justify-center p-3.5 md:min-h-[148px] md:p-4">
-          <p className="font-mono text-[10px] font-medium tracking-normal text-muted-foreground md:tracking-[0.18em]">
+          <p className="font-mono text-xs font-medium tracking-normal text-muted-foreground">
             Giorni operativi
           </p>
 
@@ -331,7 +331,7 @@ export function AdvancedStatsGrid({
 
       <Card className="self-start rounded-[20px] border border-border bg-card/95 py-0 shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
         <CardContent className="flex min-h-[112px] min-w-0 flex-col justify-center p-3.5 md:min-h-[148px] md:p-4">
-          <p className="font-mono text-[10px] font-medium tracking-normal text-muted-foreground md:tracking-[0.18em]">
+          <p className="font-mono text-xs font-medium tracking-normal text-muted-foreground">
             {extended ? 'Serie massima' : 'Serie attuale'}
           </p>
 
@@ -378,7 +378,7 @@ export function AdvancedStatsGrid({
 
       <Card className="self-start rounded-[20px] border border-border bg-card/95 py-0 shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
         <CardContent className="flex min-h-[112px] min-w-0 flex-col justify-center p-3.5 md:min-h-[148px] md:p-4">
-          <p className="font-mono text-[10px] font-medium tracking-normal text-muted-foreground md:tracking-[0.18em]">
+          <p className="font-mono text-xs font-medium tracking-normal text-muted-foreground">
             Media win / Media loss
           </p>
 
@@ -425,7 +425,7 @@ export function AdvancedStatsGrid({
 
       <Card className="self-start rounded-[20px] border border-border bg-card/95 py-0 shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
         <CardContent className="flex min-h-[112px] min-w-0 flex-col justify-center p-3.5 md:min-h-[148px] md:p-4">
-          <p className="font-mono text-[10px] font-medium tracking-normal text-muted-foreground md:tracking-[0.18em]">
+          <p className="font-mono text-xs font-medium tracking-normal text-muted-foreground">
             Finestra operativa migliore
           </p>
 
@@ -447,7 +447,7 @@ export function AdvancedStatsGrid({
 
       <Card className="self-start rounded-[20px] border border-border bg-card/95 py-0 shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
         <CardContent className="flex min-h-[112px] min-w-0 flex-col justify-center p-3.5 md:min-h-[148px] md:p-4">
-          <p className="font-mono text-[10px] font-medium tracking-normal text-muted-foreground md:tracking-[0.18em]">
+          <p className="font-mono text-xs font-medium tracking-normal text-muted-foreground">
             Setup migliore
           </p>
 
@@ -478,7 +478,7 @@ export function AdvancedStatsGrid({
 
       <Card className="self-start rounded-[20px] border border-border bg-card/95 py-0 shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
         <CardContent className="flex min-h-[112px] min-w-0 flex-col justify-center p-3.5 md:min-h-[148px] md:p-4">
-          <p className="font-mono text-[10px] font-medium tracking-normal text-muted-foreground md:tracking-[0.18em]">
+          <p className="font-mono text-xs font-medium tracking-normal text-muted-foreground">
             Long vs Short
           </p>
 
@@ -732,7 +732,7 @@ function CompactAnalysisCard({
   return (
     <Card className="self-start rounded-[20px] border border-border bg-card/95 py-0 shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
       <CardContent className="flex min-h-[104px] min-w-0 flex-col justify-center p-3.5 md:min-h-[124px] md:p-4">
-        <p className="font-mono text-[10px] font-medium tracking-normal text-muted-foreground md:tracking-[0.18em]">
+        <p className="font-mono text-xs font-medium tracking-normal text-muted-foreground">
           {title}
         </p>
         <p

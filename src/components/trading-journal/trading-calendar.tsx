@@ -301,18 +301,18 @@ export function TradingCalendar({
       </div>
 
       <div className="w-full overflow-hidden">
-        <div className="flex w-full min-w-0 flex-col gap-px bg-border">
-          <div className="grid grid-cols-7 gap-px sm:grid-cols-[repeat(7,minmax(0,1fr))_80px] lg:grid-cols-[repeat(7,minmax(0,1fr))_155px]">
+        <div className="flex w-full min-w-0 flex-col gap-1.5 p-2 sm:p-3">
+          <div className="grid grid-cols-7 gap-1.5 sm:grid-cols-[repeat(7,minmax(0,1fr))_80px] lg:grid-cols-[repeat(7,minmax(0,1fr))_155px]">
             {weekdayLabels.map((day) => (
               <div
                 key={day}
-                className="bg-card px-1 py-1.5 font-sans text-[11px] font-bold tracking-[-0.02em] text-muted-foreground/85 sm:px-2 sm:py-2 sm:text-xs"
+                className="px-1 py-1 font-sans text-[11px] font-medium text-muted-foreground sm:px-2 sm:text-xs"
               >
                 {day}
               </div>
             ))}
 
-            <div className="hidden bg-card px-1 py-1.5 text-right font-sans text-[10px] font-bold tracking-normal text-muted-foreground/85 sm:block sm:px-2.5 sm:py-2.5 sm:text-xs lg:text-sm">
+            <div className="hidden px-1 py-1 text-right font-sans text-xs font-medium tracking-normal text-muted-foreground sm:block sm:px-2.5 sm:text-xs">
               <span className="sm:hidden">Sett</span>
               <span className="hidden sm:inline">Settimana</span>
             </div>
@@ -321,7 +321,7 @@ export function TradingCalendar({
           {weeks.map((week, weekIndex) => (
             <div
               key={weekIndex}
-              className="grid grid-cols-7 gap-px sm:grid-cols-[repeat(7,minmax(0,1fr))_80px] lg:grid-cols-[repeat(7,minmax(0,1fr))_155px]"
+              className="grid grid-cols-7 gap-1.5 sm:grid-cols-[repeat(7,minmax(0,1fr))_80px] lg:grid-cols-[repeat(7,minmax(0,1fr))_155px]"
             >
               {week.map((day) => {
                 const dateKey = getDateKey(day);
