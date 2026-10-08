@@ -1493,11 +1493,11 @@ export function DayEditorDialog({
               {autosaveStatus === 'saving'
                 ? 'Salvataggio...'
                 : autosaveStatus === 'saved'
-                  ? 'Salvato'
+                  ? 'Salvato in automatico'
                   : ''}
             </span>
 
-            <Button onClick={handleSalva} className="bg-primary text-primary-foreground hover:bg-primary/90">
+            <Button onClick={handleSalva} className="bg-profit text-background hover:bg-profit/90">
               Salva
             </Button>
           </div>
