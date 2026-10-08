@@ -6,7 +6,7 @@ const INTRO_POINTS = [
   {
     icon: Target,
     title: 'Watchlist con i tuoi Asset preferiti',
-    text: 'Scegli gli strumenti che operi e ritrovali subito nei menu, nel calendario e nei filtri.',
+    text: 'Scegli gli strumenti sui quali operi e ritrovali subito nei menu, nel calendario e nei filtri.',
   },
   {
     icon: BarChart3,
@@ -16,7 +16,7 @@ const INTRO_POINTS = [
   {
     icon: Clock,
     title: 'Ottimizzare le tue Sessioni Operative',
-    text: 'Indica i tuoi orari e scopri in quali fasce funzioni meglio.',
+    text: 'Sessioni Operative sviluppate sui tuoi orari abituali.',
   },
   {
     icon: UserRound,
