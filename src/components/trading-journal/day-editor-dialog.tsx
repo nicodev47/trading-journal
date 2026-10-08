@@ -34,13 +34,14 @@ import { cn } from '@/lib/utils';
 import {
   CUSTOM_TAG_PREFIX,
   TRADE_TAGS,
-  VALID_TRADE_SETUPS,
   getEditableSetupValue,
   type Trade,
   type ScreenshotData,
 } from '@/lib/types/trade';
 import { generateId } from '@/lib/calculations';
 import { useStreamerMode } from '@/contexts/streamer-mode-context';
+import { usePreferences } from '@/contexts/preferences-context';
+import { getMenuOptions } from '@/lib/preferences';
 import { PROFILE_NAME_KEY } from '@/lib/export-filename';
 import {
   DEFAULT_TAG_COLOR,
@@ -175,6 +176,7 @@ export function DayEditorDialog({
   onUpdateTagColor,
   onRemoveTag,
 }: DayEditorDialogProps) {
+  const { preferences } = usePreferences();
   const { streamerMode } = useStreamerMode();
   const [tradeRows, setTradeRows] = useState<TradeRow[]>([]);
   const [timeDrafts, setTimeDrafts] = useState<Record<string, string>>({});
@@ -815,8 +817,12 @@ export function DayEditorDialog({
 
                       <SelectContent>
                         <SelectGroup>
-                          <SelectItem value="NQ">NQ</SelectItem>
-                          <SelectItem value="MNQ">MNQ</SelectItem>
+                          {getMenuOptions(preferences.assets, row.symbol).map(option => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.value}
+                              {option.orphan ? ' (non più nelle preferenze)' : ''}
+                            </SelectItem>
+                          ))}
                         </SelectGroup>
                       </SelectContent>
                     </Select>
@@ -931,9 +937,10 @@ export function DayEditorDialog({
 
                       <SelectContent>
                         <SelectGroup>
-                          {VALID_TRADE_SETUPS.map(setup => (
-                            <SelectItem key={setup} value={setup}>
-                              {setup}
+                          {getMenuOptions(preferences.setups, row.setup).map(option => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.value}
+                              {option.orphan ? ' (non più nelle preferenze)' : ''}
                             </SelectItem>
                           ))}
                         </SelectGroup>

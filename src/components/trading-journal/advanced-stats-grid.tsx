@@ -9,6 +9,7 @@ import {
 } from '@/lib/operating-windows';
 import { isValidTradeSetup, type Trade } from '@/lib/types/trade';
 import { useStreamerMode } from '@/contexts/streamer-mode-context';
+import { usePreferences } from '@/contexts/preferences-context';
 import { cn } from '@/lib/utils';
 import {
   getRiskRewardCardPresentation,
@@ -69,6 +70,7 @@ export function AdvancedStatsGrid({
   extended = false,
 }: AdvancedStatsGridProps) {
   const { streamerMode, sundayWeekStart } = useStreamerMode();
+  const { preferences } = usePreferences();
   const data = useMemo(() => {
     const validTrades = trades.filter(isValidStatTrade);
     const winningTrades = validTrades.filter((trade) => getTradeOutcome(trade) === 'win');
@@ -89,7 +91,7 @@ export function AdvancedStatsGrid({
       const date = trade.exitDate.split('T')[0];
       const netPnl = trade.pnl - trade.commission;
       tradesByDay.set(date, (tradesByDay.get(date) ?? 0) + 1);
-      const operatingWindow = getOperatingWindowName(trade);
+      const operatingWindow = getOperatingWindowName(trade, preferences.windows);
 
       if (operatingWindow) {
         operatingWindowStats.set(
@@ -139,7 +141,7 @@ export function AdvancedStatsGrid({
     );
 
     const tradingDays = tradesByDay.size;
-    const bestOperatingWindow = getBestOperatingWindow(validTrades);
+    const bestOperatingWindow = getBestOperatingWindow(validTrades, preferences.windows);
     const bestSetup = Array.from(setupStats.entries()).reduce<{
       name: string | null;
       trades: number;
@@ -282,7 +284,7 @@ export function AdvancedStatsGrid({
       maxConsecutiveProfit,
       maxConsecutiveProfitTrades,
     };
-  }, [sundayWeekStart, trades]);
+  }, [sundayWeekStart, trades, preferences.windows]);
 
   const formatCurrency = (value: number) =>
     `${value.toLocaleString('it-IT', {

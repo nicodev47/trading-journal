@@ -12,10 +12,11 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
+import { usePreferences } from '@/contexts/preferences-context';
+import { getMenuOptions } from '@/lib/preferences';
 import {
   CUSTOM_TAG_PREFIX,
   TRADE_TAGS,
-  VALID_TRADE_SETUPS,
   type ScreenshotData,
   type Trade,
 } from '@/lib/types/trade';
@@ -242,6 +243,7 @@ export function TradeDetailDialog({
   showBackButton = false,
   onBack,
 }: TradeDetailDialogProps) {
+  const { preferences } = usePreferences();
   const [setupDraft, setSetupDraft] = useState('');
   const [savedSetup, setSavedSetup] = useState('');
 
@@ -341,9 +343,10 @@ export function TradeDetailDialog({
                   className="ej-filter-select h-9 w-full rounded-lg border border-border bg-background/70 px-3 font-sans tabular-nums text-xs text-foreground outline-none transition-colors focus:border-ring/60"
                 >
                   <option value="">Seleziona setup</option>
-                  {VALID_TRADE_SETUPS.map((setup) => (
-                    <option key={setup} value={setup}>
-                      {setup}
+                  {getMenuOptions(preferences.setups, setupDraft).map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.value}
+                      {option.orphan ? ' (non più nelle preferenze)' : ''}
                     </option>
                   ))}
                 </select>

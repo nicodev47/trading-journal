@@ -1,5 +1,6 @@
 import type { Trade } from '@/lib/types/trade';
 import { getTradeSharePresentation } from '@/lib/trade-share-outcome';
+import { usePreferences } from '@/contexts/preferences-context';
 import {
   ShareCardFooter,
   ShareCardFrame,
@@ -66,6 +67,7 @@ export function TradeShareCard({
   streamerMode,
   className,
 }: TradeShareCardProps) {
+  const { preferences } = usePreferences();
   const netPnl = trade.pnl - (trade.commission || 0);
   const { accent, badgeLabel } = getTradeSharePresentation(netPnl);
   const identity = getShareIdentity(handle);
@@ -92,7 +94,13 @@ export function TradeShareCard({
       </div>
 
       <ShareCardFooter
-        avatar={identity?.initials ?? 'EJ'}
+        avatar={
+          preferences.photo ? (
+            <img src={preferences.photo} alt="" className="size-full object-cover" />
+          ) : (
+            identity?.initials ?? 'EJ'
+          )
+        }
         name={identity?.displayName ?? 'EclipseJournal'}
         caption="Trading journal"
         right={badgeLabel}

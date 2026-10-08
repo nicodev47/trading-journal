@@ -1,3 +1,4 @@
+import { usePreferences } from '@/contexts/preferences-context';
 import {
   ShareCardFooter,
   ShareCardFrame,
@@ -60,6 +61,7 @@ export function ProfileShareCard({
   streamerMode,
   className,
 }: ProfileShareCardProps) {
+  const { preferences } = usePreferences();
   const identity =
     profile.traderName.trim() === 'Trader'
       ? { initials: 'TR', displayName: 'Trader' }
@@ -100,7 +102,13 @@ export function ProfileShareCard({
       </div>
 
       <ShareCardFooter
-        avatar={identity.initials}
+        avatar={
+          preferences.photo ? (
+            <img src={preferences.photo} alt="" className="size-full object-cover" />
+          ) : (
+            identity.initials
+          )
+        }
         name={identity.displayName}
         caption="Profilo trader"
         right={`Livello ${profile.level}`}

@@ -173,7 +173,7 @@ export function ShareCardFooter({
   return (
     <footer className="mt-auto flex items-center pt-8 justify-between gap-6">
       <div className="flex items-center gap-4">
-        <div className="flex size-16 items-center justify-center rounded-full bg-white/10 text-[24px] font-semibold text-white">
+        <div className="flex size-16 items-center justify-center overflow-hidden rounded-full bg-white/10 text-[24px] font-semibold text-white">
           {avatar}
         </div>
         <div>

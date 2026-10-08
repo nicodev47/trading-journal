@@ -187,6 +187,7 @@ const getBacktestHasTrades = () => {
 
 function AppContent() {
  const { streamerMode } = useStreamerMode();
+ const { preferences } = usePreferences();
  const {
    workspaces,
    maxCustomWorkspaces,
@@ -644,7 +645,10 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
       toast.info('Non ci sono dati da esportare');
       return;
     }
-    const blob = createZipBlob(files);
+    const blob = createZipBlob([
+      ...files,
+      { path: 'Preferenze/preferenze.json', content: JSON.stringify(preferences, null, 2) },
+    ]);
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     const date = new Date();

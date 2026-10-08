@@ -127,24 +127,18 @@ export const TRADE_TAGS = [
 
 export const CUSTOM_TAG_PREFIX = 'custom:';
 
-export const VALID_TRADE_SETUPS = [
-  'Continuation',
-  'Reversal Sequence',
-  'Reversal Sequence Failed',
-] as const;
-
-export type TradeSetup = typeof VALID_TRADE_SETUPS[number];
+export type TradeSetup = string;
 
 export function isValidTradeSetup(
   value?: string | null
-): value is TradeSetup {
-  return VALID_TRADE_SETUPS.includes(value as TradeSetup);
+): value is string {
+  return typeof value === 'string' && value.trim().length > 0;
 }
 
 export function getEditableSetupValue(
   value?: string | null
-): TradeSetup | '' {
-  return isValidTradeSetup(value) ? value : '';
+): string {
+  return isValidTradeSetup(value) ? value.trim() : '';
 }
 
 export const EMOTIONAL_STATES = [

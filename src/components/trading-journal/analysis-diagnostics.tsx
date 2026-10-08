@@ -31,12 +31,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useStreamerMode } from '@/contexts/streamer-mode-context';
+import { usePreferences } from '@/contexts/preferences-context';
 import { TradeDetailDialog } from '@/components/trading-journal/trade-detail-dialog';
 import { TradeGroupDetailDialog } from '@/components/trading-journal/trade-group-detail-dialog';
 import {
   CUSTOM_TAG_PREFIX,
   TRADE_TAGS,
-  VALID_TRADE_SETUPS,
   isValidTradeSetup,
   type Trade,
 } from '@/lib/types/trade';
@@ -82,7 +82,7 @@ type ChartClickState = {
 type TradeLogFilters = {
   direction: 'all' | 'long' | 'short';
   result: 'all' | 'profit' | 'loss' | 'missed';
-  asset: 'all' | 'NQ' | 'MNQ';
+  asset: string;
   setup: string;
   tag: string;
   favoritesOnly: 'yes' | 'no';
@@ -533,6 +533,7 @@ export function AnalysisDiagnostics({
   onUpdateTrade,
 }: AnalysisDiagnosticsProps) {
   const { streamerMode, sundayWeekStart } = useStreamerMode();
+  const { preferences } = usePreferences();
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
   const [tradeGroupDialog, setTradeGroupDialog] =
     useState<TradeGroupDialogState | null>(null);
@@ -652,7 +653,7 @@ export function AnalysisDiagnostics({
     >();
 
     validStatTrades.forEach((trade) => {
-      const label = getOperatingWindowName(trade);
+      const label = getOperatingWindowName(trade, preferences.windows);
       if (!label) return;
 
       const current = sessionStats.get(label) ?? { trades: 0, totalPnl: 0 };
@@ -788,7 +789,7 @@ export function AnalysisDiagnostics({
       finalCumulativePnl,
       totalTrades: validStatTrades.length,
     };
-  }, [sundayWeekStart, trades]);
+  }, [sundayWeekStart, trades, preferences.windows]);
 
   const availableDailyPnlMonths = useMemo(
     () =>
@@ -878,14 +879,36 @@ export function AnalysisDiagnostics({
         return !isValidTradeSetup(setup);
       });
 
+      const usedSetups = Array.from(
+        new Set(
+          data.tradeLog
+            .map(trade => trade.strategy?.trim() ?? '')
+            .filter(isValidTradeSetup)
+        )
+      );
+      const orderedSetups = [
+        ...preferences.setups.filter(setup => usedSetups.includes(setup)),
+        ...usedSetups
+          .filter(setup => !preferences.setups.includes(setup))
+          .sort((a, b) => a.localeCompare(b, 'it')),
+      ];
+
       return [
-        ...VALID_TRADE_SETUPS.filter(setup =>
-          data.tradeLog.some(trade => trade.strategy?.trim() === setup)
-        ),
+        ...orderedSetups,
         ...(hasTradesWithoutSetup ? ['Senza Setup'] : []),
       ];
     },
-    [data.tradeLog]
+    [data.tradeLog, preferences.setups]
+  );
+  const availableAssets = useMemo(
+    () => {
+      const tradeAssets = data.tradeLog
+        .map(trade => trade.pair)
+        .filter((pair): pair is string => Boolean(pair));
+
+      return Array.from(new Set([...preferences.assets, ...tradeAssets]));
+    },
+    [data.tradeLog, preferences.assets]
   );
   const availableTags = useMemo(
     () =>
@@ -1934,14 +1957,17 @@ export function AnalysisDiagnostics({
                   onChange={(event) =>
                     setTradeLogFilters((filters) => ({
                       ...filters,
-                      asset: event.target.value as TradeLogFilters['asset'],
+                      asset: event.target.value,
                     }))
                   }
                   className="ej-filter-select h-9 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-ring/60"
                 >
                   <option value="all">Tutti</option>
-                  <option value="NQ">NQ</option>
-                  <option value="MNQ">MNQ</option>
+                  {availableAssets.map(asset => (
+                    <option key={asset} value={asset}>
+                      {asset}
+                    </option>
+                  ))}
                 </select>
               </FilterField>
 
