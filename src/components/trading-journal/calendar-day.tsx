@@ -210,7 +210,7 @@ export function CalendarDay({
         <span
           className={cn(
             'font-sans text-[12px] font-bold leading-none tracking-[-0.04em] min-[380px]:text-[13px] sm:text-[15px] md:text-[17px]',
-            isToday && 'text-profit',
+            isToday && 'text-primary',
             !isToday && 'text-foreground'
           )}
         >
@@ -296,7 +296,7 @@ export function CalendarDay({
           </span>
 
           <div
-            className="pointer-events-none absolute bottom-full right-0 z-50 mb-1 max-w-[min(150px,calc(100vw-2rem))] rounded-md border border-border/80 bg-background/95 px-1.5 py-1.5 text-left opacity-0 shadow-lg backdrop-blur transition group-hover/tag-menu:opacity-100"
+            className="pointer-events-none absolute bottom-full right-0 z-50 mb-1 max-w-[min(150px,calc(100vw-2rem))] rounded-lg border border-border/80 bg-background/95 px-1.5 py-1.5 text-left opacity-0 shadow-lg backdrop-blur transition group-hover/tag-menu:opacity-100"
           >
             <div className="flex max-w-full flex-col gap-0.5">
               {hiddenTags.map((tag) => (

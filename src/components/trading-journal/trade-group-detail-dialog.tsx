@@ -91,7 +91,7 @@ function SummaryStat({
 }) {
   return (
     <div className="rounded-xl border border-border/80 bg-background/35 p-3">
-      <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-muted-foreground">
+      <p className="font-mono text-[9px] tracking-normal text-muted-foreground">
         {label}
       </p>
       <div className="mt-2 font-mono text-sm font-semibold text-foreground">
@@ -223,7 +223,7 @@ export function TradeGroupDetailDialog({
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="h-8 rounded-lg border-border bg-background/50 px-3 font-mono text-xs text-muted-foreground hover:bg-secondary hover:text-foreground"
+                      className="h-8 rounded-xl border-border bg-background/50 px-3 font-mono text-xs text-muted-foreground hover:bg-secondary hover:text-foreground"
                       onClick={() => onOpenTrade(trade)}
                     >
                       Apri
@@ -244,7 +244,7 @@ export function TradeGroupDetailDialog({
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="h-9 w-9 rounded-lg border border-border bg-background/50 p-0 font-mono text-xs text-muted-foreground hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                  className="h-9 w-9 rounded-xl border border-border bg-background/50 p-0 font-mono text-xs text-muted-foreground hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
                   disabled={currentPage === 1}
                   onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
                 >
@@ -257,7 +257,7 @@ export function TradeGroupDetailDialog({
                     variant="outline"
                     size="sm"
                     className={cn(
-                      'h-9 w-9 rounded-lg border border-border bg-background/50 p-0 font-mono text-xs text-muted-foreground hover:bg-secondary hover:text-foreground',
+                      'h-9 w-9 rounded-xl border border-border bg-background/50 p-0 font-mono text-xs text-muted-foreground hover:bg-secondary hover:text-foreground',
                       page === currentPage &&
                         'bg-profit/20 text-foreground hover:bg-profit/25'
                     )}
@@ -270,7 +270,7 @@ export function TradeGroupDetailDialog({
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="h-9 w-9 rounded-lg border border-border bg-background/50 p-0 font-mono text-xs text-muted-foreground hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                  className="h-9 w-9 rounded-xl border border-border bg-background/50 p-0 font-mono text-xs text-muted-foreground hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
                   disabled={currentPage === totalPages}
                   onClick={() =>
                     setCurrentPage((page) => Math.min(totalPages, page + 1))

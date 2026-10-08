@@ -464,7 +464,7 @@ export function MonthlyAnalysis({
           <Button variant="outline" size="icon" className="size-8" onClick={goPreviousYear}>
             <ChevronLeft className="size-4" />
           </Button>
-          <span className="min-w-16 rounded-md border border-border bg-card px-3 py-2 text-center font-mono text-xs font-semibold">
+          <span className="min-w-16 rounded-lg border border-border bg-card px-3 py-2 text-center font-mono text-xs font-semibold">
             {selectedYear}
           </span>
           <Button variant="outline" size="icon" className="size-8" onClick={goNextYear}>
@@ -516,8 +516,8 @@ export function MonthlyAnalysis({
         </div>
       </div>
 
-      <div className="mb-4 rounded-2xl border border-border bg-card/95 p-3.5 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
-        <div className="mb-4 font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+      <div className="mb-4 rounded-[20px] border border-border bg-card/95 p-3.5 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
+        <div className="mb-4 font-mono text-[10px] font-medium tracking-normal text-muted-foreground">
           P&L mensile
         </div>
         <div className="ej-scrollbar w-full overflow-x-auto">
@@ -594,8 +594,8 @@ export function MonthlyAnalysis({
         </div>
       </div>
 
-      <div className="mb-4 rounded-2xl border border-border bg-card/95 p-3.5 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
-        <div className="mb-4 font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+      <div className="mb-4 rounded-[20px] border border-border bg-card/95 p-3.5 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
+        <div className="mb-4 font-mono text-[10px] font-medium tracking-normal text-muted-foreground">
           Distribuzione operazioni
         </div>
 
@@ -681,10 +681,10 @@ export function MonthlyAnalysis({
         />
       </div>
 
-      <div className="mb-4 overflow-hidden rounded-2xl border border-border bg-card/95 shadow-[0_16px_36px_rgba(0,0,0,0.22)]">
+      <div className="mb-4 overflow-hidden rounded-[20px] border border-border bg-card/95 shadow-[0_16px_36px_rgba(0,0,0,0.22)]">
         <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
           <div>
-            <div className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+            <div className="font-mono text-[10px] font-medium tracking-normal text-muted-foreground">
               Performance mese per mese
             </div>
             <p className="mt-1 font-sans text-xs text-muted-foreground">
@@ -694,7 +694,7 @@ export function MonthlyAnalysis({
         </div>
         <div className="ej-scrollbar w-full overflow-x-auto">
           <div className="min-w-[960px]">
-        <div className="grid grid-cols-[1.2fr_1fr_0.8fr_0.8fr_0.9fr_0.9fr_1fr_1fr_64px] border-b border-border px-4 py-3 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+        <div className="grid grid-cols-[1.2fr_1fr_0.8fr_0.8fr_0.9fr_0.9fr_1fr_1fr_64px] border-b border-border px-4 py-3 font-mono text-[10px] tracking-normal text-muted-foreground">
           <span>Mese</span>
           <span>P&L netto</span>
           <span>Trade</span>
@@ -765,7 +765,7 @@ export function MonthlyAnalysis({
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="h-8 rounded-lg border-border bg-background/50 px-3 font-mono text-xs text-muted-foreground hover:border-profit/50 hover:bg-secondary hover:text-foreground"
+                  className="h-8 rounded-xl border-border bg-background/50 px-3 font-mono text-xs text-muted-foreground hover:border-profit/50 hover:bg-secondary hover:text-foreground"
                   onClick={(event) => {
                     event.stopPropagation();
                     openMonthDetail(month.monthIndex);
@@ -790,16 +790,16 @@ export function MonthlyAnalysis({
       </div>
 
       <div className="mb-4">
-        <div className="rounded-2xl border border-border bg-card/95 p-3.5 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
+        <div className="rounded-[20px] border border-border bg-card/95 p-3.5 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
           <div className="mb-4 flex items-center justify-between gap-3">
-            <div className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+            <div className="font-mono text-[10px] font-medium tracking-normal text-muted-foreground">
               TAG ANALYTICS
             </div>
             <Button
               type="button"
               variant="outline"
               size="sm"
-              className="h-8 gap-2 rounded-lg border-border bg-background/50 px-3 font-sans text-xs font-semibold text-muted-foreground hover:bg-secondary hover:text-foreground"
+              className="h-8 gap-2 rounded-xl border-border bg-background/50 px-3 font-sans text-xs font-semibold text-muted-foreground hover:bg-secondary hover:text-foreground"
               onClick={() =>
                 setIsTagAnalyticsFilterOpen((isOpen) => !isOpen)
               }
@@ -812,7 +812,7 @@ export function MonthlyAnalysis({
           {isTagAnalyticsFilterOpen && (
             <div className="mb-4 rounded-xl border border-border bg-background/25 p-3">
               <label className="grid gap-1.5">
-                <span className="font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                <span className="font-mono text-[10px] font-medium tracking-normal text-muted-foreground">
                   Ordine di visualizzazione
                 </span>
                 <select
@@ -822,7 +822,7 @@ export function MonthlyAnalysis({
                       event.target.value as TagAnalyticsOrder
                     )
                   }
-                  className="ej-filter-select h-9 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-profit/60"
+                  className="ej-filter-select h-9 rounded-xl border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-profit/60"
                 >
                   <option value="most-used">Più utilizzato</option>
                   <option value="least-used">Meno utilizzato</option>
@@ -867,7 +867,7 @@ export function MonthlyAnalysis({
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="h-9 rounded-lg border-border bg-background/50 px-3 font-mono text-xs text-muted-foreground hover:border-profit/50 hover:bg-secondary hover:text-foreground max-sm:col-span-2 max-sm:w-full"
+                      className="h-9 rounded-xl border-border bg-background/50 px-3 font-mono text-xs text-muted-foreground hover:border-profit/50 hover:bg-secondary hover:text-foreground max-sm:col-span-2 max-sm:w-full"
                       onClick={() =>
                         openTradeGroup(
                           `Tag: ${tag.label}`,
@@ -904,7 +904,7 @@ export function MonthlyAnalysis({
                 type="button"
                 variant="outline"
                 size="sm"
-                className="h-8 min-w-8 rounded-lg border border-border bg-background/50 px-2 font-mono text-xs text-muted-foreground hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                className="h-8 min-w-8 rounded-xl border border-border bg-background/50 px-2 font-mono text-xs text-muted-foreground hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
                 disabled={tagAnalyticsPage === 1}
                 onClick={() =>
                   setTagAnalyticsPage((page) => Math.max(1, page - 1))
@@ -921,8 +921,8 @@ export function MonthlyAnalysis({
                   size="sm"
                   className={
                     page === tagAnalyticsPage
-                      ? 'h-8 min-w-8 rounded-lg border border-profit bg-profit px-2 font-mono text-xs font-bold text-background hover:bg-profit hover:text-background'
-                      : 'h-8 min-w-8 rounded-lg border border-border bg-background/50 px-2 font-mono text-xs text-muted-foreground hover:bg-secondary hover:text-foreground'
+                      ? 'h-8 min-w-8 rounded-xl border border-profit bg-profit px-2 font-mono text-xs font-bold text-background hover:bg-profit hover:text-background'
+                      : 'h-8 min-w-8 rounded-xl border border-border bg-background/50 px-2 font-mono text-xs text-muted-foreground hover:bg-secondary hover:text-foreground'
                   }
                   onClick={() => setTagAnalyticsPage(page)}
                 >
@@ -934,7 +934,7 @@ export function MonthlyAnalysis({
                 type="button"
                 variant="outline"
                 size="sm"
-                className="h-8 min-w-8 rounded-lg border border-border bg-background/50 px-2 font-mono text-xs text-muted-foreground hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                className="h-8 min-w-8 rounded-xl border border-border bg-background/50 px-2 font-mono text-xs text-muted-foreground hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
                 disabled={tagAnalyticsPage === tagAnalyticsTotalPages}
                 onClick={() =>
                   setTagAnalyticsPage((page) =>
@@ -963,7 +963,7 @@ export function MonthlyAnalysis({
         }}
       >
         {selectedMonthDetail && selectedMonthStats && (
-          <DialogContent className="max-h-[92dvh] w-[calc(100vw-1.75rem)] max-w-5xl overflow-hidden rounded-2xl border border-border bg-card p-0 shadow-[0_20px_50px_rgba(0,0,0,0.35)]">
+          <DialogContent className="max-h-[92dvh] w-[calc(100vw-1.75rem)] max-w-5xl overflow-hidden rounded-[20px] border border-border bg-card p-0 shadow-[0_20px_50px_rgba(0,0,0,0.35)]">
             <DialogHeader className="border-b border-border px-4 py-3.5 text-left sm:px-5 sm:py-4">
               <DialogTitle className="font-mono text-base text-foreground sm:text-lg">
                 Performance — {selectedMonthDetail.monthName} {selectedYear}
@@ -1076,9 +1076,9 @@ export function MonthlyAnalysis({
                 />
               </section>
 
-              <section className="mt-5 rounded-2xl border border-border bg-background/25">
+              <section className="mt-5 rounded-[20px] border border-border bg-background/25">
                 <div className="border-b border-border px-4 py-3">
-                  <p className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                  <p className="font-mono text-[10px] font-medium tracking-normal text-muted-foreground">
                     Trade del mese
                   </p>
                 </div>
@@ -1141,7 +1141,7 @@ export function MonthlyAnalysis({
                               {trade.tags.slice(0, 3).map((tag) => (
                                 <span
                                   key={tag}
-                                  className="rounded-md border border-profit/20 bg-profit/5 px-1.5 py-0.5 font-mono text-[10px] text-profit"
+                                  className="rounded-lg border border-profit/20 bg-profit/5 px-1.5 py-0.5 font-mono text-[10px] text-profit"
                                 >
                                   {getTagLabel(tag)}
                                 </span>
@@ -1164,7 +1164,7 @@ export function MonthlyAnalysis({
                             type="button"
                             variant="outline"
                             size="sm"
-                            className="h-8 rounded-lg border-border bg-background/50 px-3 font-mono text-xs text-muted-foreground hover:border-profit/50 hover:bg-secondary hover:text-foreground max-md:w-full"
+                            className="h-8 rounded-xl border-border bg-background/50 px-3 font-mono text-xs text-muted-foreground hover:border-profit/50 hover:bg-secondary hover:text-foreground max-md:w-full"
                             onClick={(event) => {
                               event.stopPropagation();
                               setSelectedMonthIndex(null);
@@ -1196,7 +1196,7 @@ export function MonthlyAnalysis({
                         type="button"
                         variant="outline"
                         size="sm"
-                        className="h-8 min-w-8 rounded-lg border border-border bg-background/50 px-2 font-mono text-xs text-muted-foreground hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                        className="h-8 min-w-8 rounded-xl border border-border bg-background/50 px-2 font-mono text-xs text-muted-foreground hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
                         disabled={monthlyTradesPage === 1}
                         onClick={() =>
                           setMonthlyTradesPage((page) =>
@@ -1219,8 +1219,8 @@ export function MonthlyAnalysis({
                           size="sm"
                           className={
                             page === monthlyTradesPage && page !== 1
-                              ? 'h-8 min-w-8 rounded-lg border border-profit bg-profit px-2 font-mono text-xs font-bold text-background hover:bg-profit hover:text-background'
-                              : 'h-8 min-w-8 rounded-lg border border-border bg-background/50 px-2 font-mono text-xs text-muted-foreground hover:bg-secondary hover:text-foreground'
+                              ? 'h-8 min-w-8 rounded-xl border border-profit bg-profit px-2 font-mono text-xs font-bold text-background hover:bg-profit hover:text-background'
+                              : 'h-8 min-w-8 rounded-xl border border-border bg-background/50 px-2 font-mono text-xs text-muted-foreground hover:bg-secondary hover:text-foreground'
                           }
                           onClick={() => setMonthlyTradesPage(page)}
                         >
@@ -1232,7 +1232,7 @@ export function MonthlyAnalysis({
                         type="button"
                         variant="outline"
                         size="sm"
-                        className="h-8 min-w-8 rounded-lg border border-border bg-background/50 px-2 font-mono text-xs text-muted-foreground hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                        className="h-8 min-w-8 rounded-xl border border-border bg-background/50 px-2 font-mono text-xs text-muted-foreground hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
                         disabled={
                           monthlyTradesPage === monthlyTradesTotalPages
                         }
@@ -1330,9 +1330,9 @@ function SummaryBox({
     );
 
   return (
-    <div className="max-w-full rounded-2xl border border-border bg-card/95 shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
+    <div className="max-w-full rounded-[20px] border border-border bg-card/95 shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
       <div className="flex min-h-[104px] min-w-0 flex-col justify-between gap-2 p-3 md:min-h-[118px] md:p-3.5">
-      <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground md:tracking-[0.18em]">{title}</div>
+      <div className="font-mono text-[10px] tracking-normal text-muted-foreground md:tracking-[0.18em]">{title}</div>
       <div className="flex min-w-0 flex-wrap items-center gap-2">
         <div
           className={cn(
@@ -1393,7 +1393,7 @@ function MonthlyMetric({
 }) {
   return (
     <div className="min-w-0 rounded-xl border border-border bg-background/45 p-3">
-      <p className="font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+      <p className="font-mono text-[10px] font-medium tracking-normal text-muted-foreground">
         {label}
       </p>
       <p

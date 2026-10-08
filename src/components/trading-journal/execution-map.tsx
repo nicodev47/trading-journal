@@ -140,10 +140,10 @@ export function ExecutionMap({ trades }: ExecutionMapProps) {
   };
 
   return (
-    <section className="max-w-full rounded-2xl border border-border bg-card p-3.5 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-6">
+    <section className="max-w-full rounded-[20px] border border-border bg-card p-3.5 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-6">
       <div className="mb-4 flex flex-col gap-3 sm:mb-5 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
-          <div className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+          <div className="font-mono text-[10px] font-medium tracking-normal text-muted-foreground">
             EXECUTION MAP
           </div>
           <p className="mt-1.5 font-sans text-xs leading-relaxed text-muted-foreground sm:mt-2 sm:text-sm">
@@ -156,7 +156,7 @@ export function ExecutionMap({ trades }: ExecutionMapProps) {
             type="button"
             variant="outline"
             size="icon"
-            className="size-9 rounded-lg border-border bg-background/50 text-muted-foreground hover:bg-secondary hover:text-foreground"
+            className="size-9 rounded-xl border-border bg-background/50 text-muted-foreground hover:bg-secondary hover:text-foreground"
             onClick={() => setSelectedMonth((month) => subMonths(month, 1))}
             aria-label="Mese precedente"
           >
@@ -171,7 +171,7 @@ export function ExecutionMap({ trades }: ExecutionMapProps) {
             type="button"
             variant="outline"
             size="icon"
-            className="size-9 rounded-lg border-border bg-background/50 text-muted-foreground hover:bg-secondary hover:text-foreground"
+            className="size-9 rounded-xl border-border bg-background/50 text-muted-foreground hover:bg-secondary hover:text-foreground"
             onClick={() => setSelectedMonth((month) => addMonths(month, 1))}
             aria-label="Mese successivo"
           >
@@ -184,7 +184,7 @@ export function ExecutionMap({ trades }: ExecutionMapProps) {
         {weekdayLabels.map((weekday) => (
           <div
             key={weekday}
-            className="px-0.5 pb-1 text-center font-mono text-[9px] font-semibold uppercase tracking-[0.08em] text-muted-foreground sm:px-1 sm:text-[10px] sm:tracking-[0.12em]"
+            className="px-0.5 pb-1 text-center font-mono text-[9px] font-semibold tracking-normal text-muted-foreground sm:px-1 sm:text-[10px] sm:tracking-[0.12em]"
           >
             {weekday}
           </div>
@@ -208,7 +208,7 @@ export function ExecutionMap({ trades }: ExecutionMapProps) {
               <div
                 key={dateKey}
                 aria-hidden="true"
-                className="h-[54px] rounded-lg border border-border bg-background p-1.5 min-[380px]:h-[62px] sm:h-[80px] sm:rounded-xl sm:p-2.5"
+                className="h-[54px] rounded-xl border border-border bg-background p-1.5 min-[380px]:h-[62px] sm:h-[80px] sm:rounded-xl sm:p-2.5"
               >
                 <span className="font-mono text-[11px] font-semibold text-muted-foreground/25 sm:text-sm">
                   {format(day, 'd')}
@@ -221,7 +221,7 @@ export function ExecutionMap({ trades }: ExecutionMapProps) {
             <div
               key={dateKey}
               className={cn(
-                'group flex h-[54px] min-w-0 flex-col justify-between rounded-lg border border-border bg-secondary/20 p-1.5 text-muted-foreground transition min-[380px]:h-[62px] sm:h-[80px] sm:rounded-xl sm:p-2.5',
+                'group flex h-[54px] min-w-0 flex-col justify-between rounded-xl border border-border bg-secondary/20 p-1.5 text-muted-foreground transition min-[380px]:h-[62px] sm:h-[80px] sm:rounded-xl sm:p-2.5',
                 'bg-background/40',
                 hasTrades ? 'cursor-pointer hover:brightness-110' : 'cursor-default',
                 !hasTrades && 'hover:border-profit/40',

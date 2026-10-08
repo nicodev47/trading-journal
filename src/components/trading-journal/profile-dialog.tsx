@@ -191,7 +191,7 @@ export function ProfileDialog({
     <>
       <Dialog open={isOpen} onOpenChange={open => !open && onClose()}>
         <DialogContent
-          className="ej-scrollbar max-h-[90dvh] w-[calc(100vw-1.75rem)] overflow-y-auto overscroll-contain rounded-2xl border border-border bg-card p-0 shadow-[0_20px_50px_rgba(0,0,0,0.35)] sm:max-w-2xl"
+          className="ej-scrollbar max-h-[90dvh] w-[calc(100vw-1.75rem)] overflow-y-auto overscroll-contain rounded-[20px] border border-border bg-card p-0 shadow-[0_20px_50px_rgba(0,0,0,0.35)] sm:max-w-2xl"
           onOpenAutoFocus={event => event.preventDefault()}
         >
           <DialogHeader className="border-b border-border px-4 py-3.5 text-left sm:px-5 sm:py-4">
@@ -207,7 +207,7 @@ export function ProfileDialog({
                 <div className="min-w-0 flex-1 space-y-1.5 sm:min-w-[190px]">
                   <Label
                     htmlFor="trader-profile-name"
-                    className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground"
+                    className="font-mono text-[11px] tracking-normal text-muted-foreground"
                   >
                     Nome trader
                   </Label>
@@ -235,7 +235,7 @@ export function ProfileDialog({
               </div>
 
               <div className="flex items-center gap-3 sm:gap-4">
-                <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl border border-profit/30 bg-profit/10 text-[40px] leading-none shadow-[0_0_24px_rgba(48,209,88,0.08)] sm:size-16 sm:text-[46px]">
+                <div className="flex size-14 shrink-0 items-center justify-center rounded-[20px] border border-profit/30 bg-profit/10 text-[40px] leading-none shadow-[0_0_24px_rgba(48,209,88,0.08)] sm:size-16 sm:text-[46px]">
                   {profile.profileIcon}
                 </div>
 
@@ -251,7 +251,7 @@ export function ProfileDialog({
                         </span>
                         {profile.rank.name}
                       </p>
-                      <p className="mt-1 font-mono text-xs uppercase tracking-[0.12em] text-profit">
+                      <p className="mt-1 font-mono text-xs tracking-normal text-profit">
                         Livello {profile.level}
                       </p>
                     </div>
@@ -284,7 +284,7 @@ export function ProfileDialog({
                   key={stat.label}
                   className="min-w-0 rounded-xl border border-border bg-background/45 p-3"
                 >
-                  <p className="font-sans text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+                  <p className="font-sans text-[11px] font-medium tracking-normal text-muted-foreground">
                     {stat.label}
                   </p>
                   <p
@@ -314,7 +314,7 @@ export function ProfileDialog({
             </section>
 
             <section className="rounded-[14px] border border-border bg-background/35 p-3.5 sm:p-4">
-              <p className="flex items-center gap-2 font-mono text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+              <p className="flex items-center gap-2 font-mono text-xs font-semibold tracking-normal text-muted-foreground">
                 <span>Impostazioni calendario</span>
                 <span className="text-xl leading-none">🗓️</span>
               </p>
@@ -458,7 +458,7 @@ export function ProfileDialog({
             </section>
 
             <section className="rounded-[14px] border border-blue-400/35 bg-blue-500/5 p-3.5 sm:p-4">
-              <p className="flex items-center gap-2 font-mono text-xs font-semibold uppercase tracking-[0.14em] text-blue-300">
+              <p className="flex items-center gap-2 font-mono text-xs font-semibold tracking-normal text-blue-300">
                 <span>Modalità Streamer</span>
                 <span className="text-xl leading-none">🙈</span>
               </p>
@@ -483,7 +483,7 @@ export function ProfileDialog({
             </section>
 
             <section className="rounded-[14px] border border-profit/35 bg-profit/5 p-3.5 sm:p-4">
-              <p className="flex items-center gap-2 font-mono text-xs font-semibold uppercase tracking-[0.14em] text-profit">
+              <p className="flex items-center gap-2 font-mono text-xs font-semibold tracking-normal text-profit">
                 <span>Esporta tutto</span>
                 <span className="text-xl leading-none">📦</span>
               </p>
@@ -506,7 +506,7 @@ export function ProfileDialog({
             </section>
 
             <section className="rounded-[14px] border border-loss/30 bg-loss/5 p-3.5 sm:p-4">
-              <p className="flex items-center gap-2 font-mono text-xs font-semibold uppercase tracking-[0.14em] text-loss">
+              <p className="flex items-center gap-2 font-mono text-xs font-semibold tracking-normal text-loss">
                 <span>Zona pericolosa</span>
                 <span className="text-xl leading-none">🚨</span>
               </p>
@@ -535,7 +535,7 @@ export function ProfileDialog({
         open={isClearDialogOpen}
         onOpenChange={open => !open && closeClearDialog()}
       >
-        <DialogContent className="max-h-[92dvh] w-[calc(100vw-1.75rem)] rounded-2xl border border-loss/35 bg-card sm:max-w-md">
+        <DialogContent className="max-h-[92dvh] w-[calc(100vw-1.75rem)] rounded-[20px] border border-loss/35 bg-card sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="font-mono text-loss">
               Elimina tutti i dati

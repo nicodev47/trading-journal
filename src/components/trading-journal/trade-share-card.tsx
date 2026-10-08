@@ -77,7 +77,7 @@ function ShareMetric({
 }) {
   return (
     <div className="flex min-h-[82px] flex-col justify-center rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3">
-      <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/38">
+      <div className="text-[11px] font-semibold tracking-normal text-white/38">
         {label}
       </div>
       <div
@@ -147,7 +147,7 @@ export function TradeShareCard({
               <div className="text-[clamp(38px,3.4vw,48px)] font-black tracking-tight text-white">
                 Trade Recap
               </div>
-              <div className="mt-1 text-[12px] font-semibold uppercase tracking-[0.28em] text-white/42">
+              <div className="mt-1 text-[12px] font-semibold tracking-normal text-white/42">
                 Trading performance card
               </div>
             </div>
@@ -155,7 +155,7 @@ export function TradeShareCard({
 
           <div className="flex min-w-[210px] flex-col items-end pt-8 text-right">
             <div
-              className="inline-flex rounded-full border px-4 py-2 text-[11px] font-black uppercase tracking-[0.22em]"
+              className="inline-flex rounded-full border px-4 py-2 text-[11px] font-black tracking-normal"
               style={{
                 borderColor: `${accent}66`,
                 backgroundColor: `${accent}18`,
@@ -172,7 +172,7 @@ export function TradeShareCard({
 
         <main className="grid flex-1 grid-cols-[1fr_0.95fr] items-center gap-11">
           <section>
-            <div className="text-[12px] font-semibold uppercase tracking-[0.3em] text-white/42">
+            <div className="text-[12px] font-semibold tracking-normal text-white/42">
               NET P&amp;L
             </div>
             <div
@@ -198,7 +198,7 @@ export function TradeShareCard({
         <footer className="flex items-end justify-between border-t border-white/10 pt-6">
           {displayHandle && (
             <div>
-              <div className="text-[12px] font-semibold uppercase tracking-[0.26em] text-white/36">
+              <div className="text-[12px] font-semibold tracking-normal text-white/36">
                 Shared by
               </div>
               <div className="mt-1 text-[28px] font-black text-white">
@@ -207,7 +207,7 @@ export function TradeShareCard({
             </div>
           )}
           <div className="ml-auto text-right">
-            <div className="text-[12px] font-semibold uppercase tracking-[0.26em] text-white/36">
+            <div className="text-[12px] font-semibold tracking-normal text-white/36">
               POWERED BY
             </div>
             <div className="mt-1 text-[20px] font-black text-white/90">

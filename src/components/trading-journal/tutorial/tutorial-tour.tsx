@@ -789,7 +789,7 @@ export function TutorialTour({
   const highlightClassName =
     step.target === 'analysis-section'
       ? 'absolute rounded-b-[18px] border-x border-b border-profit/80'
-      : 'absolute rounded-2xl border border-profit/85 shadow-[0_0_22px_rgba(48,209,88,0.28),0_0_42px_rgba(48,209,88,0.14)]';
+      : 'absolute rounded-[20px] border border-profit/85 shadow-[0_0_22px_rgba(48,209,88,0.28),0_0_42px_rgba(48,209,88,0.14)]';
 
   return (
     <div
@@ -833,13 +833,13 @@ export function TutorialTour({
 
       {isChromeReady && cardPosition && (
         <div
-          className="ej-scrollbar pointer-events-auto absolute rounded-2xl border border-border bg-card p-3.5 shadow-2xl sm:p-4"
+          className="ej-scrollbar pointer-events-auto absolute rounded-[20px] border border-border bg-card p-3.5 shadow-2xl sm:p-4"
           style={cardPosition}
           role="dialog"
           aria-modal="true"
           aria-labelledby="tutorial-step-title"
         >
-          <div className="mb-2 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-profit">
+          <div className="mb-2 font-mono text-[10px] font-semibold tracking-normal text-profit">
             {stepIndex + 1} / {TUTORIAL_STEPS.length}
           </div>
 

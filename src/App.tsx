@@ -1002,7 +1002,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
         open={isResetPreviewConfirmOpen}
         onOpenChange={setIsResetPreviewConfirmOpen}
       >
-        <DialogContent className="max-h-[92dvh] w-[calc(100vw-1.75rem)] max-w-md rounded-2xl border border-border bg-background shadow-xl">
+        <DialogContent className="max-h-[92dvh] w-[calc(100vw-1.75rem)] max-w-md rounded-[20px] border border-border bg-background shadow-xl">
           <DialogHeader>
             <DialogTitle className="font-sans text-lg font-semibold text-foreground">
               Reset Preview?
@@ -1036,7 +1036,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
         open={isBacktestResetDialogOpen}
         onOpenChange={setIsBacktestResetDialogOpen}
       >
-        <DialogContent className="max-h-[92dvh] w-[calc(100vw-1.75rem)] max-w-[520px] overflow-hidden rounded-2xl border border-border bg-card p-0">
+        <DialogContent className="max-h-[92dvh] w-[calc(100vw-1.75rem)] max-w-[520px] overflow-hidden rounded-[20px] border border-border bg-card p-0">
           <DialogHeader className="border-b border-border px-4 py-3.5 sm:px-5 sm:py-4">
             <div className="flex items-start gap-3">
               <div className="flex size-10 shrink-0 items-center justify-center rounded-full border border-loss/30 bg-loss/10 text-loss">
@@ -1104,7 +1104,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
             if (event.target === event.currentTarget) setIsHelpOpen(false);
           }}
         >
-          <div className="ej-scrollbar max-h-[90dvh] w-full max-w-4xl overflow-y-auto overscroll-contain rounded-2xl border border-border bg-card shadow-2xl">
+          <div className="ej-scrollbar max-h-[90dvh] w-full max-w-4xl overflow-y-auto overscroll-contain rounded-[20px] border border-border bg-card shadow-2xl">
             <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-border bg-card/95 px-4 py-3.5 backdrop-blur md:px-6 md:py-4">
               <div>
                 <h2 id="help-dialog-title" className="font-mono text-lg font-semibold text-foreground">
@@ -1118,7 +1118,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
               <button
                 type="button"
                 onClick={() => setIsHelpOpen(false)}
-                className="rounded-md border border-border bg-background px-3 py-1.5 font-mono text-xs text-muted-foreground transition hover:border-profit/50 hover:text-foreground"
+                className="rounded-lg border border-border bg-background px-3 py-1.5 font-mono text-xs text-muted-foreground transition hover:border-profit/50 hover:text-foreground"
               >
                 Chiudi
               </button>
@@ -1138,7 +1138,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
                   <button
                     type="button"
                     onClick={handleRestartTutorial}
-                    className="shrink-0 rounded-lg border border-profit/30 bg-profit/10 px-3 py-2 font-sans text-xs font-semibold text-profit transition hover:border-profit/60 hover:bg-profit/15"
+                    className="shrink-0 rounded-xl border border-profit/30 bg-profit/10 px-3 py-2 font-sans text-xs font-semibold text-profit transition hover:border-profit/60 hover:bg-profit/15"
                   >
                     Riavvia tutorial
                   </button>
@@ -1158,7 +1158,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
                   <button
                     type="button"
                     onClick={handleOpenWhatsNewFromHelp}
-                    className="shrink-0 rounded-lg border border-blue-300/30 bg-blue-300/10 px-3 py-2 font-sans text-xs font-semibold text-blue-100 transition hover:border-blue-200/50 hover:bg-blue-300/15"
+                    className="shrink-0 rounded-xl border border-blue-300/30 bg-blue-300/10 px-3 py-2 font-sans text-xs font-semibold text-blue-100 transition hover:border-blue-200/50 hover:bg-blue-300/15"
                   >
                     Visualizza novità
                   </button>

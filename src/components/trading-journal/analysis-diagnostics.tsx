@@ -287,7 +287,7 @@ function FilterField({
 }) {
   return (
     <label className="flex min-w-0 flex-col gap-1.5">
-      <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+      <span className="font-mono text-[10px] tracking-normal text-muted-foreground">
         {label}
       </span>
       {children}
@@ -429,7 +429,7 @@ function MonthChartSelector({
       >
         <ChevronLeft className="size-4" />
       </Button>
-      <span className="min-w-[112px] rounded-md border border-border bg-card px-3 py-2 text-center font-mono text-xs font-semibold capitalize text-foreground">
+      <span className="min-w-[112px] rounded-lg border border-border bg-card px-3 py-2 text-center font-mono text-xs font-semibold capitalize text-foreground">
         {label}
       </span>
       <Button
@@ -1155,8 +1155,8 @@ export function AnalysisDiagnostics({
 
   return (
     <section className="space-y-4">
-      <div className="rounded-2xl border border-border bg-card/95 p-4 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
-        <h2 className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+      <div className="rounded-[20px] border border-border bg-card/95 p-4 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
+        <h2 className="font-mono text-[10px] font-medium tracking-normal text-muted-foreground">
           Performance per giorno della settimana
         </h2>
 
@@ -1181,7 +1181,7 @@ export function AnalysisDiagnostics({
                 )
               }
             >
-              <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+              <p className="font-mono text-[10px] font-semibold tracking-normal text-muted-foreground">
                 {day.short}
                 {bestWeekday?.short === day.short && (
                   <span className="ml-1 text-amber-300">👑</span>
@@ -1209,13 +1209,13 @@ export function AnalysisDiagnostics({
       </div>
 
       <div>
-        <h2 className="mb-3 font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+        <h2 className="mb-3 font-mono text-[10px] font-medium tracking-normal text-muted-foreground">
           Breakdown
         </h2>
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <div className="rounded-2xl border border-border bg-card/95 p-4 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
-            <h3 className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+          <div className="rounded-[20px] border border-border bg-card/95 p-4 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
+            <h3 className="font-mono text-[10px] font-medium tracking-normal text-muted-foreground">
               Trade per setup
             </h3>
 
@@ -1304,7 +1304,7 @@ export function AnalysisDiagnostics({
                   {data.setupChartData.map((setup, index) => (
                     <div
                       key={setup.name}
-                      className="flex cursor-pointer items-center justify-between gap-3 rounded-lg px-2 py-1.5 font-mono text-xs transition-colors hover:bg-secondary/30"
+                      className="flex cursor-pointer items-center justify-between gap-3 rounded-xl px-2 py-1.5 font-mono text-xs transition-colors hover:bg-secondary/30"
                       onClick={() => openSetupTradeGroup(setup.name)}
                     >
                       <span className="flex min-w-0 items-center gap-2 text-muted-foreground">
@@ -1327,8 +1327,8 @@ export function AnalysisDiagnostics({
             )}
           </div>
 
-          <div className="rounded-2xl border border-border bg-card/95 p-4 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
-            <h3 className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+          <div className="rounded-[20px] border border-border bg-card/95 p-4 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
+            <h3 className="font-mono text-[10px] font-medium tracking-normal text-muted-foreground">
               Long vs Short
             </h3>
 
@@ -1454,8 +1454,8 @@ export function AnalysisDiagnostics({
 
       <div className="space-y-4">
         <div className="grid grid-cols-1">
-          <div className="rounded-2xl border border-border bg-card/95 p-4 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
-            <h2 className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+          <div className="rounded-[20px] border border-border bg-card/95 p-4 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
+            <h2 className="font-mono text-[10px] font-medium tracking-normal text-muted-foreground">
               ECLIPSE SCORE
             </h2>
 
@@ -1544,7 +1544,7 @@ export function AnalysisDiagnostics({
                   key={metric.metric}
                   className="min-w-0 rounded-xl border border-border bg-background/35 p-3"
                 >
-                  <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-muted-foreground">
+                  <p className="font-mono text-[9px] tracking-normal text-muted-foreground">
                     {getEclipseMetricCardLabel(metric.metric)}
                   </p>
                   <p className="mt-2 break-words font-mono text-sm font-semibold leading-tight text-foreground">
@@ -1560,9 +1560,9 @@ export function AnalysisDiagnostics({
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <div className="min-w-0 rounded-2xl border border-border bg-card/95 p-4 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
+          <div className="min-w-0 rounded-[20px] border border-border bg-card/95 p-4 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+              <h2 className="font-mono text-[10px] font-medium tracking-normal text-muted-foreground">
                 P&amp;L CUMULATIVO GIORNALIERO
               </h2>
               <MonthChartSelector
@@ -1681,9 +1681,9 @@ export function AnalysisDiagnostics({
             )}
           </div>
 
-          <div className="min-w-0 rounded-2xl border border-border bg-card/95 p-4 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
+          <div className="min-w-0 rounded-[20px] border border-border bg-card/95 p-4 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+              <h2 className="font-mono text-[10px] font-medium tracking-normal text-muted-foreground">
                 P&amp;L NETTO GIORNALIERO
               </h2>
               <MonthChartSelector
@@ -1796,9 +1796,9 @@ export function AnalysisDiagnostics({
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-border bg-card/95 shadow-[0_16px_36px_rgba(0,0,0,0.22)]">
+      <div className="overflow-hidden rounded-[20px] border border-border bg-card/95 shadow-[0_16px_36px_rgba(0,0,0,0.22)]">
         <div className="border-b border-border px-4 py-4 sm:px-5">
-          <h2 className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+          <h2 className="font-mono text-[10px] font-medium tracking-normal text-muted-foreground">
             Setup breakdown
           </h2>
         </div>
@@ -1811,7 +1811,7 @@ export function AnalysisDiagnostics({
           <div className="ej-scrollbar overflow-x-auto">
             <table className="w-full min-w-[900px] font-mono text-xs">
               <thead>
-                <tr className="border-b border-border text-left text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                <tr className="border-b border-border text-left text-[10px] tracking-normal text-muted-foreground">
                   <th className="px-4 py-3 font-medium">Setup</th>
                   <th className="px-4 py-3 font-medium">Trades</th>
                   <th className="px-4 py-3 font-medium">Winrate</th>
@@ -1859,7 +1859,7 @@ export function AnalysisDiagnostics({
                         type="button"
                         variant="outline"
                         size="sm"
-                        className="h-9 rounded-lg border-border bg-background/50 px-3 font-mono text-xs text-muted-foreground hover:border-profit/50 hover:bg-secondary hover:text-foreground"
+                        className="h-9 rounded-xl border-border bg-background/50 px-3 font-mono text-xs text-muted-foreground hover:border-profit/50 hover:bg-secondary hover:text-foreground"
                         onClick={() => openSetupTradeGroup(setup.setup)}
                       >
                         Apri
@@ -1873,16 +1873,16 @@ export function AnalysisDiagnostics({
         )}
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-border bg-card/95 shadow-[0_16px_36px_rgba(0,0,0,0.22)]">
+      <div className="overflow-hidden rounded-[20px] border border-border bg-card/95 shadow-[0_16px_36px_rgba(0,0,0,0.22)]">
         <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-4 sm:px-5">
-          <h2 className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+          <h2 className="font-mono text-[10px] font-medium tracking-normal text-muted-foreground">
             Trade log
           </h2>
           <Button
             type="button"
             variant="outline"
             size="sm"
-            className="h-8 gap-2 rounded-lg border-border bg-background/50 px-3 font-sans text-xs font-semibold text-muted-foreground hover:bg-secondary hover:text-foreground"
+            className="h-8 gap-2 rounded-xl border-border bg-background/50 px-3 font-sans text-xs font-semibold text-muted-foreground hover:bg-secondary hover:text-foreground"
             onClick={() => setIsTradeLogFilterOpen((isOpen) => !isOpen)}
           >
             <SlidersHorizontal className="size-4" />
@@ -1902,7 +1902,7 @@ export function AnalysisDiagnostics({
                       direction: event.target.value as TradeLogFilters['direction'],
                     }))
                   }
-                  className="ej-filter-select h-9 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-profit/60"
+                  className="ej-filter-select h-9 rounded-xl border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-profit/60"
                 >
                   <option value="all">Tutti</option>
                   <option value="long">Long</option>
@@ -1919,7 +1919,7 @@ export function AnalysisDiagnostics({
                       result: event.target.value as TradeLogFilters['result'],
                     }))
                   }
-                  className="ej-filter-select h-9 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-profit/60"
+                  className="ej-filter-select h-9 rounded-xl border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-profit/60"
                 >
                   <option value="all">Tutti</option>
                   <option value="profit">Profit</option>
@@ -1937,7 +1937,7 @@ export function AnalysisDiagnostics({
                       asset: event.target.value as TradeLogFilters['asset'],
                     }))
                   }
-                  className="ej-filter-select h-9 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-profit/60"
+                  className="ej-filter-select h-9 rounded-xl border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-profit/60"
                 >
                   <option value="all">Tutti</option>
                   <option value="NQ">NQ</option>
@@ -1954,7 +1954,7 @@ export function AnalysisDiagnostics({
                       setup: event.target.value,
                     }))
                   }
-                  className="ej-filter-select h-9 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-profit/60"
+                  className="ej-filter-select h-9 rounded-xl border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-profit/60"
                 >
                   <option value="all">Tutti</option>
                   {availableSetups.map((setup) => (
@@ -1974,7 +1974,7 @@ export function AnalysisDiagnostics({
                       tag: event.target.value,
                     }))
                   }
-                  className="ej-filter-select h-9 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-profit/60"
+                  className="ej-filter-select h-9 rounded-xl border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-profit/60"
                 >
                   <option value="all">Tutti</option>
                   {availableTags.map((tag) => (
@@ -1995,7 +1995,7 @@ export function AnalysisDiagnostics({
                         .value as TradeLogFilters['favoritesOnly'],
                     }))
                   }
-                  className="ej-filter-select h-9 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-profit/60"
+                  className="ej-filter-select h-9 rounded-xl border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-profit/60"
                 >
                   <option value="no">No</option>
                   <option value="yes">Sì</option>
@@ -2012,7 +2012,7 @@ export function AnalysisDiagnostics({
                         .value as TradeLogFilters['displayOrder'],
                     }))
                   }
-                  className="ej-filter-select h-9 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-profit/60"
+                  className="ej-filter-select h-9 rounded-xl border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-profit/60"
                 >
                   <option value="latest">Trade più recente</option>
                   <option value="earliest">Trade meno recente</option>
@@ -2032,7 +2032,7 @@ export function AnalysisDiagnostics({
                         dateFrom: event.target.value,
                       }))
                     }
-                    className="ej-date-input-no-indicator h-9 min-w-0 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-profit/60"
+                    className="ej-date-input-no-indicator h-9 min-w-0 rounded-xl border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-profit/60"
                   />
                 </FilterField>
                 <FilterField label="A">
@@ -2045,7 +2045,7 @@ export function AnalysisDiagnostics({
                         dateTo: event.target.value,
                       }))
                     }
-                    className="ej-date-input-no-indicator h-9 min-w-0 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-profit/60"
+                    className="ej-date-input-no-indicator h-9 min-w-0 rounded-xl border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-profit/60"
                   />
                 </FilterField>
               </div>
@@ -2059,7 +2059,7 @@ export function AnalysisDiagnostics({
                 type="button"
                 variant="outline"
                 size="sm"
-                className="h-8 rounded-lg border-border bg-background/50 px-3 font-sans text-xs font-semibold text-muted-foreground hover:bg-secondary hover:text-foreground"
+                className="h-8 rounded-xl border-border bg-background/50 px-3 font-sans text-xs font-semibold text-muted-foreground hover:bg-secondary hover:text-foreground"
                 disabled={!hasActiveTradeLogFilters}
                 onClick={() => setTradeLogFilters(DEFAULT_TRADE_LOG_FILTERS)}
               >
@@ -2092,7 +2092,7 @@ export function AnalysisDiagnostics({
                   <col className="w-[92px]" />
                 </colgroup>
                 <thead>
-                  <tr className="border-b border-border text-left text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                  <tr className="border-b border-border text-left text-[10px] tracking-normal text-muted-foreground">
                     <th className="px-4 py-3 font-medium">Data</th>
                     <th className="px-4 py-3 font-medium">P&amp;L</th>
                     <th className="px-4 py-3 font-medium">Direzione</th>
@@ -2186,7 +2186,7 @@ export function AnalysisDiagnostics({
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="h-8 min-w-8 rounded-lg border-border bg-background/50 px-2 font-mono text-xs text-muted-foreground hover:bg-secondary hover:text-foreground"
+                  className="h-8 min-w-8 rounded-xl border-border bg-background/50 px-2 font-mono text-xs text-muted-foreground hover:bg-secondary hover:text-foreground"
                   onClick={() => {
                     setIsPaginationMode(true);
                     setCurrentPage(1);
@@ -2202,7 +2202,7 @@ export function AnalysisDiagnostics({
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="h-8 min-w-8 rounded-lg border border-border bg-background/50 px-2 font-mono text-xs text-muted-foreground hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                    className="h-8 min-w-8 rounded-xl border border-border bg-background/50 px-2 font-mono text-xs text-muted-foreground hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
                     disabled={currentPage === 1}
                     onClick={() =>
                       setCurrentPage((page) => Math.max(1, page - 1))
@@ -2219,8 +2219,8 @@ export function AnalysisDiagnostics({
                       size="sm"
                       className={
                         page === currentPage && page !== 1
-                          ? 'h-8 min-w-8 rounded-lg border border-profit bg-profit px-2 font-mono text-xs font-bold text-background hover:bg-profit hover:text-background'
-                          : 'h-8 min-w-8 rounded-lg border border-border bg-background/50 px-2 font-mono text-xs text-muted-foreground hover:bg-secondary hover:text-foreground'
+                          ? 'h-8 min-w-8 rounded-xl border border-profit bg-profit px-2 font-mono text-xs font-bold text-background hover:bg-profit hover:text-background'
+                          : 'h-8 min-w-8 rounded-xl border border-border bg-background/50 px-2 font-mono text-xs text-muted-foreground hover:bg-secondary hover:text-foreground'
                       }
                       onClick={() => setCurrentPage(page)}
                     >
@@ -2232,7 +2232,7 @@ export function AnalysisDiagnostics({
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="h-8 min-w-8 rounded-lg border border-border bg-background/50 px-2 font-mono text-xs text-muted-foreground hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                    className="h-8 min-w-8 rounded-xl border border-border bg-background/50 px-2 font-mono text-xs text-muted-foreground hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
                     disabled={currentPage === totalTradeLogPages}
                     onClick={() =>
                       setCurrentPage((page) =>

@@ -300,7 +300,7 @@ export function EquityCurve({
   const canClickPoints = Boolean(onOpenTradeGroup || onOpenTrade);
 
   return (
-    <div className="max-w-full overflow-hidden rounded-2xl border border-border bg-card/95 shadow-[0_16px_36px_rgba(0,0,0,0.22)]">
+    <div className="max-w-full overflow-hidden rounded-[20px] border border-border bg-card/95 shadow-[0_16px_36px_rgba(0,0,0,0.22)]">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-3 py-3 sm:px-4">
         <h2 className="font-sans text-[15px] font-bold tracking-[-0.03em] text-foreground">
           Curva Equity
@@ -311,7 +311,7 @@ export function EquityCurve({
             type="button"
             variant="ghost"
             size="icon"
-            className="size-7 rounded-lg text-muted-foreground hover:bg-secondary/70 hover:text-foreground"
+            className="size-7 rounded-xl text-muted-foreground hover:bg-secondary/70 hover:text-foreground"
             onClick={() => changeMonth(-1)}
             aria-label="Mese precedente"
           >
@@ -334,7 +334,7 @@ export function EquityCurve({
             type="button"
             variant="ghost"
             size="icon"
-            className="size-7 rounded-lg text-muted-foreground hover:bg-secondary/70 hover:text-foreground"
+            className="size-7 rounded-xl text-muted-foreground hover:bg-secondary/70 hover:text-foreground"
             onClick={() => changeMonth(1)}
             aria-label="Mese successivo"
           >

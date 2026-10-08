@@ -162,7 +162,7 @@ export function TradeShareDialog({
         </DialogHeader>
 
         <div className="ej-scrollbar flex max-h-[calc(90vh-132px)] flex-col overflow-y-auto overscroll-contain p-3">
-          <div className="overflow-hidden rounded-2xl border border-border bg-card/60 p-2.5">
+          <div className="overflow-hidden rounded-[20px] border border-border bg-card/60 p-2.5">
             {trade && (
               <ShareCardPreview
                 width={840}

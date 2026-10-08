@@ -16,7 +16,7 @@ export function TutorialWelcomeDialog({
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/70 px-3.5">
       <div
-        className="max-h-[90dvh] w-full max-w-[420px] overflow-y-auto rounded-2xl border border-border bg-card p-5 text-center shadow-2xl sm:p-6"
+        className="max-h-[90dvh] w-full max-w-[420px] overflow-y-auto rounded-[20px] border border-border bg-card p-5 text-center shadow-2xl sm:p-6"
         role="dialog"
         aria-modal="true"
         aria-labelledby="tutorial-welcome-title"

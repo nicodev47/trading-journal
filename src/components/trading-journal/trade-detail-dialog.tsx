@@ -169,7 +169,7 @@ function DetailCard({
         className
       )}
     >
-      <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-muted-foreground">
+      <p className="font-mono text-[9px] tracking-normal text-muted-foreground">
         {label}
       </p>
       <div className="mt-2 font-mono text-xs text-foreground">{children}</div>
@@ -203,7 +203,7 @@ function AttachmentItem({
           href={screenshot.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg border border-border bg-background px-2.5 font-mono text-[10px] text-foreground transition-colors hover:border-profit/40 hover:text-profit"
+          className="inline-flex h-8 shrink-0 items-center gap-1 rounded-xl border border-border bg-background px-2.5 font-mono text-[10px] text-foreground transition-colors hover:border-profit/40 hover:text-profit"
         >
           Apri <ExternalLink className="size-3" />
         </a>
@@ -338,7 +338,7 @@ export function TradeDetailDialog({
                 <select
                   value={setupDraft}
                   onChange={(event) => setSetupDraft(event.target.value)}
-                  className="ej-filter-select h-9 w-full rounded-lg border border-border bg-background/70 px-3 font-mono text-xs text-foreground outline-none transition-colors focus:border-profit/60"
+                  className="ej-filter-select h-9 w-full rounded-xl border border-border bg-background/70 px-3 font-mono text-xs text-foreground outline-none transition-colors focus:border-profit/60"
                 >
                   <option value="">Seleziona setup</option>
                   {VALID_TRADE_SETUPS.map((setup) => (
@@ -369,7 +369,7 @@ export function TradeDetailDialog({
                 {tags.map((tag) => (
                   <span
                     key={tag}
-                    className="rounded-md border border-blue-300/25 bg-blue-300/10 px-2.5 py-1.5 font-mono text-xs text-blue-100"
+                    className="rounded-lg border border-blue-300/25 bg-blue-300/10 px-2.5 py-1.5 font-mono text-xs text-blue-100"
                   >
                     {getTagLabel(tag)}
                   </span>

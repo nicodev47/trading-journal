@@ -157,7 +157,7 @@ export function MonthYearPicker({
           type="button"
           variant={triggerVariant}
           className={cn(
-            'h-9 min-w-0 rounded-lg border border-border bg-background/50 px-3 text-sm font-semibold capitalize text-foreground hover:bg-secondary/70 hover:text-foreground sm:min-w-[150px] sm:px-4',
+            'h-9 min-w-0 rounded-xl border border-border bg-background/50 px-3 text-sm font-semibold capitalize text-foreground hover:bg-secondary/70 hover:text-foreground sm:min-w-[150px] sm:px-4',
             triggerClassName
           )}
         >
@@ -172,7 +172,7 @@ export function MonthYearPicker({
           <div className="space-y-1.5">
             <label
               htmlFor={`${id}-month`}
-              className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground"
+              className="text-xs font-semibold tracking-normal text-muted-foreground"
             >
               Mese
             </label>
@@ -201,7 +201,7 @@ export function MonthYearPicker({
           <div className="space-y-1.5">
             <label
               htmlFor={`${id}-year`}
-              className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground"
+              className="text-xs font-semibold tracking-normal text-muted-foreground"
             >
               Anno
             </label>
@@ -231,7 +231,7 @@ export function MonthYearPicker({
             <div className="space-y-1.5">
               <label
                 htmlFor={`${id}-go-to`}
-                className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground"
+                className="text-xs font-semibold tracking-normal text-muted-foreground"
               >
                 Vai a
               </label>

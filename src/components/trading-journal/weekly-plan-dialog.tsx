@@ -187,7 +187,7 @@ export function WeeklyPlanDialog({
         <div className="flex flex-col gap-4 p-4 sm:gap-6 sm:p-6">
           {/* Approccio trading - with bordered buttons */}
           <div className="flex flex-col gap-3">
-            <Label className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+            <Label className="font-mono text-xs tracking-normalr text-muted-foreground">
               Approccio trading
             </Label>
             <div className="flex flex-col gap-2 min-[420px]:flex-row">
@@ -195,7 +195,7 @@ export function WeeklyPlanDialog({
                 type="button"
                 onClick={() => setApproach(approach === 'intraday' ? '' : 'intraday')}
                 className={cn(
-                  'rounded-md border px-4 py-2 font-mono text-sm transition-colors max-[419px]:w-full',
+                  'rounded-lg border px-4 py-2 font-mono text-sm transition-colors max-[419px]:w-full',
                   approach === 'intraday'
                     ? 'border-profit bg-profit text-background'
                     : 'border-border bg-background text-foreground hover:bg-secondary'
@@ -207,7 +207,7 @@ export function WeeklyPlanDialog({
                 type="button"
                 onClick={() => setApproach(approach === 'swing' ? '' : 'swing')}
                 className={cn(
-                  'rounded-md border px-4 py-2 font-mono text-sm transition-colors max-[419px]:w-full',
+                  'rounded-lg border px-4 py-2 font-mono text-sm transition-colors max-[419px]:w-full',
                   approach === 'swing'
                     ? 'border-profit bg-profit text-background'
                     : 'border-border bg-background text-foreground hover:bg-secondary'
@@ -220,7 +220,7 @@ export function WeeklyPlanDialog({
 
           {/* Screenshot calendario economico */}
           <div className="flex flex-col gap-3">
-            <Label className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+            <Label className="font-mono text-xs tracking-normalr text-muted-foreground">
               Screenshot calendario economico
             </Label>
             
@@ -232,7 +232,7 @@ export function WeeklyPlanDialog({
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               className={cn(
-                'flex min-h-[100px] flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed transition-colors outline-none',
+                'flex min-h-[100px] flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed transition-colors outline-none',
                 isDragging ? 'border-profit bg-profit/5' : 'border-border',
                 'focus:border-profit focus:ring-1 focus:ring-profit'
               )}
@@ -280,7 +280,7 @@ export function WeeklyPlanDialog({
             {screenshots.length > 0 && (
               <div className="flex flex-col gap-3">
                 {screenshots.map((src, index) => (
-                  <div key={index} className="relative rounded-lg border border-border bg-background p-2">
+                  <div key={index} className="relative rounded-xl border border-border bg-background p-2">
                     <img
                       src={src}
                       alt={`Calendario economico ${index + 1}`}
@@ -312,7 +312,7 @@ export function WeeklyPlanDialog({
 
           {/* Weekly Notes */}
           <div className="flex flex-col gap-3">
-            <Label className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+            <Label className="font-mono text-xs tracking-normalr text-muted-foreground">
               Note piano settimanale
             </Label>
             <Textarea

@@ -310,7 +310,7 @@ export function ImportExportDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={open => !open && handleClose()}>
-      <DialogContent className="max-h-[92dvh] w-[calc(100vw-1.75rem)] max-w-[560px] overflow-hidden rounded-2xl border border-border bg-card p-0 shadow-[0_16px_36px_rgba(0,0,0,0.28)] outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0 sm:max-w-[560px]">
+      <DialogContent className="max-h-[92dvh] w-[calc(100vw-1.75rem)] max-w-[560px] overflow-hidden rounded-[20px] border border-border bg-card p-0 shadow-[0_16px_36px_rgba(0,0,0,0.28)] outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0 sm:max-w-[560px]">
         <DialogHeader className="border-b border-border px-4 py-3.5 sm:px-5 sm:py-4">
           <DialogTitle className="flex items-center gap-2 font-mono text-base">
             {mode === 'export' ? (
@@ -355,7 +355,7 @@ export function ImportExportDialog({
                   </div>
                 )}
 
-                <Label htmlFor="export-file-name" className="font-mono text-xs uppercase tracking-wider">
+                <Label htmlFor="export-file-name" className="font-mono text-xs tracking-normalr">
                   Nome del file
                 </Label>
                 <Input
@@ -500,7 +500,7 @@ export function ImportExportDialog({
               )}
 
               {importError && (
-                <p className="rounded-lg border border-loss/40 bg-loss/10 px-3 py-2 font-sans text-xs text-loss">
+                <p className="rounded-xl border border-loss/40 bg-loss/10 px-3 py-2 font-sans text-xs text-loss">
                   {importError}
                 </p>
               )}
@@ -579,7 +579,7 @@ export function ImportExportDialog({
               </Button>
 
               {importError && (
-                <p className="rounded-lg border border-loss/40 bg-loss/10 px-3 py-2 font-sans text-xs text-loss">
+                <p className="rounded-xl border border-loss/40 bg-loss/10 px-3 py-2 font-sans text-xs text-loss">
                   {importError}
                 </p>
               )}
@@ -598,7 +598,7 @@ export function ImportExportDialog({
         open={isAppendConfirmOpen}
         onOpenChange={setIsAppendConfirmOpen}
       >
-        <DialogContent className="max-h-[92dvh] w-[calc(100vw-1.75rem)] max-w-[500px] overflow-hidden rounded-2xl border border-border bg-card p-0 shadow-[0_20px_48px_rgba(0,0,0,0.36)] outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0">
+        <DialogContent className="max-h-[92dvh] w-[calc(100vw-1.75rem)] max-w-[500px] overflow-hidden rounded-[20px] border border-border bg-card p-0 shadow-[0_20px_48px_rgba(0,0,0,0.36)] outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0">
           <DialogHeader className="border-b border-border px-4 py-3.5 sm:px-5 sm:py-4">
             <DialogTitle className="font-mono text-base text-profit">
               Conferma import
@@ -648,7 +648,7 @@ export function ImportExportDialog({
         open={isOverwriteConfirmOpen}
         onOpenChange={setIsOverwriteConfirmOpen}
       >
-        <DialogContent className="max-h-[92dvh] w-[calc(100vw-1.75rem)] max-w-[500px] overflow-hidden rounded-2xl border border-border bg-card p-0 shadow-[0_20px_48px_rgba(0,0,0,0.36)] outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0">
+        <DialogContent className="max-h-[92dvh] w-[calc(100vw-1.75rem)] max-w-[500px] overflow-hidden rounded-[20px] border border-border bg-card p-0 shadow-[0_20px_48px_rgba(0,0,0,0.36)] outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0">
           <DialogHeader className="border-b border-border px-4 py-3.5 sm:px-5 sm:py-4">
             <DialogTitle className="font-mono text-base text-loss">
               Prima di sovrascrivere
@@ -708,7 +708,7 @@ export function ImportExportDialog({
           }
         }}
       >
-        <DialogContent className="max-h-[92dvh] w-[calc(100vw-1.75rem)] max-w-[500px] overflow-hidden rounded-2xl border border-border bg-card p-0 shadow-[0_20px_48px_rgba(0,0,0,0.36)] outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0">
+        <DialogContent className="max-h-[92dvh] w-[calc(100vw-1.75rem)] max-w-[500px] overflow-hidden rounded-[20px] border border-border bg-card p-0 shadow-[0_20px_48px_rgba(0,0,0,0.36)] outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0">
           <DialogHeader className="border-b border-border px-4 py-3.5 sm:px-5 sm:py-4">
             <DialogTitle className="flex items-center gap-2 font-mono text-base">
               <Download className="size-4 text-profit" />
@@ -720,7 +720,7 @@ export function ImportExportDialog({
           </DialogHeader>
 
           <div className="space-y-3 px-4 py-4 sm:px-5 sm:py-5">
-            <Label htmlFor="backup-file-name" className="font-mono text-xs uppercase tracking-wider">
+            <Label htmlFor="backup-file-name" className="font-mono text-xs tracking-normalr">
               Nome del file
             </Label>
             <Input

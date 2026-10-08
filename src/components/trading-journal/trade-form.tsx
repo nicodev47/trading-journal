@@ -346,7 +346,7 @@ export function TradeForm({
             </div>
 
             {/* Auto-calculated fields display */}
-            <div className="rounded-lg border border-border bg-secondary/30 p-4">
+            <div className="rounded-xl border border-border bg-secondary/30 p-4">
               <h4 className="mb-3 text-sm font-medium">Calculated Results</h4>
               <div className="grid grid-cols-3 gap-4">
                 <div>
@@ -436,7 +436,7 @@ export function TradeForm({
                         updateField('tags', nextTags);
                       }}
                       className={cn(
-                        'rounded-lg border px-3 py-2 text-left font-mono text-[11px] transition-colors',
+                        'rounded-xl border px-3 py-2 text-left font-mono text-[11px] transition-colors',
                         isSelected
                           ? 'border-loss/50 bg-loss/10 text-loss'
                           : 'border-border bg-background text-muted-foreground hover:bg-secondary'
@@ -472,7 +472,7 @@ export function TradeForm({
                         updateField('tags', nextTags);
                       }}
                       className={cn(
-                        'rounded-lg border px-3 py-2 text-left font-mono text-[11px] transition-colors',
+                        'rounded-xl border px-3 py-2 text-left font-mono text-[11px] transition-colors',
                         isSelected
                           ? 'border-loss/50 bg-loss/10 text-loss'
                           : 'border-border bg-background text-muted-foreground hover:bg-secondary'

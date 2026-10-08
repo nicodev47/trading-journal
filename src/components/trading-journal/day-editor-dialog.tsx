@@ -706,7 +706,7 @@ export function DayEditorDialog({
                       variant="ghost"
                       size="icon"
                       className={cn(
-                        'size-7 rounded-lg text-muted-foreground hover:bg-secondary/70 hover:text-foreground focus-visible:ring-1 focus-visible:ring-yellow-400/70',
+                        'size-7 rounded-xl text-muted-foreground hover:bg-secondary/70 hover:text-foreground focus-visible:ring-1 focus-visible:ring-yellow-400/70',
                         row.isFavorite &&
                           'text-yellow-400 hover:text-yellow-300'
                       )}
@@ -732,7 +732,7 @@ export function DayEditorDialog({
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="size-7 rounded-lg border border-transparent text-muted-foreground hover:border-loss/80 hover:bg-loss/90 hover:text-white"
+                      className="size-7 rounded-xl border border-transparent text-muted-foreground hover:border-loss/80 hover:bg-loss/90 hover:text-white"
                       onClick={() => setTradeToDeleteId(row.id)}
                       disabled={tradeRows.length === 1}
                       aria-label={`Elimina trade ${rowIndex + 1}`}
@@ -743,13 +743,13 @@ export function DayEditorDialog({
                 </div>
 
                 <div className="rounded-xl border border-border/70 bg-background/30 p-3 sm:p-3.5">
-                  <p className="mb-3 font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                  <p className="mb-3 font-mono text-[11px] font-medium tracking-normal text-muted-foreground">
                     Dettagli trade
                   </p>
 
                   <div className="grid grid-cols-1 gap-3 md:grid-cols-[150px_120px_130px_120px_minmax(220px,1fr)]">
                   <div className="flex flex-col gap-1.5">
-                    <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    <Label className="text-xs font-medium tracking-normalr text-muted-foreground">
                       P&L
                     </Label>
 
@@ -784,7 +784,7 @@ export function DayEditorDialog({
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    <Label className="text-xs font-medium tracking-normalr text-muted-foreground">
                       Simbolo
                     </Label>
 
@@ -806,7 +806,7 @@ export function DayEditorDialog({
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    <Label className="text-xs font-medium tracking-normalr text-muted-foreground">
                       Direzione
                     </Label>
 
@@ -828,7 +828,7 @@ export function DayEditorDialog({
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    <Label className="text-xs font-medium tracking-normalr text-muted-foreground">
                       Orario
                     </Label>
 
@@ -898,7 +898,7 @@ export function DayEditorDialog({
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    <Label className="text-xs font-medium tracking-normalr text-muted-foreground">
                       Setup
                     </Label>
 
@@ -926,7 +926,7 @@ export function DayEditorDialog({
                 </div>
                 </div>
                 <div className="flex min-w-0 flex-col gap-3 rounded-xl border border-border/70 bg-background/30 p-3 sm:p-3.5">
-                  <p className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                  <p className="font-mono text-[11px] font-medium tracking-normal text-muted-foreground">
                     ANALISI TRADE
                   </p>
 
@@ -941,7 +941,7 @@ export function DayEditorDialog({
                         return (
                           <div
                             key={index}
-                            className="flex flex-col gap-2 rounded-lg border border-border/80 bg-card/60 p-3"
+                            className="flex flex-col gap-2 rounded-xl border border-border/80 bg-card/60 p-3"
                           >
                             <div className="flex items-center justify-between gap-2">
                               {isEditingName ? (
@@ -984,7 +984,7 @@ export function DayEditorDialog({
                                       type="button"
                                       onClick={saveScreenshotName}
                                       aria-label="Salva nome link"
-                                      className="inline-flex h-8 items-center gap-1 rounded-md border border-profit/20 bg-profit/5 px-2 font-mono text-[10px] text-muted-foreground transition-colors hover:border-profit/40 hover:bg-profit/10 hover:text-profit"
+                                      className="inline-flex h-8 items-center gap-1 rounded-lg border border-profit/20 bg-profit/5 px-2 font-mono text-[10px] text-muted-foreground transition-colors hover:border-profit/40 hover:bg-profit/10 hover:text-profit"
                                     >
                                       <Check className="size-3" />
                                       Salva
@@ -993,7 +993,7 @@ export function DayEditorDialog({
                                       type="button"
                                       onClick={() => setEditingScreenshot(null)}
                                       aria-label="Annulla modifica nome link"
-                                      className="inline-flex h-8 items-center gap-1 rounded-md border border-border bg-background/70 px-2 font-mono text-[10px] text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                                      className="inline-flex h-8 items-center gap-1 rounded-lg border border-border bg-background/70 px-2 font-mono text-[10px] text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                                     >
                                       <X className="size-3" />
                                       Annulla
@@ -1010,7 +1010,7 @@ export function DayEditorDialog({
                                       })
                                     }
                                     aria-label="Modifica nome link"
-                                    className="rounded-md border border-transparent p-1.5 text-muted-foreground transition-colors hover:border-profit/30 hover:bg-profit/10 hover:text-profit"
+                                    className="rounded-lg border border-transparent p-1.5 text-muted-foreground transition-colors hover:border-profit/30 hover:bg-profit/10 hover:text-profit"
                                   >
                                     <Pencil className="size-3.5" />
                                   </button>
@@ -1025,7 +1025,7 @@ export function DayEditorDialog({
                                     }
                                   }}
                                   aria-label="Elimina link"
-                                  className="rounded-md border border-transparent p-1.5 text-muted-foreground transition-colors hover:border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
+                                  className="rounded-lg border border-transparent p-1.5 text-muted-foreground transition-colors hover:border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
                                 >
                                   <Trash2 className="size-3.5" />
                                 </button>
@@ -1118,7 +1118,7 @@ export function DayEditorDialog({
                     </div>
 
                     {screenshotInputs[row.id]?.url?.trim() && (
-                      <div className="overflow-hidden rounded-md border border-border bg-background">
+                      <div className="overflow-hidden rounded-lg border border-border bg-background">
                         <div className="px-3 py-2 text-xs text-muted-foreground">
                           Anteprima
                         </div>
@@ -1149,7 +1149,7 @@ export function DayEditorDialog({
                 </div>
 
                 <div className="flex min-w-0 flex-col gap-2.5 rounded-xl border border-border/70 bg-background/30 p-3 sm:p-3.5">
-                  <Label className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                  <Label className="text-[11px] font-medium tracking-normal text-muted-foreground">
                     TAGS
                   </Label>
 
@@ -1178,7 +1178,7 @@ export function DayEditorDialog({
                               updateTradeRow(row.id, 'tags', nextTags, 0);
                             }}
                             className={cn(
-                              'w-full rounded-md border px-2.5 py-1.5 text-left font-mono text-[13px] leading-4 transition-colors',
+                              'w-full rounded-lg border px-2.5 py-1.5 text-left font-mono text-[13px] leading-4 transition-colors',
                               isManaged && 'ring-1 ring-white/35',
                               !shouldShowTagColor &&
                                 'border-border bg-background/80 text-muted-foreground hover:bg-secondary hover:text-foreground'
@@ -1240,7 +1240,7 @@ export function DayEditorDialog({
                               updateTradeRow(row.id, 'tags', nextTags, 0);
                             }}
                             className={cn(
-                              'w-full rounded-md border px-2.5 py-1.5 text-left font-mono text-[13px] leading-4 transition-colors',
+                              'w-full rounded-lg border px-2.5 py-1.5 text-left font-mono text-[13px] leading-4 transition-colors',
                               isManaged && 'ring-1 ring-white/35',
                               !shouldShowTagColor &&
                                 'border-border bg-background/80 text-muted-foreground hover:bg-secondary hover:text-foreground'
@@ -1276,7 +1276,7 @@ export function DayEditorDialog({
                     })}
                   </div>
 
-                  <div className="grid grid-cols-1 items-center gap-2 rounded-lg border border-border/70 bg-background/35 p-2 min-[430px]:grid-cols-[minmax(0,1fr)_auto_auto]">
+                  <div className="grid grid-cols-1 items-center gap-2 rounded-xl border border-border/70 bg-background/35 p-2 min-[430px]:grid-cols-[minmax(0,1fr)_auto_auto]">
                     <Input
                       value={customTagInputs[row.id] ?? ''}
                       onChange={(event) =>
@@ -1418,7 +1418,7 @@ export function DayEditorDialog({
                 </div>
 
                 <div className="flex flex-col gap-2 rounded-xl border border-border/70 bg-background/30 p-3 sm:p-3.5">
-                  <Label className="font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                  <Label className="font-mono text-[11px] font-medium tracking-normal text-muted-foreground">
                     Note trade
                   </Label>
 
@@ -1470,7 +1470,7 @@ export function DayEditorDialog({
           <div className="flex items-center justify-end gap-3 max-sm:flex-col-reverse max-sm:items-stretch">
             <span
               className={cn(
-                'min-h-4 text-right font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground/70',
+                'min-h-4 text-right font-mono text-[11px] tracking-normal text-muted-foreground/70',
                 autosaveStatus === 'saving' && 'text-profit/80',
                 autosaveStatus === 'saved' && 'text-muted-foreground/80'
               )}

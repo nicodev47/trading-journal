@@ -50,7 +50,7 @@ export function WhatsNewDialog({ open, onOpenChange }: WhatsNewDialogProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={false}
-        className="ej-scrollbar max-h-[90dvh] w-[calc(100vw-1.75rem)] max-w-4xl overflow-y-auto overscroll-contain border-border/80 bg-card p-0 sm:rounded-2xl"
+        className="ej-scrollbar max-h-[90dvh] w-[calc(100vw-1.75rem)] max-w-4xl overflow-y-auto overscroll-contain border-border/80 bg-card p-0 sm:rounded-[20px]"
       >
         <DialogHeader className="sticky top-0 z-10 border-b border-border/70 bg-card/95 px-4 py-3.5 text-left backdrop-blur sm:px-6 sm:py-5">
           <div className="flex items-start justify-between gap-4">
@@ -65,7 +65,7 @@ export function WhatsNewDialog({ open, onOpenChange }: WhatsNewDialogProps) {
             <button
               type="button"
               onClick={() => onOpenChange(false)}
-              className="rounded-lg border border-border/70 p-2 text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground"
+              className="rounded-xl border border-border/70 p-2 text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground"
               aria-label="Chiudi novità"
             >
               <X className="size-4" />
@@ -74,7 +74,7 @@ export function WhatsNewDialog({ open, onOpenChange }: WhatsNewDialogProps) {
         </DialogHeader>
 
         <div className="p-4 sm:p-5">
-          <h2 className="mb-4 font-mono text-xs font-semibold uppercase tracking-[0.16em] text-blue-200">
+          <h2 className="mb-4 font-mono text-xs font-semibold tracking-normal text-blue-200">
             ✨ Nuove funzionalità
           </h2>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -101,7 +101,7 @@ export function WhatsNewDialog({ open, onOpenChange }: WhatsNewDialogProps) {
           <button
             type="button"
             onClick={() => onOpenChange(false)}
-            className="rounded-lg border border-blue-300/30 bg-blue-300/10 px-4 py-2 font-sans text-xs font-semibold text-blue-100 transition hover:border-blue-200/50 hover:bg-blue-300/15"
+            className="rounded-xl border border-blue-300/30 bg-blue-300/10 px-4 py-2 font-sans text-xs font-semibold text-blue-100 transition hover:border-blue-200/50 hover:bg-blue-300/15"
           >
             Ho capito
           </button>
