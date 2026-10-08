@@ -159,9 +159,6 @@ export function ProfileFields({ name, photo, onChange, autoFocus, fallbackInitia
           value={name}
           onChange={event => onChange({ name: event.target.value })}
         />
-        <p className="text-xs text-muted-foreground">
-          Puoi caricare una foto profilo personalizzata, altrimenti verranno utilizzate le tue iniziali di default.
-        </p>
       </div>
     </div>
   );
