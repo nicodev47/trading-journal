@@ -21,7 +21,7 @@ import type { Trade } from '@/lib/types/trade';
 import { useStreamerMode } from '@/contexts/streamer-mode-context';
 import { usePreferences } from '@/contexts/preferences-context';
 import { AssetPicker } from '@/components/preferences/asset-picker';
-import { ProfileFields } from '@/components/preferences/profile-fields';
+import { ProfileAvatar, ProfileFields } from '@/components/preferences/profile-fields';
 import { SetupInput } from '@/components/preferences/setup-input';
 import { WindowsEditor } from '@/components/preferences/windows-editor';
 import { PreferencesBackup } from '@/components/preferences/preferences-backup';
@@ -35,6 +35,8 @@ interface ProfileDialogProps {
   trades: Trade[];
   onExportAll: () => void;
   onClearAll: () => void;
+  /** Profile of an imported file: stats only, no settings or data tabs. */
+  readOnly?: boolean;
 }
 
 const formatCurrency = (value: number) =>
@@ -61,6 +63,7 @@ export function ProfileDialog({
   trades,
   onExportAll,
   onClearAll,
+  readOnly = false,
 }: ProfileDialogProps) {
   const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
   const [confirmationText, setConfirmationText] = useState('');
@@ -188,22 +191,26 @@ export function ProfileDialog({
           <DialogHeader className="border-b border-border px-4 py-3.5 text-left sm:px-5 sm:py-4">
             <DialogTitle className="font-sans tabular-nums text-base sm:text-lg">Profilo trader</DialogTitle>
             <DialogDescription>
-              Progressi e statistiche calcolati dal journal Personale.
+              {readOnly
+                ? 'Progressi e statistiche calcolati dal journal importato.'
+                : 'Progressi e statistiche calcolati dal journal Personale.'}
             </DialogDescription>
           </DialogHeader>
 
           <Tabs defaultValue="profilo" className="gap-0">
+            {!readOnly && (
             <TabsList className="mx-4 mt-4 grid h-10 w-auto grid-cols-3 sm:mx-5">
               <TabsTrigger value="profilo">Profilo</TabsTrigger>
               <TabsTrigger value="operativita">Impostazioni</TabsTrigger>
               <TabsTrigger value="dati">Dati</TabsTrigger>
             </TabsList>
+            )}
 
             <TabsContent value="profilo" className="space-y-3 p-4 sm:space-y-4 sm:p-5">
             <section className="rounded-[14px] border border-border bg-background/35 p-3.5 sm:p-4">
               <div className="mb-4 flex items-center justify-between gap-3">
                 <p className="font-sans text-xs font-semibold tracking-normal text-muted-foreground">
-                  Il tuo profilo
+                  {readOnly ? 'Profilo' : 'Il tuo profilo'}
                 </p>
                 <Button
                   type="button"
@@ -218,11 +225,20 @@ export function ProfileDialog({
                 </Button>
               </div>
 
-              <ProfileFields
-                name={preferences.name}
-                photo={preferences.photo}
-                onChange={updatePreferences}
-              />
+              {readOnly ? (
+                <div className="flex items-center gap-4">
+                  <ProfileAvatar name={preferences.name} photo={preferences.photo} />
+                  <p className="min-w-0 truncate font-sans text-lg font-semibold text-foreground">
+                    {preferences.name || 'Trader'}
+                  </p>
+                </div>
+              ) : (
+                <ProfileFields
+                  name={preferences.name}
+                  photo={preferences.photo}
+                  onChange={updatePreferences}
+                />
+              )}
 
               <div className="mt-6 border-t border-border/70 pt-5">
                 <div className="flex min-w-0 flex-wrap items-end justify-between gap-2">

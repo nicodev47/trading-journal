@@ -7,6 +7,7 @@ import { DefaultDisplaySettingsProvider, useStreamerMode } from '@/contexts/stre
 import { parseImportedJournal } from '@/hooks/use-trades';
 import { extractImportedPreferences, withImportedChoices } from '@/lib/import-preferences';
 import type { Trade } from '@/lib/types/trade';
+import { ProfileDialog } from './profile-dialog';
 import { DayEditorDialog } from './day-editor-dialog';
 import { AdvancedStatsGrid } from './advanced-stats-grid';
 import { EquityCurve } from './equity-curve';
@@ -36,6 +37,7 @@ function PreviewContent({ data, fileName, view, onClose }: ImportPreviewProps) {
   const journal = useMemo(() => parseImportedJournal(data), [data]);
   const [group, setGroup] = useState<GroupDialog | null>(null);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
   const [returnToGroup, setReturnToGroup] = useState(false);
 
@@ -64,19 +66,24 @@ function PreviewContent({ data, fileName, view, onClose }: ImportPreviewProps) {
     <div className="flex flex-1 flex-col">
       <div className="border-b border-border bg-violet-500/[0.06]">
         <div className="mx-auto flex w-full max-w-6xl items-center gap-3 px-4 py-2.5">
-          <ProfileAvatar
-            name={preferences.name}
-            photo={preferences.photo}
-            className="size-9 text-xs"
-          />
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold text-foreground">
-              {preferences.name || 'Journal importato'}
-            </p>
-            <p className="truncate text-xs text-muted-foreground">
-              Preview di sola lettura · {fileName}
-            </p>
-          </div>
+          <button
+            type="button"
+            onClick={() => setIsProfileOpen(true)}
+            aria-label="Apri il profilo del trader"
+            className="flex min-w-0 flex-1 items-center gap-3 rounded-xl text-left outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <ProfileAvatar
+              name={preferences.name}
+              photo={preferences.photo}
+              className="size-9 text-xs"
+            />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-foreground">
+                {preferences.name || 'Journal importato'}
+              </p>
+              <p className="truncate text-xs text-muted-foreground">{fileName}</p>
+            </div>
+          </button>
           <Button type="button" variant="outline" size="sm" className="gap-2" onClick={onClose}>
             <X className="size-4" />
             Esci
@@ -134,6 +141,15 @@ function PreviewContent({ data, fileName, view, onClose }: ImportPreviewProps) {
           onRemoveTag={noop}
         />
       )}
+
+      <ProfileDialog
+        readOnly
+        isOpen={isProfileOpen}
+        onClose={() => setIsProfileOpen(false)}
+        trades={journal.trades}
+        onExportAll={noop}
+        onClearAll={noop}
+      />
 
       <TradeDetailDialog
         trade={selectedTrade}
