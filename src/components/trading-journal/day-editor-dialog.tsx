@@ -786,7 +786,7 @@ export function DayEditorDialog({
                         onBlur={() => persistCurrentRows()}
                         placeholder="0"
                         className={cn(
-                          'h-9 w-full border-border bg-background pr-7 font-sans tabular-nums text-sm',
+                          'h-9 w-full border-border/70 bg-background/60 pr-7 font-sans tabular-nums text-sm',
                           getPnlNumber(row.pnl) > 0 && 'border-profit/50 text-profit',
                           getPnlNumber(row.pnl) < 0 && 'border-loss/50 text-loss'
                         )}
@@ -809,7 +809,7 @@ export function DayEditorDialog({
                       value={row.symbol}
                       onValueChange={v => updateTradeRow(row.id, 'symbol', v, 0)}
                     >
-                      <SelectTrigger className="h-9 w-full border-border bg-background text-sm">
+                      <SelectTrigger className="h-9 w-full border-border/70 bg-background/60 text-sm">
                         <SelectValue placeholder="--" />
                       </SelectTrigger>
 
@@ -831,7 +831,7 @@ export function DayEditorDialog({
                       value={row.direction}
                       onValueChange={v => updateTradeRow(row.id, 'direction', v, 0)}
                     >
-                      <SelectTrigger className="h-9 w-full border-border bg-background text-sm">
+                      <SelectTrigger className="h-9 w-full border-border/70 bg-background/60 text-sm">
                         <SelectValue placeholder="--" />
                       </SelectTrigger>
 
@@ -902,7 +902,7 @@ export function DayEditorDialog({
                           persistCurrentRows();
                         }}
                         className={cn(
-                          'h-9 w-full border-border bg-background text-center font-sans tabular-nums text-sm placeholder:text-muted-foreground/70',
+                          'h-9 w-full border-border/70 bg-background/60 text-center font-sans tabular-nums text-sm placeholder:text-muted-foreground/70',
                           /\d/.test(timeDrafts[row.id] ?? row.time) &&
                             (timeDrafts[row.id] ?? row.time) !== '00:00'
                             ? 'text-foreground'
@@ -925,7 +925,7 @@ export function DayEditorDialog({
                         updateTradeRow(row.id, 'setup', value, 0)
                       }
                     >
-                      <SelectTrigger className="h-9 w-full border-border bg-background text-sm">
+                      <SelectTrigger className="h-9 w-full border-border/70 bg-background/60 text-sm">
                         <SelectValue placeholder="Seleziona setup" />
                       </SelectTrigger>
 
@@ -986,7 +986,7 @@ export function DayEditorDialog({
                                     }
                                   }}
                                   aria-label="Modifica nome link"
-                                  className="h-8 min-w-0 flex-1 border-border bg-background font-sans tabular-nums text-xs"
+                                  className="h-8 min-w-0 flex-1 border-border/70 bg-background/60 font-sans tabular-nums text-xs"
                                 />
                               ) : (
                                 <span className="min-w-0 truncate font-sans tabular-nums text-xs font-medium text-foreground">
@@ -1098,7 +1098,7 @@ export function DayEditorDialog({
                           }))
                         }
                         placeholder="Inserisci il timeframe"
-                        className="h-8 border-border bg-background text-sm"
+                        className="h-8 border-border/70 bg-background/60 text-sm"
                       />
 
                       <Input
@@ -1115,7 +1115,7 @@ export function DayEditorDialog({
                           }))
                         }
                         placeholder="Inserisci il link di TradingView/Google Drive"
-                        className="h-8 border-border bg-background text-sm"
+                        className="h-8 border-border/70 bg-background/60 text-sm"
                         onKeyDown={e => e.key === 'Enter' && addScreenshotToTrade(row.id)}
                       />
 
@@ -1445,7 +1445,7 @@ export function DayEditorDialog({
                     }}
                     onBlur={() => persistCurrentRows()}
                     placeholder="Cosa è successo in questo trade? Narrativa, Setup, Emozioni..."
-                    className="min-h-[72px] resize-none overflow-hidden border-border bg-background text-sm"
+                    className="min-h-[72px] resize-none overflow-hidden border-border/70 bg-background/60 text-sm"
                   />
                 </div>
               </div>
