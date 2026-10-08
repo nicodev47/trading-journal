@@ -185,6 +185,10 @@ export function DayEditorDialog({
   const [managedTagKey, setManagedTagKey] = useState<string | null>(null);
   const [tradeToDeleteId, setTradeToDeleteId] = useState<string | null>(null);
   const [tagToDelete, setTagToDelete] = useState<string | null>(null);
+  const [screenshotToDelete, setScreenshotToDelete] = useState<{
+    tradeId: string;
+    index: number;
+  } | null>(null);
   const [isDeleteDayConfirmOpen, setIsDeleteDayConfirmOpen] = useState(false);
   const [selectedShareTrade, setSelectedShareTrade] = useState<Trade | null>(null);
   const [editingScreenshot, setEditingScreenshot] = useState<{
@@ -532,6 +536,19 @@ export function DayEditorDialog({
         trade.screenshots.filter((_, i) => i !== index),
         0
       );
+    }
+  };
+
+  const confirmRemoveScreenshot = () => {
+    if (screenshotToDelete) {
+      removeScreenshotFromTrade(screenshotToDelete.tradeId, screenshotToDelete.index);
+      if (
+        editingScreenshot?.tradeId === screenshotToDelete.tradeId &&
+        editingScreenshot.index === screenshotToDelete.index
+      ) {
+        setEditingScreenshot(null);
+      }
+      setScreenshotToDelete(null);
     }
   };
 
@@ -1018,12 +1035,9 @@ export function DayEditorDialog({
 
                                 <button
                                   type="button"
-                                  onClick={() => {
-                                    removeScreenshotFromTrade(row.id, index);
-                                    if (isEditingName) {
-                                      setEditingScreenshot(null);
-                                    }
-                                  }}
+                                  onClick={() =>
+                                    setScreenshotToDelete({ tradeId: row.id, index })
+                                  }
                                   aria-label="Elimina link"
                                   className="rounded-lg border border-transparent p-1.5 text-muted-foreground transition-colors hover:border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
                                 >
@@ -1514,6 +1528,36 @@ export function DayEditorDialog({
               onClick={confirmRemoveTradeRow}
             >
               Elimina trade
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(screenshotToDelete)}
+        onOpenChange={(open) => !open && setScreenshotToDelete(null)}
+      >
+        <DialogContent className="max-h-[92dvh] w-[calc(100vw-1.75rem)] max-w-[460px] border-border bg-card">
+          <DialogHeader>
+            <DialogTitle>Eliminare questa immagine?</DialogTitle>
+            <DialogDescription>
+              Il link all&apos;immagine verrà rimosso dal trade. Non potrà essere recuperato se non tramite backup.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="max-sm:[&_button]:w-full">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setScreenshotToDelete(null)}
+            >
+              Annulla
+            </Button>
+            <Button
+              type="button"
+              className="bg-loss text-white hover:bg-loss/90"
+              onClick={confirmRemoveScreenshot}
+            >
+              Elimina immagine
             </Button>
           </DialogFooter>
         </DialogContent>
