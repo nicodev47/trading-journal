@@ -406,7 +406,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
       setBackupBaseline(totalTrades);
       toast.info('Ricordati di fare un backup', {
         description:
-          'Hai aggiunto 3 operazioni dall’ultimo backup. I dati sono salvati nella cache del browser: esporta una copia per non perderli.',
+          'Hai inserito nuove operazioni dall’ultimo backup. I dati sono salvati nella cache del browser: esporta una copia per non perderli.',
         duration: 12000,
         action: { label: 'Esporta tutto', onClick: () => handleExportAllJournals() },
       });
