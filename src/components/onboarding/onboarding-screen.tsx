@@ -35,10 +35,7 @@ const STEPS: { title: string; description?: string; why?: string }[] = [
 export function OnboardingScreen() {
   const { completeOnboarding } = usePreferences();
   const [step, setStep] = useState(-1);
-  const [draft, setDraft] = useState<JournalPreferences>({
-    ...EMPTY_PREFERENCES,
-    windows: [{ id: 'w-suggested', name: '', start: '', end: '' }],
-  });
+  const [draft, setDraft] = useState<JournalPreferences>(EMPTY_PREFERENCES);
 
   const isLast = step === STEPS.length - 1;
   const canContinue = step !== 1 || draft.assets.length > 0;

@@ -126,7 +126,7 @@ export function WindowsEditor({ value, onChange }: WindowsEditorProps) {
   const add = () =>
     onChange([
       ...value,
-      { id: `w-${Date.now()}`, name: '', start: '09:00', end: '12:00' },
+      { id: `w-${Date.now()}`, name: '', start: '', end: '' },
     ]);
 
   return (
