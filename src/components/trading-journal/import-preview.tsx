@@ -70,20 +70,20 @@ function PreviewContent({ data, fileName, view, onClose }: ImportPreviewProps) {
             type="button"
             onClick={() => setIsProfileOpen(true)}
             aria-label="Apri il profilo del trader"
-            className="flex min-w-0 flex-1 items-center gap-3 rounded-xl text-left outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ring"
+            className="shrink-0 rounded-full outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ring"
           >
             <ProfileAvatar
               name={preferences.name}
               photo={preferences.photo}
               className="size-9 text-xs"
             />
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-foreground">
-                {preferences.name || 'Journal importato'}
-              </p>
-              <p className="truncate text-xs text-muted-foreground">{fileName}</p>
-            </div>
           </button>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold text-foreground">
+              {preferences.name || 'Journal importato'}
+            </p>
+            <p className="truncate text-xs text-muted-foreground">{fileName}</p>
+          </div>
           <Button type="button" variant="outline" size="sm" className="gap-2" onClick={onClose}>
             <X className="size-4" />
             Esci
