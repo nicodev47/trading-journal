@@ -104,6 +104,7 @@ export function OnboardingScreen() {
                   <ProfileFields
                     autoFocus
                     fallbackInitials="MR"
+                    hint="Il nome / username che andrai ad inserire verrà utilizzato all'interno del tuo profilo da trader."
                     name={draft.name}
                     photo={draft.photo}
                     onChange={patch}

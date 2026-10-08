@@ -81,9 +81,10 @@ interface ProfileFieldsProps {
   onChange: (patch: { name?: string; photo?: string | null }) => void;
   autoFocus?: boolean;
   fallbackInitials?: string;
+  hint?: string;
 }
 
-export function ProfileFields({ name, photo, onChange, autoFocus, fallbackInitials }: ProfileFieldsProps) {
+export function ProfileFields({ name, photo, onChange, autoFocus, fallbackInitials, hint }: ProfileFieldsProps) {
   const fileInput = useRef<HTMLInputElement>(null);
   const [error, setError] = useState('');
 
@@ -159,6 +160,7 @@ export function ProfileFields({ name, photo, onChange, autoFocus, fallbackInitia
           value={name}
           onChange={event => onChange({ name: event.target.value })}
         />
+        {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
       </div>
     </div>
   );
