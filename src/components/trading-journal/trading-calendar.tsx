@@ -44,7 +44,7 @@ interface TradingCalendarProps {
   onExport: () => void;
   importTargetMonth?: Date | null;
   tutorialDemoDateKey?: string;
-  /** Hides import/export/reset: used by the import preview. */
+  /** Hides import and reset (export stays): used by the import preview. */
   readOnly?: boolean;
 }
 
@@ -278,11 +278,12 @@ export function TradingCalendar({
           </Button>
         </div>
 
-        {!readOnly && (
+        {(
           <div
             className="flex items-center gap-2 max-md:w-full"
             data-tutorial="import-export-buttons"
           >
+            {!readOnly && (
             <Button
               variant="outline"
               size="sm"
@@ -292,6 +293,7 @@ export function TradingCalendar({
               <Upload className="size-3" />
               Importa
             </Button>
+            )}
 
             <Button
               variant="outline"

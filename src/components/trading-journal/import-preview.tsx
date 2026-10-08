@@ -6,6 +6,8 @@ import { PreferencesOverrideProvider, usePreferences } from '@/contexts/preferen
 import { DefaultDisplaySettingsProvider, useStreamerMode } from '@/contexts/streamer-mode-context';
 import { parseImportedJournal } from '@/hooks/use-trades';
 import { extractImportedPreferences, withImportedChoices } from '@/lib/import-preferences';
+import { getExportDateSlug, normalizeExportName } from '@/lib/export-filename';
+import { createWorkspaceExportData } from '@/lib/journal-export';
 import type { Trade } from '@/lib/types/trade';
 import { ProfileDialog } from './profile-dialog';
 import { DayEditorDialog } from './day-editor-dialog';
@@ -54,6 +56,22 @@ function PreviewContent({ data, fileName, view, onClose }: ImportPreviewProps) {
   }, [journal]);
 
   if (!journal) return null;
+
+  const handleExport = () => {
+    const blob = new Blob(
+      [createWorkspaceExportData('personal', journal, new Date(), undefined, preferences)],
+      { type: 'application/json' }
+    );
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+
+    anchor.href = url;
+    anchor.download = `eclipsejournal-${normalizeExportName(preferences.name, 'preview')}-${getExportDateSlug(new Date(), true)}.json`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(url);
+  };
 
   const openGroup = (payload: GroupDialog) => {
     if (payload.trades.length === 0) return;
@@ -104,7 +122,7 @@ function PreviewContent({ data, fileName, view, onClose }: ImportPreviewProps) {
               onDayClick={setSelectedDay}
               onWeekPlanClick={noop}
               onImport={noop}
-              onExport={noop}
+              onExport={handleExport}
               importTargetMonth={latestMonth}
             />
             <AdvancedStatsGrid trades={journal.trades} />
