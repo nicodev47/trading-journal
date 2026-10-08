@@ -197,7 +197,7 @@ export function WeeklyPlanDialog({
                 className={cn(
                   'rounded-lg border px-4 py-2 font-mono text-sm transition-colors max-[419px]:w-full',
                   approach === 'intraday'
-                    ? 'border-profit bg-profit text-background'
+                    ? 'border-profit bg-primary text-primary-foreground'
                     : 'border-border bg-background text-foreground hover:bg-secondary'
                 )}
               >
@@ -209,7 +209,7 @@ export function WeeklyPlanDialog({
                 className={cn(
                   'rounded-lg border px-4 py-2 font-mono text-sm transition-colors max-[419px]:w-full',
                   approach === 'swing'
-                    ? 'border-profit bg-profit text-background'
+                    ? 'border-profit bg-primary text-primary-foreground'
                     : 'border-border bg-background text-foreground hover:bg-secondary'
                 )}
               >
@@ -234,7 +234,7 @@ export function WeeklyPlanDialog({
               className={cn(
                 'flex min-h-[100px] flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed transition-colors outline-none',
                 isDragging ? 'border-profit bg-profit/5' : 'border-border',
-                'focus:border-profit focus:ring-1 focus:ring-profit'
+                'focus:border-primary focus:ring-1 focus:ring-primary'
               )}
             >
               <div className="flex items-center gap-2 text-muted-foreground">
@@ -292,7 +292,7 @@ export function WeeklyPlanDialog({
                         <button
                           type="button"
                           onClick={() => openScreenshotInNewTab(src)}
-                          className="flex items-center gap-1 text-foreground hover:text-profit"
+                          className="flex items-center gap-1 text-foreground hover:text-primary"
                         >
                           Apri <ExternalLink className="size-3" />
                         </button>
@@ -335,7 +335,7 @@ export function WeeklyPlanDialog({
           </Button>
           <Button
             onClick={handleSave}
-            className="bg-profit text-background hover:bg-profit/90"
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
           >
             Salva piano
           </Button>

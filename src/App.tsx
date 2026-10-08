@@ -1067,7 +1067,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
             <Button
               type="button"
               onClick={handleBackupAndResetBacktest}
-              className="gap-2 bg-profit text-background hover:bg-profit/90"
+              className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
             >
               <Download className="size-4" />
               Scarica backup e resetta
@@ -1118,7 +1118,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
               <button
                 type="button"
                 onClick={() => setIsHelpOpen(false)}
-                className="rounded-lg border border-border bg-background px-3 py-1.5 font-mono text-xs text-muted-foreground transition hover:border-profit/50 hover:text-foreground"
+                className="rounded-lg border border-border bg-background px-3 py-1.5 font-mono text-xs text-muted-foreground transition hover:border-primary/50 hover:text-foreground"
               >
                 Chiudi
               </button>
@@ -1138,7 +1138,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
                   <button
                     type="button"
                     onClick={handleRestartTutorial}
-                    className="shrink-0 rounded-xl border border-profit/30 bg-profit/10 px-3 py-2 font-sans text-xs font-semibold text-profit transition hover:border-profit/60 hover:bg-profit/15"
+                    className="shrink-0 rounded-xl border border-profit/30 bg-profit/10 px-3 py-2 font-sans text-xs font-semibold text-profit transition hover:border-primary/60 hover:bg-primary/15"
                   >
                     Riavvia tutorial
                   </button>

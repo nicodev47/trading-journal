@@ -224,9 +224,9 @@ export function ExecutionMap({ trades }: ExecutionMapProps) {
                 'group flex h-[54px] min-w-0 flex-col justify-between rounded-xl border border-border bg-secondary/20 p-1.5 text-muted-foreground transition min-[380px]:h-[62px] sm:h-[80px] sm:rounded-xl sm:p-2.5',
                 'bg-background/40',
                 hasTrades ? 'cursor-pointer hover:brightness-110' : 'cursor-default',
-                !hasTrades && 'hover:border-profit/40',
+                !hasTrades && 'hover:border-primary/40',
                 status === 'profit' &&
-                  'border-profit/40 bg-profit/15 text-foreground hover:border-profit/70',
+                  'border-profit/40 bg-profit/15 text-foreground hover:border-primary/70',
                 status === 'loss' &&
                   'border-loss/40 bg-loss/15 text-foreground hover:border-loss/70'
               )}

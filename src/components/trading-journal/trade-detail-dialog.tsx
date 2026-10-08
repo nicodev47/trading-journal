@@ -203,7 +203,7 @@ function AttachmentItem({
           href={screenshot.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex h-8 shrink-0 items-center gap-1 rounded-xl border border-border bg-background px-2.5 font-mono text-[10px] text-foreground transition-colors hover:border-profit/40 hover:text-profit"
+          className="inline-flex h-8 shrink-0 items-center gap-1 rounded-xl border border-border bg-background px-2.5 font-mono text-[10px] text-foreground transition-colors hover:border-primary/40 hover:text-primary"
         >
           Apri <ExternalLink className="size-3" />
         </a>
@@ -290,7 +290,7 @@ export function TradeDetailDialog({
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="h-10 w-10 rounded-xl border border-border bg-background/60 text-muted-foreground hover:border-border hover:bg-secondary/70 hover:text-foreground focus-visible:ring-1 focus-visible:ring-profit/50"
+                className="h-10 w-10 rounded-xl border border-border bg-background/60 text-muted-foreground hover:border-border hover:bg-secondary/70 hover:text-foreground focus-visible:ring-1 focus-visible:ring-primary/50"
                 onClick={handleBack}
                 aria-label="Torna alla lista trade"
               >
@@ -338,7 +338,7 @@ export function TradeDetailDialog({
                 <select
                   value={setupDraft}
                   onChange={(event) => setSetupDraft(event.target.value)}
-                  className="ej-filter-select h-9 w-full rounded-xl border border-border bg-background/70 px-3 font-mono text-xs text-foreground outline-none transition-colors focus:border-profit/60"
+                  className="ej-filter-select h-9 w-full rounded-xl border border-border bg-background/70 px-3 font-mono text-xs text-foreground outline-none transition-colors focus:border-primary/60"
                 >
                   <option value="">Seleziona setup</option>
                   {VALID_TRADE_SETUPS.map((setup) => (
@@ -406,7 +406,7 @@ export function TradeDetailDialog({
               type="button"
               onClick={saveSetup}
               disabled={!isSetupDirty}
-              className="rounded-[10px] bg-profit text-background hover:bg-profit/90"
+              className="rounded-[10px] bg-primary text-primary-foreground hover:bg-primary/90"
             >
               Salva
             </Button>

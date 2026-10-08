@@ -259,7 +259,7 @@ export function TradeGroupDetailDialog({
                     className={cn(
                       'h-9 w-9 rounded-xl border border-border bg-background/50 p-0 font-mono text-xs text-muted-foreground hover:bg-secondary hover:text-foreground',
                       page === currentPage &&
-                        'bg-profit/20 text-foreground hover:bg-profit/25'
+                        'bg-profit/20 text-foreground hover:bg-primary/25'
                     )}
                     onClick={() => setCurrentPage(page)}
                   >

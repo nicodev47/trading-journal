@@ -123,7 +123,7 @@ export function ProfileShareDialog({
               size="icon"
               onClick={() => onOpenChange(false)}
               aria-label="Torna al profilo"
-              className="h-10 w-10 shrink-0 rounded-xl border border-transparent bg-transparent text-muted-foreground hover:border-border hover:bg-secondary/40 hover:text-foreground focus-visible:ring-1 focus-visible:ring-profit/50"
+              className="h-10 w-10 shrink-0 rounded-xl border border-transparent bg-transparent text-muted-foreground hover:border-border hover:bg-secondary/40 hover:text-foreground focus-visible:ring-1 focus-visible:ring-primary/50"
             >
               <ArrowLeft className="size-4" />
             </Button>
@@ -159,7 +159,7 @@ export function ProfileShareDialog({
             variant="outline"
             onClick={handleCopy}
             disabled={isCopying || isExporting}
-            className="gap-2 border-border bg-background/50 text-foreground hover:border-profit/40 hover:bg-secondary/70"
+            className="gap-2 border-border bg-background/50 text-foreground hover:border-primary/40 hover:bg-secondary/70"
           >
             <Clipboard className="size-4" />
             {isCopying ? 'Copia...' : 'Copia negli appunti'}
@@ -168,7 +168,7 @@ export function ProfileShareDialog({
             type="button"
             onClick={handleDownload}
             disabled={isExporting || isCopying}
-            className="gap-2 bg-profit text-background hover:bg-profit/90"
+            className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
           >
             <Download className="size-4" />
             {isExporting ? 'Salvataggio...' : 'Salva come immagine'}

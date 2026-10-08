@@ -689,7 +689,7 @@ export function DayEditorDialog({
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="h-10 gap-2 rounded-xl border-[#0f8f6f] bg-[#06251f] px-3.5 font-mono text-sm font-semibold text-[#30d158] shadow-none transition-colors duration-150 hover:border-[#119979] hover:bg-[#073128] hover:text-[#30d158] hover:shadow-none"
+                      className="h-10 gap-2 rounded-xl border-border bg-white/[0.04] px-3.5 font-sans text-sm font-medium text-foreground shadow-none transition-colors duration-150 hover:bg-white/10 hover:text-foreground hover:shadow-none"
                       onClick={() => setSelectedShareTrade(getTradeFromRow(row))}
                     >
                       <span
@@ -927,7 +927,7 @@ export function DayEditorDialog({
                 </div>
                 <div className="flex min-w-0 flex-col gap-3 rounded-xl border border-border/70 bg-background/30 p-3 sm:p-3.5">
                   <p className="font-mono text-[11px] font-medium tracking-normal text-muted-foreground">
-                    ANALISI TRADE
+                    Analisi trade
                   </p>
 
                   {row.screenshots.length > 0 && (
@@ -984,7 +984,7 @@ export function DayEditorDialog({
                                       type="button"
                                       onClick={saveScreenshotName}
                                       aria-label="Salva nome link"
-                                      className="inline-flex h-8 items-center gap-1 rounded-lg border border-profit/20 bg-profit/5 px-2 font-mono text-[10px] text-muted-foreground transition-colors hover:border-profit/40 hover:bg-profit/10 hover:text-profit"
+                                      className="inline-flex h-8 items-center gap-1 rounded-lg border border-profit/20 bg-profit/5 px-2 font-mono text-[10px] text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/10 hover:text-primary"
                                     >
                                       <Check className="size-3" />
                                       Salva
@@ -1010,7 +1010,7 @@ export function DayEditorDialog({
                                       })
                                     }
                                     aria-label="Modifica nome link"
-                                    className="rounded-lg border border-transparent p-1.5 text-muted-foreground transition-colors hover:border-profit/30 hover:bg-profit/10 hover:text-profit"
+                                    className="rounded-lg border border-transparent p-1.5 text-muted-foreground transition-colors hover:border-primary/30 hover:bg-primary/10 hover:text-primary"
                                   >
                                     <Pencil className="size-3.5" />
                                   </button>
@@ -1057,7 +1057,7 @@ export function DayEditorDialog({
                                 href={screenshot.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex items-center gap-1 text-foreground hover:text-profit"
+                                className="flex items-center gap-1 text-foreground hover:text-primary"
                               >
                                 Apri <ExternalLink className="size-3" />
                               </a>
@@ -1138,7 +1138,7 @@ export function DayEditorDialog({
                           <button
                             type="button"
                           
-                            className="flex items-center gap-1 text-foreground hover:text-profit"
+                            className="flex items-center gap-1 text-foreground hover:text-primary"
                           >
                             Apri <ExternalLink className="size-3" />
                           </button>
@@ -1483,7 +1483,7 @@ export function DayEditorDialog({
                   : ''}
             </span>
 
-            <Button onClick={handleSalva} className="bg-profit text-background hover:bg-profit/90">
+            <Button onClick={handleSalva} className="bg-primary text-primary-foreground hover:bg-primary/90">
               Salva
             </Button>
           </div>

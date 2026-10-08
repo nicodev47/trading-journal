@@ -184,7 +184,7 @@ export function MonthYearPicker({
             >
               <SelectTrigger
                 id={`${id}-month`}
-                className="relative flex h-12 w-full items-center justify-between rounded-xl border border-border bg-background/50 px-4 text-sm font-semibold text-foreground hover:bg-secondary/40 focus-visible:border-profit/60"
+                className="relative flex h-12 w-full items-center justify-between rounded-xl border border-border bg-background/50 px-4 text-sm font-semibold text-foreground hover:bg-secondary/40 focus-visible:border-primary/60"
               >
                 <SelectValue />
               </SelectTrigger>
@@ -213,7 +213,7 @@ export function MonthYearPicker({
             >
               <SelectTrigger
                 id={`${id}-year`}
-                className="relative flex h-12 w-full items-center justify-between rounded-xl border border-border bg-background/50 px-4 text-sm font-semibold text-foreground hover:bg-secondary/40 focus-visible:border-profit/60"
+                className="relative flex h-12 w-full items-center justify-between rounded-xl border border-border bg-background/50 px-4 text-sm font-semibold text-foreground hover:bg-secondary/40 focus-visible:border-primary/60"
               >
                 <SelectValue />
               </SelectTrigger>
@@ -241,7 +241,7 @@ export function MonthYearPicker({
               >
                 <SelectTrigger
                   id={`${id}-go-to`}
-                  className="relative flex h-12 w-full items-center justify-between rounded-xl border border-border bg-background/50 px-4 text-sm font-semibold text-foreground hover:bg-secondary/40 focus-visible:border-profit/60"
+                  className="relative flex h-12 w-full items-center justify-between rounded-xl border border-border bg-background/50 px-4 text-sm font-semibold text-foreground hover:bg-secondary/40 focus-visible:border-primary/60"
                 >
                   <SelectValue placeholder="Seleziona destinazione" />
                 </SelectTrigger>
@@ -267,7 +267,7 @@ export function MonthYearPicker({
               type="button"
               variant="outline"
               onClick={handleActionClick}
-              className="mt-1 h-11 w-full rounded-xl border-profit/35 bg-profit/10 font-sans text-sm font-semibold text-profit transition-colors hover:border-profit/60 hover:bg-profit/15 hover:text-profit"
+              className="mt-1 h-11 w-full rounded-xl border-profit/35 bg-profit/10 font-sans text-sm font-semibold text-profit transition-colors hover:border-primary/60 hover:bg-primary/15 hover:text-primary"
             >
               {actionLabel ?? 'Vai a oggi'}
             </Button>

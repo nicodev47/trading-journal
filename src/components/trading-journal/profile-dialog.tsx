@@ -224,7 +224,7 @@ export function ProfileDialog({
                 <Button
                   type="button"
                   size="sm"
-                  className="gap-2 bg-profit text-background hover:bg-profit/90 max-sm:w-full"
+                  className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90 max-sm:w-full"
                   onClick={handleShare}
                 >
                   <span className="text-base leading-none" aria-hidden="true">
@@ -496,7 +496,7 @@ export function ProfileDialog({
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="gap-2 border-profit/50 bg-profit/10 text-profit hover:bg-profit/20 hover:text-profit max-sm:w-full"
+                  className="gap-2 border-profit/50 bg-profit/10 text-profit hover:bg-primary/20 hover:text-primary max-sm:w-full"
                   onClick={onExportAll}
                 >
                   <Download className="size-3.5" />

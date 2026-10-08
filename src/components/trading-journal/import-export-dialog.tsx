@@ -514,7 +514,7 @@ export function ImportExportDialog({
                 <Button
                   type="button"
                   onClick={() => setIsAppendConfirmOpen(true)}
-                  className="gap-2 bg-profit text-background hover:bg-profit/90 hover:text-background"
+                  className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground"
                 >
                   <Upload className="size-4" />
                   Aggiungi ai dati attuali
@@ -533,7 +533,7 @@ export function ImportExportDialog({
                 <Button
                   type="button"
                   onClick={handleReplaceImport}
-                  className="gap-2 bg-profit text-background hover:bg-profit/90 hover:text-background"
+                  className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground"
                 >
                   <Upload className="size-4" />
                   Importa dati
@@ -564,7 +564,7 @@ export function ImportExportDialog({
                   'h-32 w-full flex-col gap-2 rounded-xl border-dashed transition-colors',
                   isDragging
                     ? 'border-profit bg-profit/10 text-profit'
-                    : 'border-border bg-background/35 hover:border-profit/70 hover:bg-profit/5'
+                    : 'border-border bg-background/35 hover:border-primary/70 hover:bg-primary/5'
                 )}
               >
                 <Upload
@@ -635,7 +635,7 @@ export function ImportExportDialog({
             <Button
               type="button"
               onClick={handleAppendImport}
-              className="gap-2 bg-profit text-background hover:bg-profit/90 hover:text-background"
+              className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground"
             >
               <Upload className="size-4" />
               Aggiungi dati
@@ -682,7 +682,7 @@ export function ImportExportDialog({
             <Button
               type="button"
               onClick={() => handleBackupDownload(true)}
-              className="gap-2 bg-profit text-background hover:bg-profit/90 hover:text-background"
+              className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground"
             >
               <Download className="size-4" />
               Esporta backup
