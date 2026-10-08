@@ -13,9 +13,10 @@ import { OnboardingPreview } from './onboarding-preview';
 
 const STEPS = [
   {
-    title: 'Come ti chiami?',
-    description: 'Il tuo nome e una foto (facoltativa) compaiono nel profilo e nelle card che condividi.',
-    why: 'Così le card che condividi sono davvero tue, con le tue iniziali o la tua foto.',
+    title: 'Incominciamo con le presentazioni, come ti chiami?',
+    description:
+      'Inserisci il tuo Nome e Cognome, altrimenti l\'username con il quale vuoi essere riconosciuto. Se ti va, carica una foto profilo unica, se non vuoi utilizzare quella di default.',
+    why: 'Ti chiediamo questi dati solo per un punto di vista estetico e di personalizzazione del tuo profilo. I tuoi dati non vengono condivisi con nessuno: per i nostri trader la privacy è al primo posto.',
   },
   {
     title: 'Su quali asset operi?',
