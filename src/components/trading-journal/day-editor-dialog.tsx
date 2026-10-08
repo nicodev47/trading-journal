@@ -1541,7 +1541,7 @@ export function DayEditorDialog({
           <DialogHeader>
             <DialogTitle>Eliminare questa immagine?</DialogTitle>
             <DialogDescription>
-              Il link all&apos;immagine verrà rimosso dal trade. Non potrà essere recuperato se non tramite backup.
+              Il link all&apos;immagine verrà rimosso dal trade.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="max-sm:[&_button]:w-full">
