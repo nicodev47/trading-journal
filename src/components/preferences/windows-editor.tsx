@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { getRomeUtcLabel } from '@/lib/timezone';
 import { MAX_LABEL_LENGTH, capitalizeSetup, type OperatingWindowConfig } from '@/lib/preferences';
 
 interface WindowsEditorProps {
@@ -110,7 +111,7 @@ export function WindowsEditor({ value, onChange }: WindowsEditorProps) {
       </Button>
 
       <p className="text-xs text-muted-foreground">
-        Questi orari seguono il fuso orario di Roma (UTC+2).
+        Questi orari seguono il fuso orario di Roma ({getRomeUtcLabel()}).
       </p>
 
       {value.length === 0 && (
