@@ -110,9 +110,9 @@ export function OnboardingIntro({ onStart }: { onStart: () => void }) {
             <ArrowRight className="size-4" />
           </Button>
         </Reveal>
-        <Reveal delay={1900} className="mx-auto mt-6 flex max-w-[420px] items-start justify-center gap-3 text-left text-sm text-muted-foreground">
-          <ShieldCheck className="mt-0.5 size-4 shrink-0" />
-          <span>
+        <Reveal delay={1900} className="mx-auto mt-8 flex max-w-[400px] flex-col items-center gap-2 text-center text-sm text-muted-foreground">
+          <ShieldCheck className="size-4" />
+          <span className="text-balance">
             Puoi modificare queste impostazioni quando vuoi successivamente all&apos;interno del tuo profilo.
           </span>
         </Reveal>
