@@ -121,7 +121,7 @@ export function OnboardingScreen() {
               <div className="mt-8 flex items-start gap-3 rounded-xl border border-border bg-white/[0.03] p-4 text-sm text-muted-foreground">
                 <ShieldCheck className="mt-0.5 size-4 shrink-0" />
                 <span>
-                  Puoi cambiare tutto quando vuoi dal profilo. I tuoi dati restano nel tuo browser.
+                  Puoi modificare queste impostazioni quando vuoi successivamente all&apos;interno del tuo profilo.
                 </span>
               </div>
             </>
