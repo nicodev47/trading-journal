@@ -49,6 +49,11 @@ export function OnboardingScreen() {
       completeOnboarding({
         ...draft,
         windows: draft.windows
+          .map((window, index) =>
+            index === 0 && !window.name.trim() && !window.start && !window.end
+              ? { ...window, name: 'Apertura NY', start: '15:30', end: '16:10' }
+              : window
+          )
           .filter(window => window.name.trim() && window.start && window.end)
           .map(window => ({ ...window, name: capitalizeSetup(window.name) })),
       });
