@@ -785,7 +785,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
                 Import ed Export per pagina, backup preventivo e note durante la creazione dei conti.
               </p>
             </div>
-            <div className="flex items-center justify-center sm:justify-end">
+            <div className="flex items-center justify-center sm:justify-start">
               <button
                 type="button"
                 onClick={() => setIsWhatsNewOpen(true)}
