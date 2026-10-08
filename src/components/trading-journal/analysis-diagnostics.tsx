@@ -8,13 +8,8 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
-  PolarAngleAxis,
-  PolarGrid,
-  PolarRadiusAxis,
   Pie,
   PieChart,
-  Radar,
-  RadarChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -42,21 +37,11 @@ import {
 } from '@/lib/types/trade';
 import { cn } from '@/lib/utils';
 import {
-  calculateEclipseScore,
-  calculateOperationalFrequency,
-  calculateRiskRewardRatio,
   calculateTradeWinRate,
-  formatRiskRewardRatio,
   getTradeOutcome,
   isValidStatTrade,
-  MIN_TRADES_PER_WEEK,
 } from '@/lib/calculations';
 import { formatMonthYear } from '@/lib/date-utils';
-import {
-  getOperatingWindowName,
-  isAutomaticWindowName,
-  type OperatingWindowName,
-} from '@/lib/operating-windows';
 
 interface AnalysisDiagnosticsProps {
   trades: Trade[];
@@ -69,8 +54,6 @@ type TradeGroupDialogState = {
   trades: Trade[];
 };
 
-const ECLIPSE_SCORE_MAX_RISK_REWARD = 1.2;
-const ECLIPSE_SCORE_TARGET_SESSION_CONSISTENCY = 0.7;
 
 type ChartClickState = {
   activePayload?: Array<{
@@ -157,14 +140,6 @@ function netPnl(trade: Trade) {
   return trade.pnl - trade.commission;
 }
 
-function normalizeScore(value: number) {
-  if (!Number.isFinite(value) || Number.isNaN(value)) {
-    return 0;
-  }
-
-  return Math.min(Math.max(value, 0), 100);
-}
-
 function formatDateLabel(dateKey: string) {
   const [year, month, day] = dateKey.split('-');
 
@@ -197,13 +172,6 @@ function getTradeTime(trade: Trade) {
   const time =
     trade.exitDate?.split('T')[1] || trade.entryDate?.split('T')[1] || '';
   return time.slice(0, 5) || '—';
-}
-
-function getEclipseMetricCardLabel(metric: string) {
-  if (metric === 'Freq. operativa') return 'Frequenza operativa';
-  if (metric === 'Costanza operativa') return 'Costanza Operativa';
-  if (metric === 'Risk/Reward') return 'Risk-to-Reward Ratio';
-  return metric;
 }
 
 function getTradeDateKey(trade: Trade) {
@@ -362,48 +330,6 @@ function DailyPnlTooltip({
   );
 }
 
-function EclipseScoreTooltip({
-  active,
-  payload,
-}: {
-  active?: boolean;
-  payload?: Array<{
-    payload?: {
-      metric?: string;
-      normalizedScore?: number;
-      displayValue?: string;
-      description?: string;
-      tooltipValue?: string;
-      targetValue?: string;
-    };
-  }>;
-}) {
-  const item = payload?.[0]?.payload;
-  if (!active || !item) return null;
-
-  return (
-    <div className="min-w-40 rounded-lg border border-border bg-[#1c1c1f]/98 px-3 py-2.5 font-sans tabular-nums text-xs shadow-[0_10px_30px_rgba(0,0,0,0.45),0_0_18px_rgba(10,132,255,0.08)]">
-      <p className="font-semibold text-white">
-        {item.metric ? getEclipseMetricCardLabel(item.metric) : '—'}
-      </p>
-      <p className="mt-1 text-[11px] font-semibold text-blue-200">
-        Score: {Math.round(item.normalizedScore ?? 0)} / 100 ·{' '}
-        {getScoreEvaluation(item.normalizedScore ?? 0)}
-      </p>
-      {item.displayValue && (
-        <p className="mt-1 text-[11px] text-slate-200">
-          Valore reale: {item.tooltipValue ?? item.displayValue}
-        </p>
-      )}
-      {item.targetValue && (
-        <p className="mt-1 text-[11px] text-slate-300">
-          Target Eclipse: {item.targetValue}
-        </p>
-      )}
-    </div>
-  );
-}
-
 function MonthChartSelector({
   label,
   canGoPrevious,
@@ -448,57 +374,6 @@ function MonthChartSelector({
   );
 }
 
-function EclipseScoreAngleTick({
-  x = 0,
-  y = 0,
-  payload,
-}: {
-  x?: number;
-  y?: number;
-  payload?: { value?: string };
-}) {
-  const label = payload?.value ?? '';
-  let nextX = x;
-  let nextY = y;
-  let nextAnchor: 'start' | 'middle' | 'end' = 'middle';
-
-  if (label === 'Winrate') {
-    nextY -= 12;
-  }
-
-  if (label === 'Risk/Reward') {
-    nextX += 22;
-    nextAnchor = 'start';
-  }
-
-  if (label === 'Costanza operativa') {
-    nextX -= 26;
-    nextAnchor = 'end';
-  }
-
-  if (label === 'Freq. operativa') {
-    nextY += 24;
-  }
-
-  return (
-    <text
-      x={nextX}
-      y={nextY}
-      textAnchor={nextAnchor}
-      dominantBaseline="middle"
-      fill="rgba(255,255,255,0.9)"
-      style={{
-        fontSize: 13,
-        fontWeight: 700,
-        pointerEvents: 'none',
-        userSelect: 'none',
-      }}
-    >
-      {label}
-    </text>
-  );
-}
-
 function CumulativePnlTooltip({
   active,
   payload,
@@ -533,7 +408,7 @@ export function AnalysisDiagnostics({
   trades,
   onUpdateTrade,
 }: AnalysisDiagnosticsProps) {
-  const { streamerMode, sundayWeekStart } = useStreamerMode();
+  const { streamerMode } = useStreamerMode();
   const { preferences } = usePreferences();
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
   const [tradeGroupDialog, setTradeGroupDialog] =
@@ -633,115 +508,6 @@ export function AnalysisDiagnostics({
     const tradeLog = [...trades].sort(
       (a, b) => getTradeSortTime(b) - getTradeSortTime(a)
     );
-    const winRate = calculateTradeWinRate(validStatTrades);
-    const winRateScore = validStatTrades.length
-      ? normalizeScore((winRate / 80) * 100)
-      : 0;
-    const riskRewardRatio = calculateRiskRewardRatio(validStatTrades).value;
-    const riskRewardScore = riskRewardRatio === null
-      ? 0
-      : normalizeScore(
-          (riskRewardRatio / ECLIPSE_SCORE_MAX_RISK_REWARD) * 100
-        );
-    const operationalFrequency = calculateOperationalFrequency(
-      validStatTrades,
-      sundayWeekStart ? 0 : 1
-    );
-    const frequencyScore = operationalFrequency.score;
-    const sessionStats = new Map<
-      OperatingWindowName,
-      { trades: number; totalPnl: number }
-    >();
-
-    validStatTrades.forEach((trade) => {
-      const label = getOperatingWindowName(trade, preferences.windows);
-      if (!label) return;
-
-      const current = sessionStats.get(label) ?? { trades: 0, totalPnl: 0 };
-      current.trades += 1;
-      current.totalPnl += netPnl(trade);
-      sessionStats.set(label, current);
-    });
-
-    const bestSessionEntry =
-      Array.from(sessionStats.entries())
-        .filter(([name]) => !isAutomaticWindowName(name))
-        .sort(
-        (a, b) =>
-          b[1].trades - a[1].trades ||
-          b[1].totalPnl - a[1].totalPnl
-      )[0];
-    const bestSessionWindow = bestSessionEntry?.[0] ?? null;
-    const bestSessionTradeCount = bestSessionEntry?.[1].trades ?? 0;
-    const sessionTradeCount = Array.from(sessionStats.values()).reduce(
-      (sum, session) => sum + session.trades,
-      0
-    );
-    const hasSessionData =
-      bestSessionWindow !== null && sessionTradeCount > 0;
-    const sessionConsistency = hasSessionData
-      ? bestSessionTradeCount / sessionTradeCount
-      : 0;
-    const sessionWindowScore = hasSessionData
-      ? normalizeScore(
-          (sessionConsistency /
-            ECLIPSE_SCORE_TARGET_SESSION_CONSISTENCY) *
-            100
-        )
-      : 0;
-    const eclipseScoreComponents = [
-      winRateScore,
-      riskRewardScore,
-      frequencyScore,
-      sessionWindowScore,
-    ];
-    const eclipseScore = validStatTrades.length
-      ? calculateEclipseScore(eclipseScoreComponents)
-      : null;
-    const eclipseRadarData = [
-      {
-        metric: 'Winrate',
-        normalizedScore: winRateScore,
-        displayValue: validStatTrades.length ? formatPercent(winRate) : '—',
-        description: validStatTrades.length
-          ? 'Percentuale trade vincenti'
-          : 'Nessun dato disponibile',
-      },
-      {
-        metric: 'Risk/Reward',
-        normalizedScore: riskRewardScore,
-        displayValue: formatRiskRewardRatio(riskRewardRatio),
-        description: 'Rapporto Rischio / Rendimento',
-        targetValue: ECLIPSE_SCORE_MAX_RISK_REWARD.toFixed(2),
-      },
-      {
-        metric: 'Freq. operativa',
-        normalizedScore: frequencyScore,
-        displayValue: operationalFrequency.totalWeeks > 0
-          ? `${operationalFrequency.weeksWithMinimumTrades}/${operationalFrequency.totalWeeks} settimane`
-          : '—',
-        description: operationalFrequency.totalWeeks > 0
-          ? `Settimane con almeno ${MIN_TRADES_PER_WEEK} trade`
-          : 'Nessun dato disponibile',
-        tooltipValue: `${operationalFrequency.weeksWithMinimumTrades}/${operationalFrequency.totalWeeks} settimane con almeno ${MIN_TRADES_PER_WEEK} trade statistici validi`,
-        targetValue: `Almeno ${MIN_TRADES_PER_WEEK} trade a settimana`,
-      },
-      {
-        metric: 'Costanza operativa',
-        normalizedScore: sessionWindowScore,
-        displayValue: bestSessionWindow ?? '—',
-        description: hasSessionData
-          ? 'Fascia con la maggiore concentrazione di trade'
-          : 'Nessun dato disponibile',
-        tooltipValue: hasSessionData
-          ? `${Math.round(
-              sessionConsistency * 100
-            )}% dei trade in ${bestSessionWindow} (${bestSessionTradeCount}/${sessionTradeCount})`
-          : undefined,
-        targetValue:
-          'Almeno il 70% dei trade nella fascia più utilizzata',
-      },
-    ];
     const dailyPnlMap = new Map<string, number>();
 
     validStatTrades.forEach((trade) => {
@@ -786,13 +552,11 @@ export function AnalysisDiagnostics({
       })),
       directionStats,
       tradeLog,
-      eclipseRadarData,
-      eclipseScore,
       dailyPnlData,
       finalCumulativePnl,
       totalTrades: validStatTrades.length,
     };
-  }, [sundayWeekStart, trades, preferences.windows]);
+  }, [trades]);
 
   const availableDailyPnlMonths = useMemo(
     () =>
@@ -1479,112 +1243,6 @@ export function AnalysisDiagnostics({
       </div>
 
       <div className="space-y-4">
-        <div className="grid grid-cols-1">
-          <div className="rounded-2xl border border-border bg-card/95 p-4 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
-            <h2 className="font-sans tabular-nums text-xs font-medium tracking-normal text-muted-foreground">
-              ECLIPSE SCORE
-            </h2>
-
-            {data.eclipseScore === null ? (
-              <div className="mt-4">
-                <EmptyState>Nessun dato disponibile.</EmptyState>
-              </div>
-            ) : (
-              <div className="mx-auto mt-4 h-[340px] max-w-5xl sm:h-[380px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RadarChart
-                    data={data.eclipseRadarData}
-                    outerRadius="72%"
-                    margin={{ top: 38, right: 70, bottom: 52, left: 70 }}
-                  >
-                    <defs>
-                      <linearGradient
-                        id="eclipseScoreFill"
-                        x1="0"
-                        y1="0"
-                        x2="0"
-                        y2="1"
-                      >
-                        <stop
-                          offset="0%"
-                          stopColor="#34d27b"
-                          stopOpacity={0.42}
-                        />
-                        <stop
-                          offset="100%"
-                          stopColor="#34d27b"
-                          stopOpacity={0.08}
-                        />
-                      </linearGradient>
-                    </defs>
-                    <PolarGrid
-                      stroke="rgba(255,255,255,0.1)"
-                      radialLines
-                    />
-                    <PolarAngleAxis
-                      dataKey="metric"
-                      tick={<EclipseScoreAngleTick />}
-                    />
-                    <PolarRadiusAxis
-                      angle={90}
-                      domain={[0, 100]}
-                      tick={false}
-                      axisLine={false}
-                      tickCount={5}
-                    />
-                    <Radar
-                      dataKey="normalizedScore"
-                      stroke="#34d27b"
-                      strokeWidth={2}
-                      fill="url(#eclipseScoreFill)"
-                      fillOpacity={1}
-                      dot={{ r: 3, fill: '#34d27b', strokeWidth: 0 }}
-                      isAnimationActive
-                      animationDuration={650}
-                    />
-                    <Tooltip
-                      cursor={false}
-                      content={<EclipseScoreTooltip />}
-                      wrapperStyle={{ zIndex: 30, outline: 'none' }}
-                      allowEscapeViewBox={{ x: false, y: false }}
-                    />
-                  </RadarChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-
-            <div className="mt-3 text-center">
-              <p className="font-sans tabular-nums text-sm font-semibold text-foreground">
-                Eclipse Score:{' '}
-                {data.eclipseScore === null
-                  ? '—'
-                  : data.eclipseScore.toFixed(1)}
-              </p>
-              <p className="mt-1 font-sans text-xs text-muted-foreground">
-                Basato su winrate, risk-to-reward ratio, frequenza e costanza operativa.
-              </p>
-            </div>
-            <div className="mt-4 grid grid-cols-2 gap-2 lg:grid-cols-4">
-              {data.eclipseRadarData.map((metric) => (
-                <div
-                  key={metric.metric}
-                  className="min-w-0 rounded-lg border border-border bg-background/35 p-3"
-                >
-                  <p className="font-sans tabular-nums text-[9px] tracking-normal text-muted-foreground">
-                    {getEclipseMetricCardLabel(metric.metric)}
-                  </p>
-                  <p className="mt-2 break-words font-sans tabular-nums text-sm font-semibold leading-tight text-foreground">
-                    {metric.displayValue}
-                  </p>
-                  <p className="mt-1 break-words font-sans tabular-nums text-[10px] leading-snug text-muted-foreground">
-                    {metric.description}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
         <div className="grid grid-cols-2 gap-4">
           <div className="min-w-0 rounded-2xl border border-border bg-card/95 p-4 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">

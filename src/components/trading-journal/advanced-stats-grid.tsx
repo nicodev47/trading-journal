@@ -4,9 +4,6 @@ import { useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import {
   getBestOperatingWindow,
-  getOperatingWindowName,
-  isAutomaticWindowName,
-  type OperatingWindowName,
 } from '@/lib/operating-windows';
 import { isValidTradeSetup, type Trade } from '@/lib/types/trade';
 import { useStreamerMode } from '@/contexts/streamer-mode-context';
@@ -19,13 +16,11 @@ import {
 import { StatisticsCardGrid } from './statistics-card-grid';
 import {
   calculateMaxDrawdown,
-  calculateOperationalFrequency,
   calculateRiskRewardRatio,
   calculateStatistics,
   calculateWinRate,
   getTradeOutcome,
   isValidStatTrade,
-  MIN_TRADES_PER_WEEK,
 } from '@/lib/calculations';
 
 interface AdvancedStatsGridProps {
@@ -33,7 +28,6 @@ interface AdvancedStatsGridProps {
   extended?: boolean;
 }
 
-const OPERATIONAL_CONSISTENCY_TARGET = 70;
 const WEEKDAY_NAMES = [
   'Domenica',
   'Lunedì',
@@ -70,7 +64,7 @@ export function AdvancedStatsGrid({
   trades,
   extended = false,
 }: AdvancedStatsGridProps) {
-  const { streamerMode, sundayWeekStart } = useStreamerMode();
+  const { streamerMode } = useStreamerMode();
   const { preferences } = usePreferences();
   const data = useMemo(() => {
     const validTrades = trades.filter(isValidStatTrade);
@@ -81,26 +75,19 @@ export function AdvancedStatsGrid({
     const shortTrades = validTrades.filter((trade) => trade.direction === 'short').length;
     const tradesByDay = new Map<string, number>();
     const setupStats = new Map<string, { trades: number; wins: number; losses: number }>();
-    const operatingWindowStats = new Map<OperatingWindowName, number>();
     const weekdayStats = new Map<
       number,
       { trades: number; wins: number; losses: number; pnl: number }
     >();
-    const monthStats = new Map<string, { trades: number; pnl: number }>();
+    const monthStats = new Map<
+      string,
+      { trades: number; wins: number; losses: number; pnl: number }
+    >();
 
     validTrades.forEach((trade) => {
       const date = trade.exitDate.split('T')[0];
       const netPnl = trade.pnl - trade.commission;
       tradesByDay.set(date, (tradesByDay.get(date) ?? 0) + 1);
-      const operatingWindow = getOperatingWindowName(trade, preferences.windows);
-
-      if (operatingWindow) {
-        operatingWindowStats.set(
-          operatingWindow,
-          (operatingWindowStats.get(operatingWindow) ?? 0) + 1
-        );
-      }
-
       const tradeDate = new Date(`${date}T12:00:00`);
 
       if (!Number.isNaN(tradeDate.getTime())) {
@@ -119,9 +106,16 @@ export function AdvancedStatsGrid({
         weekdayStats.set(weekday, weekdayData);
 
         const monthKey = date.slice(0, 7);
-        const monthData = monthStats.get(monthKey) ?? { trades: 0, pnl: 0 };
+        const monthData = monthStats.get(monthKey) ?? {
+          trades: 0,
+          wins: 0,
+          losses: 0,
+          pnl: 0,
+        };
         monthData.trades += 1;
         monthData.pnl += netPnl;
+        if (outcome === 'win') monthData.wins += 1;
+        if (outcome === 'loss') monthData.losses += 1;
         monthStats.set(monthKey, monthData);
       }
 
@@ -162,18 +156,6 @@ export function AdvancedStatsGrid({
       },
       { name: null, trades: 0, winRate: -1 }
     );
-    const mostUsedOperatingWindow = Array.from(
-      operatingWindowStats.entries()
-    )
-      .filter(([name]) => !isAutomaticWindowName(name))
-      .sort((a, b) => b[1] - a[1])[0];
-    const timedTrades = Array.from(operatingWindowStats.values()).reduce(
-      (sum, count) => sum + count,
-      0
-    );
-    const operationalConsistency = timedTrades > 0
-      ? ((mostUsedOperatingWindow?.[1] ?? 0) / timedTrades) * 100
-      : 0;
     const bestWeekday = Array.from(weekdayStats.entries())
       .map(([weekday, stats]) => ({
         name: WEEKDAY_NAMES[weekday],
@@ -213,6 +195,10 @@ export function AdvancedStatsGrid({
             return MONTH_NAMES[month - 1];
           })(),
           trades: bestMonthEntry[1].trades,
+          winRate: calculateWinRate(
+            bestMonthEntry[1].wins,
+            bestMonthEntry[1].losses
+          ),
           pnl: bestMonthEntry[1].pnl,
         }
       : null;
@@ -223,13 +209,13 @@ export function AdvancedStatsGrid({
             return MONTH_NAMES[month - 1];
           })(),
           trades: worstMonthEntry[1].trades,
+          winRate: calculateWinRate(
+            worstMonthEntry[1].wins,
+            worstMonthEntry[1].losses
+          ),
           pnl: worstMonthEntry[1].pnl,
         }
       : null;
-    const operationalFrequency = calculateOperationalFrequency(
-      validTrades,
-      sundayWeekStart ? 0 : 1
-    );
     const sortedValidTrades = [...validTrades].sort(
       (a, b) =>
         new Date(a.exitDate).getTime() - new Date(b.exitDate).getTime()
@@ -275,19 +261,14 @@ export function AdvancedStatsGrid({
       longestPositiveStreak: tradeStatistics.longestWinStreak,
       riskRewardRatio: calculateRiskRewardRatio(trades),
       maxDrawdown: calculateMaxDrawdown(trades),
-      mostUsedOperatingWindow: mostUsedOperatingWindow?.[0] ?? null,
-      mostUsedOperatingWindowTrades: mostUsedOperatingWindow?.[1] ?? 0,
-      timedTrades,
-      operationalConsistency,
       bestWeekday,
       worstWeekday,
       bestMonth,
       worstMonth,
-      operationalFrequency,
       maxConsecutiveProfit,
       maxConsecutiveProfitTrades,
     };
-  }, [sundayWeekStart, trades, preferences.windows]);
+  }, [trades, preferences.windows]);
 
   const formatCurrency = (value: number) =>
     `${value.toLocaleString('it-IT', {
@@ -296,10 +277,6 @@ export function AdvancedStatsGrid({
     })} USD`;
   const riskRewardPresentation = getRiskRewardCardPresentation(
     data.riskRewardRatio
-  );
-  const operationalConsistencyProgress = Math.min(
-    (data.operationalConsistency / OPERATIONAL_CONSISTENCY_TARGET) * 100,
-    100
   );
 
   return (
@@ -550,29 +527,6 @@ export function AdvancedStatsGrid({
           />
 
           <CompactAnalysisCard
-            title="Costanza Operativa"
-            value={data.mostUsedOperatingWindow ?? '—'}
-            subtitle={
-              data.mostUsedOperatingWindow
-                ? `${data.mostUsedOperatingWindowTrades} / ${
-                    data.timedTrades
-                  } trade - ${data.operationalConsistency.toFixed(0)}% dei trade`
-                : 'Nessun orario registrato'
-            }
-            tone={
-              data.mostUsedOperatingWindow &&
-              data.operationalConsistency >= OPERATIONAL_CONSISTENCY_TARGET
-                ? 'profit'
-                : data.mostUsedOperatingWindow
-                  ? 'loss'
-                  : 'neutral'
-            }
-            progress={operationalConsistencyProgress}
-            hasData={data.mostUsedOperatingWindow !== null}
-            prominentValue
-          />
-
-          <CompactAnalysisCard
             title="Giorno operativo migliore"
             value={data.bestWeekday?.name ?? '—'}
             subtitle={
@@ -621,9 +575,11 @@ export function AdvancedStatsGrid({
             value={data.bestMonth?.name ?? '—'}
             subtitle={
               data.bestMonth
-                ? `${streamerMode ? '******' : formatCurrency(
-                    data.bestMonth.pnl
-                  )} · ${data.bestMonth.trades} trade`
+                ? `${data.bestMonth.winRate.toFixed(0)}% WR · ${
+                    data.bestMonth.trades
+                  } trade · ${
+                    streamerMode ? '******' : formatCurrency(data.bestMonth.pnl)
+                  }`
                 : 'Nessun mese disponibile'
             }
             tone={
@@ -642,9 +598,11 @@ export function AdvancedStatsGrid({
             value={data.worstMonth?.name ?? '—'}
             subtitle={
               data.worstMonth
-                ? `${streamerMode ? '******' : formatCurrency(
-                    data.worstMonth.pnl
-                  )} · ${data.worstMonth.trades} trade`
+                ? `${data.worstMonth.winRate.toFixed(0)}% WR · ${
+                    data.worstMonth.trades
+                  } trade · ${
+                    streamerMode ? '******' : formatCurrency(data.worstMonth.pnl)
+                  }`
                 : 'Nessun mese disponibile'
             }
             tone={
@@ -656,25 +614,6 @@ export function AdvancedStatsGrid({
             }
             hasData={data.worstMonth !== null}
             prominentValue
-          />
-
-          <CompactAnalysisCard
-            title="Frequenza operativa"
-            value={
-              data.operationalFrequency.totalWeeks > 0
-                ? `${data.operationalFrequency.weeksWithMinimumTrades}/${data.operationalFrequency.totalWeeks} settimane`
-                : '—'
-            }
-            subtitle={`Settimane con almeno ${MIN_TRADES_PER_WEEK} trade`}
-            tone={
-              data.operationalFrequency.totalWeeks === 0
-                ? 'neutral'
-                : data.operationalFrequency.score > 50
-                  ? 'profit'
-                  : 'loss'
-            }
-            progress={data.operationalFrequency.score}
-            hasData={data.operationalFrequency.totalWeeks > 0}
           />
 
           <CompactAnalysisCard

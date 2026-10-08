@@ -1267,7 +1267,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
                     'Esplora grafici chiari e coerenti con il tema dell’app.',
                     'Clicca sui grafici per aprire i trade filtrati.',
                     'Analizza setup, direzione, performance e distribuzione.',
-                    'Usa Execution Map ed Eclipse Score per leggere meglio il journal.',
+                    'Usa Execution Map e le statistiche per leggere meglio il journal.',
                   ],
                 },
                 {
