@@ -95,8 +95,11 @@ export function OnboardingScreen() {
         <div className="flex max-w-[480px] flex-1 flex-col">
           {isIntro ? (
             <>
-              <h1 className="text-3xl font-semibold tracking-tight">Rendiamo il journal tuo</h1>
-              <p className="mt-3 text-sm text-muted-foreground">
+              <h1 className="text-3xl font-semibold tracking-tight">Benvenuto in EclipseJournal</h1>
+              <p className="mt-2 text-xl font-medium tracking-tight text-foreground/80">
+                Prima di incominciare, rendiamo la tua esperienza unica.
+              </p>
+              <p className="mt-4 text-sm text-muted-foreground">
                 Ti facciamo quattro domande veloci, circa un minuto. Servono a far funzionare il
                 journal sul tuo modo di operare, invece di darti uno strumento uguale per tutti.
               </p>
