@@ -657,7 +657,7 @@ export function DayEditorDialog({
         data-tutorial="trade-editor"
         onOpenAutoFocus={(e) => e.preventDefault()}
         onEscapeKeyDown={(event) => {
-          if (isTutorialMode) event.preventDefault();
+          if (isTutorialMode || editingScreenshot) event.preventDefault();
         }}
         onInteractOutside={(event) => {
           if (isTutorialMode) event.preventDefault();
