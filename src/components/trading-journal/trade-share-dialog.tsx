@@ -165,8 +165,9 @@ export function TradeShareDialog({
           <div className="overflow-hidden rounded-2xl border border-border bg-card/60 p-2.5">
             {trade && (
               <ShareCardPreview
-                width={840}
-                height={472.5}
+                width={760}
+                height={950}
+                desktopScale={0.68}
                 exportRef={cardRef}
               >
                 <TradeShareCard
@@ -174,7 +175,7 @@ export function TradeShareDialog({
                   date={date}
                   handle={profileHandle}
                   streamerMode={streamerMode}
-                  className="w-[840px]"
+                  className="w-[760px]"
                 />
               </ShareCardPreview>
             )}

@@ -1,7 +1,13 @@
-import { Moon } from 'lucide-react';
 import type { Trade } from '@/lib/types/trade';
 import { getTradeSharePresentation } from '@/lib/trade-share-outcome';
-import { cn } from '@/lib/utils';
+import {
+  ShareCardFooter,
+  ShareCardFrame,
+  ShareCardHeader,
+  ShareCaption,
+  ShareGlowAmount,
+  ShareRow,
+} from './share-card-parts';
 
 interface TradeShareCardProps {
   trade: Trade;
@@ -33,22 +39,19 @@ const formatTradeDate = (trade: Trade, fallbackDate: string) => {
   });
 };
 
-const formatPnl = (pnl: number, streamerMode: boolean) => {
+const splitPnl = (pnl: number, streamerMode: boolean) => {
   if (streamerMode) {
-    return '****** USD';
+    return { sign: '', amount: '******' };
   }
 
   const sign = pnl > 0 ? '+' : pnl < 0 ? '-' : '';
-  const absoluteValue = Math.abs(pnl).toLocaleString('it-IT', {
+  const amount = Math.abs(pnl).toLocaleString('it-IT', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
 
-  return `${sign}${absoluteValue} USD`;
+  return { sign, amount };
 };
-
-const getPnlFontSize = (text: string) =>
-  text.length <= 12 ? 96 : text.length <= 14 ? 80 : 66;
 
 const getTradeTime = (trade: Trade) => {
   return (trade.exitDate?.split('T')[1] || trade.entryDate?.split('T')[1] || '')
@@ -69,17 +72,6 @@ const formatShareCardSetup = (setup?: string | null) => {
   return '—';
 };
 
-function ShareMetric({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <div className="text-[14px] font-medium text-white/45">{label}</div>
-      <div className="mt-2 whitespace-nowrap text-[28px] font-semibold leading-none tracking-tight text-white">
-        {value || '--'}
-      </div>
-    </div>
-  );
-}
-
 export function TradeShareCard({
   trade,
   date,
@@ -88,54 +80,42 @@ export function TradeShareCard({
   className,
 }: TradeShareCardProps) {
   const netPnl = trade.pnl - (trade.commission || 0);
-  const { accent } = getTradeSharePresentation(netPnl);
+  const { accent, badgeLabel } = getTradeSharePresentation(netPnl);
   const displayHandle = getDisplayHandle(handle);
   const directionLabel = trade.direction === 'short' ? 'Short' : 'Long';
+  const { sign, amount } = splitPnl(netPnl, streamerMode);
+  const avatar = displayHandle
+    ? displayHandle.slice(1, 3).toUpperCase()
+    : 'EJ';
 
   return (
-    <div
-      className={cn(
-        'relative aspect-[16/9] w-[960px] max-w-full overflow-hidden rounded-[28px] border border-white/10 bg-[#0a0a0b] p-12 text-white',
-        className
-      )}
-    >
-      <div className="relative z-10 flex h-full flex-col">
-        <header className="flex items-center justify-between gap-6">
-          <div className="flex items-center gap-3">
-            <div className="flex size-10 items-center justify-center rounded-xl bg-white/10">
-              <Moon className="size-5 text-white" />
-            </div>
-            <div className="text-[22px] font-semibold tracking-tight text-white">
-              EclipseJournal
-            </div>
-          </div>
-          <div className="text-[18px] font-medium capitalize text-white/50">
-            {formatTradeDate(trade, date)}
-          </div>
-        </header>
+    <ShareCardFrame className={className} glow={`${accent}2e`}>
+      <ShareCardHeader dateLabel={formatTradeDate(trade, date)} />
 
-        <main className="flex flex-1 flex-col justify-center">
-          <div className="text-[22px] font-medium text-white/55">
-            {trade.pair || '--'} · {directionLabel}
-          </div>
-          <div
-            className="mt-3 whitespace-nowrap font-semibold leading-none tracking-[-0.03em]"
-            style={{ color: accent, fontSize: getPnlFontSize(formatPnl(netPnl, streamerMode)) }}
-          >
-            {formatPnl(netPnl, streamerMode)}
-          </div>
-          <div className="mt-10 flex gap-14">
-            <ShareMetric label="Orario" value={getTradeTime(trade)} />
-            <ShareMetric label="Setup" value={formatShareCardSetup(trade.strategy)} />
-          </div>
-        </main>
+      <ShareGlowAmount
+        sign={sign}
+        amount={amount}
+        currency="USD"
+        label="Net P&L"
+        accent={accent}
+        trend={netPnl > 0 ? 'up' : netPnl < 0 ? 'down' : 'flat'}
+      />
 
-        {displayHandle && (
-          <footer className="text-[22px] font-medium text-white/70">
-            {displayHandle}
-          </footer>
-        )}
+      <ShareCaption lines={[`${trade.pair || '--'} · ${directionLabel}`]} />
+
+      <div className="mt-5 space-y-3">
+        <ShareRow label="Asset" value={trade.pair || '--'} />
+        <ShareRow label="Direzione" value={directionLabel} />
+        <ShareRow label="Orario" value={getTradeTime(trade)} />
+        <ShareRow label="Setup" value={formatShareCardSetup(trade.strategy)} />
       </div>
-    </div>
+
+      <ShareCardFooter
+        avatar={avatar}
+        name={displayHandle ?? 'EclipseJournal'}
+        caption="Trading journal"
+        right={badgeLabel}
+      />
+    </ShareCardFrame>
   );
 }

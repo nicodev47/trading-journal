@@ -1,5 +1,11 @@
-import { Moon } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import {
+  ShareCardFooter,
+  ShareCardFrame,
+  ShareCardHeader,
+  ShareCaption,
+  ShareGlowAmount,
+  ShareRow,
+} from './share-card-parts';
 
 export interface ProfileShareData {
   traderName: string;
@@ -29,16 +35,16 @@ interface ProfileShareCardProps {
   className?: string;
 }
 
-const formatCurrency = (value: number, streamerMode: boolean) => {
-  if (streamerMode) return '****** USD';
+const splitCurrency = (value: number, streamerMode: boolean) => {
+  if (streamerMode) return { sign: '', amount: '******' };
 
   const sign = value > 0 ? '+' : value < 0 ? '-' : '';
-  const formatted = Math.abs(value).toLocaleString('it-IT', {
+  const amount = Math.abs(value).toLocaleString('it-IT', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
 
-  return `${sign}${formatted} USD`;
+  return { sign, amount };
 };
 
 const formatPercent = (value: number) =>
@@ -47,20 +53,6 @@ const formatPercent = (value: number) =>
     maximumFractionDigits: 1,
   })}%`;
 
-const getPnlFontSize = (text: string) =>
-  text.length <= 12 ? 96 : text.length <= 14 ? 80 : 66;
-
-function ProfileMetric({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <div className="text-[14px] font-medium text-white/45">{label}</div>
-      <div className="mt-2 whitespace-nowrap text-[28px] font-semibold leading-none tracking-tight text-white">
-        {value || '--'}
-      </div>
-    </div>
-  );
-}
-
 export function ProfileShareCard({
   profile,
   streamerMode,
@@ -68,48 +60,46 @@ export function ProfileShareCard({
 }: ProfileShareCardProps) {
   const displayName = profile.traderName.trim() || 'Trader';
   const accent = profile.totalPnl < 0 ? '#ff6568' : '#34d27b';
-  const pnlText = formatCurrency(profile.totalPnl, streamerMode);
+  const { sign, amount } = splitCurrency(profile.totalPnl, streamerMode);
+  const todayLabel = new Date().toLocaleDateString('it-IT', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
 
   return (
-    <div
-      className={cn(
-        'relative aspect-[16/9] w-[840px] max-w-full overflow-hidden rounded-[28px] border border-white/10 bg-[#0a0a0b] p-12 text-white',
-        className
-      )}
-    >
-      <div className="relative z-10 flex h-full flex-col">
-        <header className="flex items-center justify-between gap-6">
-          <div className="flex items-center gap-3">
-            <div className="flex size-10 items-center justify-center rounded-xl bg-white/10">
-              <Moon className="size-5 text-white" />
-            </div>
-            <div className="text-[22px] font-semibold tracking-tight text-white">
-              EclipseJournal
-            </div>
-          </div>
-          <div className="text-[18px] font-medium text-white/50">Profilo trader</div>
-        </header>
+    <ShareCardFrame className={className} glow={`${accent}2e`}>
+      <ShareCardHeader dateLabel={todayLabel} />
 
-        <main className="flex flex-1 flex-col justify-center">
-          <div className="text-[22px] font-medium text-white/55">
-            {profile.rank.emoji} {profile.rank.name} · Livello {profile.level}
-          </div>
-          <div
-            className="mt-3 whitespace-nowrap font-semibold leading-none tracking-[-0.03em]"
-            style={{ color: accent, fontSize: getPnlFontSize(pnlText) }}
-          >
-            {pnlText}
-          </div>
-          <div className="mt-10 flex gap-14">
-            <ProfileMetric label="Winrate" value={formatPercent(profile.winRate)} />
-            <ProfileMetric label="Trade totali" value={profile.totalTrades.toString()} />
-            <ProfileMetric label="Streak migliore" value={`${profile.longestWinStreak} win`} />
-            <ProfileMetric label="Giorni positivi" value={profile.greenDays.toString()} />
-          </div>
-        </main>
+      <ShareGlowAmount
+        sign={sign}
+        amount={amount}
+        currency="USD"
+        label="P&L totale"
+        accent={accent}
+        trend={profile.totalPnl > 0 ? 'up' : profile.totalPnl < 0 ? 'down' : 'flat'}
+      />
 
-        <footer className="text-[22px] font-medium text-white/70">{displayName}</footer>
+      <ShareCaption
+        lines={[
+          `${profile.rank.name} · Livello ${profile.level}`,
+          `${profile.totalXP} XP totali`,
+        ]}
+      />
+
+      <div className="mt-5 space-y-3">
+        <ShareRow label="Winrate" value={formatPercent(profile.winRate)} />
+        <ShareRow label="Trade totali" value={profile.totalTrades.toString()} />
+        <ShareRow label="Streak migliore" value={`${profile.longestWinStreak} win`} />
+        <ShareRow label="Giorni positivi" value={profile.greenDays.toString()} tone="profit" />
       </div>
-    </div>
+
+      <ShareCardFooter
+        avatar={profile.profileIcon}
+        name={displayName}
+        caption="Profilo trader"
+        right={`Livello ${profile.level}`}
+      />
+    </ShareCardFrame>
   );
 }
