@@ -37,6 +37,7 @@ import { WhatsNewDialog } from '@/components/trading-journal/whats-new-dialog';
 import { Download, RotateCcw } from 'lucide-react';
 import {
   getDefaultExportBaseName,
+  getGuidedExportBaseName,
   normalizeExportName,
   normalizeExportFileName,
 } from '@/lib/export-filename';
@@ -387,6 +388,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
     0
   );
   const justImportedRef = useRef(false);
+  const exportCurrentJournalRef = useRef<() => void>(() => {});
 
   // Remind about a backup after 3 new trades since the last one. Data that
   // just came from an import file counts as already backed up.
@@ -408,7 +410,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
         description:
           'Hai inserito nuove operazioni dall’ultimo backup. I dati sono salvati nella cache del browser: esporta una copia per non perderli.',
         duration: 12000,
-        action: { label: 'Esporta tutto', onClick: () => handleExportAllJournals() },
+        action: { label: 'Esporta', onClick: () => exportCurrentJournalRef.current() },
       });
     }, 1500);
 
@@ -545,6 +547,24 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
   const getWorkspaceExportData = useCallback((workspace: JournalWorkspace) => {
     return createWorkspaceExportData(workspace, getWorkspaceData(workspace));
   }, [getWorkspaceData]);
+
+  // Used by the backup reminder: downloads the open journal as a single JSON file.
+  exportCurrentJournalRef.current = () => {
+    const blob = new Blob([getWorkspaceExportData(activeWorkspace)], {
+      type: 'application/json',
+    });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+
+    anchor.href = url;
+    anchor.download = `${getGuidedExportBaseName(activeWorkspace)}.json`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(url);
+    setBackupBaseline(totalTrades);
+    toast.success('Journal esportato');
+  };
 
   const getWorkspaceHasImportData = useCallback((workspace: JournalWorkspace) => {
     return hasWorkspaceContent(getWorkspaceData(workspace));
