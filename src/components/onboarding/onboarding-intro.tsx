@@ -1,13 +1,6 @@
 import type { CSSProperties, ReactNode } from 'react';
-import { ArrowRight, BarChart3, Clock, Moon, ShieldCheck, Target, UserRound } from 'lucide-react';
+import { ArrowRight, Moon, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-
-const INTRO_POINTS = [
-  { icon: Target, title: 'I tuoi Asset preferiti a portata di mano', text: 'Scegli gli strumenti che operi e ritrovali subito nei menu, nel calendario e nei filtri.' },
-  { icon: BarChart3, title: 'Statistiche basate sulle tue performance', text: 'Analisi su misura che leggono i tuoi trade, i tuoi setup e i tuoi risultati.' },
-  { icon: Clock, title: 'Le tue sessioni operative', text: 'Indica i tuoi orari e scopri in quali fasce funzioni meglio.' },
-  { icon: UserRound, title: 'Un profilo personalizzato', text: 'Nome e foto per riconoscerti nel journal e nelle card che condividi.' },
-];
 
 function Reveal({
   delay,
@@ -56,33 +49,14 @@ export function OnboardingIntro({ onStart }: { onStart: () => void }) {
           </p>
         </Reveal>
 
-        <ul className="mt-10 grid w-full gap-3 text-left">
-          {INTRO_POINTS.map((point, index) => (
-            <li key={point.title}>
-              <Reveal
-                delay={600 + index * 180}
-                className="flex items-center gap-4 rounded-2xl border border-border bg-card p-4"
-              >
-                <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-white/10">
-                  <point.icon className="size-5" />
-                </div>
-                <div>
-                  <div className="text-sm font-semibold">{point.title}</div>
-                  <div className="mt-0.5 text-sm text-muted-foreground">{point.text}</div>
-                </div>
-              </Reveal>
-            </li>
-          ))}
-        </ul>
-
-        <Reveal delay={1450} className="mt-8 flex items-start gap-3 text-left text-sm text-muted-foreground">
+        <Reveal delay={600} className="mt-10 flex items-start gap-3 text-left text-sm text-muted-foreground">
           <ShieldCheck className="mt-0.5 size-4 shrink-0" />
           <span>
             Puoi modificare queste impostazioni quando vuoi successivamente all&apos;interno del tuo profilo.
           </span>
         </Reveal>
 
-        <Reveal delay={1650} className="mt-10">
+        <Reveal delay={800} className="mt-10">
           <Button type="button" size="lg" className="gap-2 px-8" onClick={onStart}>
             Iniziamo
             <ArrowRight className="size-4" />
