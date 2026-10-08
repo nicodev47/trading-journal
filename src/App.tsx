@@ -774,14 +774,14 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
   return (
     <div className="flex min-h-screen flex-col bg-background">
       {isUpdateBannerVisible && (
-        <div className="border-b border-violet-400/25 bg-gradient-to-r from-violet-950/90 via-violet-900/65 to-slate-950">
+        <div className="border-b border-border bg-white/[0.03]">
           <div className="flex min-h-11 w-full items-center justify-center px-4 py-2">
             <div className="flex min-w-0 flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-center">
               <div className="min-w-0 basis-full sm:basis-auto">
-                <p className="font-mono text-xs font-semibold text-violet-100 sm:text-sm">
+                <p className="font-sans text-xs font-semibold text-foreground sm:text-sm">
                   EclipseJournal v0.6 è disponibile!
                 </p>
-                <p className="font-sans text-[11px] text-violet-200/75">
+                <p className="font-sans text-[11px] text-muted-foreground">
                   Import ed Export per pagina, backup preventivo e note durante la creazione dei conti.
                 </p>
               </div>
@@ -789,14 +789,14 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
                 <button
                   type="button"
                   onClick={() => setIsWhatsNewOpen(true)}
-                  className="shrink-0 rounded-lg border border-violet-300/25 bg-violet-300/10 px-3 py-1.5 font-sans text-xs font-semibold text-violet-100 transition hover:border-violet-200/50 hover:bg-violet-300/15"
+                  className="shrink-0 rounded-full bg-primary px-3.5 py-1.5 font-sans text-xs font-medium text-primary-foreground transition hover:bg-primary/90"
                 >
                   Visualizza novità
                 </button>
                 <button
                   type="button"
                   onClick={handleDismissUpdateBanner}
-                  className="flex size-7 shrink-0 items-center justify-center rounded-lg text-sm leading-none text-violet-200/70 transition hover:bg-white/10 hover:text-white"
+                  className="flex size-7 shrink-0 items-center justify-center rounded-full text-sm leading-none text-muted-foreground transition hover:bg-white/10 hover:text-white"
                   aria-label="Chiudi annuncio aggiornamento"
                 >
                   ×
