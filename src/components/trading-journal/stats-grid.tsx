@@ -175,7 +175,7 @@ export function StatsGrid({ trades }: StatsGridProps) {
       data-tutorial="stats-grid"
     >
       <KpiCard title="P&L netto">
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex items-start justify-between gap-3">
           <div className="flex flex-col items-start gap-2">
             <span
               className={cn(
@@ -191,7 +191,7 @@ export function StatsGrid({ trades }: StatsGridProps) {
       </KpiCard>
 
       <KpiCard title="Win rate">
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex items-start justify-between gap-3">
           <span className="font-sans text-xl font-semibold tabular-nums tracking-tight text-foreground">
             {hasNoTrades ? '—' : `${stats.winRate.toFixed(0)}%`}
           </span>
@@ -233,7 +233,7 @@ export function StatsGrid({ trades }: StatsGridProps) {
       </KpiCard>
 
       <KpiCard title="Profit factor">
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex items-start justify-between gap-3">
           <span className="font-sans text-xl font-semibold tabular-nums tracking-tight text-foreground">
             {formatProfitFactorValue(profitFactor)}
           </span>
