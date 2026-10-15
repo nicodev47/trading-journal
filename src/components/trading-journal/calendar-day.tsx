@@ -184,7 +184,7 @@ export function CalendarDay({
     return (
       <div
         aria-hidden="true"
-        className="flex h-[78px] w-full bg-background p-1 min-[380px]:h-[84px] min-[380px]:p-1.5 sm:h-[92px] sm:p-2 md:h-[106px] md:p-2.5"
+        className="flex h-[62px] w-full bg-background p-1 min-[380px]:h-[66px] min-[380px]:p-1.5 sm:h-[74px] sm:p-2 md:h-[82px] md:p-2.5"
       >
         <span className="font-sans text-[12px] font-semibold leading-none tracking-[-0.04em] text-muted-foreground/25 min-[380px]:text-[13px] sm:text-[15px] md:text-[17px]">
           {date.getDate()}
@@ -201,7 +201,7 @@ export function CalendarDay({
       onKeyDown={handleDayKeyDown}
       data-tutorial={tutorialTarget}
       className={cn(
-        'group relative flex h-[78px] w-full min-w-0 cursor-pointer flex-col bg-background p-1 pb-4 text-left transition-colors hover:bg-secondary/30 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring min-[380px]:h-[84px] min-[380px]:p-1.5 min-[380px]:pb-4 sm:h-[92px] sm:p-2 sm:pb-5 md:h-[106px] md:p-2.5 md:pb-6',
+        'group relative flex h-[62px] w-full min-w-0 cursor-pointer flex-col bg-background p-1 pb-4 text-left transition-colors hover:bg-secondary/30 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring min-[380px]:h-[66px] min-[380px]:p-1.5 min-[380px]:pb-4 sm:h-[74px] sm:p-1.5 sm:pb-4 md:h-[82px] md:p-2 md:pb-5',
         isToday && 'ring-1 ring-inset ring-white/35'
       )}
       style={getBackgroundStyle()}
