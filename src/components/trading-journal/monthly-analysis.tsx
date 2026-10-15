@@ -17,7 +17,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { EquityCurve } from '@/components/trading-journal/equity-curve';
-import { AdvancedStatsGrid } from '@/components/trading-journal/advanced-stats-grid';
+import { StatsGrid } from '@/components/trading-journal/stats-grid';
+import { InsightsPanel } from '@/components/trading-journal/insights-panel';
 import { AnalysisDiagnostics } from '@/components/trading-journal/analysis-diagnostics';
 import { StatisticsCardGrid } from '@/components/trading-journal/statistics-card-grid';
 import { ExecutionMap } from '@/components/trading-journal/execution-map';
@@ -474,33 +475,9 @@ export function MonthlyAnalysis({
       </div>
 
       <div>
-        <StatisticsCardGrid className="mb-4">
-          <SummaryBox
-            title="P&L annuale"
-            value={streamerMode ? '******' : formatCurrency(yearTotal)}
-            color={yearTotal > 0 ? 'profit' : yearTotal < 0 ? 'loss' : 'neutral'}
-            description="Performance netta del periodo"
-            pills={[{ label: `${yearTrades} trade` }]}
-          />
-          <SummaryBox
-            title="Win Rate"
-            value={`${yearWinRate.toFixed(0)}%`}
-            description="Percentuale trade vincenti"
-            pills={[
-              { label: `${yearWins} win`, tone: 'profit' },
-              { label: `${yearLosses} loss`, tone: 'loss' },
-            ]}
-          />
-          <SummaryBox
-            title="Trade totali"
-            value={yearTrades.toString()}
-            description="Operazioni registrate nel periodo"
-            pills={[
-              { label: `${yearLongTrades} long`, tone: 'profit' },
-              { label: `${yearShortTrades} short`, tone: 'loss' },
-            ]}
-          />
-        </StatisticsCardGrid>
+        <div className="mb-1">
+          <StatsGrid trades={yearFilteredTrades} />
+        </div>
 
         <div className="mb-4">
           <EquityCurve
@@ -950,7 +927,12 @@ export function MonthlyAnalysis({
       </div>
 
       <div className="mb-4">
-        <AdvancedStatsGrid trades={yearFilteredTrades} extended />
+        <InsightsPanel
+          trades={yearFilteredTrades}
+          onOpenGroup={(title, subtitle, groupTrades) =>
+            openTradeGroup(title, subtitle, groupTrades)
+          }
+        />
       </div>
 
       <Dialog
