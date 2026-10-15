@@ -109,7 +109,7 @@ export function TradeLog({ trades, onOpenTrade }: TradeLogProps) {
                       </td>
                       <td className="px-3 py-3">
                         <div
-                          className="mx-auto max-w-[340px] overflow-hidden text-center text-[11px] leading-[1.4] text-muted-foreground"
+                          className="max-w-[340px] overflow-hidden text-[11px] leading-[1.4] text-muted-foreground"
                           style={{
                             display: '-webkit-box',
                             WebkitLineClamp: 2,
