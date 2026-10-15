@@ -25,7 +25,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import type { JournalState, Trade } from '@/lib/types/trade';
-import { AdvancedStatsGrid } from '@/components/trading-journal/advanced-stats-grid';
 import { ProfileDialog } from '@/components/trading-journal/profile-dialog';
 import { toast } from 'sonner';
 import { StreamerModeProvider } from '@/contexts/streamer-mode-context';
@@ -42,6 +41,7 @@ import {
 } from '@/lib/export-filename';
 import { extractImportedPreferences, planPreferencesImport } from '@/lib/import-preferences';
 import { AppShell, type AppView } from '@/components/shell/app-shell';
+import { TradeLog } from '@/components/trading-journal/trade-log';
 import { StrategiesPage } from '@/components/trading-journal/strategies-page';
 import { PropfirmPlaceholder } from '@/components/trading-journal/propfirm-placeholder';
 import { ImportPreview } from '@/components/trading-journal/import-preview';
@@ -1081,8 +1081,14 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
   />
 
   <div data-tutorial="detailed-stats-equity">
-    <div data-tutorial-part="detailed-stats">
-      <AdvancedStatsGrid trades={visibleTrades} />
+    <div data-tutorial-part="detailed-stats" className="pt-3 sm:pt-4">
+      <TradeLog
+        trades={visibleTrades}
+        onOpenTrade={(trade) => {
+          setReturnToTradeGroup(false);
+          setSelectedTrade(trade);
+        }}
+      />
     </div>
 
     <div

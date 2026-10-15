@@ -44,9 +44,9 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   },
   {
     target: 'detailed-stats-equity',
-    title: 'Statistiche dettagliate ed Equity',
+    title: 'Trade log ed Equity',
     description:
-      'Sotto al calendario trovi le statistiche più dettagliate: setup, finestre operative, giorni e mesi migliori e peggiori, serie, Long vs Short, drawdown e profitto.\n\nInsieme alla curva Equity ti mostrano dove stai performando meglio e dove perdi di più.',
+      'Sotto al calendario trovi il Trade log con le tue ultime operazioni: apri un trade per vederne il dettaglio.\n\nInsieme alla curva Equity ti mostra come sta andando il journal nel tempo.',
     cta: 'Avanti',
   },
   {
