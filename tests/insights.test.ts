@@ -30,8 +30,8 @@ test('indica il setup migliore e quello più debole', () => {
   const best = insights.find(insight => insight.id === 'setup-best');
   const worst = insights.find(insight => insight.id === 'setup-worst');
 
-  assert.match(text(best!), /Il setup più redditizio è A/);
-  assert.match(text(worst!), /Il più debole è B/);
+  assert.match(text(best!), /Il tuo cavallo di battaglia è A/);
+  assert.match(text(worst!), /B è quello che ti (sta costando di più|rende di meno)/);
 });
 
 test('con pochi trade non propone consigli sul setup', () => {

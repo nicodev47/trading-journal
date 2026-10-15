@@ -20,6 +20,7 @@ import type { Trade } from '@/lib/types/trade';
 import { cn } from '@/lib/utils';
 
 const TOPICS: Record<InsightTopic, { label: string; icon: LucideIcon }> = {
+  panoramica: { label: 'Panoramica', icon: Sparkles },
   setup: { label: 'Setup', icon: Target },
   orari: { label: 'Orari', icon: Clock },
   giorni: { label: 'Giorni', icon: CalendarDays },
