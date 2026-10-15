@@ -149,8 +149,8 @@ export function StatsGrid({ trades }: StatsGridProps) {
             {stats.tradingDays} {stats.tradingDays === 1 ? 'giorno' : 'giorni'}
           </span>
           <div className="flex items-center gap-2">
-            <Chip tone="profit">{stats.greenDays} verdi</Chip>
-            <Chip tone="loss">{stats.redDays} rossi</Chip>
+            <Chip tone="profit">{stats.greenDays} win</Chip>
+            <Chip tone="loss">{stats.redDays} loss</Chip>
           </div>
         </div>
       </KpiCard>
