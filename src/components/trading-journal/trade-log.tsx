@@ -115,7 +115,6 @@ export function TradeLog({ trades, onOpenTrade }: TradeLogProps) {
                             WebkitLineClamp: 2,
                             WebkitBoxOrient: 'vertical',
                           }}
-                          title={trade.notes?.trim() || undefined}
                         >
                           {trade.notes?.trim() || '—'}
                         </div>
