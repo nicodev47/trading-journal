@@ -1,5 +1,4 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { getDateKey } from '@/lib/date-utils';
 import { TradingCalendar } from '@/components/trading-journal/trading-calendar';
 import { StatsGrid } from '@/components/trading-journal/stats-grid';
 import { EquityCurve } from '@/components/trading-journal/equity-curve';
@@ -1008,10 +1007,6 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
     <>
       <AppShell
         banner={bannerNode}
-        onAddTrade={() => {
-          setImportPreview(null);
-          handleDayClick(getDateKey(new Date()));
-        }}
         activeView={activeView}
         activeWorkspace={activeWorkspace}
         workspaces={workspaces}

@@ -13,7 +13,6 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   PlayCircle,
-  Plus,
   Target,
   Trophy,
   UserRound,
@@ -70,7 +69,6 @@ interface AppShellProps {
   onViewChange: (view: AppView) => void;
   onProfileClick: () => void;
   onHelpClick: () => void;
-  onAddTrade: () => void;
   pinnedForTutorial?: boolean;
   banner?: ReactNode;
   children: ReactNode;
@@ -151,7 +149,6 @@ export function AppShell({
   onViewChange,
   onProfileClick,
   onHelpClick,
-  onAddTrade,
   pinnedForTutorial = false,
   banner,
   children,
@@ -327,16 +324,6 @@ export function AppShell({
                   🙈
                 </div>
               )}
-
-              <Button
-                type="button"
-                size="sm"
-                className="h-8 gap-1.5 rounded-full bg-[#0a84ff] px-3.5 font-sans text-xs font-semibold text-white hover:bg-[#0a84ff]/90"
-                onClick={onAddTrade}
-              >
-                <Plus className="size-3.5" />
-                <span className="max-sm:sr-only">Aggiungi trade</span>
-              </Button>
 
               <Button
                 type="button"
