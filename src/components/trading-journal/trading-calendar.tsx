@@ -10,6 +10,7 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import { CalendarDay } from './calendar-day';
+import { isUsBankHoliday } from '@/lib/bank-holidays';
 import { WeekSummary } from './week-summary';
 import { MonthYearPicker } from './month-year-picker';
 import {
@@ -353,6 +354,7 @@ export function TradingCalendar({
                     }
                     maxPnl={maxPnl}
                     minPnl={minPnl}
+                    bankHoliday={isUsBankHoliday(dateKey)}
                     onClick={() => {
                       if (!isDayCurrentMonth) return;
 

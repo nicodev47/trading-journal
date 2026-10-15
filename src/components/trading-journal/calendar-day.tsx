@@ -18,6 +18,7 @@ interface CalendarDayProps {
   tutorialTarget?: string;
   maxPnl: number;
   minPnl: number;
+  bankHoliday?: boolean;
   onClick: () => void;
 }
 
@@ -88,6 +89,7 @@ export function CalendarDay({
   tutorialTarget,
   maxPnl,
   minPnl,
+  bankHoliday = false,
   onClick,
 }: CalendarDayProps) {
   const { streamerMode, showCalendarSetup, showCalendarTags } =
@@ -270,6 +272,19 @@ export function CalendarDay({
           </>
         )}
       </div>
+
+      {bankHoliday && (
+        <span
+          className={cn(
+            'pointer-events-none absolute bottom-1 right-1 truncate rounded-full bg-[#8e8e93] px-1.5 py-[2px] text-center font-sans text-[7px] font-medium leading-none text-white min-[380px]:bottom-1.5 min-[380px]:right-1.5 min-[380px]:text-[8px] sm:bottom-2 sm:right-2 sm:px-2 sm:py-[3px] sm:text-[10px] md:bottom-2.5 md:right-2.5',
+            hasTrades
+              ? 'left-4 min-[380px]:left-5 sm:left-7 md:left-8'
+              : 'left-1 min-[380px]:left-1.5 sm:left-2 md:left-2.5'
+          )}
+        >
+          Bank holiday
+        </span>
+      )}
 
       {hasTrades && (
         <span
