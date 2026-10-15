@@ -545,17 +545,10 @@ export function AdvancedStatsGrid({
   );
 
   if (!extended) {
+    // Days and averages already appear in the dashboard KPI row above.
     return (
-      <StatisticsCardGrid
-      className={cn(
-        'items-start py-3 md:py-4',
-        extended &&
-          '[&_[data-slot=card-content]]:!min-h-[124px] md:[&_[data-slot=card-content]]:!min-h-[144px]'
-      )}
-      >
-        {giorniCard}
+      <StatisticsCardGrid className="items-start py-3 md:grid-cols-2 md:py-4 xl:grid-cols-4">
         {serieCard}
-        {mediaCard}
         {finestraCard}
         {setupCard}
         {longshortCard}
