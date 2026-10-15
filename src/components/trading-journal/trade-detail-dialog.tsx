@@ -397,7 +397,7 @@ export function TradeDetailDialog({
           </DetailCard>
 
           <DetailCard
-            label="Link TradingView / Google Drive / immagini"
+            label="Link TradingView e immagini"
             className="mt-3"
           >
             {screenshots.length > 0 ? (

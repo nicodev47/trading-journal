@@ -24,7 +24,6 @@ import {
 import {
   Check,
   ExternalLink,
-  ImagePlus,
   Pencil,
   Plus,
   Star,
@@ -543,7 +542,12 @@ export function DayEditorDialog({
   const imageTargetRef = useRef<string | null>(null);
 
   const addImagesToTrade = async (tradeId: string, files: File[]) => {
-    const images = files.filter(file => file.type.startsWith('image/'));
+    const allowed = ['image/png', 'image/jpeg', 'image/webp'];
+    const images = files.filter(file => allowed.includes(file.type));
+
+    if (files.length > 0 && images.length < files.length) {
+      toast.error('Sono supportati solo file PNG, JPG o WebP');
+    }
 
     if (readOnly || images.length === 0) return;
 
@@ -1173,7 +1177,7 @@ export function DayEditorDialog({
                       void addImagesToTrade(row.id, Array.from(event.dataTransfer.files));
                     }}
                   >
-                    <div className="grid grid-cols-1 gap-2 md:grid-cols-[180px_1fr_auto_auto]">
+                    <div className="grid grid-cols-1 gap-2 md:grid-cols-[180px_1fr_auto]">
                       <Input
                         type="text"
                         value={screenshotInputs[row.id]?.name || ''}
@@ -1204,7 +1208,7 @@ export function DayEditorDialog({
                             },
                           }))
                         }
-                        placeholder="Inserisci il link di TradingView/Google Drive"
+                        placeholder="Inserisci il link di TradingView"
                         className="h-8 border-border/70 bg-background/60 text-sm"
                         onKeyDown={e => e.key === 'Enter' && addScreenshotToTrade(row.id)}
                       />
@@ -1212,31 +1216,28 @@ export function DayEditorDialog({
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => addScreenshotToTrade(row.id)}
-                        className="h-8 shrink-0 gap-1.5 border-border text-xs"
-                        disabled={!screenshotInputs[row.id]?.url?.trim()}
-                      >
-                        <Plus className="size-3" />
-                        Aggiungi
-                      </Button>
-
-                      <Button
-                        variant="outline"
-                        size="sm"
                         onClick={() => {
+                          if (screenshotInputs[row.id]?.url?.trim()) {
+                            addScreenshotToTrade(row.id);
+                            return;
+                          }
+
                           imageTargetRef.current = row.id;
                           imageInputRef.current?.click();
                         }}
                         className="h-8 shrink-0 gap-1.5 border-border text-xs"
-                        disabled={row.screenshots.length >= MAX_IMAGES_PER_TRADE}
+                        disabled={
+                          !screenshotInputs[row.id]?.url?.trim() &&
+                          row.screenshots.length >= MAX_IMAGES_PER_TRADE
+                        }
                       >
-                        <ImagePlus className="size-3" />
-                        Carica immagine
+                        <Plus className="size-3" />
+                        Aggiungi
                       </Button>
                     </div>
 
                     <p className="text-[11px] text-muted-foreground">
-                      Puoi anche incollare (Cmd/Ctrl+V) o trascinare qui un’immagine: viene ridimensionata e salvata nel browser.
+                      Senza link, “Aggiungi” carica un’immagine dal computer (PNG, JPG o WebP). Puoi anche incollarla (Cmd/Ctrl+V) o trascinarla qui: viene ridimensionata e salvata nel browser.
                     </p>
 
                     {screenshotInputs[row.id]?.url?.trim() && (
@@ -1584,7 +1585,7 @@ export function DayEditorDialog({
           <input
             ref={imageInputRef}
             type="file"
-            accept="image/*"
+            accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
             multiple
             className="hidden"
             onChange={event => {
