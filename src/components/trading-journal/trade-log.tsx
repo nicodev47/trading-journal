@@ -6,7 +6,8 @@ import { useStreamerMode } from '@/contexts/streamer-mode-context';
 import type { Trade } from '@/lib/types/trade';
 import { cn } from '@/lib/utils';
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 12;
+const DEFAULT_VISIBLE_COUNT = 7;
 
 const net = (trade: Trade) => trade.pnl - trade.commission;
 
@@ -33,7 +34,8 @@ interface TradeLogProps {
 /** Latest trades first, ten at a time, for the dashboard. */
 export function TradeLog({ trades, onOpenTrade }: TradeLogProps) {
   const { streamerMode } = useStreamerMode();
-  const [visible, setVisible] = useState(PAGE_SIZE);
+  const [isPaginationMode, setIsPaginationMode] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
   const sorted = useMemo(
     () =>
       [...trades].sort(
@@ -41,7 +43,13 @@ export function TradeLog({ trades, onOpenTrade }: TradeLogProps) {
       ),
     [trades]
   );
-  const shown = sorted.slice(0, visible);
+  const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
+  const startIndex = isPaginationMode ? (currentPage - 1) * PAGE_SIZE : 0;
+  const endIndex = isPaginationMode ? currentPage * PAGE_SIZE : DEFAULT_VISIBLE_COUNT;
+  const shown = sorted.slice(startIndex, endIndex);
+  const from = sorted.length > 0 ? startIndex + 1 : 0;
+  const to = Math.min(endIndex, sorted.length);
+  const hasMoreRows = !isPaginationMode && sorted.length > DEFAULT_VISIBLE_COUNT;
 
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-card">
@@ -137,20 +145,70 @@ export function TradeLog({ trades, onOpenTrade }: TradeLogProps) {
             </table>
           </div>
 
-          <div className="flex items-center justify-between gap-3 border-t border-border px-4 py-3 sm:px-5">
-            <span className="font-sans text-[11px] tabular-nums text-muted-foreground">
-              Mostrati {shown.length} di {sorted.length}
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3 sm:px-5">
+            <span className="font-sans tabular-nums text-[10px] text-muted-foreground">
+              {isPaginationMode
+                ? `Mostrati ${from}-${to} di ${sorted.length}`
+                : `Mostrati ${shown.length} di ${sorted.length}`}{' '}
+              trade
             </span>
-            {shown.length < sorted.length && (
+
+            {hasMoreRows && (
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
-                className="h-8 rounded-lg px-3 text-xs"
-                onClick={() => setVisible(count => count + PAGE_SIZE)}
+                className="h-8 min-w-8 rounded-lg border-border bg-background/50 px-2 font-sans tabular-nums text-xs text-muted-foreground hover:bg-secondary hover:text-foreground"
+                onClick={() => {
+                  setIsPaginationMode(true);
+                  setCurrentPage(1);
+                }}
               >
                 Mostra altri
               </Button>
+            )}
+
+            {isPaginationMode && (
+              <div className="mr-2 flex flex-wrap items-center justify-end gap-1.5 sm:mr-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 min-w-8 rounded-lg border border-border bg-background/50 px-2 font-sans tabular-nums text-xs text-muted-foreground hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(page => Math.max(1, page - 1))}
+                >
+                  &lt;
+                </Button>
+
+                {Array.from({ length: totalPages }, (_, index) => index + 1).map(page => (
+                  <Button
+                    key={page}
+                    type="button"
+                    variant={page === currentPage && page !== 1 ? 'default' : 'outline'}
+                    size="sm"
+                    className={
+                      page === currentPage && page !== 1
+                        ? 'h-8 min-w-8 rounded-lg border border-transparent bg-primary px-2 font-sans tabular-nums text-xs font-semibold text-primary-foreground hover:bg-primary hover:text-primary-foreground'
+                        : 'h-8 min-w-8 rounded-lg border border-border bg-background/50 px-2 font-sans tabular-nums text-xs text-muted-foreground hover:bg-secondary hover:text-foreground'
+                    }
+                    onClick={() => setCurrentPage(page)}
+                  >
+                    {page}
+                  </Button>
+                ))}
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 min-w-8 rounded-lg border border-border bg-background/50 px-2 font-sans tabular-nums text-xs text-muted-foreground hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage(page => Math.min(totalPages, page + 1))}
+                >
+                  &gt;
+                </Button>
+              </div>
             )}
           </div>
         </>
