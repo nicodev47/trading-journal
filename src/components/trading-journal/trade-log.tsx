@@ -59,7 +59,7 @@ export function TradeLog({ trades, onOpenTrade }: TradeLogProps) {
       ) : (
         <>
           <div className="ej-scrollbar overflow-x-auto">
-            <table className="w-full min-w-[640px] border-collapse font-sans text-xs tabular-nums">
+            <table className="w-full min-w-[860px] border-collapse font-sans text-xs tabular-nums">
               <thead>
                 <tr className="border-b border-border text-left text-[11px] text-muted-foreground">
                   <th className="px-4 py-2.5 font-medium sm:px-5">Data</th>
@@ -68,6 +68,7 @@ export function TradeLog({ trades, onOpenTrade }: TradeLogProps) {
                   <th className="px-3 py-2.5 font-medium">Direzione</th>
                   <th className="px-3 py-2.5 font-medium">Setup</th>
                   <th className="px-3 py-2.5 text-right font-medium">P&L</th>
+                  <th className="px-3 py-2.5 font-medium">Note</th>
                   <th className="px-4 py-2.5 text-right font-medium sm:px-5" />
                 </tr>
               </thead>
@@ -100,11 +101,24 @@ export function TradeLog({ trades, onOpenTrade }: TradeLogProps) {
                       </td>
                       <td
                         className={cn(
-                          'px-3 py-3 text-right font-semibold',
+                          'whitespace-nowrap px-3 py-3 text-right font-semibold',
                           pnl > 0 ? 'text-profit' : pnl < 0 ? 'text-loss' : 'text-foreground'
                         )}
                       >
                         {streamerMode ? '******' : money(pnl)}
+                      </td>
+                      <td className="px-3 py-3">
+                        <div
+                          className="max-w-[340px] overflow-hidden text-[11px] leading-[1.4] text-muted-foreground"
+                          style={{
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                          }}
+                          title={trade.notes?.trim() || undefined}
+                        >
+                          {trade.notes?.trim() || '—'}
+                        </div>
                       </td>
                       <td className="px-4 py-2 text-right sm:px-5">
                         <Button
