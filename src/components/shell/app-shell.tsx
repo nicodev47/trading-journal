@@ -10,6 +10,7 @@ import {
   Lightbulb,
   Menu,
   Moon,
+  Newspaper,
   PanelLeftClose,
   PanelLeftOpen,
   PlayCircle,
@@ -29,7 +30,7 @@ import type {
 } from '@/hooks/use-trades';
 import { cn } from '@/lib/utils';
 
-export type AppView = 'calendar' | 'monthly' | 'strategies' | 'progress' | 'propfirm';
+export type AppView = 'calendar' | 'monthly' | 'strategies' | 'progress' | 'news' | 'propfirm';
 
 interface NavEntry {
   id: string;
@@ -46,6 +47,7 @@ const MAIN_ENTRIES: NavEntry[] = [
   { id: 'reports', label: 'Reports', icon: BarChart3, view: 'monthly', tutorial: 'analysis-tab' },
   { id: 'strategies', label: 'Strategies', icon: Target, view: 'strategies' },
   { id: 'progress', label: 'Progress Tracker', icon: Trophy, view: 'progress' },
+  { id: 'news', label: 'News', icon: Newspaper, view: 'news' },
   { id: 'propfirm', label: 'Propfirm', icon: Building2, view: 'propfirm' },
 ];
 
@@ -60,6 +62,7 @@ const VIEW_TITLES: Record<AppView, string> = {
   monthly: 'Reports',
   strategies: 'Strategies',
   progress: 'Progress Tracker',
+  news: 'News',
   propfirm: 'Propfirm',
 };
 

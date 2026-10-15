@@ -42,6 +42,7 @@ import {
 import { extractImportedPreferences, planPreferencesImport } from '@/lib/import-preferences';
 import { AppShell, type AppView } from '@/components/shell/app-shell';
 import { TradeLog } from '@/components/trading-journal/trade-log';
+import { NewsPage } from '@/components/news/news-page';
 import { ProgressTrackerPage } from '@/components/progress/progress-tracker-page';
 import { StrategiesPage } from '@/components/trading-journal/strategies-page';
 import { PropfirmPlaceholder } from '@/components/trading-journal/propfirm-placeholder';
@@ -1118,6 +1119,8 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
           />
         ) : activeView === 'strategies' ? (
           <StrategiesPage trades={visibleTrades} />
+        ) : activeView === 'news' ? (
+          <NewsPage />
         ) : activeView === 'progress' ? (
           <ProgressTrackerPage
             trades={visibleTrades}
