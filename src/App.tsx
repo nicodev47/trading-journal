@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { NavHeader } from '@/components/trading-journal/nav-header';
+import { getDateKey } from '@/lib/date-utils';
 import { TradingCalendar } from '@/components/trading-journal/trading-calendar';
 import { StatsGrid } from '@/components/trading-journal/stats-grid';
 import { EquityCurve } from '@/components/trading-journal/equity-curve';
@@ -42,6 +42,9 @@ import {
   normalizeExportFileName,
 } from '@/lib/export-filename';
 import { extractImportedPreferences, planPreferencesImport } from '@/lib/import-preferences';
+import { AppShell, type AppView } from '@/components/shell/app-shell';
+import { StrategiesPage } from '@/components/trading-journal/strategies-page';
+import { PropfirmPlaceholder } from '@/components/trading-journal/propfirm-placeholder';
 import { ImportPreview } from '@/components/trading-journal/import-preview';
 import { createFullBackupExportData, parseJournalExport } from '@/lib/journal-export';
 import {
@@ -205,7 +208,7 @@ function AppContent() {
    deleteWorkspace,
  } = useJournalWorkspaces();
  const [activeWorkspace, setActiveWorkspace] = useState<JournalWorkspace>('personal');
-const [activeView, setActiveView] = useState<'calendar' | 'monthly'>('calendar');
+const [activeView, setActiveView] = useState<AppView>('calendar');
 const [isHelpOpen, setIsHelpOpen] = useState(false);
 const [isWhatsNewOpen, setIsWhatsNewOpen] = useState(false);
 const [isUpdateBannerVisible, setIsUpdateBannerVisible] = useState(() => {
@@ -968,9 +971,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
     );
   }
 
-  return (
-    <div className="flex min-h-screen flex-col bg-background">
-      {isUpdateBannerVisible && (
+  const bannerNode = isUpdateBannerVisible ? (
         <div className="border-b border-border bg-white/[0.03]">
           <div className="relative grid min-h-11 w-full items-center gap-x-3 gap-y-1.5 px-6 py-2 sm:grid-cols-[1fr_auto_1fr]">
             <div className="hidden sm:block" aria-hidden="true" />
@@ -1001,9 +1002,16 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
             </div>
           </div>
         </div>
-      )}
+  ) : null;
 
-      <NavHeader
+  return (
+    <>
+      <AppShell
+        banner={bannerNode}
+        onAddTrade={() => {
+          setImportPreview(null);
+          handleDayClick(getDateKey(new Date()));
+        }}
         activeView={activeView}
         activeWorkspace={activeWorkspace}
         workspaces={workspaces}
@@ -1034,21 +1042,23 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
           isTutorialActive &&
           TUTORIAL_STEPS[tutorialStepIndex]?.target === 'analysis-section'
         }
-        onViewChange={setActiveView}
+        onViewChange={(view) => {
+          setActiveView(view);
+        }}
         onHelpClick={() => setIsHelpOpen(true)}
         onProfileClick={handleOpenProfile}
-      />
+      >
 
       {importPreview ? (
         <ImportPreview
           key={`${importPreview.fileName}-${importPreview.data.length}`}
           data={importPreview.data}
           fileName={importPreview.fileName}
-          view={activeView}
+          view={activeView === 'monthly' ? 'monthly' : 'calendar'}
           onClose={() => setImportPreview(null)}
         />
       ) : (
-      <main className="mx-auto w-full max-w-6xl flex-1 overflow-x-hidden px-3.5 py-2.5 sm:px-4 sm:py-3">
+      <main className="mx-auto w-full max-w-[1400px] flex-1 overflow-x-hidden px-3.5 py-2.5 sm:px-5 sm:py-4">
         {activeView === 'calendar' ? (
           <>
           <>
@@ -1092,12 +1102,16 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
   </div>
 </>
           </>
-        ) : (
+        ) : activeView === 'monthly' ? (
           <MonthlyAnalysis
             trades={visibleTrades}
             tagColors={tagColors}
             onUpdateTrade={updateTrade}
           />
+        ) : activeView === 'strategies' ? (
+          <StrategiesPage trades={visibleTrades} />
+        ) : (
+          <PropfirmPlaceholder />
         )}
       </main>
       )}
@@ -1117,6 +1131,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
           </span>
         </div>
       </footer>
+      </AppShell>
 
       {selectedDate && (
         <DayEditorDialog
@@ -1581,7 +1596,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
       />
 
       <Toaster />
-    </div>
+    </>
   );
 }
 

@@ -39,7 +39,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     target: 'stats-grid',
     title: 'Statistiche principali',
     description:
-      'Sopra al calendario trovi il riepilogo delle tue performance: P&L, numero di trade, win rate e rapporto rischio rendimento, sempre a colpo d’occhio.',
+      'Sopra al calendario trovi il riepilogo delle tue performance: P&L netto, aspettativa per trade, profit factor, win rate e media win/loss, sempre a colpo d’occhio.',
     cta: 'Avanti',
   },
   {
@@ -51,9 +51,9 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   },
   {
     target: 'analysis-section',
-    title: 'Analisi',
+    title: 'Reports',
     description:
-      'La sezione Analisi raccoglie grafici e dati sul tuo journal, filtrabili per i tuoi asset e setup.\n\nLa pagina scorrerà per mostrarti distribuzioni, statistiche mensili, Execution Map e Trade Log.\n\nClicca sui grafici per vedere le operazioni collegate a ogni dato.',
+      'La sezione Reports (nella barra laterale) raccoglie grafici e dati sul tuo journal, filtrabili per i tuoi asset e setup.\n\nLa pagina scorrerà per mostrarti distribuzioni, statistiche mensili, Execution Map e Trade Log.\n\nClicca sui grafici per vedere le operazioni collegate a ogni dato.',
     cta: 'Vai ad Analisi',
   },
   {
