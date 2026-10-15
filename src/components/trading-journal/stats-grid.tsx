@@ -172,10 +172,10 @@ export function StatsGrid({ trades }: StatsGridProps) {
 
   return (
     <div
-      className="grid grid-cols-2 gap-3 py-3 md:grid-cols-6 md:gap-4 md:py-4 xl:grid-cols-5 [&>*]:min-w-0"
+      className="grid grid-cols-2 gap-3 py-3 md:grid-cols-4 md:gap-4 md:py-4 [&>*]:min-w-0"
       data-tutorial="stats-grid"
     >
-      <KpiCard title="P&L netto" className="col-span-2 md:col-span-2 xl:col-span-1">
+      <KpiCard title="P&L netto">
         <div className="flex items-center justify-between gap-3">
           <div className="flex flex-col items-start gap-2">
             <span
@@ -194,7 +194,7 @@ export function StatsGrid({ trades }: StatsGridProps) {
         </div>
       </KpiCard>
 
-      <KpiCard title="Win rate" className="md:col-span-2 xl:col-span-1">
+      <KpiCard title="Win rate">
         <div className="flex items-center justify-between gap-3">
           <span className="font-sans text-xl font-semibold tabular-nums tracking-tight text-foreground">
             {hasNoTrades ? '—' : `${stats.winRate.toFixed(0)}%`}
@@ -207,7 +207,7 @@ export function StatsGrid({ trades }: StatsGridProps) {
         </div>
       </KpiCard>
 
-      <KpiCard title="Aspettativa per trade" className="md:col-span-2 xl:col-span-1">
+      <KpiCard title="Aspettativa per trade">
         <div className="flex flex-col gap-3">
           <span
             className={cn(
@@ -236,7 +236,7 @@ export function StatsGrid({ trades }: StatsGridProps) {
         </div>
       </KpiCard>
 
-      <KpiCard title="Profit factor" className="md:col-span-3 xl:col-span-1">
+      <KpiCard title="Profit factor">
         <div className="flex items-center justify-between gap-3">
           <span className="font-sans text-xl font-semibold tabular-nums tracking-tight text-foreground">
             {formatProfitFactorValue(profitFactor)}
@@ -245,26 +245,6 @@ export function StatsGrid({ trades }: StatsGridProps) {
             parts={[
               { value: profitFactor.grossProfit, className: 'stroke-profit' },
               { value: profitFactor.grossLoss, className: 'stroke-loss' },
-            ]}
-          />
-        </div>
-      </KpiCard>
-
-      <KpiCard title="Giorni operativi" className="md:col-span-3 xl:col-span-1">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex flex-col items-start gap-2">
-            <span className="whitespace-nowrap font-sans text-xl font-semibold tabular-nums tracking-tight text-foreground">
-              {stats.tradingDays} {stats.tradingDays === 1 ? 'giorno' : 'giorni'}
-            </span>
-            <div className="flex items-center gap-2">
-              <Chip tone="profit">{stats.greenDays} win</Chip>
-              <Chip tone="loss">{stats.redDays} loss</Chip>
-            </div>
-          </div>
-          <Ring
-            parts={[
-              { value: stats.greenDays, className: 'stroke-profit' },
-              { value: stats.redDays, className: 'stroke-loss' },
             ]}
           />
         </div>

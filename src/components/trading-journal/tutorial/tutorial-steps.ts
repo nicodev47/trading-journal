@@ -39,7 +39,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     target: 'stats-grid',
     title: 'Statistiche principali',
     description:
-      'Sopra al calendario trovi il riepilogo delle tue performance: P&L netto, win rate, aspettativa per trade (con media win e media loss), profit factor e giorni operativi, sempre a colpo d’occhio.',
+      'Sopra al calendario trovi il riepilogo delle tue performance: P&L netto, win rate, aspettativa per trade (con media win e media loss) e profit factor, sempre a colpo d’occhio.',
     cta: 'Avanti',
   },
   {
