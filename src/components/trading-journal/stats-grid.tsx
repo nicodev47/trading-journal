@@ -28,6 +28,27 @@ const toneClass = (value: number | null) =>
       ? 'text-profit'
       : 'text-loss';
 
+function Chip({
+  tone = 'neutral',
+  children,
+}: {
+  tone?: 'neutral' | 'profit' | 'loss';
+  children: React.ReactNode;
+}) {
+  return (
+    <span
+      className={cn(
+        'rounded-full border px-2.5 py-0.5 font-sans text-[11px] font-medium tabular-nums',
+        tone === 'neutral' && 'border-border bg-background/70 text-foreground',
+        tone === 'profit' && 'border-profit/40 bg-profit/10 text-profit',
+        tone === 'loss' && 'border-loss/40 bg-loss/10 text-loss'
+      )}
+    >
+      {children}
+    </span>
+  );
+}
+
 function KpiCard({
   title,
   className,
@@ -40,7 +61,7 @@ function KpiCard({
   return (
     <div
       className={cn(
-        'flex min-w-0 flex-col justify-between gap-3 rounded-2xl border border-border bg-card p-4',
+        'flex min-w-0 flex-col justify-start gap-3 rounded-2xl border border-border bg-card p-4',
         className
       )}
     >
@@ -67,7 +88,7 @@ export function StatsGrid({ trades }: StatsGridProps) {
       data-tutorial="stats-grid"
     >
       <KpiCard title="P&L netto" className="col-span-2 md:col-span-2 xl:col-span-1">
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-col items-start gap-2">
           <span
             className={cn(
               'font-sans text-xl font-semibold tabular-nums tracking-tight',
@@ -76,70 +97,61 @@ export function StatsGrid({ trades }: StatsGridProps) {
           >
             {hide(formatCurrency(stats.totalPnl))}
           </span>
-          <span className="rounded-full border border-border bg-background/70 px-2.5 py-0.5 font-sans text-[11px] font-medium tabular-nums text-foreground">
-            {trades.length} trade
+          <Chip>{trades.length} trade</Chip>
+        </div>
+      </KpiCard>
+
+      <KpiCard title="Win rate" className="md:col-span-2 xl:col-span-1">
+        <div className="flex flex-col items-start gap-2">
+          <span className="font-sans text-xl font-semibold tabular-nums tracking-tight text-foreground">
+            {hasNoTrades ? '—' : `${stats.winRate.toFixed(0)}%`}
           </span>
+          <div className="flex items-center gap-2">
+            <Chip tone="profit">{stats.winningTrades} win</Chip>
+            <Chip tone="loss">{stats.losingTrades} loss</Chip>
+          </div>
         </div>
       </KpiCard>
 
       <KpiCard title="Aspettativa per trade" className="md:col-span-2 xl:col-span-1">
-        <span
-          className={cn(
-            'font-sans text-xl font-semibold tabular-nums tracking-tight',
-            toneClass(expectancy)
+        <div className="flex flex-col items-start gap-2">
+          <span
+            className={cn(
+              'font-sans text-xl font-semibold tabular-nums tracking-tight',
+              toneClass(expectancy)
+            )}
+          >
+            {expectancy === null ? '—' : hide(formatCurrency(expectancy))}
+          </span>
+          {!hasNoTrades && (
+            <div className="flex flex-col gap-0.5 font-sans text-[11px] tabular-nums text-muted-foreground">
+              <span>
+                Media win <span className="text-profit">{hide(formatCurrency(stats.avgWin))}</span>
+              </span>
+              <span>
+                Media loss{' '}
+                <span className="text-loss">{hide(formatCurrency(Math.abs(stats.avgLoss)))}</span>
+              </span>
+            </div>
           )}
-        >
-          {expectancy === null ? '—' : hide(formatCurrency(expectancy))}
-        </span>
+        </div>
       </KpiCard>
 
-      <KpiCard title="Profit factor" className="md:col-span-2 xl:col-span-1">
+      <KpiCard title="Profit factor" className="md:col-span-3 xl:col-span-1">
         <span className="font-sans text-xl font-semibold tabular-nums tracking-tight text-foreground">
           {formatProfitFactorValue(profitFactor)}
         </span>
       </KpiCard>
 
-      <KpiCard title="Win rate" className="md:col-span-3 xl:col-span-1">
-        <div className="flex flex-col gap-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="font-sans text-xl font-semibold tabular-nums tracking-tight text-foreground">
-              {hasNoTrades ? '—' : `${stats.winRate.toFixed(0)}%`}
-            </span>
-            <span className="rounded-full border border-profit/40 bg-profit/10 px-2 py-0.5 font-sans text-[11px] tabular-nums text-profit">
-              {stats.winningTrades}
-            </span>
-            <span className="rounded-full border border-loss/40 bg-loss/10 px-2 py-0.5 font-sans text-[11px] tabular-nums text-loss">
-              {stats.losingTrades}
-            </span>
-          </div>
-          <div className="flex h-1.5 w-full overflow-hidden rounded-full bg-secondary">
-            {decided > 0 && (
-              <>
-                <div className="h-full bg-profit/80" style={{ width: `${winShare}%` }} />
-                <div className="h-full bg-loss/80" style={{ width: `${100 - winShare}%` }} />
-              </>
-            )}
-          </div>
-        </div>
-      </KpiCard>
-
-      <KpiCard title="Media win / media loss" className="md:col-span-3 xl:col-span-1">
-        <div className="flex flex-col gap-1">
+      <KpiCard title="Giorni operativi" className="md:col-span-3 xl:col-span-1">
+        <div className="flex flex-col items-start gap-2">
           <span className="font-sans text-xl font-semibold tabular-nums tracking-tight text-foreground">
-            {hasNoTrades || stats.avgLoss === 0
-              ? '—'
-              : stats.avgWinLossRatio.toLocaleString('it-IT', {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
+            {stats.tradingDays} {stats.tradingDays === 1 ? 'giorno' : 'giorni'}
           </span>
-          {!hasNoTrades && (
-            <span className="font-sans text-[11px] tabular-nums text-muted-foreground">
-              <span className="text-profit">{hide(formatCurrency(stats.avgWin))}</span>
-              {' / '}
-              <span className="text-loss">{hide(formatCurrency(Math.abs(stats.avgLoss)))}</span>
-            </span>
-          )}
+          <div className="flex items-center gap-2">
+            <Chip tone="profit">{stats.greenDays} verdi</Chip>
+            <Chip tone="loss">{stats.redDays} rossi</Chip>
+          </div>
         </div>
       </KpiCard>
     </div>
