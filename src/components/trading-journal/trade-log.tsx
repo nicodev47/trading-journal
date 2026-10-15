@@ -67,8 +67,8 @@ export function TradeLog({ trades, onOpenTrade }: TradeLogProps) {
                   <th className="px-3 py-2.5 font-medium">Asset</th>
                   <th className="px-3 py-2.5 font-medium">Direzione</th>
                   <th className="px-3 py-2.5 font-medium">Setup</th>
-                  <th className="px-3 py-2.5 text-right font-medium">P&L</th>
-                  <th className="px-3 py-2.5 font-medium">Note</th>
+                  <th className="px-3 py-2.5 text-center font-medium">P&L</th>
+                  <th className="px-3 py-2.5 text-center font-medium">Note</th>
                   <th className="px-4 py-2.5 text-right font-medium sm:px-5" />
                 </tr>
               </thead>
@@ -101,7 +101,7 @@ export function TradeLog({ trades, onOpenTrade }: TradeLogProps) {
                       </td>
                       <td
                         className={cn(
-                          'whitespace-nowrap px-3 py-3 text-right font-semibold',
+                          'whitespace-nowrap px-3 py-3 text-center font-semibold',
                           pnl > 0 ? 'text-profit' : pnl < 0 ? 'text-loss' : 'text-foreground'
                         )}
                       >
@@ -109,7 +109,7 @@ export function TradeLog({ trades, onOpenTrade }: TradeLogProps) {
                       </td>
                       <td className="px-3 py-3">
                         <div
-                          className="max-w-[340px] overflow-hidden text-[11px] leading-[1.4] text-muted-foreground"
+                          className="mx-auto max-w-[340px] overflow-hidden text-center text-[11px] leading-[1.4] text-muted-foreground"
                           style={{
                             display: '-webkit-box',
                             WebkitLineClamp: 2,
