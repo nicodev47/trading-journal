@@ -70,7 +70,7 @@ function EventRow({ event }: { event: NewsEvent }) {
 
 export function NewsPage() {
   const { events, fetchedAt, loading, error, refresh } = useNews();
-  const [mode, setMode] = useState<'day' | 'week'>('day');
+  const [mode, setMode] = useState<'day' | 'week'>('week');
   const [filters, setFilters] = useState<NewsFilters>(() => {
     try {
       return parseStoredNewsFilters(localStorage.getItem(FILTERS_KEY));

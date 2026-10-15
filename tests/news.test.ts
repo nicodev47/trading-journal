@@ -33,10 +33,10 @@ test('gli eventi sono ordinati per orario', () => {
   assert.ok(events.every((event, index) => index === 0 || event.timestamp >= events[index - 1].timestamp));
 });
 
-test('di default solo dollaro con impatto alto e medio', () => {
+test('di default solo dollaro con impatto alto, medio e festivi', () => {
   const titles = filterNews(parseNewsFeed(feed), DEFAULT_NEWS_FILTERS).map(event => event.title);
 
-  assert.deepEqual(titles.sort(), ['Core PPI m/m', 'Unemployment Claims']);
+  assert.deepEqual(titles.sort(), ['Bank Holiday', 'Core PPI m/m', 'Unemployment Claims']);
 });
 
 test('filtri personalizzati: tutte le valute e festivi', () => {

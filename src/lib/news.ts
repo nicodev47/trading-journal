@@ -15,9 +15,9 @@ export interface NewsFilters {
   currencies: string[];
 }
 
-/** Dollar news, red (high) and orange (medium) only. */
+/** Dollar news: red (high) and orange (medium), plus bank holidays. */
 export const DEFAULT_NEWS_FILTERS: NewsFilters = {
-  impacts: ['High', 'Medium'],
+  impacts: ['High', 'Medium', 'Holiday'],
   currencies: ['USD'],
 };
 
