@@ -11,7 +11,6 @@ import type { Trade } from '@/lib/types/trade';
 import { useStreamerMode } from '@/contexts/streamer-mode-context';
 import { cn } from '@/lib/utils';
 import { toArcSegments, toShares } from '@/lib/kpi-charts';
-import { Wallet } from 'lucide-react';
 
 interface StatsGridProps {
   trades: Trade[];
@@ -187,9 +186,6 @@ export function StatsGrid({ trades }: StatsGridProps) {
               {hide(formatCurrency(stats.totalPnl))}
             </span>
             <Chip>{trades.length} trade</Chip>
-          </div>
-          <div className="hidden size-9 shrink-0 items-center justify-center rounded-lg bg-white/[0.06] text-muted-foreground 2xl:flex">
-            <Wallet className="size-4" />
           </div>
         </div>
       </KpiCard>
