@@ -1058,7 +1058,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
           onClose={() => setImportPreview(null)}
         />
       ) : (
-      <main className="mx-auto w-full max-w-[1400px] flex-1 overflow-x-hidden px-3.5 py-2.5 sm:px-5 sm:py-4">
+      <main className="mx-auto w-full max-w-[1280px] flex-1 overflow-x-hidden px-3.5 py-3 sm:px-8 sm:py-6 lg:px-12 xl:px-16">
         {activeView === 'calendar' ? (
           <>
           <>
