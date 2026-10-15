@@ -39,6 +39,13 @@ import {
   type ScreenshotData,
 } from '@/lib/types/trade';
 import { generateId } from '@/lib/calculations';
+import {
+  MAX_IMAGES_PER_TRADE,
+  fileToCompressedDataUrl,
+  isDataImage,
+  openImageInNewTab,
+} from '@/lib/image-upload';
+import { toast } from 'sonner';
 import { useStreamerMode } from '@/contexts/streamer-mode-context';
 import { usePreferences } from '@/contexts/preferences-context';
 import { getMenuOptions } from '@/lib/preferences';
@@ -528,6 +535,48 @@ export function DayEditorDialog({
     };
 
     updateTradeRow(tradeId, 'screenshots', [...trade.screenshots, newScreenshot], 0);
+    setScreenshotInputs(prev => ({ ...prev, [tradeId]: { url: '', name: '' } }));
+  };
+
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const imageTargetRef = useRef<string | null>(null);
+
+  const addImagesToTrade = async (tradeId: string, files: File[]) => {
+    const allowed = ['image/png', 'image/jpeg', 'image/webp'];
+    const images = files.filter(file => allowed.includes(file.type));
+
+    if (files.length > 0 && images.length < files.length) {
+      toast.error('Sono supportati solo file PNG, JPG o WebP');
+    }
+
+    if (readOnly || images.length === 0) return;
+
+    const timeframe = screenshotInputs[tradeId]?.name?.trim() || '';
+    const added: ScreenshotData[] = [];
+    const currentCount = () =>
+      (tradeRowsRef.current.find(row => row.id === tradeId)?.screenshots.length ?? 0) +
+      added.length;
+
+    for (const file of images) {
+      if (currentCount() >= MAX_IMAGES_PER_TRADE) {
+        toast.error(`Puoi allegare al massimo ${MAX_IMAGES_PER_TRADE} immagini o link per trade`);
+        break;
+      }
+
+      try {
+        added.push({ url: await fileToCompressedDataUrl(file), name: timeframe });
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : 'Impossibile caricare l’immagine');
+      }
+    }
+
+    if (added.length === 0) return;
+
+    const trade = tradeRowsRef.current.find(row => row.id === tradeId);
+
+    if (!trade) return;
+
+    updateTradeRow(tradeId, 'screenshots', [...trade.screenshots, ...added], 0);
     setScreenshotInputs(prev => ({ ...prev, [tradeId]: { url: '', name: '' } }));
   };
 
@@ -1089,6 +1138,12 @@ export function DayEditorDialog({
                                 href={screenshot.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
+                                onClick={event => {
+                                  if (isDataImage(screenshot.url)) {
+                                    event.preventDefault();
+                                    void openImageInNewTab(screenshot.url);
+                                  }
+                                }}
                                 className="flex items-center gap-1 text-foreground hover:text-highlight"
                               >
                                 Apri <ExternalLink className="size-3" />
@@ -1100,7 +1155,28 @@ export function DayEditorDialog({
                     </div>
                   )}
 
-                  <div className="flex flex-col gap-2">
+                  <div
+                    className="flex flex-col gap-2"
+                    onPaste={event => {
+                      const files = Array.from(event.clipboardData.files);
+
+                      if (files.some(file => file.type.startsWith('image/'))) {
+                        event.preventDefault();
+                        void addImagesToTrade(row.id, files);
+                      }
+                    }}
+                    onDragOver={event => {
+                      if (!readOnly && event.dataTransfer.types.includes('Files')) {
+                        event.preventDefault();
+                      }
+                    }}
+                    onDrop={event => {
+                      if (readOnly) return;
+
+                      event.preventDefault();
+                      void addImagesToTrade(row.id, Array.from(event.dataTransfer.files));
+                    }}
+                  >
                     <div className="grid grid-cols-1 gap-2 md:grid-cols-[180px_1fr_auto]">
                       <Input
                         type="text"
@@ -1132,7 +1208,7 @@ export function DayEditorDialog({
                             },
                           }))
                         }
-                        placeholder="Inserisci il link di TradingView/Google Drive"
+                        placeholder="Inserisci il link di TradingView"
                         className="h-8 border-border/70 bg-background/60 text-sm"
                         onKeyDown={e => e.key === 'Enter' && addScreenshotToTrade(row.id)}
                       />
@@ -1140,14 +1216,29 @@ export function DayEditorDialog({
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => addScreenshotToTrade(row.id)}
+                        onClick={() => {
+                          if (screenshotInputs[row.id]?.url?.trim()) {
+                            addScreenshotToTrade(row.id);
+                            return;
+                          }
+
+                          imageTargetRef.current = row.id;
+                          imageInputRef.current?.click();
+                        }}
                         className="h-8 shrink-0 gap-1.5 border-border text-xs"
-                        disabled={!screenshotInputs[row.id]?.url?.trim()}
+                        disabled={
+                          !screenshotInputs[row.id]?.url?.trim() &&
+                          row.screenshots.length >= MAX_IMAGES_PER_TRADE
+                        }
                       >
                         <Plus className="size-3" />
                         Aggiungi
                       </Button>
                     </div>
+
+                    <p className="text-[11px] text-muted-foreground">
+                      Senza link, “Aggiungi” carica un’immagine dal computer (PNG, JPG o WebP). Puoi anche incollarla (Cmd/Ctrl+V) o trascinarla qui: viene ridimensionata e salvata nel browser.
+                    </p>
 
                     {screenshotInputs[row.id]?.url?.trim() && (
                       <div className="overflow-hidden rounded-lg border border-border bg-background">
@@ -1491,6 +1582,20 @@ export function DayEditorDialog({
             </span>
           </div>
           </fieldset>
+          <input
+            ref={imageInputRef}
+            type="file"
+            accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
+            multiple
+            className="hidden"
+            onChange={event => {
+              const tradeId = imageTargetRef.current;
+
+              if (tradeId) void addImagesToTrade(tradeId, Array.from(event.target.files ?? []));
+
+              event.target.value = '';
+            }}
+          />
         </div>
 
         {readOnly ? (

@@ -1430,7 +1430,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
                   bullets: [
                     'Inserisci P&L, simbolo, direzione, orario e setup.',
                     'Aggiungi note per ricordare cosa è successo nel trade.',
-                    'Salva link TradingView, Google Drive o altri servizi cloud.',
+                    'Salva link TradingView oppure carica un’immagine dal tuo computer.',
                     'Usa la stella per segnare i trade più importanti.',
                   ],
                 },

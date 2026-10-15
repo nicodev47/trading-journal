@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { ArrowLeft, ExternalLink, Star } from 'lucide-react';
+import { isDataImage, openImageInNewTab } from '@/lib/image-upload';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -204,6 +205,12 @@ function AttachmentItem({
           href={screenshot.url}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={(event) => {
+            if (isDataImage(screenshot.url)) {
+              event.preventDefault();
+              void openImageInNewTab(screenshot.url);
+            }
+          }}
           className="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg border border-border bg-background px-2.5 font-sans tabular-nums text-[10px] text-foreground transition-colors hover:border-highlight/40 hover:text-highlight"
         >
           Apri <ExternalLink className="size-3" />
@@ -220,6 +227,12 @@ function AttachmentItem({
           href={screenshot.url}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={(event) => {
+            if (isDataImage(screenshot.url)) {
+              event.preventDefault();
+              void openImageInNewTab(screenshot.url);
+            }
+          }}
           className="inline-flex shrink-0 items-center gap-1 text-xs text-profit hover:underline"
         >
           Apri <ExternalLink className="size-3" />
@@ -384,7 +397,7 @@ export function TradeDetailDialog({
           </DetailCard>
 
           <DetailCard
-            label="Link TradingView / Google Drive / immagini"
+            label="Link TradingView e immagini"
             className="mt-3"
           >
             {screenshots.length > 0 ? (

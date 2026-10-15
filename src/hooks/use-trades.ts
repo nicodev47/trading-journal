@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { toast } from 'sonner';
 import {
   CUSTOM_TAG_PREFIX,
   TRADE_TAGS,
@@ -946,6 +947,12 @@ export function useTrades(workspace: JournalWorkspace = 'personal') {
         localStorage.setItem(storageKey, JSON.stringify(state));
       } catch (error) {
         console.error('Failed to save trades to localStorage:', error);
+        toast.error('Memoria del browser piena: le ultime modifiche non sono state salvate', {
+          id: 'storage-full',
+          description:
+            'Esporta subito un backup ed elimina le immagini più pesanti dai trade.',
+          duration: 15000,
+        });
       }
     }
   }, [state, isLoaded, loadedWorkspace, storageKey, workspace]);

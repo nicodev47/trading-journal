@@ -18,7 +18,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     target: 'trade-editor',
     title: 'Inserimento trade',
     description:
-      'Qui inserisci le operazioni del giorno: puoi aggiungere uno o più trade con P&L, asset, direzione, orario, setup, note e link ai grafici.\n\nI menu di asset e setup mostrano le tue scelte e le modifiche si salvano in automatico.\n\nPer le immagini usa i link di TradingView oppure di Google Drive e altri servizi online.',
+      'Qui inserisci le operazioni del giorno: puoi aggiungere uno o più trade con P&L, asset, direzione, orario, setup, note e link ai grafici.\n\nI menu di asset e setup mostrano le tue scelte e le modifiche si salvano in automatico.\n\nPer i grafici usa i link di TradingView oppure carica un’immagine dal tuo computer (PNG, JPG o WebP).',
     cta: 'Avanti',
   },
   {
