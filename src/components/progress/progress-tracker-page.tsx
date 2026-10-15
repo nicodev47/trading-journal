@@ -1,0 +1,344 @@
+'use client';
+
+import { useMemo, useState } from 'react';
+import { BookOpen, ChevronLeft, ChevronRight, CircleSlash, Eye, FileText } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useStreamerMode } from '@/contexts/streamer-mode-context';
+import {
+  MAX_LEVEL,
+  buildHeatmap,
+  computeStreaks,
+  getLevelsByDate,
+  summarizeYear,
+  toDateKey,
+} from '@/lib/progress-tracker';
+import type { DailyAnalysis, MissedTrade, Trade } from '@/lib/types/trade';
+import { cn } from '@/lib/utils';
+import { DailyAnalysisDialog } from './daily-analysis-dialog';
+
+const LEVEL_CLASSES = [
+  'bg-white/[0.06]',
+  'bg-profit/25',
+  'bg-profit/45',
+  'bg-profit/70',
+  'bg-profit',
+];
+const MONTH_LABELS = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
+const MONTH_NAMES = [
+  'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
+  'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre',
+];
+
+interface ProgressTrackerPageProps {
+  trades: Trade[];
+  dailyAnalyses: DailyAnalysis[];
+  missedTrades: MissedTrade[];
+  onSaveAnalysis: (entry: DailyAnalysis) => void;
+  onDeleteAnalysis: (date: string) => void;
+  onAddMissed: (missed: MissedTrade) => void;
+  onUpdateMissed: (id: string, updates: Partial<MissedTrade>) => void;
+  onDeleteMissed: (id: string) => void;
+}
+
+function StatTile({ title, value, hint }: { title: string; value: string; hint: string }) {
+  return (
+    <div className="flex min-w-0 flex-col gap-2 rounded-2xl border border-border bg-card p-4">
+      <span className="font-sans text-xs font-medium text-muted-foreground">{title}</span>
+      <span className="font-sans text-xl font-semibold tabular-nums tracking-tight">{value}</span>
+      <span className="font-sans text-[11px] text-muted-foreground">{hint}</span>
+    </div>
+  );
+}
+
+export function ProgressTrackerPage({
+  trades,
+  dailyAnalyses,
+  missedTrades,
+  onSaveAnalysis,
+  onDeleteAnalysis,
+  onAddMissed,
+  onUpdateMissed,
+  onDeleteMissed,
+}: ProgressTrackerPageProps) {
+  const { sundayWeekStart } = useStreamerMode();
+  const today = useMemo(() => new Date(), []);
+  const [year, setYear] = useState(today.getFullYear());
+  const [month, setMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [hovered, setHovered] = useState<string | null>(null);
+
+  const levels = useMemo(
+    () => getLevelsByDate(dailyAnalyses, missedTrades),
+    [dailyAnalyses, missedTrades]
+  );
+  const streaks = useMemo(() => computeStreaks(levels, today), [levels, today]);
+  const summary = useMemo(() => summarizeYear(year, levels), [year, levels]);
+  const weeks = useMemo(() => buildHeatmap(year, levels), [year, levels]);
+  const entryByDate = useMemo(
+    () => new Map(dailyAnalyses.map(entry => [entry.date, entry])),
+    [dailyAnalyses]
+  );
+  const missedByDate = useMemo(() => {
+    const map = new Map<string, MissedTrade[]>();
+
+    missedTrades.forEach(item => map.set(item.date, [...(map.get(item.date) ?? []), item]));
+
+    return map;
+  }, [missedTrades]);
+  const tradesByDate = useMemo(() => {
+    const map = new Map<string, Trade[]>();
+
+    trades.forEach(trade => {
+      const key = (trade.exitDate || trade.entryDate || '').split('T')[0];
+
+      map.set(key, [...(map.get(key) ?? []), trade]);
+    });
+
+    return map;
+  }, [trades]);
+
+  const monthLabelAt = weeks.map((week, index) => {
+    const firstInYear = week.find(cell => cell.inYear);
+    const previous = weeks[index - 1]?.find(cell => cell.inYear);
+
+    if (!firstInYear) return null;
+
+    const monthOf = Number(firstInYear.date.slice(5, 7)) - 1;
+
+    return !previous || Number(previous.date.slice(5, 7)) - 1 !== monthOf ? monthOf : null;
+  });
+
+  const hoveredCell = hovered ? weeks.flat().find(cell => cell.date === hovered) : null;
+  const hoveredText = hoveredCell
+    ? `${new Date(`${hoveredCell.date}T12:00:00`).toLocaleDateString('it-IT', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+      })}: ${hoveredCell.level === 0 ? 'nessuna analisi' : `${hoveredCell.level} di ${MAX_LEVEL} parti compilate`}`
+    : 'Passa sopra un giorno per vedere i dettagli, clicca per aprirlo.';
+
+  // Month grid
+  const firstOfMonth = new Date(month.getFullYear(), month.getMonth(), 1, 12);
+  const offset = sundayWeekStart ? firstOfMonth.getDay() : (firstOfMonth.getDay() + 6) % 7;
+  const daysInMonth = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
+  const cells: (string | null)[] = [
+    ...Array.from({ length: offset }, () => null),
+    ...Array.from({ length: daysInMonth }, (_, index) =>
+      toDateKey(new Date(month.getFullYear(), month.getMonth(), index + 1, 12))
+    ),
+  ];
+
+  while (cells.length % 7 !== 0) cells.push(null);
+
+  const weekdayLabels = sundayWeekStart
+    ? ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab']
+    : ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
+  const todayKey = toDateKey(today);
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4 [&>*]:min-w-0">
+        <StatTile
+          title="Serie attuale"
+          value={`${streaks.current} ${streaks.current === 1 ? 'giorno' : 'giorni'}`}
+          hint="Giorni feriali di fila con analisi"
+        />
+        <StatTile
+          title="Serie più lunga"
+          value={`${streaks.longest} ${streaks.longest === 1 ? 'giorno' : 'giorni'}`}
+          hint="Il tuo record"
+        />
+        <StatTile
+          title={`Giorni con analisi nel ${year}`}
+          value={String(summary.daysWithEntry)}
+          hint="Almeno una parte compilata"
+        />
+        <StatTile
+          title="Completamento medio"
+          value={`${summary.completion}%`}
+          hint="Parti compilate nei giorni con analisi"
+        />
+      </div>
+
+      <div className="overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3.5 sm:px-5">
+          <div>
+            <h2 className="font-sans text-[15px] font-semibold tracking-tight">Costanza</h2>
+            <p className="font-sans text-xs text-muted-foreground">
+              Più il verde è intenso, più parti dell’analisi hai compilato quel giorno.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="icon" className="size-8" onClick={() => setYear(year - 1)}>
+              <ChevronLeft className="size-4" />
+            </Button>
+            <span className="min-w-14 text-center font-sans text-xs font-semibold tabular-nums">{year}</span>
+            <Button variant="outline" size="icon" className="size-8" onClick={() => setYear(year + 1)}>
+              <ChevronRight className="size-4" />
+            </Button>
+          </div>
+        </div>
+
+        <div className="ej-scrollbar overflow-x-auto px-4 py-4 sm:px-5">
+          <div className="inline-flex flex-col gap-1">
+            <div className="ml-8 flex gap-[3px]">
+              {weeks.map((week, index) => (
+                <div key={week[0].date} className="w-[16px] font-sans text-[10px] text-muted-foreground">
+                  <span className="whitespace-nowrap">
+                    {monthLabelAt[index] !== null ? MONTH_LABELS[monthLabelAt[index] as number] : ''}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-[3px]">
+              <div className="grid w-7 grid-rows-7 gap-[3px] pr-1 font-sans text-[10px] text-muted-foreground">
+                {['Lun', '', 'Mer', '', 'Ven', '', ''].map((label, index) => (
+                  <span key={index} className="flex h-[16px] items-center">{label}</span>
+                ))}
+              </div>
+              {weeks.map(week => (
+                <div key={week[0].date} className="grid grid-rows-7 gap-[3px]">
+                  {week.map(cell => (
+                    <button
+                      key={cell.date}
+                      type="button"
+                      aria-label={`${cell.date}: ${cell.level} parti compilate`}
+                      disabled={!cell.inYear}
+                      onMouseEnter={() => setHovered(cell.date)}
+                      onMouseLeave={() => setHovered(null)}
+                      onClick={() => setSelectedDate(cell.date)}
+                      className={cn(
+                        'size-[16px] rounded-[3px] outline-none transition-transform focus-visible:ring-1 focus-visible:ring-ring',
+                        cell.inYear ? LEVEL_CLASSES[cell.level] : 'invisible',
+                        cell.inYear && 'hover:scale-125',
+                        cell.date === todayKey && 'ring-1 ring-white/50'
+                      )}
+                    />
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3 sm:px-5">
+          <span className="font-sans text-xs text-muted-foreground">{hoveredText}</span>
+          <div className="flex items-center gap-1.5 font-sans text-[11px] text-muted-foreground">
+            Meno
+            {LEVEL_CLASSES.map((className, index) => (
+              <span key={index} className={cn('size-[16px] rounded-[3px]', className)} />
+            ))}
+            Più
+          </div>
+        </div>
+      </div>
+
+      <div className="overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3.5 sm:px-5">
+          <h2 className="font-sans text-[15px] font-semibold tracking-tight">Calendario delle analisi</h2>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              className="size-8"
+              onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}
+            >
+              <ChevronLeft className="size-4" />
+            </Button>
+            <span className="min-w-32 text-center font-sans text-sm font-semibold">
+              {MONTH_NAMES[month.getMonth()]} {month.getFullYear()}
+            </span>
+            <Button
+              variant="outline"
+              size="icon"
+              className="size-8"
+              onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}
+            >
+              <ChevronRight className="size-4" />
+            </Button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-7 gap-px bg-border">
+          {weekdayLabels.map(label => (
+            <div key={label} className="bg-card px-2 py-2 font-sans text-[11px] font-semibold text-muted-foreground">
+              {label}
+            </div>
+          ))}
+          {cells.map((date, index) => {
+            if (!date) return <div key={`empty-${index}`} className="min-h-[72px] bg-background/60 md:min-h-[84px]" />;
+
+            const entry = entryByDate.get(date);
+            const missed = missedByDate.get(date)?.length ?? 0;
+            const level = levels.get(date) ?? 0;
+            const traded = (tradesByDate.get(date)?.length ?? 0) > 0;
+
+            return (
+              <button
+                key={date}
+                type="button"
+                onClick={() => setSelectedDate(date)}
+                className={cn(
+                  'relative flex min-h-[72px] flex-col items-start justify-between gap-2 bg-background p-2 text-left outline-none transition-colors hover:bg-secondary/30 focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring md:min-h-[84px] md:p-2.5',
+                  date === todayKey && 'ring-1 ring-inset ring-white/35'
+                )}
+              >
+                {level > 0 && (
+                  <span
+                    aria-hidden="true"
+                    className={cn('pointer-events-none absolute inset-0', LEVEL_CLASSES[level], 'opacity-30')}
+                  />
+                )}
+                <span className="relative flex w-full items-center justify-between">
+                  <span className="font-sans text-sm font-semibold">{Number(date.slice(8))}</span>
+                  {traded && <span className="size-1.5 rounded-full bg-muted-foreground" />}
+                </span>
+                <span className="relative flex items-center gap-1.5 text-muted-foreground">
+                  <FileText className={cn('size-3', entry?.analysis.trim() && 'text-profit')} />
+                  <Eye className={cn('size-3', entry?.observations.trim() && 'text-profit')} />
+                  <span className={cn('flex items-center gap-0.5 font-sans text-[10px] tabular-nums', missed > 0 && 'text-profit')}>
+                    <CircleSlash className="size-3" />
+                    {missed > 0 && missed}
+                  </span>
+                  <span
+                    className={cn(
+                      'flex items-center gap-0.5 font-sans text-[10px] tabular-nums',
+                      (entry?.caseStudies.length ?? 0) > 0 && 'text-profit'
+                    )}
+                  >
+                    <BookOpen className="size-3" />
+                    {(entry?.caseStudies.length ?? 0) > 0 && entry?.caseStudies.length}
+                  </span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-border px-4 py-3 font-sans text-[11px] text-muted-foreground sm:px-5">
+          <span className="flex items-center gap-1.5"><FileText className="size-3" /> Analisi</span>
+          <span className="flex items-center gap-1.5"><Eye className="size-3" /> Cosa ho visto</span>
+          <span className="flex items-center gap-1.5"><CircleSlash className="size-3" /> Operazioni mancate</span>
+          <span className="flex items-center gap-1.5"><BookOpen className="size-3" /> Casi studio</span>
+          <span className="flex items-center gap-1.5"><span className="size-1.5 rounded-full bg-muted-foreground" /> Giorno operativo</span>
+        </div>
+      </div>
+
+      {selectedDate && (
+        <DailyAnalysisDialog
+          open
+          date={selectedDate}
+          entry={entryByDate.get(selectedDate)}
+          missedTrades={missedByDate.get(selectedDate) ?? []}
+          trades={tradesByDate.get(selectedDate) ?? []}
+          onClose={() => setSelectedDate(null)}
+          onSave={onSaveAnalysis}
+          onDelete={onDeleteAnalysis}
+          onAddMissed={onAddMissed}
+          onUpdateMissed={onUpdateMissed}
+          onDeleteMissed={onDeleteMissed}
+        />
+      )}
+    </div>
+  );
+}

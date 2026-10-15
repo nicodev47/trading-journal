@@ -80,3 +80,12 @@ export async function openImageInNewTab(url: string) {
   window.open(blobUrl, '_blank', 'noopener,noreferrer');
   window.setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
 }
+
+/** Direct image URL for previews; TradingView snapshot links are converted. */
+export function getPreviewImageUrl(url: string): string {
+  if (isDataImage(url) || url.includes('s3.tradingview.com/snapshots')) return url;
+
+  const match = url.match(/tradingview\.com\/x\/([A-Za-z0-9]+)/);
+
+  return match ? `https://s3.tradingview.com/snapshots/t/${match[1]}.png` : url;
+}

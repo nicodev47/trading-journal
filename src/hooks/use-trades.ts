@@ -6,6 +6,7 @@ import {
   CUSTOM_TAG_PREFIX,
   TRADE_TAGS,
   type MissedTrade,
+  type DailyAnalysis,
   type Trade,
   type JournalState,
   type WeeklyPlan,
@@ -96,6 +97,7 @@ const DEFAULT_AVAILABLE_TAGS = TRADE_TAGS.map((tag) => tag.value);
 const initialState: JournalState = {
   trades: [],
   missedTrades: [],
+  dailyAnalyses: [],
   tags: DEFAULT_AVAILABLE_TAGS,
   tagsInitialized: true,
   strategies: [],
@@ -150,6 +152,9 @@ export const parseImportedJournal = (jsonString: string): JournalState | null =>
       trades,
       missedTrades: Array.isArray(data.missedTrades)
         ? (data.missedTrades as MissedTrade[])
+        : [],
+      dailyAnalyses: Array.isArray(data.dailyAnalyses)
+        ? (data.dailyAnalyses as DailyAnalysis[])
         : [],
       tags,
       tagsInitialized: true,
@@ -856,6 +861,15 @@ const getTradeDedupKey = (trade: Trade) => {
   ].join('|');
 };
 
+const mergeDailyAnalyses = (
+  current: DailyAnalysis[],
+  imported: DailyAnalysis[]
+): DailyAnalysis[] => {
+  const dates = new Set(current.map(item => item.date));
+
+  return [...current, ...imported.filter(item => !dates.has(item.date))];
+};
+
 const mergeJournalState = (
   currentState: JournalState,
   importedState: JournalState
@@ -897,6 +911,10 @@ const mergeJournalState = (
     ...currentState,
     trades: mergedTrades,
     missedTrades: [...currentState.missedTrades, ...importedState.missedTrades],
+    dailyAnalyses: mergeDailyAnalyses(
+      currentState.dailyAnalyses ?? [],
+      importedState.dailyAnalyses ?? []
+    ),
     tags: Array.from(new Set([...currentState.tags, ...importedState.tags])),
     strategies: Array.from(
       new Set([...currentState.strategies, ...importedState.strategies])
@@ -1023,6 +1041,23 @@ export function useTrades(workspace: JournalWorkspace = 'personal') {
         ...prev.missedTrades.filter(missedTrade => missedTrade.date !== dateKey),
         ...missedTrades,
       ],
+    }));
+  }, []);
+
+  const saveDailyAnalysis = useCallback((analysis: DailyAnalysis) => {
+    setState(prev => ({
+      ...prev,
+      dailyAnalyses: [
+        ...(prev.dailyAnalyses ?? []).filter(item => item.date !== analysis.date),
+        analysis,
+      ],
+    }));
+  }, []);
+
+  const deleteDailyAnalysis = useCallback((date: string) => {
+    setState(prev => ({
+      ...prev,
+      dailyAnalyses: (prev.dailyAnalyses ?? []).filter(item => item.date !== date),
     }));
   }, []);
 
@@ -1241,6 +1276,7 @@ export function useTrades(workspace: JournalWorkspace = 'personal') {
   return {
     trades: state.trades,
     missedTrades: state.missedTrades,
+    dailyAnalyses: state.dailyAnalyses ?? [],
     tags: state.tags,
     strategies: state.strategies,
     customTags: state.customTags,
@@ -1255,6 +1291,8 @@ export function useTrades(workspace: JournalWorkspace = 'personal') {
     updateMissedTrade,
     deleteMissedTrade,
     saveMissedTradesForDate,
+    saveDailyAnalysis,
+    deleteDailyAnalysis,
     addTag,
     removeTag,
     addStrategy,

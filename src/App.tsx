@@ -42,6 +42,7 @@ import {
 import { extractImportedPreferences, planPreferencesImport } from '@/lib/import-preferences';
 import { AppShell, type AppView } from '@/components/shell/app-shell';
 import { TradeLog } from '@/components/trading-journal/trade-log';
+import { ProgressTrackerPage } from '@/components/progress/progress-tracker-page';
 import { StrategiesPage } from '@/components/trading-journal/strategies-page';
 import { PropfirmPlaceholder } from '@/components/trading-journal/propfirm-placeholder';
 import { ImportPreview } from '@/components/trading-journal/import-preview';
@@ -258,6 +259,12 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
   const {
     trades,
     missedTrades,
+    dailyAnalyses,
+    addMissedTrade,
+    updateMissedTrade,
+    deleteMissedTrade,
+    saveDailyAnalysis,
+    deleteDailyAnalysis,
     tags,
     strategies,
     customTags,
@@ -1111,6 +1118,17 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
           />
         ) : activeView === 'strategies' ? (
           <StrategiesPage trades={visibleTrades} />
+        ) : activeView === 'progress' ? (
+          <ProgressTrackerPage
+            trades={visibleTrades}
+            dailyAnalyses={isTutorialActive ? [] : dailyAnalyses}
+            missedTrades={isTutorialActive ? [] : missedTrades}
+            onSaveAnalysis={saveDailyAnalysis}
+            onDeleteAnalysis={deleteDailyAnalysis}
+            onAddMissed={addMissedTrade}
+            onUpdateMissed={updateMissedTrade}
+            onDeleteMissed={deleteMissedTrade}
+          />
         ) : (
           <PropfirmPlaceholder />
         )}

@@ -29,6 +29,27 @@ export interface Trade {
   updatedAt: string;
 }
 
+export interface CaseStudy {
+  id: string;
+  title: string;
+  notes: string;
+  /** Optional link to an executed trade of the same day. */
+  tradeId?: string;
+  screenshots: ScreenshotData[];
+}
+
+/** One entry of the Progress Tracker: the thinking behind a day, not its executions. */
+export interface DailyAnalysis {
+  id: string;
+  /** YYYY-MM-DD */
+  date: string;
+  analysis: string;
+  observations: string;
+  caseStudies: CaseStudy[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface MissedTrade {
   id: string;
   date: string;
@@ -73,6 +94,7 @@ export interface WeeklyPlan {
 export interface JournalState {
   trades: Trade[];
   missedTrades: MissedTrade[];
+  dailyAnalyses?: DailyAnalysis[];
   tags: string[];
   tagsInitialized?: boolean;
   strategies: string[];
