@@ -13,6 +13,7 @@ import { useStreamerMode } from '@/contexts/streamer-mode-context';
 import { generateId } from '@/lib/calculations';
 import type { DailyAnalysis, ScreenshotData, Trade } from '@/lib/types/trade';
 import { AttachmentsField } from './attachments-field';
+import { ExecutedTrades } from './executed-trades';
 
 interface DailyAnalysisDialogProps {
   open: boolean;
@@ -179,6 +180,8 @@ export function DailyAnalysisDialog({
         </DialogHeader>
 
         <div className="flex flex-col gap-4 p-4 sm:p-6">
+          <ExecutedTrades trades={trades} />
+
           <Section title="Analisi della giornata" hint="Contesto di mercato, bias, livelli che hai preparato.">
             <Textarea
               value={analysis}

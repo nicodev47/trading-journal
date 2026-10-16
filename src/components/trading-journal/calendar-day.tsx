@@ -16,7 +16,15 @@ export interface AnalysisCell {
   /** Something was written directly in the Progress Tracker for this day. */
   manual: boolean;
   /** Prop accounts on which trades were executed this day. */
-  props: { id: string; initials: string; tile: string; logo?: string; logoOnDark?: boolean }[];
+  props: PropMarkerCell[];
+}
+
+export interface PropMarkerCell {
+  id: string;
+  initials: string;
+  tile: string;
+  logo?: string;
+  logoOnDark?: boolean;
 }
 
 interface CalendarDayProps {
@@ -30,6 +38,8 @@ interface CalendarDayProps {
   bankHoliday?: boolean;
   /** Progress Tracker mode: show the daily analysis instead of the P&L. */
   analysis?: AnalysisCell;
+  /** Prop accounts on which trades were executed this day. */
+  propMarkers?: PropMarkerCell[];
   onClick: () => void;
 }
 
@@ -102,6 +112,7 @@ export function CalendarDay({
   minPnl,
   bankHoliday = false,
   analysis,
+  propMarkers = [],
   onClick,
 }: CalendarDayProps) {
   const { streamerMode, showCalendarSetup, showCalendarTags } =
@@ -280,18 +291,18 @@ export function CalendarDay({
               </div>
             )}
 
-            {!analysis && <span className="mt-auto" aria-hidden="true" />}
+            {propMarkers.length === 0 && !analysis?.manual && <span className="mt-auto" aria-hidden="true" />}
           </>
         )}
 
-        {analysis && (
-          <span className="mt-auto flex flex-wrap items-center gap-1 self-end sm:gap-1.5">
-            {analysis.props.map(item => (
+        {(propMarkers.length > 0 || analysis?.manual) && (
+          <span className="mt-auto flex flex-wrap items-center gap-1 self-start sm:gap-1.5">
+            {propMarkers.map(item => (
               <span
                 key={item.id}
                 aria-label="Eseguito su questa prop"
                 className={cn(
-                  'relative flex size-4 items-center justify-center rounded-[5px] border bg-gradient-to-b font-sans text-[7px] font-bold leading-none text-white sm:size-[18px] sm:text-[8px]',
+                  'relative flex size-5 items-center justify-center rounded-md border bg-gradient-to-b font-sans text-[8px] font-bold leading-none text-white min-[380px]:size-6 sm:size-7 sm:text-[10px] md:size-8',
                   item.tile
                 )}
               >
@@ -300,25 +311,24 @@ export function CalendarDay({
                     src={item.logo}
                     alt=""
                     className={cn(
-                      'size-full rounded-[4px]',
-                      item.logoOnDark ? 'bg-[#0b0b0d] object-contain p-[2px]' : 'object-cover'
+                      'size-full rounded-[5px]',
+                      item.logoOnDark ? 'bg-[#0b0b0d] object-contain p-[3px]' : 'object-cover'
                     )}
                   />
                 ) : (
                   item.initials
                 )}
-                <span className="absolute -right-[3px] -top-[3px] size-[7px] rounded-full bg-profit ring-1 ring-background" />
+                <span className="absolute -right-[3px] -top-[3px] size-2 rounded-full bg-profit ring-1 ring-background sm:size-[9px]" />
               </span>
             ))}
-            {analysis.manual && (
+            {analysis?.manual && (
               <span
                 aria-label="Analisi inserita qui"
-                className="size-[7px] rounded-full bg-white sm:size-2"
+                className="size-2 rounded-full bg-white sm:size-2.5"
               />
             )}
           </span>
         )}
-
       </div>
 
       {bankHoliday && (

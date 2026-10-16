@@ -12,8 +12,7 @@ import {
   toDateKey,
 } from '@/lib/progress-tracker';
 import type { DailyAnalysis, Trade } from '@/lib/types/trade';
-import { getAccountDays } from '@/lib/propfirm/days';
-import { getFirm } from '@/lib/propfirm/firms';
+import { buildPropMarkers } from '@/lib/propfirm/markers';
 import type { PropAccount } from '@/lib/propfirm/types';
 import { cn } from '@/lib/utils';
 import { TradingCalendar } from '@/components/trading-journal/trading-calendar';
@@ -66,32 +65,10 @@ export function ProgressTrackerPage({
     () => new Map(dailyAnalyses.map(entry => [entry.date, entry])),
     [dailyAnalyses]
   );
-  // Prop accounts on which something was executed, day by day.
-  const propsByDate = useMemo(() => {
-    const map = new Map<
-      string,
-      { id: string; initials: string; tile: string; logo?: string; logoOnDark?: boolean }[]
-    >();
-
-    propAccounts.forEach(account => {
-      const firm = getFirm(account.firmId);
-
-      getAccountDays(account, getJournalTrades).forEach(day => {
-        map.set(day.date, [
-          ...(map.get(day.date) ?? []),
-          {
-            id: account.id,
-            initials: firm?.initials ?? account.firmName.slice(0, 2).toUpperCase(),
-            logo: firm?.logo,
-            logoOnDark: firm?.logoOnDark,
-            tile: firm?.tile ?? 'from-[#2a2a2d] to-[#1f1f22] border-white/10',
-          },
-        ]);
-      });
-    });
-
-    return map;
-  }, [propAccounts, getJournalTrades]);
+  const propsByDate = useMemo(
+    () => buildPropMarkers(propAccounts, getJournalTrades),
+    [propAccounts, getJournalTrades]
+  );
   const tradesByDate = useMemo(() => {
     const map = new Map<string, Trade[]>();
 

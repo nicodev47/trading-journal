@@ -14,6 +14,7 @@ import {
   hasStoredWorkspaceContent,
   type JournalWorkspace,
 } from '@/hooks/use-trades';
+import { buildPropMarkers } from '@/lib/propfirm/markers';
 import { Toaster } from '@/components/ui/sonner';
 import { Button } from '@/components/ui/button';
 import {
@@ -300,6 +301,12 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
   const progressTrades = workspaces
     .filter(workspace => workspace.group !== 'backtest' && workspace.group !== 'preview')
     .flatMap(workspace => getWorkspaceData(workspace.id).trades);
+  const dashboardPropMarkers = buildPropMarkers(
+    propStore.accounts.filter(
+      account => account.source.kind === 'journal' && account.source.journalId === activeWorkspace
+    ),
+    () => trades
+  );
   const showPreviewWorkspace = true;
   const visibleTrades = isTutorialActive ? tutorialTrades : trades;
 
@@ -1097,6 +1104,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
   <TradingCalendar
     trades={visibleTrades}
     navigationTrades={isTutorialActive ? [] : trades}
+    getPropMarkers={date => (isTutorialActive ? undefined : dashboardPropMarkers.get(date))}
     weeklyPlans={isTutorialActive ? [] : weeklyPlans}
     activeWorkspace={activeWorkspace}
     showPreviewWorkspace={previewHasContent}
