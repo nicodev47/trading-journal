@@ -12,7 +12,6 @@ import {
   useJournalWorkspaces,
   useTrades,
   hasStoredWorkspaceContent,
-  syncTradeCopies,
   type JournalWorkspace,
 } from '@/hooks/use-trades';
 import { Toaster } from '@/components/ui/sonner';
@@ -471,14 +470,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
     setSelectedWeek({ weekKey, weekLabel });
   };
 
-  const copyTargets = workspaces.filter(
-    workspace =>
-      workspace.id !== activeWorkspace &&
-      workspace.group !== 'backtest' &&
-      workspace.group !== 'preview'
-  );
-
-  const handleSaveDayTrades = (dayTrades: Trade[], copyTo: string[] = []) => {
+  const handleSaveDayTrades = (dayTrades: Trade[]) => {
     if (isTutorialActive) {
       setSelectedDate(null);
       return;
@@ -487,20 +479,8 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
     const existingTrades = selectedDate ? getTradesByDate(selectedDate) : [];
     existingTrades.forEach((trade) => deleteTrade(trade.id));
 
-    const stamped = dayTrades.map(trade => ({
-      ...trade,
-      copiedTo: copyTo.length > 0 ? copyTo : undefined,
-    }));
-
-    stamped.forEach((trade) => {
+    dayTrades.forEach((trade) => {
       addTrade(trade);
-    });
-
-    syncTradeCopies({
-      candidates: copyTargets.map(target => target.id),
-      selected: copyTo as JournalWorkspace[],
-      sourceIds: [...existingTrades.map(trade => trade.id), ...stamped.map(trade => trade.id)],
-      sourceTrades: stamped,
     });
 
     if (activeWorkspace === 'backtest') {
@@ -526,12 +506,6 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
     if (selectedDate) {
       const existingTrades = getTradesByDate(selectedDate);
       existingTrades.forEach((trade) => deleteTrade(trade.id));
-      syncTradeCopies({
-        candidates: copyTargets.map(target => target.id),
-        selected: [],
-        sourceIds: existingTrades.map(trade => trade.id),
-        sourceTrades: [],
-      });
       setSelectedDate(null);
 
       if (activeWorkspace === 'backtest') {
@@ -1228,7 +1202,6 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
               : getTradesByDate(selectedDate)
           }
           onSave={handleSaveDayTrades}
-          copyTargets={copyTargets.map(target => ({ id: target.id, name: target.name }))}
           onDeleteDay={handleDeleteDay}
           strategies={strategies}
           availableStandardTags={tags}

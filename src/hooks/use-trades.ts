@@ -10,7 +10,6 @@ import {
   type JournalState,
   type WeeklyPlan,
 } from '@/lib/types/trade';
-import { syncCopies } from '@/lib/copy-trading';
 import { hasWorkspaceContent } from '@/lib/workspace-content';
 import {
   getWorkspaceStorageKey,
@@ -838,39 +837,6 @@ export function useJournalWorkspaces() {
     reorderCustomWorkspaces,
     restoreCustomWorkspaces,
   };
-}
-
-/**
- * Copy trading: writes a day of trades into other journals' storage (or
- * removes earlier copies when the account is no longer selected).
- */
-export function syncTradeCopies(options: {
-  candidates: JournalWorkspace[];
-  selected: JournalWorkspace[];
-  sourceIds: string[];
-  sourceTrades: Trade[];
-}) {
-  options.candidates.forEach(target => {
-    const key = getWorkspaceStorageKey(target);
-
-    try {
-      const stored = localStorage.getItem(key);
-      const state = (stored && parseImportedJournal(stored)) || initialState;
-      const trades = syncCopies(
-        state.trades,
-        options.sourceIds,
-        options.sourceTrades,
-        target,
-        options.selected.includes(target)
-      );
-
-      if (trades.length === state.trades.length && !options.selected.includes(target) && !stored) return;
-
-      localStorage.setItem(key, JSON.stringify({ ...state, trades }));
-    } catch (error) {
-      console.error('Failed to copy trades to', target, error);
-    }
-  });
 }
 
 const getTradeDedupKey = (trade: Trade) => {
