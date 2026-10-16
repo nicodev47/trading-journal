@@ -41,9 +41,6 @@ import {
 
 interface AccountSelectorProps {
   activeWorkspace: JournalWorkspace;
-  /** Dashboard shows every account together. */
-  isAllActive?: boolean;
-  onSelectAll?: () => void;
   workspaces: JournalWorkspaceMeta[];
   showPreviewWorkspace: boolean;
   maxCustomWorkspaces: number;
@@ -69,8 +66,6 @@ interface AccountSelectorProps {
 
 export function AccountSelector({
   activeWorkspace,
-  isAllActive = false,
-  onSelectAll,
   workspaces,
   showPreviewWorkspace,
   maxCustomWorkspaces,
@@ -229,7 +224,7 @@ export function AccountSelector({
           type="button"
           className={cn(
             'flex min-h-10 w-full cursor-pointer items-center gap-2.5 rounded-[9px] px-2.5 text-left text-sm outline-none transition-colors hover:bg-white/10 hover:text-foreground focus-visible:bg-white/10',
-            activeWorkspace === workspace.id && !isPreviewing && !isAllActive && 'bg-white/[0.07]',
+            activeWorkspace === workspace.id && !isPreviewing && 'bg-white/[0.07]',
             isEditable && 'pr-11'
           )}
           onClick={() => {
@@ -260,7 +255,7 @@ export function AccountSelector({
               </span>
             )}
           </span>
-          {activeWorkspace === workspace.id && !isPreviewing && !isAllActive && (
+          {activeWorkspace === workspace.id && !isPreviewing && (
             <Check
               className={cn(
                 'absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground',
@@ -325,11 +320,7 @@ export function AccountSelector({
                 )}
               />
               <span className="truncate font-sans text-xs font-medium">
-                {isPreviewing
-                  ? 'Preview'
-                  : isAllActive
-                    ? 'Tutti gli account'
-                    : activeAccount?.name ?? 'Seleziona conto'}
+                {isPreviewing ? 'Preview' : activeAccount?.name ?? 'Seleziona conto'}
               </span>
             </span>
             <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" />
@@ -371,27 +362,6 @@ export function AccountSelector({
           <div className="px-2.5 pb-1 pt-2 font-sans text-[11px] text-muted-foreground">
             I tuoi conti
           </div>
-
-          {onSelectAll && (
-            <button
-              type="button"
-              className={cn(
-                'flex min-h-10 w-full cursor-pointer items-center gap-2.5 rounded-[9px] px-2.5 text-left outline-none transition-colors hover:bg-white/10 focus-visible:bg-white/10',
-                isAllActive && !isPreviewing && 'bg-white/[0.07]'
-              )}
-              onClick={() => {
-                setMenuSection('accounts');
-                onSelectAll();
-                setIsMenuOpen(false);
-              }}
-            >
-              <span className="flex size-4 shrink-0 items-center justify-center">
-                <WalletCards className="size-3.5 text-muted-foreground" />
-              </span>
-              <span className="min-w-0 flex-1 font-sans text-xs font-semibold">Tutti gli account</span>
-              {isAllActive && !isPreviewing && <Check className="size-4 text-muted-foreground" />}
-            </button>
-          )}
 
           {accountWorkspaces.map((workspace) =>
             renderWorkspaceItem(

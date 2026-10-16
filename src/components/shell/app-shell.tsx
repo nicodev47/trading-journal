@@ -21,7 +21,13 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { AccountSelector } from '@/components/trading-journal/account-selector';
 import { useStreamerMode } from '@/contexts/streamer-mode-context';
+import type {
+  JournalWorkspace,
+  JournalWorkspaceGroup,
+  JournalWorkspaceMeta,
+} from '@/hooks/use-trades';
 import { cn } from '@/lib/utils';
 
 export type AppView = 'calendar' | 'monthly' | 'strategies' | 'progress' | 'news' | 'propfirm';
@@ -70,6 +76,26 @@ interface AppShellProps {
   pinnedForTutorial?: boolean;
   banner?: ReactNode;
   children: ReactNode;
+  activeWorkspace: JournalWorkspace;
+  workspaces: JournalWorkspaceMeta[];
+  showPreviewWorkspace: boolean;
+  maxCustomWorkspaces: number;
+  onWorkspaceChange: (workspace: JournalWorkspace) => void;
+  onCreateWorkspace: (
+    name: string,
+    group?: JournalWorkspaceGroup,
+    notes?: string
+  ) => { success: boolean; error?: string; workspace?: JournalWorkspaceMeta };
+  onUpdateWorkspace: (
+    workspace: JournalWorkspace,
+    name: string,
+    notes: string
+  ) => { success: boolean; error?: string; workspace?: JournalWorkspaceMeta };
+  onBackupWorkspace: (workspace: JournalWorkspace) => void;
+  onDeleteWorkspace: (workspace: JournalWorkspace) => boolean;
+  previewLabel?: string;
+  onExitPreview?: () => void;
+  legacyPreviewWorkspaceIds?: string[];
 }
 
 function NavList({
@@ -130,6 +156,18 @@ export function AppShell({
   pinnedForTutorial = false,
   banner,
   children,
+  activeWorkspace,
+  workspaces,
+  showPreviewWorkspace,
+  maxCustomWorkspaces,
+  onWorkspaceChange,
+  onCreateWorkspace,
+  onUpdateWorkspace,
+  onBackupWorkspace,
+  onDeleteWorkspace,
+  previewLabel,
+  onExitPreview,
+  legacyPreviewWorkspaceIds,
 }: AppShellProps) {
   const { streamerMode } = useStreamerMode();
   const [collapsed, setCollapsed] = useState(() => {
@@ -263,6 +301,22 @@ export function AppShell({
               {VIEW_TITLES[activeView]}
             </h1>
 
+            <div className="min-w-0 flex-1 sm:flex-none">
+              <AccountSelector
+                activeWorkspace={activeWorkspace}
+                workspaces={workspaces}
+                showPreviewWorkspace={showPreviewWorkspace}
+                maxCustomWorkspaces={maxCustomWorkspaces}
+                onWorkspaceChange={onWorkspaceChange}
+                onCreateWorkspace={onCreateWorkspace}
+                onUpdateWorkspace={onUpdateWorkspace}
+                onBackupWorkspace={onBackupWorkspace}
+                onDeleteWorkspace={onDeleteWorkspace}
+                previewLabel={previewLabel}
+                onExitPreview={onExitPreview}
+                legacyPreviewWorkspaceIds={legacyPreviewWorkspaceIds}
+              />
+            </div>
 
             <div className="ml-auto flex shrink-0 items-center gap-2">
               {streamerMode && (
