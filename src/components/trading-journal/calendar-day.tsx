@@ -305,12 +305,6 @@ export function CalendarDay({
           </>
         )}
 
-        {analysis?.manual && !hasTrades && (
-          <span className="mt-auto block w-full min-w-0 font-sans text-[9px] font-semibold leading-tight text-foreground/80 sm:text-[11px] md:text-xs">
-            Caso studio
-          </span>
-        )}
-
         {propMarkers.length > 0 && (
           <span className="mt-auto flex shrink-0 items-center gap-1.5 self-start">
             {firmMarkers.length > 0 && (
@@ -350,6 +344,14 @@ export function CalendarDay({
           </span>
         )}
       </div>
+
+      {analysis?.manual && !hasTrades && !bankHoliday && (
+        <div className="pointer-events-none absolute inset-x-1 inset-y-0 flex items-center justify-center">
+          <span className="max-w-full truncate rounded-full border border-border bg-background/70 px-1.5 py-[2px] font-sans text-[8px] font-medium leading-none text-foreground min-[380px]:text-[9px] sm:px-3 sm:py-1 sm:text-[11px]">
+            Caso studio
+          </span>
+        </div>
+      )}
 
       {bankHoliday && (
         <div
