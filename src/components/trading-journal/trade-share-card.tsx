@@ -111,7 +111,7 @@ export function TradeShareCard({
           )
         }
         name={identity?.displayName ?? 'EclipseJournal'}
-        caption="Trader"
+        caption="Trading journal"
         right={badgeLabel}
       />
     </ShareCardFrame>
