@@ -47,97 +47,284 @@ const simulate = (account: PropAccount, getJournalTrades: (id: string) => Trade[
   };
 };
 
+const DRAWDOWN_LABEL = {
+  'eod-trailing': 'EOD DRAWDOWN',
+  'intraday-trailing': 'INTRADAY DRAWDOWN',
+  static: 'STATIC DRAWDOWN',
+} as const;
+
+function Stat({
+  label,
+  children,
+  hint,
+}: {
+  label: string;
+  children: React.ReactNode;
+  hint?: React.ReactNode;
+}) {
+  return (
+    <div className="min-w-0">
+      <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">{label}</p>
+      <div className="mt-1.5 font-sans text-xl font-semibold tabular-nums tracking-tight">{children}</div>
+      {hint && <p className="mt-0.5 font-sans text-[11px] font-medium text-muted-foreground">{hint}</p>}
+    </div>
+  );
+}
+
+function Pill({ tone, children }: { tone: 'neutral' | 'blue' | 'amber' | 'green'; children: React.ReactNode }) {
+  return (
+    <span
+      className={cn(
+        'rounded-md border px-2 py-1 font-sans text-[10px] font-bold uppercase tracking-wider',
+        tone === 'neutral' && 'border-border bg-white/[0.06] text-muted-foreground',
+        tone === 'blue' && 'border-[#0a84ff]/40 bg-[#0a84ff]/10 text-[#5cb8ff]',
+        tone === 'amber' && 'border-[#ff9f0a]/40 bg-[#ff9f0a]/10 text-[#ffb340]',
+        tone === 'green' && 'border-profit/40 bg-profit/10 text-profit'
+      )}
+    >
+      {children}
+    </span>
+  );
+}
+
+/** From the drawdown limit to the profit target, with the starting balance marked. */
+function TargetTrack({
+  floor,
+  start,
+  balance,
+  target,
+}: {
+  floor: number;
+  start: number;
+  balance: number;
+  target: number;
+}) {
+  const span = Math.max(1, target - floor);
+  const position = (value: number) => Math.min(100, Math.max(0, ((value - floor) / span) * 100));
+  const startAt = position(start);
+  const balanceAt = position(balance);
+  const up = balance >= start;
+
+  return (
+    <div className="relative mt-5 h-6">
+      <span
+        className="absolute -top-4 -translate-x-1/2 font-sans text-[9px] font-semibold uppercase tracking-wider text-muted-foreground"
+        style={{ left: `${startAt}%` }}
+      >
+        Start
+      </span>
+      <div className="absolute inset-x-0 top-2.5 h-1.5 rounded-full bg-secondary" />
+      <div
+        className={cn('absolute top-2.5 h-1.5 rounded-full', up ? 'bg-profit shadow-[0_0_10px] shadow-profit/50' : 'bg-loss')}
+        style={{
+          left: `${Math.min(startAt, balanceAt)}%`,
+          width: `${Math.abs(balanceAt - startAt)}%`,
+        }}
+      />
+      <div className="absolute top-1 h-4 w-0.5 -translate-x-1/2 bg-white/60" style={{ left: `${startAt}%` }} />
+    </div>
+  );
+}
+
 function AccountCard({
   account,
   getJournalTrades,
   onOpen,
+  onReset,
 }: {
   account: PropAccount;
   getJournalTrades: (id: string) => Trade[];
-  onOpen: () => void;
+  onOpen: (section?: string) => void;
+  onReset: (endedOn: string | null) => void;
 }) {
   const money = useMoney();
   const firm = getFirm(account.firmId);
   const { sim } = useMemo(() => simulate(account, getJournalTrades), [account, getJournalTrades]);
-  const drawdown = account.rules.drawdown.amount ?? 0;
-  const roomPercent = drawdown > 0 ? (sim.room / drawdown) * 100 : 100;
-  const targetPercent =
-    sim.requiredProfit && sim.requiredProfit > 0 ? (Math.max(0, sim.profit) / sim.requiredProfit) * 100 : 0;
+  const [confirmReset, setConfirmReset] = useState(false);
+  const rules = account.rules;
+  const isEvaluation = account.kind === 'evaluation';
+  const targetBalance =
+    isEvaluation && sim.requiredProfit !== null ? account.size + sim.requiredProfit : null;
+  const consistency = sim.consistency;
+  const payout = sim.payout;
+  const daysReady = payout ? payout.winningDays >= rules.payout.minWinningDays : false;
 
   return (
-    <button
-      type="button"
-      onClick={onOpen}
-      className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 text-left transition-colors hover:border-white/25 focus-visible:ring-2 focus-visible:ring-ring"
-    >
-      <div className="flex items-center gap-3">
-        {firm && <FirmMark firm={firm} className="size-10 text-xs" />}
-        <div className="min-w-0 flex-1">
-          <p className="truncate font-sans text-sm font-semibold">{account.name}</p>
-          <p className="truncate font-sans text-xs text-muted-foreground">
-            {account.firmName} · {account.sizeLabel} {account.ruleSetName}
-          </p>
-        </div>
-        <div className="flex flex-col items-end gap-1">
-          <StatusBadge status={sim.status} />
-          <span className="font-sans text-[10px] text-muted-foreground">{KIND_LABEL[account.kind]}</span>
-        </div>
-      </div>
-
-      <div className="flex items-end justify-between gap-3">
-        <div>
-          <p className="font-sans text-[11px] text-muted-foreground">Saldo</p>
-          <p className="font-sans text-lg font-semibold tabular-nums">{money.usd(sim.balance)}</p>
-        </div>
-        <div className="text-right">
-          <p className="font-sans text-[11px] text-muted-foreground">Profitto attuale</p>
-          <p
-            className={cn(
-              'font-sans text-sm font-semibold tabular-nums',
-              sim.profit > 0 ? 'text-profit' : sim.profit < 0 ? 'text-loss' : 'text-muted-foreground'
-            )}
-          >
-            {money.signed(sim.profit)}
-          </p>
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-2.5">
-        <div className="flex flex-col gap-1">
-          <div className="flex justify-between font-sans text-[11px] text-muted-foreground">
-            <span>Margine</span>
-            <span className="tabular-nums">{money.usd(sim.room)}</span>
-          </div>
-          <ProgressBar value={roomPercent} tone={roomPercent <= 25 ? 'loss' : 'neutral'} />
-        </div>
-        {account.kind === 'evaluation' ? (
-          <div className="flex flex-col gap-1">
-            <div className="flex justify-between font-sans text-[11px] text-muted-foreground">
-              <span>Obiettivo</span>
-              <span className="tabular-nums">
-                {sim.requiredProfit === null ? '—' : `${Math.round(Math.min(100, targetPercent))}%`}
-              </span>
+    <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 text-left transition-colors hover:border-white/20">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
+          {firm && <FirmMark firm={firm} className="size-9 text-xs" />}
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="truncate font-sans text-[15px] font-bold uppercase tracking-tight">
+                {account.firmName} {account.ruleSetName} {account.sizeLabel}
+              </p>
+              <Pill tone="neutral">{isEvaluation ? 'EVAL' : KIND_LABEL[account.kind].toUpperCase()}</Pill>
             </div>
-            <ProgressBar value={targetPercent} tone="profit" />
+            <p className="mt-1 truncate font-sans text-xs tracking-wide text-muted-foreground">{account.name}</p>
           </div>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <Pill tone="neutral">{DRAWDOWN_LABEL[rules.drawdown.type]}</Pill>
+        <span
+          className={cn(
+            'rounded-md border px-2.5 py-1 font-sans text-xs font-bold uppercase tracking-wider',
+            sim.status === 'active' && 'border-profit/40 bg-profit/10 text-profit',
+            sim.status === 'passed' && 'border-[#0a84ff]/40 bg-[#0a84ff]/10 text-[#5cb8ff]',
+            sim.status === 'failed' && 'border-loss/40 bg-loss/10 text-loss'
+          )}
+        >
+          {sim.status === 'active' ? 'Active' : sim.status === 'passed' ? 'Passed' : 'Failed'}
+        </span>
+        {rules.dailyLossLimit ? (
+          <Pill tone="amber">DLL {money.usd(rules.dailyLossLimit.amount)}</Pill>
         ) : (
-          sim.payout && (
-            <div className="flex justify-between font-sans text-[11px] text-muted-foreground">
-              <span>Payout disponibile</span>
-              <span className={cn('tabular-nums', sim.payout.eligible && 'text-profit')}>
-                {money.usd(sim.payout.available)}
-              </span>
-            </div>
-          )
+          <Pill tone="blue">No DLL</Pill>
         )}
       </div>
-    </button>
+
+      <div className="grid grid-cols-2 gap-x-4 gap-y-5 border-t border-border pt-4">
+        <Stat label="Saldo conto">
+          <span>{money.usd(sim.balance)}</span>{' '}
+          <span className="text-sm font-semibold text-muted-foreground">/ {money.usd(sim.floor)}</span>
+        </Stat>
+
+        {isEvaluation ? (
+          <Stat label="Obiettivo di profitto">
+            <span className={sim.profit > 0 ? 'text-profit' : sim.profit < 0 ? 'text-loss' : undefined}>
+              {money.usd(sim.profit)}
+            </span>{' '}
+            <span className="text-sm font-semibold text-muted-foreground">
+              / {money.usd(sim.requiredProfit ?? rules.profitTarget ?? 0)}
+            </span>
+          </Stat>
+        ) : (
+          <Stat label="Profitto">
+            <span className={sim.profit > 0 ? 'text-profit' : sim.profit < 0 ? 'text-loss' : 'text-profit'}>
+              {money.usd(sim.profit)}
+            </span>
+          </Stat>
+        )}
+
+        {isEvaluation ? (
+          <>
+            <Stat label="Giorni di trading">
+              <span className="text-profit">{sim.tradingDays}</span>
+              {rules.minTradingDays > 0 && (
+                <span className="text-sm font-semibold text-muted-foreground"> / {rules.minTradingDays}</span>
+              )}
+            </Stat>
+            <Stat
+              label={consistency ? `Consistenza (${Math.round(consistency.limit * 100)}%)` : 'Consistenza'}
+              hint={
+                consistency && !consistency.ok && consistency.profitToFix > 0
+                  ? `mancano ${money.usd(consistency.profitToFix)}`
+                  : undefined
+              }
+            >
+              {consistency ? (
+                <span className={consistency.ok ? 'text-profit' : 'text-loss'}>
+                  {consistency.share === null ? '—' : `${(consistency.share * 100).toFixed(2)}%`}
+                </span>
+              ) : (
+                <span className="text-muted-foreground">Nessuna</span>
+              )}
+            </Stat>
+          </>
+        ) : (
+          <>
+            <Stat label="Minimo giornaliero">
+              {rules.payout.winningDayMin > 0 ? money.usd(rules.payout.winningDayMin) : '—'}
+            </Stat>
+            <Stat
+              label="Giorni in profitto"
+              hint={payout && payout.available > 0 ? `Disponibile ${money.usd(payout.available)}` : undefined}
+            >
+              {rules.payout.minWinningDays > 0 ? (
+                <>
+                  <span className={daysReady ? 'text-profit' : 'text-loss'}>{payout?.winningDays ?? 0}</span>
+                  <span className="text-sm font-semibold text-muted-foreground"> / {rules.payout.minWinningDays}</span>
+                </>
+              ) : (
+                <span className="text-muted-foreground">Nessuno</span>
+              )}
+            </Stat>
+          </>
+        )}
+      </div>
+
+      {isEvaluation && targetBalance !== null && (
+        <div>
+          <TargetTrack floor={sim.floor} start={account.size} balance={sim.balance} target={targetBalance} />
+          <div className="mt-1 flex items-start justify-between">
+            <div>
+              <p className="font-sans text-base font-bold tabular-nums text-loss">{money.usd(sim.floor)}</p>
+              <p className="font-sans text-[10px] font-semibold uppercase tracking-wider text-loss/50">Limite</p>
+            </div>
+            <div className="text-right">
+              <p className="font-sans text-base font-bold tabular-nums text-profit">{money.usd(targetBalance)}</p>
+              <p className="font-sans text-[10px] font-semibold uppercase tracking-wider text-profit/50">Obiettivo</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="flex flex-col gap-2 border-t border-border pt-4">
+        {!isEvaluation && payout?.eligible && (
+          <button
+            type="button"
+            onClick={() => onOpen('payout')}
+            className="h-11 rounded-xl bg-profit font-sans text-sm font-bold text-black transition-opacity hover:opacity-90"
+          >
+            Richiedi payout · {money.usd(payout.available)}
+          </button>
+        )}
+        <div className="flex gap-2">
+          {isEvaluation && (
+            <button
+              type="button"
+              onClick={() => {
+                if (confirmReset) {
+                  onReset(sim.endedOn);
+                  setConfirmReset(false);
+                } else {
+                  setConfirmReset(true);
+                }
+              }}
+              onBlur={() => setConfirmReset(false)}
+              className={cn(
+                'h-11 flex-1 rounded-xl border font-sans text-sm font-semibold transition-colors',
+                confirmReset
+                  ? 'border-loss/50 bg-loss/10 text-loss'
+                  : 'border-border bg-white/[0.04] hover:bg-white/10'
+              )}
+            >
+              {confirmReset ? 'Conferma reset' : 'Reset'}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => onOpen()}
+            className="h-11 flex-1 rounded-xl border border-border bg-white/[0.04] font-sans text-sm font-semibold transition-colors hover:bg-white/10"
+          >
+            Dettagli
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
 export function PropfirmPage({ store, journals, getJournalTrades }: PropfirmPageProps) {
   const [adding, setAdding] = useState<{ firmId?: string } | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
+  const [openSection, setOpenSection] = useState<string | undefined>(undefined);
+  const openAccountAt = (id: string, section?: string) => {
+    setOpenSection(section);
+    setOpenId(id);
+  };
   const openAccount = store.accounts.find(account => account.id === openId) ?? null;
   const detail = useMemo(
     () => (openAccount ? simulate(openAccount, getJournalTrades) : null),
@@ -185,9 +372,9 @@ export function PropfirmPage({ store, journals, getJournalTrades }: PropfirmPage
     setOpenId(created.id);
   };
 
-  const reset = (account: PropAccount) => {
+  const reset = (account: PropAccount, endedOn: string | null) => {
     store.updateAccount(account.id, {
-      startDate: nextDay(detail?.sim.endedOn ?? todayKey()),
+      startDate: nextDay(endedOn ?? todayKey()),
       balanceUpdates: account.source.kind === 'manual' ? [] : account.balanceUpdates,
     });
   };
@@ -235,7 +422,8 @@ export function PropfirmPage({ store, journals, getJournalTrades }: PropfirmPage
                         key={account.id}
                         account={account}
                         getJournalTrades={getJournalTrades}
-                        onOpen={() => setOpenId(account.id)}
+                        onOpen={section => openAccountAt(account.id, section)}
+                        onReset={endedOn => reset(account, endedOn)}
                       />
                     ))}
                   </div>
@@ -248,7 +436,8 @@ export function PropfirmPage({ store, journals, getJournalTrades }: PropfirmPage
                   key={account.id}
                   account={account}
                   getJournalTrades={getJournalTrades}
-                  onOpen={() => setOpenId(account.id)}
+                  onOpen={section => openAccountAt(account.id, section)}
+                  onReset={endedOn => reset(account, endedOn)}
                 />
               ))}
           </div>
@@ -306,7 +495,8 @@ export function PropfirmPage({ store, journals, getJournalTrades }: PropfirmPage
           onAddPayout={payout => store.addPayout(openAccount.id, payout)}
           onRemovePayout={payoutId => store.removePayout(openAccount.id, payoutId)}
           onStartFunded={() => startFunded(openAccount)}
-          onReset={() => reset(openAccount)}
+          initialSection={openSection}
+          onReset={() => reset(openAccount, detail.sim.endedOn)}
         />
       )}
     </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Pencil, RefreshCw, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
@@ -36,6 +36,8 @@ interface AccountDetailDialogProps {
   /** Starts the next phase (funded after a passed evaluation) as a new account. */
   onStartFunded: () => void;
   onReset: () => void;
+  /** Section to scroll to when the dialog opens (e.g. 'payout'). */
+  initialSection?: string;
 }
 
 function Tile({ label, value, tone }: { label: string; value: string; tone?: 'profit' | 'loss' }) {
@@ -96,6 +98,7 @@ export function AccountDetailDialog({
   onRemovePayout,
   onStartFunded,
   onReset,
+  initialSection,
 }: AccountDetailDialogProps) {
   const money = useMoney();
   const { streamerMode } = useStreamerMode();
@@ -113,6 +116,20 @@ export function AccountDetailDialog({
 
   const drawdownAmount = rules.drawdown.amount ?? 0;
   const paidNet = account.payouts.reduce((total, payout) => total + payout.gross * rules.payout.split, 0);
+
+  useEffect(() => {
+    if (!initialSection) return;
+
+    const timer = window.setTimeout(
+      () =>
+        document
+          .getElementById(`prop-section-${initialSection}`)
+          ?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+      350
+    );
+
+    return () => window.clearTimeout(timer);
+  }, [initialSection]);
 
   const winningDays = sim.days.filter(row => row.pnl > 0).length;
   const bestDay = sim.days.reduce((best, row) => Math.max(best, row.pnl), 0);
