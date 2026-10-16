@@ -11,6 +11,9 @@ import {
 import { useStreamerMode } from '@/contexts/streamer-mode-context';
 import type { Trade } from '@/lib/types/trade';
 import { cn } from '@/lib/utils';
+import { getFirm } from '@/lib/propfirm/firms';
+import { FirmMark } from '@/components/propfirm/shared';
+import type { AccountChip } from './trade-detail-dialog';
 import {
   calculateTradeWinRate,
   isValidStatTrade,
@@ -101,6 +104,10 @@ function SummaryStat({
 }
 
 type TradeGroupContentProps = {
+  /** Shows a header row naming the columns. */
+  columnHeaders?: boolean;
+  /** Adds an "Eseguito su" column with the logos of the accounts. */
+  getAccounts?: (trade: Trade) => AccountChip[];
   title: string;
   subtitle?: string;
   trades: Trade[];
@@ -108,7 +115,14 @@ type TradeGroupContentProps = {
 };
 
 /** Header, summary and trade list: shared by the dialog and the Progress Tracker card. */
-export function TradeGroupContent({ title, subtitle, trades, onOpenTrade }: TradeGroupContentProps) {
+export function TradeGroupContent({
+  title,
+  subtitle,
+  trades,
+  onOpenTrade,
+  columnHeaders = false,
+  getAccounts,
+}: TradeGroupContentProps) {
   const { streamerMode } = useStreamerMode();
   const [currentPage, setCurrentPage] = useState(1);
   const sortedTrades = useMemo(
@@ -178,6 +192,23 @@ export function TradeGroupContent({ title, subtitle, trades, onOpenTrade }: Trad
           </div>
 
           <div className="mt-4 space-y-2">
+            {columnHeaders && sortedTrades.length > 0 && (
+              <div
+                className={cn(
+                  'hidden items-center gap-3 px-3 font-sans text-[10px] font-semibold uppercase tracking-wider text-muted-foreground md:grid',
+                  getAccounts ? 'md:grid-cols-[112px_64px_82px_86px_minmax(0,1fr)_96px_96px_auto]' : 'md:grid-cols-[112px_64px_82px_86px_minmax(0,1fr)_96px_auto]'
+                )}
+              >
+                <span>Data</span>
+                <span>Orario</span>
+                <span>Asset</span>
+                <span>Direzione</span>
+                <span>Setup</span>
+                {getAccounts && <span>Eseguito su</span>}
+                <span>P&L</span>
+                <span className="w-[54px]" />
+              </div>
+            )}
             {sortedTrades.length === 0 ? (
               <div className="rounded-lg border border-border bg-background/35 p-4 text-center font-sans tabular-nums text-xs text-muted-foreground">
                 Nessun trade trovato per questo criterio.
@@ -190,7 +221,10 @@ export function TradeGroupContent({ title, subtitle, trades, onOpenTrade }: Trad
                 return (
                   <div
                     key={trade.id}
-                    className="grid grid-cols-2 items-center gap-2 rounded-lg border border-border/80 bg-background/35 p-3 font-sans tabular-nums text-xs sm:gap-3 md:grid-cols-[112px_64px_82px_86px_minmax(0,1fr)_96px_auto]"
+                    className={cn(
+                      'grid grid-cols-2 items-center gap-2 rounded-lg border border-border/80 bg-background/35 p-3 font-sans tabular-nums text-xs sm:gap-3',
+                      getAccounts ? 'md:grid-cols-[112px_64px_82px_86px_minmax(0,1fr)_96px_96px_auto]' : 'md:grid-cols-[112px_64px_82px_86px_minmax(0,1fr)_96px_auto]'
+                    )}
                   >
                     <span className="text-foreground">
                       {date
@@ -213,6 +247,19 @@ export function TradeGroupContent({ title, subtitle, trades, onOpenTrade }: Trad
                     <span className="truncate text-muted-foreground">
                       {trade.strategy?.trim() || '-'}
                     </span>
+                    {getAccounts && (
+                      <span className="flex items-center -space-x-1.5">
+                        {getAccounts(trade).map(account => {
+                          const firm = getFirm(account.firmId);
+
+                          return firm ? (
+                            <span key={account.name} title={account.name}>
+                              <FirmMark firm={firm} className="size-6 rounded-full" />
+                            </span>
+                          ) : null;
+                        })}
+                      </span>
+                    )}
                     <EconomicValue
                       value={pnl}
                       streamerMode={streamerMode}

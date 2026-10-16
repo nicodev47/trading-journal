@@ -8,7 +8,8 @@ import { generateId } from '@/lib/calculations';
 import type { DailyAnalysis, ScreenshotData, Trade } from '@/lib/types/trade';
 import { AttachmentsField } from './attachments-field';
 import type { AccountChip } from '@/components/trading-journal/trade-detail-dialog';
-import { TradeDetailCard } from './trade-detail-card';
+import { TradeDetailDialog } from '@/components/trading-journal/trade-detail-dialog';
+import { TradeGroupContent } from '@/components/trading-journal/trade-group-detail-dialog';
 
 interface DailyAnalysisDialogProps {
   open: boolean;
@@ -73,6 +74,7 @@ export function DailyAnalysisDialog({
   const { streamerMode } = useStreamerMode();
   const [analysis, setAnalysis] = useState('');
   const [observations, setObservations] = useState('');
+  const [openedTrade, setOpenedTrade] = useState<Trade | null>(null);
   const [attachments, setAttachments] = useState<ScreenshotData[]>([]);
   const loadedDate = useRef<string | null>(null);
   const timer = useRef<number | null>(null);
@@ -215,22 +217,14 @@ export function DailyAnalysisDialog({
       >
         {hasTrades && (
           <div className="shrink-0 overflow-hidden rounded-2xl border border-border bg-card">
-            <div className="border-b border-border px-4 py-3.5 pr-12 sm:px-6 sm:py-4">
-              <h2 className="font-sans text-base font-semibold tracking-wide">Dettaglio trade</h2>
-              <p className="mt-0.5 font-sans text-xs text-muted-foreground">
-                Tutti i dati registrati per {trades.length === 1 ? 'l’operazione' : 'le operazioni'} del {dateLabel}.
-              </p>
-            </div>
-            <div className="flex flex-col gap-6 px-4 py-4 sm:px-6 sm:py-5">
-              {trades.map((trade, index) => (
-                <div key={trade.id} className="flex flex-col gap-2">
-                  {trades.length > 1 && (
-                    <p className="font-sans text-xs font-semibold text-muted-foreground">Trade {index + 1}</p>
-                  )}
-                  <TradeDetailCard trade={trade} accounts={getAccounts(trade)} />
-                </div>
-              ))}
-            </div>
+            <TradeGroupContent
+              title={`Trade del ${dateLabel}`}
+              subtitle="Operazioni registrate nella Execution Map."
+              trades={trades}
+              columnHeaders
+              getAccounts={getAccounts}
+              onOpenTrade={trade => setOpenedTrade(trade)}
+            />
           </div>
         )}
 
