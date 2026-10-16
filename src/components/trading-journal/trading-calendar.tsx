@@ -404,9 +404,8 @@ export function TradingCalendar({
       {analysisMode ? (
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-border px-3 py-2 font-sans text-xs font-medium text-muted-foreground max-md:gap-x-3 max-md:text-[11px]">
           <span className="flex items-center gap-1.5">
-            <span className="relative flex size-4 items-center justify-center rounded-[5px] border border-white/15 bg-white/10 text-[7px] font-bold text-white">
+            <span className="relative flex size-4 items-center justify-center rounded-full border border-white/15 bg-white/10 text-[7px] font-bold text-white">
               P
-              <span className="absolute -right-[3px] -top-[3px] size-[7px] rounded-full bg-profit ring-1 ring-card" />
             </span>
             Prop su cui hai eseguito
           </span>

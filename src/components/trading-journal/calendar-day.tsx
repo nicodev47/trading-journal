@@ -296,31 +296,43 @@ export function CalendarDay({
         )}
 
         {(propMarkers.length > 0 || analysis?.manual) && (
-          <span className="mt-auto flex flex-wrap items-center gap-1 self-start sm:gap-1.5">
-            {propMarkers.map(item => (
-              <span
-                key={item.id}
-                aria-label="Eseguito su questa prop"
-                className={cn(
-                  'relative flex size-5 items-center justify-center rounded-md border bg-gradient-to-b font-sans text-[8px] font-bold leading-none text-white min-[380px]:size-6 sm:size-7 sm:text-[10px] md:size-8',
-                  item.tile
-                )}
-              >
-                {item.logo ? (
-                  <img
-                    src={item.logo}
-                    alt=""
+          <span className="mt-auto flex items-center gap-1.5 self-start">
+            {propMarkers.length > 0 && (
+              <span className="flex items-center -space-x-1.5 sm:-space-x-2">
+                {propMarkers.slice(0, 4).map((item, index) => (
+                  <span
+                    key={item.id}
+                    aria-label="Eseguito su questa prop"
+                    style={{ zIndex: propMarkers.length - index }}
                     className={cn(
-                      'size-full rounded-[5px]',
-                      item.logoOnDark ? 'bg-[#0b0b0d] object-contain p-[3px]' : 'object-cover'
+                      'relative flex size-5 items-center justify-center overflow-hidden rounded-full border bg-gradient-to-b font-sans text-[8px] font-bold leading-none text-white ring-2 ring-background min-[380px]:size-6 sm:size-7 sm:text-[10px] md:size-8',
+                      item.tile
                     )}
-                  />
-                ) : (
-                  item.initials
+                  >
+                    {item.logo ? (
+                      <img
+                        src={item.logo}
+                        alt=""
+                        className={cn(
+                          'size-full',
+                          item.logoOnDark ? 'bg-[#0b0b0d] object-contain p-[4px]' : 'object-cover'
+                        )}
+                      />
+                    ) : (
+                      item.initials
+                    )}
+                  </span>
+                ))}
+                {propMarkers.length > 4 && (
+                  <span
+                    style={{ zIndex: 0 }}
+                    className="relative flex size-5 items-center justify-center rounded-full border border-border bg-secondary font-sans text-[8px] font-semibold text-muted-foreground ring-2 ring-background min-[380px]:size-6 sm:size-7 sm:text-[10px] md:size-8"
+                  >
+                    +{propMarkers.length - 4}
+                  </span>
                 )}
-                <span className="absolute -right-[3px] -top-[3px] size-2 rounded-full bg-profit ring-1 ring-background sm:size-[9px]" />
               </span>
-            ))}
+            )}
             {analysis?.manual && (
               <span
                 aria-label="Analisi inserita qui"
