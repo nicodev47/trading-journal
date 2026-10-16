@@ -191,25 +191,25 @@ export function ProgressTrackerPage({
           </div>
         </div>
 
-        <div className="ej-scrollbar overflow-x-auto px-4 py-4 sm:px-5">
-          <div className="inline-flex flex-col gap-1">
-            <div className="ml-8 flex gap-[3px]">
-              {weeks.map((week, index) => (
-                <div key={week[0].date} className="w-[16px] font-sans text-[10px] text-muted-foreground">
-                  <span className="whitespace-nowrap">
-                    {monthLabelAt[index] !== null ? MONTH_LABELS[monthLabelAt[index] as number] : ''}
-                  </span>
-                </div>
-              ))}
-            </div>
-            <div className="flex gap-[3px]">
-              <div className="grid w-7 grid-rows-7 gap-[3px] pr-1 font-sans text-[10px] text-muted-foreground">
+        <div className="px-4 py-4 sm:px-5">
+          <div className="flex w-full min-w-0 gap-1.5 sm:gap-2">
+            <div className="flex w-6 shrink-0 flex-col font-sans text-[9px] text-muted-foreground sm:w-7 sm:text-[10px]">
+              <span className="h-4" />
+              <div className="grid min-h-0 flex-1 grid-rows-7 items-center gap-[2px] sm:gap-[3px]">
                 {['Lun', '', 'Mer', '', 'Ven', '', ''].map((label, index) => (
-                  <span key={index} className="flex h-[16px] items-center">{label}</span>
+                  <span key={index} className="flex h-0 items-center overflow-visible">{label}</span>
                 ))}
               </div>
-              {weeks.map(week => (
-                <div key={week[0].date} className="grid grid-rows-7 gap-[3px]">
+            </div>
+            <div
+              className="grid min-w-0 flex-1 gap-[2px] sm:gap-[3px]"
+              style={{ gridTemplateColumns: `repeat(${weeks.length}, minmax(0, 1fr))` }}
+            >
+              {weeks.map((week, index) => (
+                <div key={week[0].date} className="flex min-w-0 flex-col gap-[2px] sm:gap-[3px]">
+                  <span className="h-4 whitespace-nowrap font-sans text-[9px] text-muted-foreground sm:text-[10px]">
+                    {monthLabelAt[index] !== null ? MONTH_LABELS[monthLabelAt[index] as number] : ''}
+                  </span>
                   {week.map(cell => (
                     <button
                       key={cell.date}
@@ -220,7 +220,7 @@ export function ProgressTrackerPage({
                       onMouseLeave={() => setHovered(null)}
                       onClick={() => setSelectedDate(cell.date)}
                       className={cn(
-                        'size-[16px] rounded-[3px] outline-none transition-transform focus-visible:ring-1 focus-visible:ring-ring',
+                        'aspect-square w-full rounded-[2px] outline-none transition-transform focus-visible:ring-1 focus-visible:ring-ring sm:rounded-[3px]',
                         cell.inYear ? LEVEL_CLASSES[cell.level] : 'invisible',
                         cell.inYear && 'hover:scale-125',
                         cell.date === todayKey && 'ring-1 ring-white/50'
