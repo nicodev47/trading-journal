@@ -7,6 +7,7 @@ import { useStreamerMode } from '@/contexts/streamer-mode-context';
 import { generateId } from '@/lib/calculations';
 import type { DailyAnalysis, ScreenshotData, Trade } from '@/lib/types/trade';
 import { AttachmentsField } from './attachments-field';
+import type { AccountChip } from '@/components/trading-journal/trade-detail-dialog';
 import { TradeDetailCard } from './trade-detail-card';
 
 interface DailyAnalysisDialogProps {
@@ -14,8 +15,8 @@ interface DailyAnalysisDialogProps {
   date: string;
   entry?: DailyAnalysis;
   trades: Trade[];
-  /** Names of the prop accounts a trade was executed on. */
-  getAccountNames: (trade: Trade) => string[];
+  /** Prop accounts a trade was executed on. */
+  getAccounts: (trade: Trade) => AccountChip[];
   onClose: () => void;
   onSave: (entry: DailyAnalysis) => void;
   onDelete: (date: string) => void;
@@ -64,7 +65,7 @@ export function DailyAnalysisDialog({
   date,
   entry,
   trades,
-  getAccountNames,
+  getAccounts,
   onClose,
   onSave,
   onDelete,
@@ -226,7 +227,7 @@ export function DailyAnalysisDialog({
                   {trades.length > 1 && (
                     <p className="font-sans text-xs font-semibold text-muted-foreground">Trade {index + 1}</p>
                   )}
-                  <TradeDetailCard trade={trade} accountNames={getAccountNames(trade)} />
+                  <TradeDetailCard trade={trade} accounts={getAccounts(trade)} />
                 </div>
               ))}
             </div>

@@ -2,6 +2,7 @@
 
 import {
   AccountList,
+  type AccountChip,
   AttachmentItem,
   DetailCard,
   EconomicValue,
@@ -15,7 +16,7 @@ import { useStreamerMode } from '@/contexts/streamer-mode-context';
 import type { Trade } from '@/lib/types/trade';
 
 /** Read-only detail of one trade: same layout as the dashboard's "Dettaglio trade". */
-export function TradeDetailCard({ trade, accountNames }: { trade: Trade; accountNames: string[] }) {
+export function TradeDetailCard({ trade, accounts }: { trade: Trade; accounts: AccountChip[] }) {
   const { streamerMode } = useStreamerMode();
   const date = getTradeDate(trade);
   const screenshots = normalizeScreenshots(trade);
@@ -41,7 +42,7 @@ export function TradeDetailCard({ trade, accountNames }: { trade: Trade; account
       </div>
 
       <DetailCard label="Eseguito su">
-        <AccountList names={accountNames} />
+        <AccountList accounts={accounts} />
       </DetailCard>
 
       <DetailCard label="Note complete">

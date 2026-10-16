@@ -13,6 +13,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
+import { getFirm } from '@/lib/propfirm/firms';
+import { FirmMark } from '@/components/propfirm/shared';
 import { usePreferences } from '@/contexts/preferences-context';
 import { getMenuOptions } from '@/lib/preferences';
 import {
@@ -29,8 +31,8 @@ interface TradeDetailDialogProps {
   onUpdateTrade?: (id: string, updates: Partial<Trade>) => void;
   showBackButton?: boolean;
   onBack?: () => void;
-  /** Names of the accounts the trade was executed on. */
-  accountNames?: string[];
+  /** Accounts the trade was executed on. */
+  accounts?: AccountChip[];
 }
 
 export function netPnl(trade: Trade) {
@@ -250,19 +252,29 @@ export function AttachmentItem({
   );
 }
 
-export function AccountList({ names }: { names: string[] }) {
-  if (names.length === 0) return <span className="text-muted-foreground">Nessun account assegnato</span>;
+export interface AccountChip {
+  name: string;
+  firmId: string;
+}
+
+export function AccountList({ accounts }: { accounts: AccountChip[] }) {
+  if (accounts.length === 0) return <span className="text-muted-foreground">Nessun account assegnato</span>;
 
   return (
     <div className="flex flex-wrap gap-2">
-      {names.map(name => (
-        <span
-          key={name}
-          className="rounded-lg border border-border bg-secondary/40 px-2.5 py-1.5 font-sans tabular-nums text-xs text-foreground"
-        >
-          {name}
-        </span>
-      ))}
+      {accounts.map(account => {
+        const firm = getFirm(account.firmId);
+
+        return (
+          <span
+            key={account.name}
+            className="inline-flex items-center gap-2 rounded-lg border border-border bg-secondary/40 py-1.5 pl-1.5 pr-2.5 font-sans tabular-nums text-xs text-foreground"
+          >
+            {firm && <FirmMark firm={firm} className="size-5 rounded-md text-[8px]" />}
+            {account.name}
+          </span>
+        );
+      })}
     </div>
   );
 }
@@ -274,7 +286,7 @@ export function TradeDetailDialog({
   onUpdateTrade,
   showBackButton = false,
   onBack,
-  accountNames,
+  accounts,
 }: TradeDetailDialogProps) {
   const { preferences } = usePreferences();
   const [setupDraft, setSetupDraft] = useState('');
@@ -393,9 +405,9 @@ export function TradeDetailDialog({
             </DetailCard>
           </div>
 
-          {accountNames !== undefined && (
+          {accounts !== undefined && (
             <DetailCard label="Eseguito su" className="mt-3">
-              <AccountList names={accountNames} />
+              <AccountList accounts={accounts} />
             </DetailCard>
           )}
 
