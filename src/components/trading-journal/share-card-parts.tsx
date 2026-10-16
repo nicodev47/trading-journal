@@ -167,7 +167,7 @@ export function ShareCardFooter({
 }: {
   avatar: ReactNode;
   name: string;
-  caption: string;
+  caption?: ReactNode;
   right: string;
 }) {
   return (
@@ -178,9 +178,11 @@ export function ShareCardFooter({
         </div>
         <div>
           <div className="text-[22px] font-semibold text-white">{name}</div>
-          <div className="mt-0.5 text-[15px] font-medium text-white/45">
-            {caption}
-          </div>
+          {caption && (
+            <div className="mt-0.5 text-[15px] font-medium text-white/45">
+              {caption}
+            </div>
+          )}
         </div>
       </div>
       <div className="text-[20px] font-semibold text-white/70">{right}</div>

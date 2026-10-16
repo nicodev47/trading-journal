@@ -1,6 +1,9 @@
 import type { Trade } from '@/lib/types/trade';
 import { getTradeSharePresentation } from '@/lib/trade-share-outcome';
 import { usePreferences } from '@/contexts/preferences-context';
+import { usePropAccountList } from '@/contexts/prop-accounts-context';
+import { getFirm } from '@/lib/propfirm/firms';
+import { FirmMark } from '@/components/propfirm/shared';
 import {
   ShareCardFooter,
   ShareCardFrame,
@@ -68,6 +71,17 @@ export function TradeShareCard({
   className,
 }: TradeShareCardProps) {
   const { preferences } = usePreferences();
+  const propAccounts = usePropAccountList();
+  // Companies the trade was executed on (one entry per firm).
+  const firms = Array.from(
+    new Set(
+      (trade.propAccountIds ?? [])
+        .map(id => propAccounts.find(account => account.id === id)?.firmId)
+        .filter((id): id is string => Boolean(id))
+    )
+  )
+    .map(id => getFirm(id))
+    .filter((firm): firm is NonNullable<ReturnType<typeof getFirm>> => Boolean(firm));
   const netPnl = trade.pnl - (trade.commission || 0);
   const { accent, badgeLabel } = getTradeSharePresentation(netPnl);
   const identity = getShareIdentity(handle);
@@ -102,7 +116,19 @@ export function TradeShareCard({
           )
         }
         name={identity?.displayName ?? 'EclipseJournal'}
-        caption="Trading journal"
+        caption={
+          firms.length > 0 ? (
+            <span className="inline-flex items-center gap-2.5">
+              <span>x</span>
+              <span className="flex items-center -space-x-2">
+                {firms.map(firm => (
+                  <FirmMark key={firm.id} firm={firm} className="size-6 rounded-full" />
+                ))}
+              </span>
+              <span className="text-white/70">{firms.map(firm => firm.name).join(' · ')}</span>
+            </span>
+          ) : undefined
+        }
         right={badgeLabel}
       />
     </ShareCardFrame>

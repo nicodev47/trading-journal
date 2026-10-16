@@ -683,6 +683,7 @@ export function DayEditorDialog({
       setupRating: 3,
       createdAt: now,
       updatedAt: now,
+      propAccountIds: row.propAccountIds,
     };
   };
 
