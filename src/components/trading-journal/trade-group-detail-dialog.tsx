@@ -12,6 +12,7 @@ import { useStreamerMode } from '@/contexts/streamer-mode-context';
 import type { Trade } from '@/lib/types/trade';
 import { cn } from '@/lib/utils';
 import { getFirm } from '@/lib/propfirm/firms';
+import { usePropAccountList } from '@/contexts/prop-accounts-context';
 import { FirmMark } from '@/components/propfirm/shared';
 import type { AccountChip } from './trade-detail-dialog';
 import {
@@ -20,6 +21,8 @@ import {
 } from '@/lib/calculations';
 
 type TradeGroupDetailDialogProps = {
+  /** Imported files have no accounts: pass null to hide the column. */
+  getAccounts?: ((trade: Trade) => AccountChip[]) | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
@@ -107,7 +110,7 @@ type TradeGroupContentProps = {
   /** Shows a header row naming the columns. */
   columnHeaders?: boolean;
   /** Adds an "Eseguito su" column with the logos of the accounts. */
-  getAccounts?: (trade: Trade) => AccountChip[];
+  getAccounts?: ((trade: Trade) => AccountChip[]) | null;
   title: string;
   subtitle?: string;
   trades: Trade[];
@@ -120,9 +123,23 @@ export function TradeGroupContent({
   subtitle,
   trades,
   onOpenTrade,
-  columnHeaders = false,
-  getAccounts,
+  columnHeaders = true,
+  getAccounts: getAccountsProp,
 }: TradeGroupContentProps) {
+  const propAccounts = usePropAccountList();
+  // Without an explicit resolver the accounts come from the trade's prop assignments;
+  // the column only exists when the user has prop accounts.
+  const getAccounts =
+    getAccountsProp === null
+      ? undefined
+      : getAccountsProp ??
+    (propAccounts.length > 0
+      ? (trade: Trade): AccountChip[] =>
+          (trade.propAccountIds ?? [])
+            .map(id => propAccounts.find(account => account.id === id))
+            .filter((account): account is NonNullable<typeof account> => Boolean(account))
+            .map(account => ({ name: `${account.firmName} · ${account.name}`, firmId: account.firmId }))
+      : undefined);
   const { streamerMode } = useStreamerMode();
   const [currentPage, setCurrentPage] = useState(1);
   const sortedTrades = useMemo(
@@ -358,13 +375,20 @@ export function TradeGroupDetailDialog({
   subtitle,
   trades,
   onOpenTrade,
+  getAccounts,
 }: TradeGroupDetailDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[92dvh] w-[calc(100vw-1.75rem)] max-w-[860px] gap-0 overflow-hidden border-border bg-card p-0 sm:max-h-[86vh] sm:w-[94vw]">
         <DialogTitle className="sr-only">{title}</DialogTitle>
         <DialogDescription className="sr-only">{subtitle ?? title}</DialogDescription>
-        <TradeGroupContent title={title} subtitle={subtitle} trades={trades} onOpenTrade={onOpenTrade} />
+        <TradeGroupContent
+          title={title}
+          subtitle={subtitle}
+          trades={trades}
+          onOpenTrade={onOpenTrade}
+          getAccounts={getAccounts}
+        />
       </DialogContent>
     </Dialog>
   );
