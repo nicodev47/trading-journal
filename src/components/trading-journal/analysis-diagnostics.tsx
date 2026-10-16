@@ -1,5 +1,6 @@
 'use client';
 
+import { AssetName } from '@/components/ui/asset-icon';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
   Area,
@@ -1825,7 +1826,7 @@ export function AnalysisDiagnostics({
                           {getTradeTime(trade)}
                         </td>
                         <td className="align-middle px-4 py-2 text-muted-foreground">
-                          {trade.pair?.trim() || '—'}
+                          <AssetName symbol={trade.pair} />
                         </td>
                         <td className="align-middle px-4 py-2">
                           <div

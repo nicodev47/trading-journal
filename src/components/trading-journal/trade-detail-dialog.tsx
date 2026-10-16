@@ -1,5 +1,6 @@
 'use client';
 
+import { AssetName } from '@/components/ui/asset-icon';
 import { useEffect, useState } from 'react';
 import { ArrowLeft, ExternalLink, Star } from 'lucide-react';
 import { isDataImage, openImageInNewTab } from '@/lib/image-upload';
@@ -413,7 +414,7 @@ export function TradeDetailDialog({
             </DetailCard>
             <DetailCard label="Orario">{getTradeTime(trade)}</DetailCard>
             <DetailCard label="Asset">
-              {trade.pair?.trim() || '—'}
+              <AssetName symbol={trade.pair} />
             </DetailCard>
           </div>
 

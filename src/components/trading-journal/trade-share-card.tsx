@@ -1,4 +1,5 @@
 import type { Trade } from '@/lib/types/trade';
+import { AssetIcon } from '@/components/ui/asset-icon';
 import { getTradeSharePresentation } from '@/lib/trade-share-outcome';
 import { usePreferences } from '@/contexts/preferences-context';
 import {
@@ -88,7 +89,15 @@ export function TradeShareCard({
       />
 
       <div className="mt-14 space-y-3">
-        <ShareRow label="Asset" value={trade.pair || '--'} />
+        <ShareRow
+          label="Asset"
+          value={
+            <span className="inline-flex items-center gap-3">
+              <AssetIcon symbol={trade.pair} className="[&_img]:size-8" />
+              {trade.pair || '--'}
+            </span>
+          }
+        />
         <ShareRow label="Direzione" value={directionLabel} />
         <ShareRow label="Orario apertura" value={getTradeOpenTime(trade)} />
       </div>

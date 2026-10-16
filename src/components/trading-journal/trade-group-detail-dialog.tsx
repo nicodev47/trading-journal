@@ -1,5 +1,6 @@
 'use client';
 
+import { AssetName } from '@/components/ui/asset-icon';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -256,7 +257,7 @@ export function TradeGroupContent({
                       {getTradeTime(trade)}
                     </span>
                     <span className="text-muted-foreground">
-                      {trade.pair?.trim() || '-'}
+                      <AssetName symbol={trade.pair} fallback="-" />
                     </span>
                     <span className="capitalize text-muted-foreground">
                       {trade.direction || '-'}

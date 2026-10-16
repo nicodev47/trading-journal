@@ -135,7 +135,7 @@ export function ShareRow({
   tone = 'neutral',
 }: {
   label: string;
-  value: string;
+  value: ReactNode;
   tone?: 'profit' | 'loss' | 'neutral';
 }) {
   return (

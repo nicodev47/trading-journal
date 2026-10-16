@@ -1,5 +1,6 @@
 'use client';
 
+import { AssetName } from '@/components/ui/asset-icon';
 import { useEffect, useMemo, useState } from 'react';
 import {
   ChevronLeft,
@@ -1101,7 +1102,7 @@ export function MonthlyAnalysis({
                           {streamerMode ? '******' : formatSignedCurrency(pnl)}
                         </div>
                         <div className="font-sans tabular-nums text-xs text-muted-foreground">
-                          {trade.pair?.trim() || '—'}
+                          <AssetName symbol={trade.pair} />
                         </div>
                         <div className="font-sans tabular-nums text-xs capitalize text-muted-foreground">
                           {trade.direction || '—'}

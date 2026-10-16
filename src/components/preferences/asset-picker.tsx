@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Check, Search, X } from 'lucide-react';
+import { AssetIcon } from '@/components/ui/asset-icon';
 import { Input } from '@/components/ui/input';
 import { ALL_CATALOG_ASSETS, ASSET_CATALOG, toggleAssetItem } from '@/lib/asset-catalog';
 import { addAsset } from '@/lib/preferences';
@@ -38,6 +39,7 @@ export function AssetPicker({ value, onChange }: AssetPickerProps) {
               onClick={() => onChange(value.filter(item => item !== asset))}
               className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#0a0a0b]"
             >
+              <AssetIcon symbol={asset} className="[&_img]:size-4" />
               {asset}
               <X className="size-3" />
             </button>
@@ -85,6 +87,7 @@ export function AssetPicker({ value, onChange }: AssetPickerProps) {
                     )}
                   >
                     {selected && <Check className="size-3" />}
+                    <AssetIcon symbol={item.symbols[0]} className="[&_img]:size-4" />
                     {item.label}
                   </button>
                 );
