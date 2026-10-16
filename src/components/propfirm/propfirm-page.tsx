@@ -89,14 +89,17 @@ function AccountCard({
           <p className="font-sans text-[11px] text-muted-foreground">Saldo</p>
           <p className="font-sans text-lg font-semibold tabular-nums">{money.usd(sim.balance)}</p>
         </div>
-        <p
-          className={cn(
-            'font-sans text-sm font-semibold tabular-nums',
-            sim.profit > 0 ? 'text-profit' : sim.profit < 0 ? 'text-loss' : 'text-muted-foreground'
-          )}
-        >
-          {money.signed(sim.profit)}
-        </p>
+        <div className="text-right">
+          <p className="font-sans text-[11px] text-muted-foreground">Profitto attuale</p>
+          <p
+            className={cn(
+              'font-sans text-sm font-semibold tabular-nums',
+              sim.profit > 0 ? 'text-profit' : sim.profit < 0 ? 'text-loss' : 'text-muted-foreground'
+            )}
+          >
+            {money.signed(sim.profit)}
+          </p>
+        </div>
       </div>
 
       <div className="flex flex-col gap-2.5">

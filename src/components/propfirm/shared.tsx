@@ -8,7 +8,7 @@ import type { AccountStatus, FailReason } from '@/lib/propfirm/engine';
 import { cn } from '@/lib/utils';
 
 export const KIND_LABEL: Record<AccountKind, string> = {
-  evaluation: 'Valutazione',
+  evaluation: 'Evaluation',
   funded: 'Funded',
   live: 'Live',
 };
