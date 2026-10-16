@@ -119,6 +119,11 @@ export function CalendarDay({
     useStreamerMode();
   const canShowCalendarSetup = showCalendarSetup && !streamerMode;
   const canShowCalendarTags = showCalendarTags && !streamerMode;
+  // One logo per company: several accounts of the same firm count once.
+  const firmMarkers = propMarkers.filter(
+    (item, index) =>
+      propMarkers.findIndex(other => (other.logo ?? other.initials) === (item.logo ?? item.initials)) === index
+  );
   const hasTrades = dayData && dayData.tradeCount > 0;
   const pnl = dayData?.totalPnl ?? 0;
   const tradeCount = dayData?.tradeCount ?? 0;
@@ -297,13 +302,13 @@ export function CalendarDay({
 
         {(propMarkers.length > 0 || analysis?.manual) && (
           <span className="mt-auto flex shrink-0 items-center gap-1.5 self-start">
-            {propMarkers.length > 0 && (
+            {firmMarkers.length > 0 && (
               <span className="flex items-center -space-x-1.5 sm:-space-x-2">
-                {propMarkers.slice(0, 4).map((item, index) => (
+                {firmMarkers.slice(0, 3).map((item, index) => (
                   <span
                     key={item.id}
                     aria-label="Eseguito su questa prop"
-                    style={{ zIndex: propMarkers.length - index }}
+                    style={{ zIndex: 3 - index }}
                     className={cn(
                       'relative flex size-5 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-b font-sans text-[8px] font-bold leading-none text-white sm:size-6 sm:text-[9px]',
                       item.tile
@@ -323,14 +328,11 @@ export function CalendarDay({
                     )}
                   </span>
                 ))}
-                {propMarkers.length > 4 && (
-                  <span
-                    style={{ zIndex: 0 }}
-                    className="relative flex size-5 shrink-0 items-center justify-center rounded-full bg-secondary font-sans text-[8px] font-semibold text-muted-foreground sm:size-6 sm:text-[9px]"
-                  >
-                    +{propMarkers.length - 4}
-                  </span>
-                )}
+              </span>
+            )}
+            {firmMarkers.length > 3 && (
+              <span className="font-sans text-[9px] font-semibold tabular-nums text-muted-foreground sm:text-[11px]">
+                +{firmMarkers.length - 3}
               </span>
             )}
             {analysis?.manual && (
