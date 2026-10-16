@@ -1247,6 +1247,10 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
 
       <TradeDetailDialog
         trade={selectedTrade}
+        accountNames={(selectedTrade?.propAccountIds ?? [])
+          .map(id => propStore.accounts.find(account => account.id === id))
+          .filter((account): account is NonNullable<typeof account> => Boolean(account))
+          .map(account => `${account.firmName} · ${account.name}`)}
         streamerMode={streamerMode}
         onUpdateTrade={(id, updates) => {
           updateTrade(id, updates);

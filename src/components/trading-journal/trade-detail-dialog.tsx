@@ -29,24 +29,26 @@ interface TradeDetailDialogProps {
   onUpdateTrade?: (id: string, updates: Partial<Trade>) => void;
   showBackButton?: boolean;
   onBack?: () => void;
+  /** Names of the accounts the trade was executed on. */
+  accountNames?: string[];
 }
 
-function netPnl(trade: Trade) {
+export function netPnl(trade: Trade) {
   return trade.pnl - trade.commission;
 }
 
-function getTradeDate(trade: Trade) {
+export function getTradeDate(trade: Trade) {
   const date = new Date(trade.exitDate);
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
-function getTradeTime(trade: Trade) {
+export function getTradeTime(trade: Trade) {
   const time =
     trade.exitDate?.split('T')[1] || trade.entryDate?.split('T')[1] || '';
   return time.slice(0, 5) || '—';
 }
 
-function normalizeScreenshots(trade: Trade): ScreenshotData[] {
+export function normalizeScreenshots(trade: Trade): ScreenshotData[] {
   return (trade.screenshots ?? [])
     .map((screenshot, index) => {
       if (
@@ -114,7 +116,7 @@ function getLinkLabel(url: string) {
   }
 }
 
-function getTagLabel(value: string) {
+export function getTagLabel(value: string) {
   const standardTag = TRADE_TAGS.find((tag) => tag.value === value);
   if (standardTag) {
     return `${standardTag.emoji} ${standardTag.label}`;
@@ -132,7 +134,7 @@ function formatCurrency(value: number) {
   })} USD`;
 }
 
-function EconomicValue({
+export function EconomicValue({
   value,
   streamerMode,
   className,
@@ -155,7 +157,7 @@ function EconomicValue({
   );
 }
 
-function DetailCard({
+export function DetailCard({
   label,
   children,
   className,
@@ -179,7 +181,7 @@ function DetailCard({
   );
 }
 
-function AttachmentItem({
+export function AttachmentItem({
   screenshot,
   index,
 }: {
@@ -248,6 +250,23 @@ function AttachmentItem({
   );
 }
 
+export function AccountList({ names }: { names: string[] }) {
+  if (names.length === 0) return <span className="text-muted-foreground">Nessun account assegnato</span>;
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      {names.map(name => (
+        <span
+          key={name}
+          className="rounded-lg border border-border bg-secondary/40 px-2.5 py-1.5 font-sans tabular-nums text-xs text-foreground"
+        >
+          {name}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 export function TradeDetailDialog({
   trade,
   streamerMode,
@@ -255,6 +274,7 @@ export function TradeDetailDialog({
   onUpdateTrade,
   showBackButton = false,
   onBack,
+  accountNames,
 }: TradeDetailDialogProps) {
   const { preferences } = usePreferences();
   const [setupDraft, setSetupDraft] = useState('');
@@ -372,6 +392,12 @@ export function TradeDetailDialog({
               {trade.pair?.trim() || '—'}
             </DetailCard>
           </div>
+
+          {accountNames !== undefined && (
+            <DetailCard label="Eseguito su" className="mt-3">
+              <AccountList names={accountNames} />
+            </DetailCard>
+          )}
 
           <DetailCard label="Note complete" className="mt-3">
             <p className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-muted-foreground">

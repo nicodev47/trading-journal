@@ -234,6 +234,12 @@ export function ProgressTrackerPage({
           date={selectedDate}
           entry={entryByDate.get(selectedDate)}
           trades={tradesByDate.get(selectedDate) ?? []}
+          getAccountNames={trade =>
+            (trade.propAccountIds ?? [])
+              .map(id => propAccounts.find(account => account.id === id))
+              .filter((account): account is NonNullable<typeof account> => Boolean(account))
+              .map(account => `${account.firmName} · ${account.name}`)
+          }
           onClose={() => setSelectedDate(null)}
           onSave={onSaveAnalysis}
           onDelete={onDeleteAnalysis}
