@@ -1247,7 +1247,7 @@ export function DayEditorDialog({
                     </div>
 
                     <p className="text-[11px] text-muted-foreground">
-                      Incolla il link di TradingView o di Google Drive e premi “Aggiungi”.
+                      Incolla il link di TradingView / Google Drive e premi “Aggiungi”
                     </p>
 
                     {screenshotInputs[row.id]?.url?.trim() && (
