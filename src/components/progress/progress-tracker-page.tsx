@@ -192,8 +192,8 @@ export function ProgressTrackerPage({
           <span className="font-sans text-xs text-muted-foreground">{hoveredText}</span>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 font-sans text-[11px] text-muted-foreground">
             {[
-              ['Niente', 0],
-              ['Attività inserita', 3],
+              ['Nessuna attività', 0],
+              ['Attività registrata', 3],
             ].map(([label, level]) => (
               <span key={label} className="flex items-center gap-1.5">
                 <span className={cn('size-[14px] rounded-[3px]', LEVEL_CLASSES[level as number])} />
