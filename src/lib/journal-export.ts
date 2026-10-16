@@ -2,7 +2,7 @@ import type {
   JournalWorkspace,
   JournalWorkspaceMeta,
 } from '@/hooks/use-trades';
-import type { JournalState, Trade } from './types/trade';
+import type { DailyAnalysis, JournalState, MissedTrade, Trade } from './types/trade';
 import type { PropAccount } from './propfirm/types';
 
 export const JOURNAL_EXPORT_FORMAT_VERSION = 1;
@@ -27,6 +27,8 @@ export interface FullJournalBackup {
   workspaceOptions: JournalWorkspaceMeta[];
   /** Prop firm simulator accounts, when the backup includes them. */
   propAccounts?: PropAccount[];
+  /** Progress Tracker entries (daily analyses, missed trades, case studies). */
+  progressJournal?: { dailyAnalyses: DailyAnalysis[]; missedTrades: MissedTrade[] };
 }
 
 export type ParsedJournalExport =
@@ -132,7 +134,8 @@ export function createFullBackupExportData(
   workspaces: Partial<Record<JournalWorkspace, JournalState>>,
   workspaceOptions: JournalWorkspaceMeta[],
   exportedAt = new Date(),
-  propAccounts: PropAccount[] = []
+  propAccounts: PropAccount[] = [],
+  progressJournal?: { dailyAnalyses: DailyAnalysis[]; missedTrades: MissedTrade[] }
 ): string {
   const includedWorkspaceIds = new Set(Object.keys(workspaces));
   const payload: FullJournalBackup = {
@@ -146,6 +149,10 @@ export function createFullBackupExportData(
       includedWorkspaceIds.has(workspace.id)
     ),
     ...(propAccounts.length > 0 ? { propAccounts } : {}),
+    ...(progressJournal &&
+    (progressJournal.dailyAnalyses.length > 0 || progressJournal.missedTrades.length > 0)
+      ? { progressJournal }
+      : {}),
   };
 
   return JSON.stringify(payload, null, 2);
@@ -199,6 +206,16 @@ export function parseJournalExport(jsonString: string): ParsedJournalExport | nu
         propAccounts: Array.isArray(parsed.propAccounts)
           ? (parsed.propAccounts.filter(isRecord) as unknown as PropAccount[])
           : [],
+        progressJournal: isRecord(parsed.progressJournal)
+          ? {
+              dailyAnalyses: Array.isArray(parsed.progressJournal.dailyAnalyses)
+                ? (parsed.progressJournal.dailyAnalyses as DailyAnalysis[])
+                : [],
+              missedTrades: Array.isArray(parsed.progressJournal.missedTrades)
+                ? (parsed.progressJournal.missedTrades as MissedTrade[])
+                : [],
+            }
+          : undefined,
       },
     };
   } catch {

@@ -94,7 +94,6 @@ export interface WeeklyPlan {
 export interface JournalState {
   trades: Trade[];
   missedTrades: MissedTrade[];
-  dailyAnalyses?: DailyAnalysis[];
   tags: string[];
   tagsInitialized?: boolean;
   strategies: string[];

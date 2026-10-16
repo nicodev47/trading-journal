@@ -1,7 +1,6 @@
 'use client';
 
 import { type KeyboardEvent as ReactKeyboardEvent } from 'react';
-import { BookOpen, CircleSlash, Eye, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   CUSTOM_TAG_PREFIX,
@@ -14,10 +13,10 @@ import { useStreamerMode } from '@/contexts/streamer-mode-context';
 export interface AnalysisCell {
   /** 0–4 parts of the daily analysis that are filled in. */
   level: number;
-  analysis: boolean;
-  observations: boolean;
-  missed: number;
-  cases: number;
+  /** Something was written directly in the Progress Tracker for this day. */
+  manual: boolean;
+  /** Prop accounts on which trades were executed this day. */
+  props: { id: string; initials: string; tile: string }[];
 }
 
 interface CalendarDayProps {
@@ -240,17 +239,26 @@ export function CalendarDay({
         </span>
 
         {analysis && (
-          <span className="mt-auto flex items-center gap-1 text-muted-foreground sm:gap-1.5">
-            <FileText className={cn('size-3 sm:size-3.5', analysis.analysis && 'text-profit')} />
-            <Eye className={cn('size-3 sm:size-3.5', analysis.observations && 'text-profit')} />
-            <span className={cn('flex items-center gap-0.5 font-sans text-[9px] tabular-nums sm:text-[10px]', analysis.missed > 0 && 'text-profit')}>
-              <CircleSlash className="size-3 sm:size-3.5" />
-              {analysis.missed > 0 && analysis.missed}
-            </span>
-            <span className={cn('flex items-center gap-0.5 font-sans text-[9px] tabular-nums sm:text-[10px]', analysis.cases > 0 && 'text-profit')}>
-              <BookOpen className="size-3 sm:size-3.5" />
-              {analysis.cases > 0 && analysis.cases}
-            </span>
+          <span className="mt-auto flex flex-wrap items-center gap-1 sm:gap-1.5">
+            {analysis.props.map(item => (
+              <span
+                key={item.id}
+                aria-label="Eseguito su questa prop"
+                className={cn(
+                  'relative flex size-4 items-center justify-center rounded-[5px] border bg-gradient-to-b font-sans text-[7px] font-bold leading-none text-white sm:size-[18px] sm:text-[8px]',
+                  item.tile
+                )}
+              >
+                {item.initials}
+                <span className="absolute -right-[3px] -top-[3px] size-[7px] rounded-full bg-profit ring-1 ring-background" />
+              </span>
+            ))}
+            {analysis.manual && (
+              <span
+                aria-label="Analisi inserita qui"
+                className="size-[7px] rounded-full bg-white sm:size-2"
+              />
+            )}
           </span>
         )}
 

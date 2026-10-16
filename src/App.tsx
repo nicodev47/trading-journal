@@ -45,7 +45,9 @@ import { TradeLog } from '@/components/trading-journal/trade-log';
 import { NewsPage } from '@/components/news/news-page';
 import { ProgressTrackerPage } from '@/components/progress/progress-tracker-page';
 import { StrategiesPage } from '@/components/trading-journal/strategies-page';
-import { PropfirmPlaceholder } from '@/components/trading-journal/propfirm-placeholder';
+import { PropfirmPage } from '@/components/propfirm/propfirm-page';
+import { usePropAccounts } from '@/hooks/use-prop-accounts';
+import { useProgressJournal } from '@/hooks/use-progress-journal';
 import { ImportPreview } from '@/components/trading-journal/import-preview';
 import { createFullBackupExportData, parseJournalExport } from '@/lib/journal-export';
 import {
@@ -257,15 +259,11 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
     };
   }, [isHelpOpen]);
 
+  const propStore = usePropAccounts();
+  const progress = useProgressJournal();
   const {
     trades,
     missedTrades,
-    dailyAnalyses,
-    addMissedTrade,
-    updateMissedTrade,
-    deleteMissedTrade,
-    saveDailyAnalysis,
-    deleteDailyAnalysis,
     tags,
     strategies,
     customTags,
@@ -298,6 +296,10 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
   const previewHasContent =
     (activeWorkspace === 'student' || activeWorkspace.startsWith('preview-')) &&
     hasWorkspaceContent(getWorkspaceData(activeWorkspace));
+  // The Progress Tracker covers every account except Backtest and Preview.
+  const progressTrades = workspaces
+    .filter(workspace => workspace.group !== 'backtest' && workspace.group !== 'preview')
+    .flatMap(workspace => getWorkspaceData(workspace.id).trades);
   const showPreviewWorkspace = true;
   const visibleTrades = isTutorialActive ? tutorialTrades : trades;
 
@@ -714,6 +716,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
       if (created) createdIds.set(id, created.id);
     });
 
+    const idMap = new Map<string, string>();
     let restored: JournalWorkspace | null = null;
     let restoredCount = 0;
     const skipped: string[] = [];
@@ -725,6 +728,8 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
         skipped.push(metaOf(id)?.name ?? id);
         return;
       }
+
+      idMap.set(id, target);
 
       const json = JSON.stringify(state);
       const ok = mode === 'replace' ? importData(json, target) : appendImportData(json, target);
@@ -738,6 +743,25 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
     });
 
     if (restoredCount === 0) return false;
+
+    if (parsed.data.progressJournal) progress.importJournal(parsed.data.progressJournal);
+
+    // Prop firm accounts follow their journal to its (possibly new) id.
+    if (parsed.data.propAccounts?.length) {
+      propStore.importAccounts(
+        parsed.data.propAccounts.map(account =>
+          account.source?.kind === 'journal'
+            ? {
+                ...account,
+                source: {
+                  kind: 'journal' as const,
+                  journalId: idMap.get(account.source.journalId) ?? account.source.journalId,
+                },
+              }
+            : account
+        )
+      );
+    }
 
     const allTrades = entries.flatMap(([, state]) => state.trades);
 
@@ -852,7 +876,10 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
         return [workspace.id, journal];
       })
     );
-    const blob = new Blob([createFullBackupExportData(journals, included)], {
+    const blob = new Blob([createFullBackupExportData(journals, included, new Date(), propStore.accounts, {
+      dailyAnalyses: progress.dailyAnalyses,
+      missedTrades: progress.missedTrades,
+    })], {
       type: 'application/json',
     });
     const url = URL.createObjectURL(blob);
@@ -1123,17 +1150,25 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
           <NewsPage />
         ) : activeView === 'progress' ? (
           <ProgressTrackerPage
-            trades={visibleTrades}
-            dailyAnalyses={isTutorialActive ? [] : dailyAnalyses}
-            missedTrades={isTutorialActive ? [] : missedTrades}
-            onSaveAnalysis={saveDailyAnalysis}
-            onDeleteAnalysis={deleteDailyAnalysis}
-            onAddMissed={addMissedTrade}
-            onUpdateMissed={updateMissedTrade}
-            onDeleteMissed={deleteMissedTrade}
+            trades={progressTrades}
+            propAccounts={propStore.accounts}
+            getJournalTrades={journalId => getWorkspaceData(journalId as JournalWorkspace).trades}
+            dailyAnalyses={progress.dailyAnalyses}
+            missedTrades={progress.missedTrades}
+            onSaveAnalysis={progress.saveDailyAnalysis}
+            onDeleteAnalysis={progress.deleteDailyAnalysis}
+            onAddMissed={progress.addMissedTrade}
+            onUpdateMissed={progress.updateMissedTrade}
+            onDeleteMissed={progress.deleteMissedTrade}
           />
         ) : (
-          <PropfirmPlaceholder />
+          <PropfirmPage
+            store={propStore}
+            journals={workspaces
+              .filter(workspace => workspace.group !== 'preview')
+              .map(workspace => ({ id: workspace.id, name: workspace.name }))}
+            getJournalTrades={journalId => getWorkspaceData(journalId as JournalWorkspace).trades}
+          />
         )}
       </main>
       )}

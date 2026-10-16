@@ -2,7 +2,7 @@ import type { JournalState } from './types/trade';
 
 export type WorkspaceContent = Pick<
   JournalState,
-  'trades' | 'missedTrades' | 'weeklyPlans' | 'dailyAnalyses'
+  'trades' | 'missedTrades' | 'weeklyPlans'
 >;
 
 const hasText = (value: unknown): value is string =>
@@ -35,19 +35,6 @@ const hasConsultableWeeklyPlan = (plan: unknown): boolean => {
   );
 };
 
-const hasConsultableDailyAnalysis = (entry: unknown): boolean => {
-  if (!entry || typeof entry !== 'object') return false;
-
-  const candidate = entry as Record<string, unknown>;
-
-  return (
-    hasText(candidate.date) &&
-    (hasText(candidate.analysis) ||
-      hasText(candidate.observations) ||
-      (Array.isArray(candidate.caseStudies) && candidate.caseStudies.length > 0))
-  );
-};
-
 /**
  * Returns true only for data that can be consulted in the journal. Settings,
  * tags, strategies and other metadata do not make an empty workspace visible.
@@ -60,7 +47,6 @@ export function hasWorkspaceContent(
   return (
     workspace.trades.some(hasConsultableTrade) ||
     workspace.missedTrades.some(hasConsultableMissedTrade) ||
-    workspace.weeklyPlans.some(hasConsultableWeeklyPlan) ||
-    (workspace.dailyAnalyses ?? []).some(hasConsultableDailyAnalysis)
+    workspace.weeklyPlans.some(hasConsultableWeeklyPlan)
   );
 }

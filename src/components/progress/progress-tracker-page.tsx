@@ -12,6 +12,9 @@ import {
   toDateKey,
 } from '@/lib/progress-tracker';
 import type { DailyAnalysis, MissedTrade, Trade } from '@/lib/types/trade';
+import { getAccountDays } from '@/lib/propfirm/days';
+import { getFirm } from '@/lib/propfirm/firms';
+import type { PropAccount } from '@/lib/propfirm/types';
 import { cn } from '@/lib/utils';
 import { TradingCalendar } from '@/components/trading-journal/trading-calendar';
 import { DailyAnalysisDialog } from './daily-analysis-dialog';
@@ -26,7 +29,10 @@ const LEVEL_CLASSES = [
 const MONTH_LABELS = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
 
 interface ProgressTrackerPageProps {
+  /** Executions of every account except Backtest and Preview. */
   trades: Trade[];
+  propAccounts: PropAccount[];
+  getJournalTrades: (journalId: string) => Trade[];
   dailyAnalyses: DailyAnalysis[];
   missedTrades: MissedTrade[];
   onSaveAnalysis: (entry: DailyAnalysis) => void;
@@ -48,6 +54,8 @@ function StatTile({ title, value, hint }: { title: string; value: string; hint: 
 
 export function ProgressTrackerPage({
   trades,
+  propAccounts,
+  getJournalTrades,
   dailyAnalyses,
   missedTrades,
   onSaveAnalysis,
@@ -79,6 +87,27 @@ export function ProgressTrackerPage({
 
     return map;
   }, [missedTrades]);
+  // Prop accounts on which something was executed, day by day.
+  const propsByDate = useMemo(() => {
+    const map = new Map<string, { id: string; initials: string; tile: string }[]>();
+
+    propAccounts.forEach(account => {
+      const firm = getFirm(account.firmId);
+
+      getAccountDays(account, getJournalTrades).forEach(day => {
+        map.set(day.date, [
+          ...(map.get(day.date) ?? []),
+          {
+            id: account.id,
+            initials: firm?.initials ?? account.firmName.slice(0, 2).toUpperCase(),
+            tile: firm?.tile ?? 'from-[#2a2a2d] to-[#1f1f22] border-white/10',
+          },
+        ]);
+      });
+    });
+
+    return map;
+  }, [propAccounts, getJournalTrades]);
   const tradesByDate = useMemo(() => {
     const map = new Map<string, Trade[]>();
 
@@ -228,10 +257,12 @@ export function ProgressTrackerPage({
 
             return {
               level: levels.get(date) ?? 0,
-              analysis: Boolean(entry?.analysis.trim()),
-              observations: Boolean(entry?.observations.trim()),
-              missed: missedByDate.get(date)?.length ?? 0,
-              cases: entry?.caseStudies.length ?? 0,
+              manual:
+                Boolean(entry?.analysis.trim()) ||
+                Boolean(entry?.observations.trim()) ||
+                (entry?.caseStudies.length ?? 0) > 0 ||
+                (missedByDate.get(date)?.length ?? 0) > 0,
+              props: propsByDate.get(date) ?? [],
             };
           },
         }}

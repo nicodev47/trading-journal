@@ -9,7 +9,6 @@ import {
   Download,
   RotateCcw,
 } from 'lucide-react';
-import { BookOpen, CircleSlash, Eye, FileText } from 'lucide-react';
 import { CalendarDay, type AnalysisCell } from './calendar-day';
 import { isUsBankHoliday } from '@/lib/bank-holidays';
 import { WeekSummary } from './week-summary';
@@ -394,10 +393,17 @@ export function TradingCalendar({
 
       {analysisMode ? (
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-border px-3 py-2 font-sans text-xs font-medium text-muted-foreground max-md:gap-x-3 max-md:text-[11px]">
-          <span className="flex items-center gap-1.5"><FileText className="size-3" /> Analisi</span>
-          <span className="flex items-center gap-1.5"><Eye className="size-3" /> Cosa ho visto</span>
-          <span className="flex items-center gap-1.5"><CircleSlash className="size-3" /> Operazioni mancate</span>
-          <span className="flex items-center gap-1.5"><BookOpen className="size-3" /> Casi studio</span>
+          <span className="flex items-center gap-1.5">
+            <span className="relative flex size-4 items-center justify-center rounded-[5px] border border-white/15 bg-white/10 text-[7px] font-bold text-white">
+              P
+              <span className="absolute -right-[3px] -top-[3px] size-[7px] rounded-full bg-profit ring-1 ring-card" />
+            </span>
+            Prop su cui hai eseguito
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="size-2 rounded-full bg-white" />
+            Analisi inserita qui
+          </span>
           <span>— più il verde è intenso, più parti hai compilato</span>
         </div>
       ) : (

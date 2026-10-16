@@ -28,6 +28,7 @@ export function formatUsd(value: number) {
   return `${value.toLocaleString('it-IT', {
     minimumFractionDigits: whole ? 0 : 2,
     maximumFractionDigits: 2,
+    useGrouping: 'always' as unknown as boolean,
   })} USD`;
 }
 
@@ -48,6 +49,15 @@ export const todayKey = () => {
 
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 };
+
+/** The day after a YYYY-MM-DD date. */
+export function nextDay(date: string) {
+  const parsed = new Date(`${date}T12:00:00`);
+
+  parsed.setDate(parsed.getDate() + 1);
+
+  return `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, '0')}-${String(parsed.getDate()).padStart(2, '0')}`;
+}
 
 /** Formatter that hides amounts in streamer mode. */
 export function useMoney() {
