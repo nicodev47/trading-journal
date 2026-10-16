@@ -8,31 +8,27 @@ import {
   summarizeYear,
 } from '../src/lib/progress-tracker.ts';
 
-const entry = (date: string, parts: Partial<{ a: string; o: string; c: number }> = {}) =>
+const entry = (date: string, parts: Partial<{ a: string; o: string; f: number }> = {}) =>
   ({
     id: date,
     date,
     analysis: parts.a ?? '',
     observations: parts.o ?? '',
-    caseStudies: Array.from({ length: parts.c ?? 0 }, (_, index) => ({
-      id: `c${index}`,
-      title: 't',
-      notes: '',
-      screenshots: [],
-    })),
+    caseStudies: [],
+    attachments: Array.from({ length: parts.f ?? 0 }, (_, index) => ({ url: `https://x/${index}`, name: '' })),
     createdAt: '',
     updatedAt: '',
   }) as never;
 
 test('il livello conta le parti compilate del giorno', () => {
-  assert.equal(getDayLevel(undefined, 0), 0);
-  assert.equal(getDayLevel(entry('2026-06-01', { a: 'x' }), 0), 1);
-  assert.equal(getDayLevel(entry('2026-06-01', { a: 'x', o: 'y', c: 1 }), 2), 4);
-  assert.equal(getDayLevel(entry('2026-06-01', { a: '   ' }), 0), 0);
+  assert.equal(getDayLevel(undefined), 0);
+  assert.equal(getDayLevel(entry('2026-06-01', { a: 'x' })), 1);
+  assert.equal(getDayLevel(entry('2026-06-01', { a: 'x', o: 'y', f: 2 })), 3);
+  assert.equal(getDayLevel(entry('2026-06-01', { a: '   ' })), 0);
 });
 
-test('un giorno con sole operazioni mancate ha livello 1', () => {
-  const levels = getLevelsByDate([], [{ date: '2026-06-02' }, { date: '2026-06-02' }]);
+test('un giorno con soli file ha livello 1', () => {
+  const levels = getLevelsByDate([entry('2026-06-02', { f: 1 })]);
 
   assert.equal(levels.get('2026-06-02'), 1);
 });
@@ -80,9 +76,9 @@ test('riepilogo annuale', () => {
   const summary = summarizeYear(
     2026,
     new Map([
-      ['2026-06-01', 4],
-      ['2026-06-02', 2],
-      ['2025-12-31', 4],
+      ['2026-06-01', 3],
+      ['2026-06-02', 1.5],
+      ['2025-12-31', 3],
     ])
   );
 

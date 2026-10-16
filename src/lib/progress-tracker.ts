@@ -1,40 +1,26 @@
-import type { DailyAnalysis, MissedTrade } from './types/trade';
+import type { DailyAnalysis } from './types/trade';
 
-export const MAX_LEVEL = 4;
+export const MAX_LEVEL = 3;
 
 const hasText = (value: string | undefined) => (value ?? '').trim().length > 0;
 
-/** How many of the four parts of a day were filled in: 0 to 4. */
-export function getDayLevel(entry: DailyAnalysis | undefined, missedCount: number): number {
+/** How many of the three parts of a day were filled in (analysis, notes, files): 0 to 3. */
+export function getDayLevel(entry: DailyAnalysis | undefined): number {
   return (
     Number(hasText(entry?.analysis)) +
     Number(hasText(entry?.observations)) +
-    Number(missedCount > 0) +
-    Number((entry?.caseStudies.length ?? 0) > 0)
+    Number((entry?.attachments?.length ?? 0) > 0)
   );
 }
 
 /** Level per YYYY-MM-DD, only for days with something filled in. */
-export function getLevelsByDate(
-  entries: DailyAnalysis[],
-  missedTrades: Pick<MissedTrade, 'date'>[]
-): Map<string, number> {
-  const missedByDate = new Map<string, number>();
-
-  missedTrades.forEach(item =>
-    missedByDate.set(item.date, (missedByDate.get(item.date) ?? 0) + 1)
-  );
-
-  const dates = new Set([...entries.map(entry => entry.date), ...missedByDate.keys()]);
+export function getLevelsByDate(entries: DailyAnalysis[]): Map<string, number> {
   const levels = new Map<string, number>();
 
-  dates.forEach(date => {
-    const level = getDayLevel(
-      entries.find(entry => entry.date === date),
-      missedByDate.get(date) ?? 0
-    );
+  entries.forEach(entry => {
+    const level = getDayLevel(entry);
 
-    if (level > 0) levels.set(date, level);
+    if (level > 0) levels.set(entry.date, level);
   });
 
   return levels;
@@ -151,7 +137,7 @@ export function computeStreaks(levels: Map<string, number>, today: Date): Streak
 
 export interface YearSummary {
   daysWithEntry: number;
-  /** Average share of the four parts filled on days with an entry, 0–100. */
+  /** Average share of the three parts filled on days with an entry, 0–100. */
   completion: number;
 }
 

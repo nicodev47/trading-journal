@@ -11,7 +11,7 @@ import {
   summarizeYear,
   toDateKey,
 } from '@/lib/progress-tracker';
-import type { DailyAnalysis, MissedTrade, Trade } from '@/lib/types/trade';
+import type { DailyAnalysis, Trade } from '@/lib/types/trade';
 import { getAccountDays } from '@/lib/propfirm/days';
 import { getFirm } from '@/lib/propfirm/firms';
 import type { PropAccount } from '@/lib/propfirm/types';
@@ -19,13 +19,7 @@ import { cn } from '@/lib/utils';
 import { TradingCalendar } from '@/components/trading-journal/trading-calendar';
 import { DailyAnalysisDialog } from './daily-analysis-dialog';
 
-const LEVEL_CLASSES = [
-  'bg-white/[0.06]',
-  'bg-profit/25',
-  'bg-profit/45',
-  'bg-profit/70',
-  'bg-profit',
-];
+const LEVEL_CLASSES = ['bg-white/[0.06]', 'bg-profit/30', 'bg-profit/60', 'bg-profit'];
 const MONTH_LABELS = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
 
 interface ProgressTrackerPageProps {
@@ -34,12 +28,8 @@ interface ProgressTrackerPageProps {
   propAccounts: PropAccount[];
   getJournalTrades: (journalId: string) => Trade[];
   dailyAnalyses: DailyAnalysis[];
-  missedTrades: MissedTrade[];
   onSaveAnalysis: (entry: DailyAnalysis) => void;
   onDeleteAnalysis: (date: string) => void;
-  onAddMissed: (missed: MissedTrade) => void;
-  onUpdateMissed: (id: string, updates: Partial<MissedTrade>) => void;
-  onDeleteMissed: (id: string) => void;
 }
 
 function StatTile({ title, value, hint }: { title: string; value: string; hint: string }) {
@@ -57,12 +47,8 @@ export function ProgressTrackerPage({
   propAccounts,
   getJournalTrades,
   dailyAnalyses,
-  missedTrades,
   onSaveAnalysis,
   onDeleteAnalysis,
-  onAddMissed,
-  onUpdateMissed,
-  onDeleteMissed,
 }: ProgressTrackerPageProps) {
   const today = useMemo(() => new Date(), []);
   const [year, setYear] = useState(today.getFullYear());
@@ -70,8 +56,8 @@ export function ProgressTrackerPage({
   const [hovered, setHovered] = useState<string | null>(null);
 
   const levels = useMemo(
-    () => getLevelsByDate(dailyAnalyses, missedTrades),
-    [dailyAnalyses, missedTrades]
+    () => getLevelsByDate(dailyAnalyses),
+    [dailyAnalyses]
   );
   const streaks = useMemo(() => computeStreaks(levels, today), [levels, today]);
   const summary = useMemo(() => summarizeYear(year, levels), [year, levels]);
@@ -80,13 +66,6 @@ export function ProgressTrackerPage({
     () => new Map(dailyAnalyses.map(entry => [entry.date, entry])),
     [dailyAnalyses]
   );
-  const missedByDate = useMemo(() => {
-    const map = new Map<string, MissedTrade[]>();
-
-    missedTrades.forEach(item => map.set(item.date, [...(map.get(item.date) ?? []), item]));
-
-    return map;
-  }, [missedTrades]);
   // Prop accounts on which something was executed, day by day.
   const propsByDate = useMemo(() => {
     const map = new Map<
@@ -265,8 +244,7 @@ export function ProgressTrackerPage({
               manual:
                 Boolean(entry?.analysis.trim()) ||
                 Boolean(entry?.observations.trim()) ||
-                (entry?.caseStudies.length ?? 0) > 0 ||
-                (missedByDate.get(date)?.length ?? 0) > 0,
+                (entry?.attachments?.length ?? 0) > 0,
               props: propsByDate.get(date) ?? [],
             };
           },
@@ -278,14 +256,10 @@ export function ProgressTrackerPage({
           open
           date={selectedDate}
           entry={entryByDate.get(selectedDate)}
-          missedTrades={missedByDate.get(selectedDate) ?? []}
           trades={tradesByDate.get(selectedDate) ?? []}
           onClose={() => setSelectedDate(null)}
           onSave={onSaveAnalysis}
           onDelete={onDeleteAnalysis}
-          onAddMissed={onAddMissed}
-          onUpdateMissed={onUpdateMissed}
-          onDeleteMissed={onDeleteMissed}
         />
       )}
     </div>

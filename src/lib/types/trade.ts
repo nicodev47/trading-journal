@@ -49,7 +49,10 @@ export interface DailyAnalysis {
   date: string;
   analysis: string;
   observations: string;
+  /** Legacy: no longer edited, kept so old backups still load. */
   caseStudies: CaseStudy[];
+  /** Files and links of the day (charts, screenshots). */
+  attachments?: ScreenshotData[];
   createdAt: string;
   updatedAt: string;
 }

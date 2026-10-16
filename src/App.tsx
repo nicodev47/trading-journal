@@ -1180,12 +1180,8 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
             propAccounts={propStore.accounts}
             getJournalTrades={journalId => getWorkspaceData(journalId as JournalWorkspace).trades}
             dailyAnalyses={progress.dailyAnalyses}
-            missedTrades={progress.missedTrades}
             onSaveAnalysis={progress.saveDailyAnalysis}
             onDeleteAnalysis={progress.deleteDailyAnalysis}
-            onAddMissed={progress.addMissedTrade}
-            onUpdateMissed={progress.updateMissedTrade}
-            onDeleteMissed={progress.deleteMissedTrade}
           />
         ) : (
           <PropfirmPage
