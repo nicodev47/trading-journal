@@ -5,7 +5,6 @@ import { Pencil, RefreshCw, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { previewNextDay, type AccountSim } from '@/lib/propfirm/engine';
 import { getFirm, isIncomplete } from '@/lib/propfirm/firms';
 import type { DayResult, Payout, PropAccount, PropRules } from '@/lib/propfirm/types';
@@ -300,8 +299,8 @@ export function AccountDetailDialog({
           </div>
         )}
 
-        <Tabs defaultValue="overview" className="gap-0">
-          <TabsList className="mx-4 mt-4 h-auto flex-wrap justify-start gap-1 bg-transparent p-0 sm:mx-6">
+        <div className="flex flex-col">
+          <nav className="sticky top-0 z-10 flex flex-wrap gap-1 border-b border-border bg-background/90 px-4 py-3 backdrop-blur sm:px-6">
             {[
               ['overview', 'Panoramica'],
               ['rules', 'Regole'],
@@ -309,17 +308,21 @@ export function AccountDetailDialog({
               ['days', 'Giorni'],
               ...(isEvaluation ? [] : [['payout', 'Payout']]),
             ].map(([value, label]) => (
-              <TabsTrigger
+              <button
                 key={value}
-                value={value}
-                className="h-8 flex-none rounded-full border border-border px-4 text-xs data-[state=active]:bg-white data-[state=active]:text-black"
+                type="button"
+                onClick={() =>
+                  document.getElementById(`prop-section-${value}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                }
+                className="h-8 flex-none rounded-full border border-border px-4 text-xs transition-colors hover:bg-white hover:text-black"
               >
                 {label}
-              </TabsTrigger>
+              </button>
             ))}
-          </TabsList>
+          </nav>
 
-          <TabsContent value="overview" className="flex flex-col gap-4 p-4 sm:p-6">
+          <section id="prop-section-overview" className="scroll-mt-14 flex flex-col gap-4 p-4 sm:p-6">
+            <h3 className="font-sans text-lg font-semibold tracking-tight">Panoramica</h3>
             {account.source.kind === 'manual' && (
               <div className="flex flex-wrap items-end gap-2 rounded-xl border border-border bg-background/40 p-3">
                 <label className="flex flex-col gap-1">
@@ -421,9 +424,10 @@ export function AccountDetailDialog({
                 Il drawdown intraday segue anche i profitti non chiusi: qui è approssimato con i saldi a fine giornata.
               </p>
             )}
-          </TabsContent>
+          </section>
 
-          <TabsContent value="rules" className="flex flex-col gap-5 p-4 sm:p-6">
+          <section id="prop-section-rules" className="scroll-mt-14 flex flex-col gap-5 p-4 sm:p-6">
+            <h3 className="font-sans text-lg font-semibold tracking-tight">Regole</h3>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               <Tile label="Obiettivo" value={isEvaluation ? (rules.profitTarget === null ? '—' : money.usd(rules.profitTarget)) : '—'} />
               <Tile label="Max drawdown" value={rules.drawdown.amount === null ? '—' : money.usd(rules.drawdown.amount)} />
@@ -480,9 +484,10 @@ export function AccountDetailDialog({
                 </Button>
               )}
             </div>
-          </TabsContent>
+          </section>
 
-          <TabsContent value="consistency" className="flex flex-col gap-4 p-4 sm:p-6">
+          <section id="prop-section-consistency" className="scroll-mt-14 flex flex-col gap-4 p-4 sm:p-6">
+            <h3 className="font-sans text-lg font-semibold tracking-tight">Consistenza</h3>
             {!sim.consistency ? (
               <p className="py-10 text-center font-sans text-sm text-muted-foreground">
                 {rules.consistency
@@ -560,9 +565,10 @@ export function AccountDetailDialog({
                 </div>
               </>
             )}
-          </TabsContent>
+          </section>
 
-          <TabsContent value="days" className="p-4 sm:p-6">
+          <section id="prop-section-days" className="scroll-mt-14 p-4 sm:p-6">
+            <h3 className="font-sans text-lg font-semibold tracking-tight">Giorni</h3>
             {sim.days.length === 0 ? (
               <p className="py-10 text-center font-sans text-sm text-muted-foreground">
                 {account.source.kind === 'journal'
@@ -605,10 +611,11 @@ export function AccountDetailDialog({
                 </table>
               </div>
             )}
-          </TabsContent>
+          </section>
 
           {!isEvaluation && sim.payout && (
-            <TabsContent value="payout" className="flex flex-col gap-4 p-4 sm:p-6">
+            <section id="prop-section-payout" className="scroll-mt-14 flex flex-col gap-4 p-4 sm:p-6">
+            <h3 className="font-sans text-lg font-semibold tracking-tight">Payout</h3>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <Tile label="Incassato (netto)" value={money.usd(Math.round(paidNet * 100) / 100)} tone={paidNet > 0 ? 'profit' : undefined} />
                 <Tile label="Payout disponibile" value={money.usd(sim.payout.available)} />
@@ -703,9 +710,9 @@ export function AccountDetailDialog({
                     ))}
                 </ul>
               )}
-            </TabsContent>
+            </section>
           )}
-        </Tabs>
+        </div>
       </DialogContent>
     </Dialog>
   );
