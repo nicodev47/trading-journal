@@ -4,7 +4,6 @@ import { useMemo } from 'react';
 import {
   CalendarDays,
   Clock,
-  Lightbulb,
   Scale,
   Sparkles,
   Target,
@@ -20,7 +19,6 @@ import type { Trade } from '@/lib/types/trade';
 import { cn } from '@/lib/utils';
 
 const TOPICS: Record<InsightTopic, { label: string; icon: LucideIcon }> = {
-  panoramica: { label: 'Panoramica', icon: Sparkles },
   setup: { label: 'Setup', icon: Target },
   orari: { label: 'Orari', icon: Clock },
   giorni: { label: 'Giorni', icon: CalendarDays },
@@ -61,7 +59,7 @@ interface InsightsPanelProps {
   onOpenGroup: (title: string, subtitle: string, trades: Trade[]) => void;
 }
 
-/** Findings and cautious tips written as sentences from the user's own trades. */
+/** Plain findings computed from the user's own trades, one line each. */
 export function InsightsPanel({ trades, onOpenGroup }: InsightsPanelProps) {
   const { preferences } = usePreferences();
   const { streamerMode } = useStreamerMode();
@@ -85,7 +83,7 @@ export function InsightsPanel({ trades, onOpenGroup }: InsightsPanelProps) {
             Cosa dicono i tuoi dati
           </h2>
           <p className="font-sans text-xs text-muted-foreground">
-            Osservazioni e spunti calcolati sulle tue operazioni del periodo.
+            Dati riportati dalle tue operazioni del periodo.
           </p>
         </div>
       </div>
@@ -115,14 +113,6 @@ export function InsightsPanel({ trades, onOpenGroup }: InsightsPanelProps) {
                           <p className="font-sans text-sm leading-relaxed text-muted-foreground">
                             <Sentence segments={insight.segments} hideMoney={streamerMode} />
                           </p>
-                          {insight.tip && (
-                            <p className="mt-1.5 flex items-start gap-2 font-sans text-[13px] leading-relaxed text-[#5cb8ff]">
-                              <Lightbulb className="mt-0.5 size-3.5 shrink-0" />
-                              <span>
-                                <Sentence segments={insight.tip} hideMoney={streamerMode} />
-                              </span>
-                            </p>
-                          )}
                         </div>
 
                         {insight.trades && insight.trades.length > 0 && (
@@ -151,9 +141,6 @@ export function InsightsPanel({ trades, onOpenGroup }: InsightsPanelProps) {
         </div>
       )}
 
-      <p className="border-t border-border px-4 py-3 font-sans text-[11px] leading-relaxed text-muted-foreground sm:px-5">
-        Spunti basati sui tuoi dati passati: non sono consigli finanziari e i risultati passati non garantiscono quelli futuri.
-      </p>
     </div>
   );
 }

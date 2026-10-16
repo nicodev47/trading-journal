@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { buildInsights, MIN_TRADES_FOR_TIPS, type Insight } from '../src/lib/insights.ts';
+import { buildInsights, type Insight } from '../src/lib/insights.ts';
 
 let counter = 0;
 const trade = (day: string, time: string, pnl: number, strategy = 'A', direction = 'long') =>
@@ -22,7 +22,7 @@ test('senza trade non ci sono frasi', () => {
   assert.deepEqual(buildInsights([], []), []);
 });
 
-test('indica il setup migliore e quello più debole', () => {
+test('riporta setup migliore e peggiore come semplici dati', () => {
   const insights = buildInsights(
     [trade('01', '10:00', 300, 'A'), trade('02', '10:00', -100, 'B')],
     []
@@ -30,29 +30,25 @@ test('indica il setup migliore e quello più debole', () => {
   const best = insights.find(insight => insight.id === 'setup-best');
   const worst = insights.find(insight => insight.id === 'setup-worst');
 
-  assert.match(text(best!), /Il tuo cavallo di battaglia è A/);
-  assert.match(text(worst!), /B è quello che ti (sta costando di più|rende di meno)/);
+  assert.match(text(best!), /^Setup migliore: A \(\+300,00 USD, 1 trade, win rate 100%\)\.$/);
+  assert.match(text(worst!), /^Setup peggiore: B \(-100,00 USD, 1 trade, win rate 0%\)\.$/);
 });
 
-test('con pochi trade non propone consigli sul setup', () => {
-  const insights = buildInsights(
-    [trade('01', '10:00', 300, 'A'), trade('02', '10:00', -100, 'B')],
-    []
-  );
-
-  assert.ok(insights.every(insight => insight.id !== 'setup-worst' || !insight.tip));
-});
-
-test('con abbastanza trade in perdita suggerisce di rivedere il setup', () => {
+test('nessuna frase contiene consigli o toni colloquiali', () => {
   const trades = [
-    ...Array.from({ length: MIN_TRADES_FOR_TIPS }, (_, index) =>
+    ...Array.from({ length: 6 }, (_, index) =>
       trade(String(index + 1).padStart(2, '0'), '10:00', -50, 'Debole')
     ),
     trade('10', '10:00', 400, 'Forte'),
   ];
-  const worst = buildInsights(trades, []).find(insight => insight.id === 'setup-worst');
+  const all = buildInsights(trades, [])
+    .map(text)
+    .join(' ')
+    .toLowerCase();
 
-  assert.ok(worst?.tip);
+  ['prova a', 'valuta di', 'potresti', 'cavallo di battaglia', 'fai più fatica', 'consigli'].forEach(word =>
+    assert.ok(!all.includes(word), word)
+  );
 });
 
 test('i trade senza orario (00:00) non compaiono nelle finestre', () => {
@@ -64,10 +60,10 @@ test('i trade senza orario (00:00) non compaiono nelle finestre', () => {
   assert.ok(insights.every(insight => insight.id !== 'window-outside'));
 });
 
-test('con soli profitti non parla di rapporto ma di assenza di perdite', () => {
+test('con soli profitti riporta che non ci sono perdite', () => {
   const average = buildInsights([trade('01', '10:00', 100), trade('02', '10:00', 200)], []).find(
     insight => insight.id === 'average'
   );
 
-  assert.match(text(average!), /Non hai ancora registrato perdite/);
+  assert.match(text(average!), /Nessuna perdita registrata/);
 });

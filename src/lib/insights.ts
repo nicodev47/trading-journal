@@ -18,7 +18,6 @@ import type { OperatingWindowConfig } from './preferences.ts';
 import { getStrategyRows } from './strategy-stats.ts';
 
 export type InsightTopic =
-  | 'panoramica'
   | 'setup'
   | 'orari'
   | 'giorni'
@@ -33,14 +32,9 @@ export interface Insight {
   id: string;
   topic: InsightTopic;
   segments: Segment[];
-  /** Optional suggestion, only when there is enough data to support it. */
-  tip?: Segment[];
   trades?: Trade[];
   openTitle?: string;
 }
-
-/** Below this many trades a pattern is shown but no suggestion is made. */
-export const MIN_TRADES_FOR_TIPS = 5;
 
 const WEEKDAYS = ['domenica', 'lunedì', 'martedì', 'mercoledì', 'giovedì', 'venerdì', 'sabato'];
 const MONTHS = [
@@ -78,7 +72,7 @@ const strong = (text: string) => ({ text, tone: 'strong' as const });
 
 const capitalize = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
 
-const plural = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`;
+const count = (value: number) => `${value} trade`;
 
 function groupBy(trades: Trade[], keyOf: (trade: Trade) => string | null) {
   const groups = new Map<string, Trade[]>();
@@ -108,7 +102,7 @@ const extremes = <T extends { pnl: number }>(rows: T[]) => {
   };
 };
 
-/** Natural-language observations (and cautious tips) computed from the trades. */
+/** Plain facts computed from the trades, one line each. */
 export function buildInsights(
   allTrades: Trade[],
   windows: OperatingWindowConfig[]
@@ -121,20 +115,6 @@ export function buildInsights(
   const stats = calculateStatistics(trades);
   const totalPnl = sum(trades);
 
-  // Overview
-  if (trades.length < 10) {
-    insights.push({
-      id: 'sample',
-      topic: 'panoramica',
-      segments: [
-        'Per ora hai ',
-        strong(`${trades.length} ${trades.length === 1 ? 'trade' : 'trade'}`),
-        ' nel periodo: sono ancora pochi per dire qualcosa di solido.',
-      ],
-      tip: ['Leggi le osservazioni qui sotto come indizi, non come verità: diventano affidabili dopo qualche decina di operazioni.'],
-    });
-  }
-
   // Setup
   const setups = getStrategyRows(trades).filter(row => row.name !== 'Senza Setup');
 
@@ -146,18 +126,12 @@ export function buildInsights(
       id: 'setup-best',
       topic: 'setup',
       segments: [
-        'Il tuo cavallo di battaglia è ',
+        'Setup migliore: ',
         strong(best.name),
-        ': ',
+        ' (',
         moneyTone(best.pnl),
-        ` in ${plural(best.trades, 'trade', 'trade')}, con il ${number(best.winRate, 0)}% di operazioni vincenti.`,
+        `, ${count(best.trades)}, win rate ${number(best.winRate, 0)}%).`,
       ],
-      tip:
-        best.trades < MIN_TRADES_FOR_TIPS
-          ? [`Sono solo ${best.trades} operazioni: aspetta di averne qualcuna in più prima di trarre conclusioni.`]
-          : best.pnl > 0 && setups.length > 1
-            ? ['Quando ti si presentano più occasioni insieme, dai la precedenza a questo setup: è quello su cui hai più riscontri.']
-            : undefined,
       trades: trades.filter(trade => trade.strategy?.trim() === best.name),
       openTitle: `Setup ${best.name}`,
     });
@@ -167,15 +141,12 @@ export function buildInsights(
         id: 'setup-worst',
         topic: 'setup',
         segments: [
+          'Setup peggiore: ',
           strong(worst.name),
-          worst.pnl < 0 ? ' è quello che ti sta costando di più: ' : ' è quello che ti rende di meno: ',
+          ' (',
           moneyTone(worst.pnl),
-          ` in ${plural(worst.trades, 'trade', 'trade')}, con il ${number(worst.winRate, 0)}% di operazioni vincenti.`,
+          `, ${count(worst.trades)}, win rate ${number(worst.winRate, 0)}%).`,
         ],
-        tip:
-          worst.trades >= MIN_TRADES_FOR_TIPS && worst.pnl < 0
-            ? ['Prima di scartarlo, riguarda gli ultimi trade: spesso il problema è un’entrata troppo anticipata o un contesto sbagliato, non il setup. Per un po’ prendilo solo nelle condizioni migliori.']
-            : undefined,
         trades: trades.filter(trade => trade.strategy?.trim() === worst.name),
         openTitle: `Setup ${worst.name}`,
       });
@@ -197,16 +168,12 @@ export function buildInsights(
       id: 'window-best',
       topic: 'orari',
       segments: [
-        'Il tuo momento migliore è ',
+        'Finestra operativa migliore: ',
         ...when(bestWindow.name, bestWindow.description),
-        ': ',
+        ', ',
         moneyTone(bestWindow.pnl),
-        ` in ${plural(bestWindow.tradeCount, 'trade', 'trade')}.`,
+        ` in ${count(bestWindow.tradeCount)}.`,
       ],
-      tip:
-        bestWindow.tradeCount >= MIN_TRADES_FOR_TIPS && bestWindow.pnl > 0
-          ? ['È la tua fascia d’oro: se devi scegliere quando esserci davvero, scegli questa.']
-          : undefined,
       trades: inWindow(bestWindow.name),
       openTitle: `Finestra ${bestWindow.name}`,
     });
@@ -217,16 +184,12 @@ export function buildInsights(
       id: 'window-worst',
       topic: 'orari',
       segments: [
-        'Nella fascia ',
+        'Finestra operativa peggiore: ',
         ...when(worstWindow.name, worstWindow.description),
-        ' fai più fatica: ',
+        ', ',
         moneyTone(worstWindow.pnl),
-        ` in ${plural(worstWindow.tradeCount, 'trade', 'trade')}.`,
+        ` in ${count(worstWindow.tradeCount)}.`,
       ],
-      tip:
-        worstWindow.tradeCount >= MIN_TRADES_FOR_TIPS && worstWindow.pnl < 0
-          ? ['Se non è un momento che ti appartiene, entra con più selettività o salta del tutto quelle ore.']
-          : undefined,
       trades: inWindow(worstWindow.name),
       openTitle: `Finestra ${worstWindow.name}`,
     });
@@ -240,23 +203,17 @@ export function buildInsights(
 
   if (outside.length >= 3 && windows.length > 0) {
     const share = (outside.length / trades.length) * 100;
-    const outsidePnl = sum(outside);
 
     insights.push({
       id: 'window-outside',
       topic: 'orari',
       segments: [
-        strong(`${outside.length} trade su ${trades.length} (${number(share, 0)}%)`),
-        ' li hai fatti fuori dai tuoi orari e sono finiti a ',
-        moneyTone(outsidePnl),
+        'Trade fuori dalle finestre operative: ',
+        strong(`${outside.length} su ${trades.length} (${number(share, 0)}%)`),
+        ', risultato ',
+        moneyTone(sum(outside)),
         '.',
       ],
-      tip:
-        share >= 25 && outsidePnl < 0
-          ? ['Gli orari che ti sei dato servono proprio a questo: se ti accorgi di essere fuori finestra, fermati e chiediti perché stai entrando.']
-          : share >= 25 && outsidePnl > 0
-            ? ['Fuori finestra stai andando bene: forse vale la pena ripensare i tuoi orari invece di ignorarli.']
-            : undefined,
       trades: outside,
       openTitle: 'Trade fuori finestra',
     });
@@ -273,28 +230,27 @@ export function buildInsights(
   if (weekdayExtremes.best) {
     const { best, worst } = weekdayExtremes;
     const bestDay = WEEKDAYS[Number(best.key)];
-    const worstDay = worst ? WEEKDAYS[Number(worst.key)] : null;
 
     insights.push({
       id: 'weekday',
       topic: 'giorni',
       segments: [
-        'Il ',
+        'Giorno della settimana migliore: ',
         strong(bestDay),
-        ' è il tuo giorno migliore (',
+        ' (',
         moneyTone(best.pnl),
-        ` in ${plural(best.items.length, 'trade', 'trade')})`,
+        `, ${count(best.items.length)})`,
         ...(worst && worst.key !== best.key
-          ? [', mentre il ', strong(worstDay ?? ''), ' è il più difficile (', moneyTone(worst.pnl), ')']
+          ? [
+              '. Peggiore: ',
+              strong(WEEKDAYS[Number(worst.key)]),
+              ' (',
+              moneyTone(worst.pnl),
+              `, ${count(worst.items.length)})`,
+            ]
           : []),
         '.',
       ],
-      tip:
-        worst && worst.key !== best.key && worst.items.length >= MIN_TRADES_FOR_TIPS && worst.pnl < 0
-          ? [`Il ${worstDay} potresti viverlo con più calma: meno operazioni o rischio ridotto, finché non capisci cosa va storto.`]
-          : best.items.length >= MIN_TRADES_FOR_TIPS && best.pnl > 0
-            ? [`Se puoi scegliere, tieni le sessioni più importanti per il ${bestDay}: è quando rendi meglio.`]
-            : undefined,
       trades: best.items,
       openTitle: `Trade del ${bestDay}`,
     });
@@ -310,25 +266,21 @@ export function buildInsights(
 
   if (monthExtremes.best) {
     const { best, worst } = monthExtremes;
-    const hasWorst = Boolean(worst && worst.key !== best.key);
 
     insights.push({
       id: 'month',
       topic: 'mesi',
       segments: [
+        'Mese migliore: ',
         strong(capitalize(MONTHS[Number(best.key)])),
-        ' è stato il tuo mese migliore: ',
+        ' (',
         moneyTone(best.pnl),
-        ` con il ${number(best.winRate, 0)}% di operazioni vincenti`,
-        ...(hasWorst && worst
-          ? [', il più complicato ', strong(MONTHS[Number(worst.key)]), ' (', moneyTone(worst.pnl), ')']
+        `, win rate ${number(best.winRate, 0)}%)`,
+        ...(worst && worst.key !== best.key
+          ? ['. Peggiore: ', strong(capitalize(MONTHS[Number(worst.key)])), ' (', moneyTone(worst.pnl), ')']
           : []),
         '.',
       ],
-      tip:
-        hasWorst && worst && worst.pnl < 0
-          ? [`Guarda cosa è cambiato a ${MONTHS[Number(worst.key)]} (orari, setup, stato d’animo): le cause tendono a ripresentarsi.`]
-          : undefined,
       trades: best.items,
       openTitle: `Trade di ${MONTHS[Number(best.key)]}`,
     });
@@ -338,36 +290,22 @@ export function buildInsights(
   if (stats.longestWinStreak > 0 || stats.longestLoseStreak > 0) {
     const current =
       stats.streakType === 'winning'
-        ? [' In questo momento sei a ', strong(`${stats.currentStreak} win`), ' di fila.']
+        ? [' Serie in corso: ', strong(`${stats.currentStreak} win`), '.']
         : stats.streakType === 'losing'
-          ? [' In questo momento sei a ', strong(`${stats.currentStreak} loss`), ' di fila.']
+          ? [' Serie in corso: ', strong(`${stats.currentStreak} loss`), '.']
           : [];
-    const tips: string[] = [];
-
-    if (stats.streakType === 'losing' && stats.currentStreak >= 2) {
-      tips.push('Dopo due loss di fila rallenta: rivedi gli ultimi trade prima del prossimo ingresso.');
-    }
-
-    if (stats.streakType === 'winning' && stats.currentStreak >= 4) {
-      tips.push('Sei in un bel momento: stai attento a non alzare il rischio per eccesso di sicurezza.');
-    }
-
-    if (stats.longestLoseStreak >= 4) {
-      tips.push(`In passato hai incassato ${stats.longestLoseStreak} loss di fila: fissa in anticipo uno stop giornaliero o una pausa dopo 3 loss, così non decidi a caldo.`);
-    }
 
     insights.push({
       id: 'streak',
       topic: 'serie',
       segments: [
-        'La tua striscia più bella è di ',
+        'Serie massima: ',
         { text: `${stats.longestWinStreak} win`, tone: 'profit' },
-        ' di fila, la peggiore di ',
+        ' consecutive. Serie peggiore: ',
         { text: `${stats.longestLoseStreak} loss`, tone: 'loss' },
-        '.',
+        ' consecutive.',
         ...current,
       ],
-      tip: tips.length > 0 ? [tips.join(' ')] : undefined,
     });
   }
 
@@ -376,67 +314,44 @@ export function buildInsights(
 
   if (maxDrawdown !== null) {
     const drawdown = Math.abs(maxDrawdown);
-    const heavy = drawdown > 0 && totalPnl > 0 && drawdown / totalPnl > 0.5;
 
     insights.push({
       id: 'drawdown',
       topic: 'rischio',
       segments:
         drawdown === 0
-          ? ['Non hai mai ceduto terreno dal tuo massimo: ', strong('nessun drawdown'), ' finora.']
+          ? ['Drawdown massimo: ', strong('nessuno'), '.']
           : [
-              'Nel momento peggiore hai ceduto ',
+              'Drawdown massimo: ',
               { text: `${number(drawdown)} USD`, tone: 'loss' as const },
-              ' dal tuo massimo',
-              totalPnl > 0 ? `, il ${number((drawdown / totalPnl) * 100, 0)}% del profitto netto.` : '.',
+              totalPnl > 0 ? ` (${number((drawdown / totalPnl) * 100, 0)}% del profitto netto).` : '.',
             ],
-      tip: heavy
-        ? ['Il calo massimo pesa molto rispetto ai guadagni: controlla la dimensione delle posizioni e quanto rischi per trade.']
-        : drawdown === 0 && trades.length >= MIN_TRADES_FOR_TIPS
-          ? ['Ottimo controllo del rischio finora: tieni le stesse regole quando aumenti l’operatività.']
-          : undefined,
     });
   }
 
   if (stats.avgWin > 0 && stats.avgLoss > 0) {
-    const ratio = stats.avgWin / stats.avgLoss;
-    const breakEvenWinRate = (1 / (1 + ratio)) * 100;
-    let tip: string | undefined;
-
-    if (trades.length >= MIN_TRADES_FOR_TIPS) {
-      if (ratio < 1) {
-        tip = 'Le perdite pesano più dei guadagni: prova a tagliare prima i trade sbagliati o a lasciar correre di più quelli giusti.';
-      } else if (stats.winRate >= breakEvenWinRate) {
-        tip = `Con questo rapporto ti basta vincere il ${number(breakEvenWinRate, 0)}% delle volte per andare in pari: tu sei al ${number(stats.winRate, 0)}%, quindi hai un buon margine.`;
-      } else {
-        tip = `Con questo rapporto ti serve vincere almeno il ${number(breakEvenWinRate, 0)}% delle volte: tu sei al ${number(stats.winRate, 0)}%, quindi lavora su uscite e dimensione dei trade.`;
-      }
-    }
-
     insights.push({
       id: 'average',
       topic: 'rischio',
       segments: [
-        'In media vinci ',
+        'Media win: ',
         { text: `${number(stats.avgWin)} USD`, tone: 'profit' },
-        ' e perdi ',
+        '. Media loss: ',
         { text: `${number(stats.avgLoss)} USD`, tone: 'loss' },
-        ': per ogni dollaro che rischi ne porti a casa circa ',
-        strong(number(ratio)),
+        '. Rapporto media win / media loss: ',
+        strong(number(stats.avgWin / stats.avgLoss)),
         '.',
       ],
-      tip: tip ? [tip] : undefined,
     });
-  } else if (stats.avgWin > 0 && stats.avgLoss === 0) {
+  } else if (stats.avgWin > 0) {
     insights.push({
       id: 'average',
       topic: 'rischio',
       segments: [
-        'Non hai ancora registrato perdite: ogni vittoria ti porta in media ',
+        'Media win: ',
         { text: `${number(stats.avgWin)} USD`, tone: 'profit' },
-        '.',
+        '. Nessuna perdita registrata.',
       ],
-      tip: ['Quando arriverà la prima perdita sarà il test vero: decidi ora come la gestirai, così non improvvisi.'],
     });
   }
 
@@ -445,14 +360,10 @@ export function buildInsights(
       id: 'concentration',
       topic: 'rischio',
       segments: [
-        'Il ',
+        'Il giorno migliore vale il ',
         strong(`${number(stats.bestDayPercentOfGross, 0)}%`),
-        ' dei tuoi profitti lordi arriva da un solo giorno.',
+        ' dei profitti lordi.',
       ],
-      tip:
-        stats.bestDayPercentOfGross >= 50 && stats.tradingDays >= 3
-          ? ['I risultati dipendono da pochi giorni: puntare sulla costanza ti rende più solido (e molte prop firm hanno regole di consistenza simili).']
-          : undefined,
     });
   }
 
@@ -464,27 +375,18 @@ export function buildInsights(
     const longPnl = sum(longs);
     const shortPnl = sum(shorts);
     const weaker = longPnl < shortPnl ? 'long' : 'short';
-    const weakerTrades = weaker === 'long' ? longs : shorts;
-    const weakerPnl = Math.min(longPnl, shortPnl);
-    const dominant = Math.max(longs.length, shorts.length) / trades.length;
 
     insights.push({
       id: 'direction',
       topic: 'direzione',
       segments: [
-        `Hai fatto ${plural(longs.length, 'long', 'long')} (`,
+        `Long: ${count(longs.length)} (`,
         moneyTone(longPnl),
-        `) e ${plural(shorts.length, 'short', 'short')} (`,
+        `). Short: ${count(shorts.length)} (`,
         moneyTone(shortPnl),
         ').',
       ],
-      tip:
-        weakerTrades.length >= MIN_TRADES_FOR_TIPS && weakerPnl < 0
-          ? [`Gli ${weaker === 'short' ? 'short' : 'long'} ti stanno pesando: prova a prenderli solo con conferme più forti.`]
-          : trades.length >= MIN_TRADES_FOR_TIPS && dominant >= 0.75
-            ? ['Operi quasi solo da un lato: non è un problema in sé, ma controlla di non perdere occasioni dall’altra parte.']
-            : undefined,
-      trades: weakerTrades,
+      trades: weaker === 'long' ? longs : shorts,
       openTitle: `Trade ${weaker}`,
     });
   }
