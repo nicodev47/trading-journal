@@ -18,8 +18,9 @@ import { cn } from '@/lib/utils';
 import { TradingCalendar } from '@/components/trading-journal/trading-calendar';
 import { DailyAnalysisDialog } from './daily-analysis-dialog';
 
-const LEVEL_CLASSES = ['bg-white/[0.06]', 'bg-profit/30', 'bg-profit/60', 'bg-profit'];
-const ACTIVITY_LABEL = ['nessuna attività', 'caso studio', 'giornata in loss', 'trade preso'];
+// Two states only: something was entered that day (green) or nothing (off).
+const LEVEL_CLASSES = ['bg-white/[0.06]', 'bg-profit', 'bg-profit', 'bg-profit'];
+const ACTIVITY_LABEL = ['niente', 'caso studio', 'trade (loss)', 'trade'];
 const MONTH_LABELS = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
 
 interface ProgressTrackerPageProps {
@@ -131,7 +132,7 @@ export function ProgressTrackerPage({
           <div>
             <h2 className="font-sans text-[15px] font-semibold tracking-tight">Costanza</h2>
             <p className="font-sans text-xs text-muted-foreground">
-              Verde acceso: giorno con un trade. Meno acceso: giorno in loss. Più tenue: caso studio.
+              Verde: giorno in cui hai inserito qualcosa (un trade o un caso studio). Spento: niente.
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -191,10 +192,8 @@ export function ProgressTrackerPage({
           <span className="font-sans text-xs text-muted-foreground">{hoveredText}</span>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 font-sans text-[11px] text-muted-foreground">
             {[
-              ['Nessuna attività', 0],
-              ['Caso studio', 1],
-              ['Loss', 2],
-              ['Trade', 3],
+              ['Niente', 0],
+              ['Attività inserita', 3],
             ].map(([label, level]) => (
               <span key={label} className="flex items-center gap-1.5">
                 <span className={cn('size-[14px] rounded-[3px]', LEVEL_CLASSES[level as number])} />
