@@ -3,6 +3,7 @@ import type {
   JournalWorkspaceMeta,
 } from '@/hooks/use-trades';
 import type { JournalState, Trade } from './types/trade';
+import type { PropAccount } from './propfirm/types';
 
 export const JOURNAL_EXPORT_FORMAT_VERSION = 1;
 
@@ -24,6 +25,8 @@ export interface FullJournalBackup {
   exportMetadata: JournalExportMetadata;
   workspaces: Partial<Record<JournalWorkspace, JournalState>>;
   workspaceOptions: JournalWorkspaceMeta[];
+  /** Prop firm simulator accounts, when the backup includes them. */
+  propAccounts?: PropAccount[];
 }
 
 export type ParsedJournalExport =
@@ -128,7 +131,8 @@ export function createWorkspaceExportData(
 export function createFullBackupExportData(
   workspaces: Partial<Record<JournalWorkspace, JournalState>>,
   workspaceOptions: JournalWorkspaceMeta[],
-  exportedAt = new Date()
+  exportedAt = new Date(),
+  propAccounts: PropAccount[] = []
 ): string {
   const includedWorkspaceIds = new Set(Object.keys(workspaces));
   const payload: FullJournalBackup = {
@@ -141,6 +145,7 @@ export function createFullBackupExportData(
     workspaceOptions: workspaceOptions.filter((workspace) =>
       includedWorkspaceIds.has(workspace.id)
     ),
+    ...(propAccounts.length > 0 ? { propAccounts } : {}),
   };
 
   return JSON.stringify(payload, null, 2);
@@ -191,6 +196,9 @@ export function parseJournalExport(jsonString: string): ParsedJournalExport | nu
         exportMetadata: metadata as unknown as JournalExportMetadata,
         workspaces,
         workspaceOptions,
+        propAccounts: Array.isArray(parsed.propAccounts)
+          ? (parsed.propAccounts.filter(isRecord) as unknown as PropAccount[])
+          : [],
       },
     };
   } catch {

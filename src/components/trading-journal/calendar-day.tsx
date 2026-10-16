@@ -1,6 +1,7 @@
 'use client';
 
 import { type KeyboardEvent as ReactKeyboardEvent } from 'react';
+import { BookOpen, CircleSlash, Eye, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   CUSTOM_TAG_PREFIX,
@@ -9,6 +10,15 @@ import {
   type Trade,
 } from '@/lib/types/trade';
 import { useStreamerMode } from '@/contexts/streamer-mode-context';
+
+export interface AnalysisCell {
+  /** 0–4 parts of the daily analysis that are filled in. */
+  level: number;
+  analysis: boolean;
+  observations: boolean;
+  missed: number;
+  cases: number;
+}
 
 interface CalendarDayProps {
   date: Date;
@@ -19,8 +29,18 @@ interface CalendarDayProps {
   maxPnl: number;
   minPnl: number;
   bankHoliday?: boolean;
+  /** Progress Tracker mode: show the daily analysis instead of the P&L. */
+  analysis?: AnalysisCell;
   onClick: () => void;
 }
+
+const getAnalysisStyle = (level: number) =>
+  level > 0
+    ? {
+        backgroundColor: `rgba(52, 210, 123, ${0.05 + level * 0.06})`,
+        boxShadow: `inset 0 0 0 1px rgba(52, 210, 123, ${0.1 + level * 0.06})`,
+      }
+    : undefined;
 
 const SETUP_LABELS: Record<string, string> = {
   Continuation: 'Cont',
@@ -90,6 +110,7 @@ export function CalendarDay({
   maxPnl,
   minPnl,
   bankHoliday = false,
+  analysis,
   onClick,
 }: CalendarDayProps) {
   const { streamerMode, showCalendarSetup, showCalendarTags } =
@@ -206,7 +227,7 @@ export function CalendarDay({
         'group relative flex h-[78px] w-full min-w-0 cursor-pointer flex-col bg-background p-1 pb-4 text-left transition-colors hover:bg-secondary/30 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring min-[380px]:h-[84px] min-[380px]:p-1.5 min-[380px]:pb-4 sm:h-[92px] sm:p-2 sm:pb-5 md:h-[106px] md:p-2.5 md:pb-6',
         isToday && 'ring-1 ring-inset ring-white/35'
       )}
-      style={getBackgroundStyle()}
+      style={analysis ? getAnalysisStyle(analysis.level) : getBackgroundStyle()}
     >
       <div className="flex h-full w-full min-w-0 flex-col gap-1 sm:gap-1.5">
         <span
@@ -218,7 +239,22 @@ export function CalendarDay({
           {date.getDate()}
         </span>
 
-        {hasTrades && (
+        {analysis && (
+          <span className="mt-auto flex items-center gap-1 text-muted-foreground sm:gap-1.5">
+            <FileText className={cn('size-3 sm:size-3.5', analysis.analysis && 'text-profit')} />
+            <Eye className={cn('size-3 sm:size-3.5', analysis.observations && 'text-profit')} />
+            <span className={cn('flex items-center gap-0.5 font-sans text-[9px] tabular-nums sm:text-[10px]', analysis.missed > 0 && 'text-profit')}>
+              <CircleSlash className="size-3 sm:size-3.5" />
+              {analysis.missed > 0 && analysis.missed}
+            </span>
+            <span className={cn('flex items-center gap-0.5 font-sans text-[9px] tabular-nums sm:text-[10px]', analysis.cases > 0 && 'text-profit')}>
+              <BookOpen className="size-3 sm:size-3.5" />
+              {analysis.cases > 0 && analysis.cases}
+            </span>
+          </span>
+        )}
+
+        {!analysis && hasTrades && (
           <>
             <span
               className={cn(
@@ -286,7 +322,7 @@ export function CalendarDay({
         </div>
       )}
 
-      {hasTrades && (
+      {!analysis && hasTrades && (
         <span
           className="absolute bottom-1 left-1 font-sans tabular-nums text-[8px] leading-none text-muted-foreground min-[380px]:bottom-1.5 min-[380px]:left-1.5 min-[380px]:text-[9px] sm:bottom-2 sm:left-2 sm:text-[10px] md:bottom-2.5 md:left-2.5 md:text-xs"
         >

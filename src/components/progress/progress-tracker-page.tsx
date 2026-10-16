@@ -1,9 +1,8 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { BookOpen, ChevronLeft, ChevronRight, CircleSlash, Eye, FileText } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useStreamerMode } from '@/contexts/streamer-mode-context';
 import {
   MAX_LEVEL,
   buildHeatmap,
@@ -14,6 +13,7 @@ import {
 } from '@/lib/progress-tracker';
 import type { DailyAnalysis, MissedTrade, Trade } from '@/lib/types/trade';
 import { cn } from '@/lib/utils';
+import { TradingCalendar } from '@/components/trading-journal/trading-calendar';
 import { DailyAnalysisDialog } from './daily-analysis-dialog';
 
 const LEVEL_CLASSES = [
@@ -24,10 +24,6 @@ const LEVEL_CLASSES = [
   'bg-profit',
 ];
 const MONTH_LABELS = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
-const MONTH_NAMES = [
-  'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
-  'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre',
-];
 
 interface ProgressTrackerPageProps {
   trades: Trade[];
@@ -60,10 +56,8 @@ export function ProgressTrackerPage({
   onUpdateMissed,
   onDeleteMissed,
 }: ProgressTrackerPageProps) {
-  const { sundayWeekStart } = useStreamerMode();
   const today = useMemo(() => new Date(), []);
   const [year, setYear] = useState(today.getFullYear());
-  const [month, setMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [hovered, setHovered] = useState<string | null>(null);
 
@@ -117,22 +111,6 @@ export function ProgressTrackerPage({
       })}: ${hoveredCell.level === 0 ? 'nessuna analisi' : `${hoveredCell.level} di ${MAX_LEVEL} parti compilate`}`
     : 'Passa sopra un giorno per vedere i dettagli, clicca per aprirlo.';
 
-  // Month grid
-  const firstOfMonth = new Date(month.getFullYear(), month.getMonth(), 1, 12);
-  const offset = sundayWeekStart ? firstOfMonth.getDay() : (firstOfMonth.getDay() + 6) % 7;
-  const daysInMonth = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
-  const cells: (string | null)[] = [
-    ...Array.from({ length: offset }, () => null),
-    ...Array.from({ length: daysInMonth }, (_, index) =>
-      toDateKey(new Date(month.getFullYear(), month.getMonth(), index + 1, 12))
-    ),
-  ];
-
-  while (cells.length % 7 !== 0) cells.push(null);
-
-  const weekdayLabels = sundayWeekStart
-    ? ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab']
-    : ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
   const todayKey = toDateKey(today);
 
   return (
@@ -233,96 +211,31 @@ export function ProgressTrackerPage({
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-border bg-card">
-        <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3.5 sm:px-5">
-          <h2 className="font-sans text-[15px] font-semibold tracking-tight">Calendario delle analisi</h2>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              className="size-8"
-              onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}
-            >
-              <ChevronLeft className="size-4" />
-            </Button>
-            <span className="min-w-32 text-center font-sans text-sm font-semibold">
-              {MONTH_NAMES[month.getMonth()]} {month.getFullYear()}
-            </span>
-            <Button
-              variant="outline"
-              size="icon"
-              className="size-8"
-              onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}
-            >
-              <ChevronRight className="size-4" />
-            </Button>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-7 gap-px bg-border">
-          {weekdayLabels.map(label => (
-            <div key={label} className="bg-card px-2 py-2 font-sans text-[11px] font-semibold text-muted-foreground">
-              {label}
-            </div>
-          ))}
-          {cells.map((date, index) => {
-            if (!date) return <div key={`empty-${index}`} className="min-h-[72px] bg-background/60 md:min-h-[84px]" />;
-
+      <TradingCalendar
+        readOnly
+        trades={trades}
+        weeklyPlans={[]}
+        activeWorkspace="personal"
+        onResetStudentJournal={() => {}}
+        onDayClick={setSelectedDate}
+        onWeekPlanClick={() => {}}
+        onImport={() => {}}
+        onExport={() => {}}
+        analysisMode={{
+          title: 'Calendario delle analisi',
+          getCell: date => {
             const entry = entryByDate.get(date);
-            const missed = missedByDate.get(date)?.length ?? 0;
-            const level = levels.get(date) ?? 0;
-            const traded = (tradesByDate.get(date)?.length ?? 0) > 0;
 
-            return (
-              <button
-                key={date}
-                type="button"
-                onClick={() => setSelectedDate(date)}
-                className={cn(
-                  'relative flex min-h-[72px] flex-col items-start justify-between gap-2 bg-background p-2 text-left outline-none transition-colors hover:bg-secondary/30 focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring md:min-h-[84px] md:p-2.5',
-                  date === todayKey && 'ring-1 ring-inset ring-white/35'
-                )}
-              >
-                {level > 0 && (
-                  <span
-                    aria-hidden="true"
-                    className={cn('pointer-events-none absolute inset-0', LEVEL_CLASSES[level], 'opacity-30')}
-                  />
-                )}
-                <span className="relative flex w-full items-center justify-between">
-                  <span className="font-sans text-sm font-semibold">{Number(date.slice(8))}</span>
-                  {traded && <span className="size-1.5 rounded-full bg-muted-foreground" />}
-                </span>
-                <span className="relative flex items-center gap-1.5 text-muted-foreground">
-                  <FileText className={cn('size-3', entry?.analysis.trim() && 'text-profit')} />
-                  <Eye className={cn('size-3', entry?.observations.trim() && 'text-profit')} />
-                  <span className={cn('flex items-center gap-0.5 font-sans text-[10px] tabular-nums', missed > 0 && 'text-profit')}>
-                    <CircleSlash className="size-3" />
-                    {missed > 0 && missed}
-                  </span>
-                  <span
-                    className={cn(
-                      'flex items-center gap-0.5 font-sans text-[10px] tabular-nums',
-                      (entry?.caseStudies.length ?? 0) > 0 && 'text-profit'
-                    )}
-                  >
-                    <BookOpen className="size-3" />
-                    {(entry?.caseStudies.length ?? 0) > 0 && entry?.caseStudies.length}
-                  </span>
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-border px-4 py-3 font-sans text-[11px] text-muted-foreground sm:px-5">
-          <span className="flex items-center gap-1.5"><FileText className="size-3" /> Analisi</span>
-          <span className="flex items-center gap-1.5"><Eye className="size-3" /> Cosa ho visto</span>
-          <span className="flex items-center gap-1.5"><CircleSlash className="size-3" /> Operazioni mancate</span>
-          <span className="flex items-center gap-1.5"><BookOpen className="size-3" /> Casi studio</span>
-          <span className="flex items-center gap-1.5"><span className="size-1.5 rounded-full bg-muted-foreground" /> Giorno operativo</span>
-        </div>
-      </div>
+            return {
+              level: levels.get(date) ?? 0,
+              analysis: Boolean(entry?.analysis.trim()),
+              observations: Boolean(entry?.observations.trim()),
+              missed: missedByDate.get(date)?.length ?? 0,
+              cases: entry?.caseStudies.length ?? 0,
+            };
+          },
+        }}
+      />
 
       {selectedDate && (
         <DailyAnalysisDialog

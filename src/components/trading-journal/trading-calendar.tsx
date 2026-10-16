@@ -9,7 +9,8 @@ import {
   Download,
   RotateCcw,
 } from 'lucide-react';
-import { CalendarDay } from './calendar-day';
+import { BookOpen, CircleSlash, Eye, FileText } from 'lucide-react';
+import { CalendarDay, type AnalysisCell } from './calendar-day';
 import { isUsBankHoliday } from '@/lib/bank-holidays';
 import { WeekSummary } from './week-summary';
 import { MonthYearPicker } from './month-year-picker';
@@ -47,6 +48,11 @@ interface TradingCalendarProps {
   tutorialDemoDateKey?: string;
   /** Hides import and reset (export stays): used by the import preview. */
   readOnly?: boolean;
+  /** Progress Tracker mode: same calendar, showing the daily analyses. */
+  analysisMode?: {
+    title: string;
+    getCell: (dateKey: string) => AnalysisCell;
+  };
 }
 
 const WEEKDAYS = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
@@ -104,6 +110,7 @@ export function TradingCalendar({
   importTargetMonth,
   tutorialDemoDateKey,
   readOnly = false,
+  analysisMode,
 }: TradingCalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const { sundayWeekStart, showZeroPnlTradesInCalendar } = useStreamerMode();
@@ -217,7 +224,7 @@ export function TradingCalendar({
           data-tutorial="workspace-tabs"
         >
           <h2 className="mr-1 font-sans text-[15px] font-semibold tracking-[-0.03em] text-foreground max-md:w-full">
-            Calendario P/L
+            {analysisMode?.title ?? 'Calendario P/L'}
           </h2>
 
           {!readOnly && activeWorkspace === 'backtest' && showResetButton && (
@@ -279,7 +286,7 @@ export function TradingCalendar({
           </Button>
         </div>
 
-        {(
+        {!analysisMode && (
           <div
             className="flex items-center gap-2 max-md:w-full"
             data-tutorial="import-export-buttons"
@@ -355,6 +362,7 @@ export function TradingCalendar({
                     maxPnl={maxPnl}
                     minPnl={minPnl}
                     bankHoliday={isUsBankHoliday(dateKey)}
+                    analysis={isDayCurrentMonth ? analysisMode?.getCell(dateKey) : undefined}
                     onClick={() => {
                       if (!isDayCurrentMonth) return;
 
@@ -368,6 +376,15 @@ export function TradingCalendar({
                 <WeekSummary
                   totalPnl={weekData[weekIndex].totalPnl}
                   tradeCount={weekData[weekIndex].tradeCount}
+                  analysisDays={
+                    analysisMode
+                      ? week.filter(
+                          day =>
+                            checkCurrentMonth(day, currentMonth) &&
+                            analysisMode.getCell(getDateKey(day)).level > 0
+                        ).length
+                      : undefined
+                  }
                 />
               </div>
             </div>
@@ -375,6 +392,15 @@ export function TradingCalendar({
         </div>
       </div>
 
+      {analysisMode ? (
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-border px-3 py-2 font-sans text-xs font-medium text-muted-foreground max-md:gap-x-3 max-md:text-[11px]">
+          <span className="flex items-center gap-1.5"><FileText className="size-3" /> Analisi</span>
+          <span className="flex items-center gap-1.5"><Eye className="size-3" /> Cosa ho visto</span>
+          <span className="flex items-center gap-1.5"><CircleSlash className="size-3" /> Operazioni mancate</span>
+          <span className="flex items-center gap-1.5"><BookOpen className="size-3" /> Casi studio</span>
+          <span>— più il verde è intenso, più parti hai compilato</span>
+        </div>
+      ) : (
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-border px-3 py-2 max-md:gap-x-3 max-md:px-3 max-md:text-[11px]">
         <div className="flex items-center gap-2">
           <div className="size-3 rounded-sm bg-muted" />
@@ -401,6 +427,7 @@ export function TradingCalendar({
           — l’intensità scala in base ai tuoi giorni migliori/peggiori
         </span>
       </div>
+      )}
     </div>
   );
 }

@@ -6,9 +6,11 @@ import { useStreamerMode } from '@/contexts/streamer-mode-context';
 interface WeekSummaryProps {
   totalPnl: number;
   tradeCount: number;
+  /** Progress Tracker mode: days with an analysis this week. */
+  analysisDays?: number;
 }
 
-export function WeekSummary({ totalPnl, tradeCount }: WeekSummaryProps) {
+export function WeekSummary({ totalPnl, tradeCount, analysisDays }: WeekSummaryProps) {
   const { streamerMode } = useStreamerMode();
   const fullPnl = `${totalPnl.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`;
   const compactPnl = (() => {
@@ -18,6 +20,26 @@ export function WeekSummary({ totalPnl, tradeCount }: WeekSummaryProps) {
     if (abs >= 1000) return `${sign}${(abs / 1000).toLocaleString('it-IT', { maximumFractionDigits: 1 })}k`;
     return `${totalPnl.toLocaleString('it-IT', { maximumFractionDigits: 0 })}`;
   })();
+
+  if (analysisDays !== undefined) {
+    return (
+      <div className="flex h-full min-h-[92px] w-full min-w-0 flex-col items-end justify-center gap-1 bg-background p-2 md:min-h-[106px] md:gap-1.5 md:p-3">
+        <span className="font-sans tabular-nums text-[8px] font-medium tracking-normal text-muted-foreground sm:text-[10px] md:text-xs">
+          SETT
+        </span>
+        <div className="flex flex-col items-end">
+          <span
+            className={cn(
+              'font-sans text-[9px] font-semibold leading-tight tabular-nums tracking-tight sm:text-[11px] md:text-base',
+              analysisDays > 0 ? 'text-profit' : 'text-muted-foreground'
+            )}
+          >
+            {analysisDays} {analysisDays === 1 ? 'analisi' : 'analisi'}
+          </span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-full min-h-[92px] w-full min-w-0 flex-col items-end justify-center gap-1 bg-background p-2 md:min-h-[106px] md:gap-1.5 md:p-3">
