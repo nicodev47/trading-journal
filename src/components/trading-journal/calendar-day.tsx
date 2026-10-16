@@ -305,7 +305,7 @@ export function CalendarDay({
                     aria-label="Eseguito su questa prop"
                     style={{ zIndex: propMarkers.length - index }}
                     className={cn(
-                      'relative flex size-5 items-center justify-center overflow-hidden rounded-full border bg-gradient-to-b font-sans text-[8px] font-bold leading-none text-white ring-2 ring-background min-[380px]:size-6 sm:size-7 sm:text-[10px] md:size-8',
+                      'relative flex size-5 items-center justify-center overflow-hidden rounded-full bg-gradient-to-b font-sans text-[8px] font-bold leading-none text-white min-[380px]:size-6 sm:size-7 sm:text-[10px] md:size-8',
                       item.tile
                     )}
                   >
@@ -326,7 +326,7 @@ export function CalendarDay({
                 {propMarkers.length > 4 && (
                   <span
                     style={{ zIndex: 0 }}
-                    className="relative flex size-5 items-center justify-center rounded-full border border-border bg-secondary font-sans text-[8px] font-semibold text-muted-foreground ring-2 ring-background min-[380px]:size-6 sm:size-7 sm:text-[10px] md:size-8"
+                    className="relative flex size-5 items-center justify-center rounded-full bg-secondary font-sans text-[8px] font-semibold text-muted-foreground min-[380px]:size-6 sm:size-7 sm:text-[10px] md:size-8"
                   >
                     +{propMarkers.length - 4}
                   </span>
