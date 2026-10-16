@@ -172,8 +172,8 @@ export function ShareCardFooter({
 }) {
   return (
     <footer className="mt-auto flex items-center pt-8 justify-between gap-6">
-      <div className="flex items-center gap-4">
-        <div className="flex size-16 items-center justify-center overflow-hidden rounded-full bg-white/10 text-[24px] font-semibold text-white">
+      <div className="flex min-w-0 items-center gap-4">
+        <div className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/10 text-[24px] font-semibold text-white">
           {avatar}
         </div>
         {typeof caption === 'string' || !caption ? (
@@ -184,7 +184,7 @@ export function ShareCardFooter({
             )}
           </div>
         ) : (
-          <div className="flex min-w-0 items-center gap-3 text-[22px] font-semibold text-white">
+          <div className="flex min-w-0 flex-nowrap items-center gap-3 overflow-hidden whitespace-nowrap text-[22px] font-semibold text-white">
             <span className="shrink-0">{name}</span>
             {caption}
           </div>

@@ -119,8 +119,8 @@ export function TradeShareCard({
         name={identity?.displayName ?? 'EclipseJournal'}
         caption={
           firms.length > 0 ? (
-            <span className="flex min-w-0 items-center gap-3 text-white/55">
-              <span className="font-medium">x</span>
+            <span className="flex min-w-0 items-center gap-3 whitespace-nowrap">
+              <span>x</span>
               <span className="flex shrink-0 items-center -space-x-2.5">
                 {firms.map(firm => (
                   <FirmMark key={firm.id} firm={firm} className="size-9 rounded-full" />
