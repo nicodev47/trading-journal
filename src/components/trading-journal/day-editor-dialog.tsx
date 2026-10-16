@@ -1319,7 +1319,7 @@ export function DayEditorDialog({
                     </div>
 
                     <p className="text-[11px] text-muted-foreground">
-                      Senza link, “Aggiungi” carica un’immagine dal computer (PNG, JPG o WebP). Puoi anche incollarla (Cmd/Ctrl+V) o trascinarla qui: viene ridimensionata e salvata nel browser.
+                      Senza link, “Aggiungi” carica un’immagine dal computer (PNG, JPG o WebP). Puoi anche incollarla (Cmd/Ctrl+V) o trascinarla qui: viene salvata nel browser in qualità originale.
                     </p>
 
                     {screenshotInputs[row.id]?.url?.trim() && (

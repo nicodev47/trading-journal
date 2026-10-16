@@ -1,6 +1,9 @@
 export const MAX_IMAGES_PER_TRADE = 5;
-export const MAX_IMAGE_SIDE = 1600;
-export const IMAGE_QUALITY = 0.8;
+/** Charts need their thin lines and small text: keep the full size up to this side. */
+export const MAX_IMAGE_SIDE = 3200;
+export const IMAGE_QUALITY = 0.95;
+/** Images up to this size are stored exactly as they were uploaded. */
+export const KEEP_ORIGINAL_BYTES = 600 * 1024;
 /** Files larger than this are refused before even trying to compress them. */
 export const MAX_SOURCE_BYTES = 15 * 1024 * 1024;
 
@@ -38,7 +41,23 @@ const loadImage = (file: File) =>
     image.src = url;
   });
 
-/** Resizes and compresses an image file into a JPEG data URL. */
+const readAsDataUrl = (file: File) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(new Error('Immagine non leggibile'));
+    reader.readAsDataURL(file);
+  });
+
+const canvasToBlob = (canvas: HTMLCanvasElement, type: string, quality: number) =>
+  new Promise<Blob | null>(resolve => canvas.toBlob(resolve, type, quality));
+
+/**
+ * Turns an image file into a data URL without visible loss: small files are kept
+ * untouched, bigger ones keep their full size (up to 3200px) and are re-encoded at
+ * very high quality (WebP, or JPEG where the browser cannot write WebP).
+ */
 export async function fileToCompressedDataUrl(file: File): Promise<string> {
   if (!file.type.startsWith('image/')) {
     throw new Error('Il file non è un’immagine');
@@ -47,6 +66,8 @@ export async function fileToCompressedDataUrl(file: File): Promise<string> {
   if (file.size > MAX_SOURCE_BYTES) {
     throw new Error('Immagine troppo grande (massimo 15 MB)');
   }
+
+  if (file.size <= KEEP_ORIGINAL_BYTES) return readAsDataUrl(file);
 
   const image = await loadImage(file);
   const { width, height } = fitWithin(image.naturalWidth, image.naturalHeight);
@@ -59,12 +80,19 @@ export async function fileToCompressedDataUrl(file: File): Promise<string> {
 
   if (!context) throw new Error('Impossibile elaborare l’immagine');
 
-  // JPEG has no transparency: paint a dark background under transparent PNGs.
+  // Neither WebP-as-JPEG fallback nor JPEG has transparency: paint a dark background.
   context.fillStyle = '#0a0a0b';
   context.fillRect(0, 0, width, height);
   context.drawImage(image, 0, 0, width, height);
 
-  return canvas.toDataURL('image/jpeg', IMAGE_QUALITY);
+  const webp = await canvasToBlob(canvas, 'image/webp', IMAGE_QUALITY);
+  const blob =
+    webp && webp.type === 'image/webp' ? webp : await canvasToBlob(canvas, 'image/jpeg', IMAGE_QUALITY);
+
+  // Never end up bigger than the file the user gave us.
+  if (!blob || blob.size >= file.size) return readAsDataUrl(file);
+
+  return readAsDataUrl(new File([blob], 'image', { type: blob.type }));
 }
 
 /** Browsers block navigating to data: URLs, so open those through a blob URL. */

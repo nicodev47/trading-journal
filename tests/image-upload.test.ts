@@ -7,7 +7,8 @@ test('un’immagine piccola non viene ridimensionata', () => {
 });
 
 test('il lato più lungo viene portato al massimo mantenendo le proporzioni', () => {
-  assert.deepEqual(fitWithin(3200, 1600), { width: 1600, height: 800 });
+  assert.deepEqual(fitWithin(6400, 3200), { width: 3200, height: 1600 });
+  assert.deepEqual(fitWithin(3200, 1600, 1600), { width: 1600, height: 800 });
   assert.deepEqual(fitWithin(1000, 4000, 1600), { width: 400, height: 1600 });
 });
 
