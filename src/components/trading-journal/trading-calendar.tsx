@@ -404,7 +404,7 @@ export function TradingCalendar({
             <span className="size-2 rounded-full bg-white" />
             Analisi inserita qui
           </span>
-          <span>— più il verde è intenso, più parti hai compilato</span>
+          <span>— il colore è il P&L del giorno, come nella dashboard</span>
         </div>
       ) : (
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-border px-3 py-2 max-md:gap-x-3 max-md:px-3 max-md:text-[11px]">

@@ -33,14 +33,6 @@ interface CalendarDayProps {
   onClick: () => void;
 }
 
-const getAnalysisStyle = (level: number) =>
-  level > 0
-    ? {
-        backgroundColor: `rgba(52, 210, 123, ${0.05 + level * 0.06})`,
-        boxShadow: `inset 0 0 0 1px rgba(52, 210, 123, ${0.1 + level * 0.06})`,
-      }
-    : undefined;
-
 const SETUP_LABELS: Record<string, string> = {
   Continuation: 'Cont',
   'Reversal Sequence': 'Rev.Seq',
@@ -226,7 +218,7 @@ export function CalendarDay({
         'group relative flex h-[78px] w-full min-w-0 cursor-pointer flex-col bg-background p-1 pb-4 text-left transition-colors hover:bg-secondary/30 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring min-[380px]:h-[84px] min-[380px]:p-1.5 min-[380px]:pb-4 sm:h-[92px] sm:p-2 sm:pb-5 md:h-[106px] md:p-2.5 md:pb-6',
         isToday && 'ring-1 ring-inset ring-white/35'
       )}
-      style={analysis ? getAnalysisStyle(analysis.level) : getBackgroundStyle()}
+      style={getBackgroundStyle()}
     >
       <div className="flex h-full w-full min-w-0 flex-col gap-1 sm:gap-1.5">
         <span
@@ -238,42 +230,7 @@ export function CalendarDay({
           {date.getDate()}
         </span>
 
-        {analysis && (
-          <span className="mt-auto flex flex-wrap items-center gap-1 sm:gap-1.5">
-            {analysis.props.map(item => (
-              <span
-                key={item.id}
-                aria-label="Eseguito su questa prop"
-                className={cn(
-                  'relative flex size-4 items-center justify-center rounded-[5px] border bg-gradient-to-b font-sans text-[7px] font-bold leading-none text-white sm:size-[18px] sm:text-[8px]',
-                  item.tile
-                )}
-              >
-                {item.logo ? (
-                  <img
-                    src={item.logo}
-                    alt=""
-                    className={cn(
-                      'size-full rounded-[4px]',
-                      item.logoOnDark ? 'bg-[#0b0b0d] object-contain p-[2px]' : 'object-cover'
-                    )}
-                  />
-                ) : (
-                  item.initials
-                )}
-                <span className="absolute -right-[3px] -top-[3px] size-[7px] rounded-full bg-profit ring-1 ring-background" />
-              </span>
-            ))}
-            {analysis.manual && (
-              <span
-                aria-label="Analisi inserita qui"
-                className="size-[7px] rounded-full bg-white sm:size-2"
-              />
-            )}
-          </span>
-        )}
-
-        {!analysis && hasTrades && (
+        {hasTrades && (
           <>
             <span
               className={cn(
@@ -323,9 +280,45 @@ export function CalendarDay({
               </div>
             )}
 
-            <span className="mt-auto" aria-hidden="true" />
+            {!analysis && <span className="mt-auto" aria-hidden="true" />}
           </>
         )}
+
+        {analysis && (
+          <span className="mt-auto flex flex-wrap items-center gap-1 self-end sm:gap-1.5">
+            {analysis.props.map(item => (
+              <span
+                key={item.id}
+                aria-label="Eseguito su questa prop"
+                className={cn(
+                  'relative flex size-4 items-center justify-center rounded-[5px] border bg-gradient-to-b font-sans text-[7px] font-bold leading-none text-white sm:size-[18px] sm:text-[8px]',
+                  item.tile
+                )}
+              >
+                {item.logo ? (
+                  <img
+                    src={item.logo}
+                    alt=""
+                    className={cn(
+                      'size-full rounded-[4px]',
+                      item.logoOnDark ? 'bg-[#0b0b0d] object-contain p-[2px]' : 'object-cover'
+                    )}
+                  />
+                ) : (
+                  item.initials
+                )}
+                <span className="absolute -right-[3px] -top-[3px] size-[7px] rounded-full bg-profit ring-1 ring-background" />
+              </span>
+            ))}
+            {analysis.manual && (
+              <span
+                aria-label="Analisi inserita qui"
+                className="size-[7px] rounded-full bg-white sm:size-2"
+              />
+            )}
+          </span>
+        )}
+
       </div>
 
       {bankHoliday && (
@@ -341,7 +334,7 @@ export function CalendarDay({
         </div>
       )}
 
-      {!analysis && hasTrades && (
+      {hasTrades && (
         <span
           className="absolute bottom-1 left-1 font-sans tabular-nums text-[8px] leading-none text-muted-foreground min-[380px]:bottom-1.5 min-[380px]:left-1.5 min-[380px]:text-[9px] sm:bottom-2 sm:left-2 sm:text-[10px] md:bottom-2.5 md:left-2.5 md:text-xs"
         >

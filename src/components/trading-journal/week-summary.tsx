@@ -21,26 +21,6 @@ export function WeekSummary({ totalPnl, tradeCount, analysisDays }: WeekSummaryP
     return `${totalPnl.toLocaleString('it-IT', { maximumFractionDigits: 0 })}`;
   })();
 
-  if (analysisDays !== undefined) {
-    return (
-      <div className="flex h-full min-h-[92px] w-full min-w-0 flex-col items-end justify-center gap-1 bg-background p-2 md:min-h-[106px] md:gap-1.5 md:p-3">
-        <span className="font-sans tabular-nums text-[8px] font-medium tracking-normal text-muted-foreground sm:text-[10px] md:text-xs">
-          SETT
-        </span>
-        <div className="flex flex-col items-end">
-          <span
-            className={cn(
-              'font-sans text-[9px] font-semibold leading-tight tabular-nums tracking-tight sm:text-[11px] md:text-base',
-              analysisDays > 0 ? 'text-profit' : 'text-muted-foreground'
-            )}
-          >
-            {analysisDays} {analysisDays === 1 ? 'analisi' : 'analisi'}
-          </span>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="flex h-full min-h-[92px] w-full min-w-0 flex-col items-end justify-center gap-1 bg-background p-2 md:min-h-[106px] md:gap-1.5 md:p-3">
       <div className="flex items-center gap-1">
@@ -69,6 +49,11 @@ export function WeekSummary({ totalPnl, tradeCount, analysisDays }: WeekSummaryP
         <span className="font-sans tabular-nums text-[9px] text-muted-foreground sm:text-[10px] md:text-sm">
           {tradeCount}
         </span>
+        {analysisDays !== undefined && (
+          <span className={cn('mt-0.5 font-sans text-[9px] font-medium sm:text-[10px] md:text-xs', analysisDays > 0 ? 'text-profit' : 'text-muted-foreground')}>
+            {analysisDays} analisi
+          </span>
+        )}
       </div>
     </div>
   );
