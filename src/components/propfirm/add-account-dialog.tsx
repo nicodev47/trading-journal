@@ -15,7 +15,7 @@ import {
 } from '@/lib/propfirm/firms';
 import type { AccountKind, PropAccount } from '@/lib/propfirm/types';
 import { cn } from '@/lib/utils';
-import { FirmTile, KIND_LABEL, formatUsd, todayKey } from './shared';
+import { FirmMark, KIND_LABEL, formatUsd, todayKey } from './shared';
 
 type Step = 'firm' | 'plan' | 'name' | 'confirm';
 const STEPS: { id: Step; label: string }[] = [
@@ -83,7 +83,7 @@ export function AddAccountDialog({
 
   const pickFirm = (item: FirmDef) => {
     setFirm(item);
-    setRuleSet(item.ruleSets.length === 1 ? item.ruleSets[0] : null);
+    setRuleSet(null);
     setSize(null);
     setStep('plan');
   };
@@ -242,7 +242,11 @@ export function AddAccountDialog({
                       )}
                     >
                       <span className="flex size-12 items-center justify-center rounded-xl bg-black/40 text-base font-bold">
-                        {item.initials}
+                        {item.logo ? (
+                          <FirmMark firm={item} className="size-12" />
+                        ) : (
+                          item.initials
+                        )}
                       </span>
                       {item.name}
                     </button>
@@ -258,7 +262,7 @@ export function AddAccountDialog({
 
             {step === 'plan' && firm && (
               <div className="flex flex-col gap-5">
-                {firm.ruleSets.length > 1 && (
+                {(
                   <div>
                     <p className="mb-2 text-center font-sans text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                       Tipo di regole
@@ -459,7 +463,7 @@ export function AddAccountDialog({
             {step === 'confirm' && firm && size && rules && (
               <div className="mx-auto flex max-w-xl flex-col gap-5">
                 <div className="flex items-center gap-3 border-b border-border pb-4">
-                  <FirmTile initials={firm.initials} tile={firm.tile} className="size-12" />
+                  <FirmMark firm={firm} className="size-12" />
                   <div>
                     <p className="font-sans text-lg font-semibold">{finalName}</p>
                     <p className="font-sans text-xs text-muted-foreground">

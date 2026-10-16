@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
 import { RulesEditor } from './rules-editor';
 import {
   FAIL_LABEL,
-  FirmTile,
+  FirmMark,
   KIND_LABEL,
   ProgressBar,
   StatusBadge,
@@ -220,7 +220,7 @@ export function AccountDetailDialog({
           </button>
 
           <div className="flex flex-wrap items-center gap-4 pr-10">
-            {firm && <FirmTile initials={firm.initials} tile={firm.tile} className="size-14" />}
+            {firm && <FirmMark firm={firm} className="size-14" />}
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
                 {editingName ? (

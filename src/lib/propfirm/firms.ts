@@ -20,6 +20,10 @@ export interface FirmDef {
   id: string;
   name: string;
   initials: string;
+  /** Official logo copied from the firm's website (public/logos). */
+  logo?: string;
+  /** The logo has a transparent background: draw it on a dark tile. */
+  logoOnDark?: boolean;
   /** Tailwind classes for the firm tile. */
   tile: string;
   ruleSets: RuleSetDef[];
@@ -65,6 +69,30 @@ const rule = (input: RuleInput): PropRules => ({
 
 const k = (size: number) => `${size / 1000}K`;
 
+const MISSING = 'Numeri di questo piano non verificati: completali nella scheda Regole del conto.';
+
+/** A rule set whose numbers are not known with certainty: they are left to fill in. */
+const partialSet = (
+  id: string,
+  name: string,
+  sizes: number[],
+  options: { type?: DrawdownType; note?: string; split?: number } = {}
+): RuleSetDef => ({
+  id,
+  name,
+  note: options.note ?? MISSING,
+  sizes: sizes.map(size => ({
+    label: k(size),
+    size,
+    rules: rule({
+      target: null,
+      drawdown: null,
+      type: options.type,
+      split: options.split ?? 0.9,
+    }),
+  })),
+});
+
 const UNOFFICIAL = 'Fonti non ufficiali (guide e recensioni), ricerca del 16 ott 2026: controlla sul sito della firm.';
 
 export const FIRMS: FirmDef[] = [
@@ -72,6 +100,7 @@ export const FIRMS: FirmDef[] = [
     id: 'topstep',
     name: 'Topstep',
     initials: 'TS',
+    logo: '/logos/topstep.png',
     tile: 'from-[#4a4a4d] to-[#3a3a3d] border-white/15',
     ruleSets: [
       {
@@ -127,12 +156,35 @@ export const FIRMS: FirmDef[] = [
           }),
         })),
       },
+      {
+        id: 'intraday',
+        name: 'Intraday',
+        note: `${UNOFFICIAL} Stessi numeri dell'EOD, ma il drawdown segue anche i profitti non chiusi (qui approssimato con i saldi a fine giornata).`,
+        sizes: [
+          { size: 25000, target: 1500, dd: 1000 },
+          { size: 50000, target: 3000, dd: 2000 },
+          { size: 100000, target: 6000, dd: 3000 },
+          { size: 150000, target: 9000, dd: 4000 },
+        ].map(item => ({
+          label: k(item.size),
+          size: item.size,
+          rules: rule({
+            target: item.target,
+            drawdown: item.dd,
+            type: 'intraday-trailing',
+            consistency: { maxDayShare: 0.5, appliesTo: 'funded' },
+            split: 1,
+            minWinningDays: 5,
+          }),
+        })),
+      },
     ],
   },
   {
     id: 'alpha',
     name: 'Alpha Futures',
     initials: 'AF',
+    logo: '/logos/alpha-futures.png',
     tile: 'from-[#1f4d36] to-[#17382a] border-[#2c7a53]/50',
     ruleSets: [
       {
@@ -153,6 +205,9 @@ export const FIRMS: FirmDef[] = [
           }),
         })),
       },
+      partialSet('zero', 'Zero', [25000, 50000, 100000, 150000], {
+        note: `${MISSING} Il piano Zero ha split 90/10 dal primo giorno e nessuna attivazione.`,
+      }),
     ],
   },
   {
@@ -182,12 +237,25 @@ export const FIRMS: FirmDef[] = [
           }),
         })),
       },
+      partialSet('pro', 'Pro', [25000, 50000, 100000, 150000], {
+        note: `${MISSING} Su Lucid Pro il limite giornaliero e la consistenza dei payout dipendono dal piano.`,
+      }),
+      partialSet('direct', 'Direct', [25000, 50000, 100000, 150000]),
+      partialSet('daily-intraday-dll', 'Daily Intraday +DLL', [25000, 50000, 100000, 150000], {
+        type: 'intraday-trailing',
+      }),
+      partialSet('daily-eod-dll', 'Daily EOD +DLL', [25000, 50000, 100000, 150000]),
+      partialSet('daily-intraday-nodll', 'Daily Intraday noDLL', [25000, 50000, 100000, 150000], {
+        type: 'intraday-trailing',
+      }),
+      partialSet('daily-eod-nodll', 'Daily EOD noDLL', [25000, 50000, 100000, 150000]),
     ],
   },
   {
     id: 'mffu',
     name: 'MyFundedFutures',
     initials: 'MF',
+    logo: '/logos/myfundedfutures.ico',
     tile: 'from-[#2f2f5a] to-[#25254a] border-[#4a4a8a]/50',
     ruleSets: [
       {
@@ -208,12 +276,19 @@ export const FIRMS: FirmDef[] = [
           },
         ],
       },
+      partialSet('rapid', 'Rapid', [50000], {
+        type: 'intraday-trailing',
+        split: 0.8,
+        note: `${MISSING} Su Rapid il drawdown segue anche i profitti non chiusi (qui approssimato).`,
+      }),
+      partialSet('pro', 'Pro', [50000], { split: 0.8 }),
     ],
   },
   {
     id: 'tradeify',
     name: 'Tradeify',
     initials: 'TF',
+    logo: '/logos/tradeify.png',
     tile: 'from-[#14522a] to-[#0f3d20] border-[#1f8a45]/50',
     ruleSets: [
       {
@@ -234,12 +309,20 @@ export const FIRMS: FirmDef[] = [
           },
         ],
       },
+      partialSet('growth', 'Growth', [50000], {
+        note: `${MISSING} Growth non ha regola di consistenza in valutazione.`,
+      }),
+      partialSet('lightning', 'Lightning', [50000], {
+        note: `${MISSING} Lightning è un conto funded diretto, senza valutazione.`,
+      }),
     ],
   },
   {
     id: 'tpt',
     name: 'Take Profit Trader',
     initials: 'TP',
+    logo: '/logos/take-profit-trader.svg',
+    logoOnDark: true,
     tile: 'from-[#2c4338] to-[#22362d] border-[#3d6a55]/50',
     ruleSets: [
       {

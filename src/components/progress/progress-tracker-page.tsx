@@ -89,7 +89,10 @@ export function ProgressTrackerPage({
   }, [missedTrades]);
   // Prop accounts on which something was executed, day by day.
   const propsByDate = useMemo(() => {
-    const map = new Map<string, { id: string; initials: string; tile: string }[]>();
+    const map = new Map<
+      string,
+      { id: string; initials: string; tile: string; logo?: string; logoOnDark?: boolean }[]
+    >();
 
     propAccounts.forEach(account => {
       const firm = getFirm(account.firmId);
@@ -100,6 +103,8 @@ export function ProgressTrackerPage({
           {
             id: account.id,
             initials: firm?.initials ?? account.firmName.slice(0, 2).toUpperCase(),
+            logo: firm?.logo,
+            logoOnDark: firm?.logoOnDark,
             tile: firm?.tile ?? 'from-[#2a2a2d] to-[#1f1f22] border-white/10',
           },
         ]);

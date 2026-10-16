@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
 import { AccountDetailDialog } from './account-detail-dialog';
 import { AddAccountDialog, type NewAccount } from './add-account-dialog';
 import {
-  FirmTile,
+  FirmMark,
   KIND_LABEL,
   ProgressBar,
   StatusBadge,
@@ -70,7 +70,7 @@ function AccountCard({
       className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 text-left transition-colors hover:border-white/25 focus-visible:ring-2 focus-visible:ring-ring"
     >
       <div className="flex items-center gap-3">
-        {firm && <FirmTile initials={firm.initials} tile={firm.tile} className="size-10 text-xs" />}
+        {firm && <FirmMark firm={firm} className="size-10 text-xs" />}
         <div className="min-w-0 flex-1">
           <p className="truncate font-sans text-sm font-semibold">{account.name}</p>
           <p className="truncate font-sans text-xs text-muted-foreground">
@@ -244,7 +244,7 @@ export function PropfirmPage({ store, journals, getJournalTrades }: PropfirmPage
               )}
             >
               <span className="flex size-12 items-center justify-center rounded-xl bg-black/40 text-base font-bold">
-                {firm.initials}
+                {firm.logo ? <FirmMark firm={firm} className="size-12" /> : firm.initials}
               </span>
               {firm.name}
             </button>

@@ -16,7 +16,7 @@ export interface AnalysisCell {
   /** Something was written directly in the Progress Tracker for this day. */
   manual: boolean;
   /** Prop accounts on which trades were executed this day. */
-  props: { id: string; initials: string; tile: string }[];
+  props: { id: string; initials: string; tile: string; logo?: string; logoOnDark?: boolean }[];
 }
 
 interface CalendarDayProps {
@@ -249,7 +249,18 @@ export function CalendarDay({
                   item.tile
                 )}
               >
-                {item.initials}
+                {item.logo ? (
+                  <img
+                    src={item.logo}
+                    alt=""
+                    className={cn(
+                      'size-full rounded-[4px]',
+                      item.logoOnDark ? 'bg-[#0b0b0d] object-contain p-[2px]' : 'object-cover'
+                    )}
+                  />
+                ) : (
+                  item.initials
+                )}
                 <span className="absolute -right-[3px] -top-[3px] size-[7px] rounded-full bg-profit ring-1 ring-background" />
               </span>
             ))}

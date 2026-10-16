@@ -107,6 +107,32 @@ export function ProgressBar({
   );
 }
 
+interface FirmVisual {
+  initials: string;
+  tile: string;
+  logo?: string;
+  logoOnDark?: boolean;
+}
+
+/** Official logo when we have it, otherwise the firm's initials. */
+export function FirmMark({ firm, className }: { firm: FirmVisual; className?: string }) {
+  if (firm.logo) {
+    return (
+      <img
+        src={firm.logo}
+        alt=""
+        className={cn(
+          'shrink-0 rounded-xl',
+          firm.logoOnDark ? 'bg-[#0b0b0d] object-contain p-[18%]' : 'object-cover',
+          className
+        )}
+      />
+    );
+  }
+
+  return <FirmTile initials={firm.initials} tile={firm.tile} className={className} />;
+}
+
 export function FirmTile({
   initials,
   tile,
