@@ -317,7 +317,7 @@ export function TradingCalendar({
 
       <div className="w-full overflow-hidden">
         <div className="flex w-full min-w-0 flex-col gap-px bg-border">
-          <div className="grid grid-cols-7 gap-px sm:grid-cols-[repeat(7,minmax(0,1fr))_80px] lg:grid-cols-[repeat(7,minmax(0,1fr))_155px]">
+          <div className="grid grid-cols-7 gap-px sm:grid-cols-8">
             {weekdayLabels.map((day) => (
               <div
                 key={day}
@@ -336,7 +336,7 @@ export function TradingCalendar({
           {weeks.map((week, weekIndex) => (
             <div
               key={weekIndex}
-              className="grid grid-cols-7 gap-px sm:grid-cols-[repeat(7,minmax(0,1fr))_80px] lg:grid-cols-[repeat(7,minmax(0,1fr))_155px]"
+              className="grid grid-cols-7 gap-px sm:grid-cols-8"
             >
               {week.map((day) => {
                 const dateKey = getDateKey(day);
