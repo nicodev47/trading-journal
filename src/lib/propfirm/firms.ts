@@ -133,6 +133,7 @@ export const FIRMS: FirmDef[] = [
     id: 'apex',
     name: 'Apex',
     initials: 'AP',
+    logo: '/logos/apex.png',
     tile: 'from-[#1d3557] to-[#14243d] border-[#2a4a7a]/60',
     ruleSets: [
       {
@@ -214,6 +215,7 @@ export const FIRMS: FirmDef[] = [
     id: 'lucid',
     name: 'Lucid Trading',
     initials: 'LT',
+    logo: '/logos/lucid.png',
     tile: 'from-[#555558] to-[#434346] border-white/15',
     ruleSets: [
       {
@@ -255,7 +257,7 @@ export const FIRMS: FirmDef[] = [
     id: 'mffu',
     name: 'MyFundedFutures',
     initials: 'MF',
-    logo: '/logos/myfundedfutures.ico',
+    logo: '/logos/myfundedfutures.png',
     tile: 'from-[#2f2f5a] to-[#25254a] border-[#4a4a8a]/50',
     ruleSets: [
       {
