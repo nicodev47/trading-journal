@@ -245,7 +245,7 @@ export function CalendarDay({
           <>
             <span
               className={cn(
-                'block w-full min-w-0 truncate font-sans text-[8px] font-semibold leading-tight tabular-nums tracking-tight min-[380px]:text-[9px] sm:text-[11px] md:text-sm',
+                'block w-full min-w-0 shrink-0 truncate font-sans text-[8px] font-semibold leading-tight tabular-nums tracking-tight min-[380px]:text-[9px] sm:text-[11px] md:text-sm',
                 pnl > 0 && 'text-profit',
                 pnl < 0 && 'text-loss',
                 pnl === 0 && 'text-muted-foreground'
@@ -296,7 +296,7 @@ export function CalendarDay({
         )}
 
         {(propMarkers.length > 0 || analysis?.manual) && (
-          <span className="mt-auto flex items-center gap-1.5 self-start">
+          <span className="mt-auto flex shrink-0 items-center gap-1.5 self-start">
             {propMarkers.length > 0 && (
               <span className="flex items-center -space-x-1.5 sm:-space-x-2">
                 {propMarkers.slice(0, 4).map((item, index) => (
@@ -305,7 +305,7 @@ export function CalendarDay({
                     aria-label="Eseguito su questa prop"
                     style={{ zIndex: propMarkers.length - index }}
                     className={cn(
-                      'relative flex size-5 items-center justify-center overflow-hidden rounded-full bg-gradient-to-b font-sans text-[8px] font-bold leading-none text-white min-[380px]:size-6 sm:size-7 sm:text-[10px] md:size-8',
+                      'relative flex size-5 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-b font-sans text-[8px] font-bold leading-none text-white sm:size-6 sm:text-[9px]',
                       item.tile
                     )}
                   >
@@ -326,7 +326,7 @@ export function CalendarDay({
                 {propMarkers.length > 4 && (
                   <span
                     style={{ zIndex: 0 }}
-                    className="relative flex size-5 items-center justify-center rounded-full bg-secondary font-sans text-[8px] font-semibold text-muted-foreground min-[380px]:size-6 sm:size-7 sm:text-[10px] md:size-8"
+                    className="relative flex size-5 shrink-0 items-center justify-center rounded-full bg-secondary font-sans text-[8px] font-semibold text-muted-foreground sm:size-6 sm:text-[9px]"
                   >
                     +{propMarkers.length - 4}
                   </span>
