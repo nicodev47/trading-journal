@@ -56,10 +56,9 @@ export function AddAccountDialog({
   const [size, setSize] = useState<SizeDef | null>(null);
   const [kind, setKind] = useState<AccountKind>('evaluation');
   const [name, setName] = useState('');
-  const [sourceKind, setSourceKind] = useState<'journal' | 'manual'>('journal');
+  const sourceKind = 'journal' as const;
   const [journalId, setJournalId] = useState('');
   const [startDate, setStartDate] = useState(todayKey());
-  const [balance, setBalance] = useState('');
   const [customRules, setCustomRules] = useState<PropRules | null>(null);
   const [customSize, setCustomSize] = useState('');
 
@@ -73,10 +72,8 @@ export function AddAccountDialog({
     setSize(null);
     setKind('evaluation');
     setName('');
-    setSourceKind('journal');
     setJournalId(journals[0]?.id ?? '');
     setStartDate(todayKey());
-    setBalance('');
     setCustomRules(null);
     setCustomSize('');
 
@@ -120,12 +117,10 @@ export function AddAccountDialog({
     if (step === 'name') setStep('plan');
     if (step === 'confirm') setStep('name');
   };
-  const canContinueName = sourceKind === 'manual' || Boolean(journalId);
+  const canContinueName = Boolean(journalId);
 
   const create = () => {
     if (!firm || !ruleSet || !size || !effectiveSize || !rules) return;
-
-    const parsedBalance = Number(balance.replace(',', '.'));
 
     onCreate({
       firmId: firm.id,
@@ -138,12 +133,9 @@ export function AddAccountDialog({
       size: effectiveSize.size,
       rules,
       templateNote: ruleSet.note,
-      source: sourceKind === 'manual' ? { kind: 'manual' } : { kind: 'journal', journalId },
+      source: { kind: 'journal', journalId },
       startDate,
-      initialBalance:
-        sourceKind === 'manual' && balance.trim() && Number.isFinite(parsedBalance)
-          ? parsedBalance
-          : null,
+      initialBalance: null,
     });
   };
 
@@ -393,33 +385,7 @@ export function AddAccountDialog({
                   ))}
                 </div>
 
-                <div className="flex flex-col gap-2">
-                  <span className="font-sans text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Da dove arrivano i risultati
-                  </span>
-                  <div className="grid grid-cols-2 gap-2">
-                    {([
-                      ['journal', 'Un mio journal', 'I trade del calendario aggiornano il conto da soli.'],
-                      ['manual', 'Manuale', 'Aggiorni tu il saldo letto dalla piattaforma.'],
-                    ] as const).map(([id, title, hint]) => (
-                      <button
-                        key={id}
-                        type="button"
-                        disabled={id === 'journal' && journals.length === 0}
-                        onClick={() => setSourceKind(id)}
-                        className={cn(
-                          'rounded-xl border p-3 text-left transition-colors disabled:opacity-40',
-                          sourceKind === id ? 'border-[#0a84ff] bg-[#0a84ff]/10' : 'border-border hover:border-white/30'
-                        )}
-                      >
-                        <p className="font-sans text-sm font-semibold">{title}</p>
-                        <p className="mt-0.5 font-sans text-[11px] text-muted-foreground">{hint}</p>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {sourceKind === 'journal' && (
+                {(
                   <label className="flex flex-col gap-2">
                     <span className="font-sans text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                       Journal collegato
@@ -449,29 +415,10 @@ export function AddAccountDialog({
                     className="ej-date-input-no-indicator h-10 max-w-[200px]"
                   />
                   <span className="font-sans text-xs text-muted-foreground">
-                    {sourceKind === 'journal'
-                      ? 'Contano solo i trade da questo giorno in poi.'
-                      : 'Contano solo i saldi da questo giorno in poi.'}
+                    I trade non assegnati contano da questo giorno in poi; quelli che assegni a questo conto contano sempre.
                   </span>
                 </label>
 
-                {sourceKind === 'manual' && (
-                  <label className="flex flex-col gap-2">
-                    <span className="font-sans text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                      Saldo attuale (facoltativo)
-                    </span>
-                    <Input
-                      inputMode="decimal"
-                      value={balance}
-                      onChange={event => setBalance(event.target.value)}
-                      placeholder={String(size.size)}
-                      className="h-10"
-                    />
-                    <span className="font-sans text-xs text-muted-foreground">
-                      Stai già operando questo conto? Scrivi il saldo di oggi, altrimenti lascia vuoto.
-                    </span>
-                  </label>
-                )}
               </div>
             )}
 
@@ -525,7 +472,7 @@ export function AddAccountDialog({
                     ],
                     ['Contratti massimi', rules.maxContracts ?? '—'],
                     ['Split sui profitti', `${Math.round(rules.payout.split * 100)}/${Math.round((1 - rules.payout.split) * 100)}`],
-                    ['Collegato a', sourceKind === 'journal' ? journals.find(item => item.id === journalId)?.name ?? '—' : 'Aggiornamento manuale'],
+                    ['Journal collegato', journals.find(item => item.id === journalId)?.name ?? '—'],
                   ].map(([label, value]) => (
                     <div key={label} className="flex justify-between gap-6">
                       <dt className="text-muted-foreground">{label}</dt>
