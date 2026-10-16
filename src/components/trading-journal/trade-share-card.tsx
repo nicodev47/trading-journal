@@ -100,6 +100,7 @@ export function TradeShareCard({
         label="Net P&L"
         accent={accent}
         trend={netPnl > 0 ? 'up' : netPnl < 0 ? 'down' : 'flat'}
+        badge={badgeLabel}
       />
 
       <div className="mt-14 space-y-3">
@@ -129,7 +130,7 @@ export function TradeShareCard({
               {/* Always the names; smaller when there are several, cut with an ellipsis if still too long. */}
               <span
                 className={`min-w-0 truncate font-medium text-white/70 ${
-                  firms.length > 2 ? 'text-[16px]' : firms.length === 2 ? 'text-[18px]' : 'text-[20px]'
+                  firms.length > 2 ? 'text-[18px]' : 'text-[20px]'
                 }`}
               >
                 {firmNames}
@@ -137,7 +138,6 @@ export function TradeShareCard({
             </span>
           ) : undefined
         }
-        right={badgeLabel}
       />
     </ShareCardFrame>
   );

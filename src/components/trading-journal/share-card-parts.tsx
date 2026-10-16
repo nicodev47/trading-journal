@@ -79,7 +79,9 @@ export function ShareGlowAmount({
   label,
   accent,
   trend,
+  badge,
 }: {
+  badge?: string;
   sign: string;
   amount: string;
   currency: string;
@@ -114,7 +116,14 @@ export function ShareGlowAmount({
           )}
         </div>
       </div>
-      <div className="mt-4 text-[22px] font-medium text-white/50">{label}</div>
+      <div className="mt-4 flex items-center justify-between gap-6">
+        <div className="text-[22px] font-medium text-white/50">{label}</div>
+        {badge && (
+          <div className="rounded-full border border-white/15 bg-white/[0.06] px-5 py-1.5 text-[18px] font-semibold tracking-wide text-white/75">
+            {badge}
+          </div>
+        )}
+      </div>
     </section>
   );
 }
@@ -168,7 +177,7 @@ export function ShareCardFooter({
   avatar: ReactNode;
   name: string;
   caption?: ReactNode;
-  right: string;
+  right?: string;
 }) {
   return (
     <footer className="mt-auto flex items-center pt-8 justify-between gap-6">
@@ -190,7 +199,7 @@ export function ShareCardFooter({
           </div>
         )}
       </div>
-      <div className="text-[20px] font-semibold text-white/70">{right}</div>
+      {right && <div className="text-[20px] font-semibold text-white/70">{right}</div>}
     </footer>
   );
 }
