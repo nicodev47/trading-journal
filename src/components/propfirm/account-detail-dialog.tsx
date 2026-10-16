@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/compone
 import { Input } from '@/components/ui/input';
 import { previewNextDay, type AccountSim } from '@/lib/propfirm/engine';
 import { getFirm } from '@/lib/propfirm/firms';
+import { RulesEditor } from './rules-editor';
 import type { DayResult, Payout, PropAccount, PropRules } from '@/lib/propfirm/types';
 import { cn } from '@/lib/utils';
 import {
@@ -448,6 +449,17 @@ export function AccountDetailDialog({
               </dl>
               <p className="mt-3 font-sans text-[11px] leading-relaxed text-muted-foreground">{account.templateNote}</p>
             </div>
+
+            {account.firmId === 'custom' && (
+              <div className="rounded-xl border border-border bg-background/30 p-4">
+                <p className="mb-3 font-sans text-sm font-semibold">Le tue regole</p>
+                <RulesEditor
+                  rules={rules}
+                  isEvaluation={isEvaluation}
+                  onChange={(next: PropRules) => onUpdate({ rules: next })}
+                />
+              </div>
+            )}
           </section>
 
           <section id="prop-section-consistency" className="scroll-mt-14 flex flex-col gap-4 p-4 sm:p-6">

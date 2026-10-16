@@ -1207,7 +1207,12 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
               account =>
                 account.source.kind === 'journal' && account.source.journalId === activeWorkspace
             )
-            .map(account => ({ id: account.id, name: account.name, firmName: account.firmName }))}
+            .map(account => ({
+              id: account.id,
+              name: account.name,
+              firmId: account.firmId,
+              firmName: account.firmName,
+            }))}
           onDeleteDay={handleDeleteDay}
           strategies={strategies}
           availableStandardTags={tags}

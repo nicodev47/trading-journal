@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 import { AccountDetailDialog } from './account-detail-dialog';
 import { AddAccountDialog, type NewAccount } from './add-account-dialog';
 import {
+  FirmFolder,
   FirmMark,
   KIND_LABEL,
   ProgressBar,
@@ -217,15 +218,36 @@ export function PropfirmPage({ store, journals, getJournalTrades }: PropfirmPage
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3 md:gap-4">
-            {store.accounts.map(account => (
-              <AccountCard
-                key={account.id}
-                account={account}
-                getJournalTrades={getJournalTrades}
-                onOpen={() => setOpenId(account.id)}
-              />
-            ))}
+          <div className="flex flex-col gap-6">
+            {FIRMS.map(firm => ({
+              firm,
+              accounts: store.accounts.filter(account => account.firmId === firm.id),
+            }))
+              .filter(group => group.accounts.length > 0)
+              .map(({ firm, accounts }) => (
+                <FirmFolder key={firm.id} firm={firm} name={firm.name} count={accounts.length} defaultOpen>
+                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3 md:gap-4">
+                    {accounts.map(account => (
+                      <AccountCard
+                        key={account.id}
+                        account={account}
+                        getJournalTrades={getJournalTrades}
+                        onOpen={() => setOpenId(account.id)}
+                      />
+                    ))}
+                  </div>
+                </FirmFolder>
+              ))}
+            {store.accounts
+              .filter(account => !FIRMS.some(firm => firm.id === account.firmId))
+              .map(account => (
+                <AccountCard
+                  key={account.id}
+                  account={account}
+                  getJournalTrades={getJournalTrades}
+                  onOpen={() => setOpenId(account.id)}
+                />
+              ))}
           </div>
         )}
       </section>

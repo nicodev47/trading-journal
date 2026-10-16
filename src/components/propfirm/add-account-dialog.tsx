@@ -5,6 +5,7 @@ import { ArrowLeft, Search, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { RulesEditor } from './rules-editor';
 import {
   FIRMS,
   rulesForKind,
@@ -12,7 +13,7 @@ import {
   type RuleSetDef,
   type SizeDef,
 } from '@/lib/propfirm/firms';
-import type { AccountKind, PropAccount } from '@/lib/propfirm/types';
+import type { AccountKind, PropAccount, PropRules } from '@/lib/propfirm/types';
 import { cn } from '@/lib/utils';
 import { FirmMark, KIND_LABEL, formatUsd, todayKey } from './shared';
 
@@ -37,6 +38,7 @@ interface AddAccountDialogProps {
   initialFirmId?: string;
 }
 
+const k = (value: number) => `${value / 1000}K`;
 const dollars = (value: number | null) => (value === null ? '—' : formatUsd(value));
 
 export function AddAccountDialog({
@@ -58,6 +60,8 @@ export function AddAccountDialog({
   const [journalId, setJournalId] = useState('');
   const [startDate, setStartDate] = useState(todayKey());
   const [balance, setBalance] = useState('');
+  const [customRules, setCustomRules] = useState<PropRules | null>(null);
+  const [customSize, setCustomSize] = useState('');
 
   useEffect(() => {
     if (!open) return;
@@ -73,6 +77,8 @@ export function AddAccountDialog({
     setJournalId(journals[0]?.id ?? '');
     setStartDate(todayKey());
     setBalance('');
+    setCustomRules(null);
+    setCustomSize('');
 
     const preselected = FIRMS.find(item => item.id === initialFirmId);
 
@@ -100,7 +106,11 @@ export function AddAccountDialog({
   }, [firm, kind, kindWord, existingAccounts]);
 
   const finalName = name.trim() || suggestedName;
-  const rules = size ? rulesForKind(size, kind) : null;
+  const parsedCustomSize = Number(customSize.replace(/[^\d.]/g, ''));
+  const effectiveSize =
+    firm?.custom && size ? { ...size, size: parsedCustomSize > 0 ? parsedCustomSize : size.size } : size;
+  const rules =
+    effectiveSize && size ? (firm?.custom ? customRules ?? rulesForKind(size, kind) : rulesForKind(size, kind)) : null;
   const filteredFirms = FIRMS.filter(item =>
     item.name.toLowerCase().includes(search.trim().toLowerCase())
   );
@@ -113,7 +123,7 @@ export function AddAccountDialog({
   const canContinueName = sourceKind === 'manual' || Boolean(journalId);
 
   const create = () => {
-    if (!firm || !ruleSet || !size || !rules) return;
+    if (!firm || !ruleSet || !size || !effectiveSize || !rules) return;
 
     const parsedBalance = Number(balance.replace(',', '.'));
 
@@ -122,10 +132,10 @@ export function AddAccountDialog({
       firmName: firm.name,
       ruleSetId: ruleSet.id,
       ruleSetName: ruleSet.name,
-      sizeLabel: size.label,
+      sizeLabel: firm.custom ? k(effectiveSize.size) : size.label,
       name: finalName,
       kind,
-      size: size.size,
+      size: effectiveSize.size,
       rules,
       templateNote: ruleSet.note,
       source: sourceKind === 'manual' ? { kind: 'manual' } : { kind: 'journal', journalId },
@@ -302,6 +312,8 @@ export function AddAccountDialog({
                           type="button"
                           onClick={() => {
                             setSize(item);
+                            setCustomRules(null);
+                            setCustomSize(String(item.size));
                             setStep('name');
                           }}
                           className="flex flex-col gap-4 rounded-2xl border border-border bg-background/40 p-5 text-left transition-colors hover:border-white/30 hover:bg-white/[0.04] focus-visible:ring-2 focus-visible:ring-ring"
@@ -470,14 +482,30 @@ export function AddAccountDialog({
                   <div>
                     <p className="font-sans text-lg font-semibold">{finalName}</p>
                     <p className="font-sans text-xs text-muted-foreground">
-                      {firm.name} · {size.label} {ruleSet?.name}
+                      {firm.name} · {firm.custom ? k(effectiveSize?.size ?? size.size) : size.label} {ruleSet?.name}
                     </p>
                   </div>
                 </div>
+                {firm.custom && (
+                  <div className="flex flex-col gap-4 rounded-xl border border-border bg-background/30 p-4">
+                    <label className="flex flex-col gap-1.5">
+                      <span className="font-sans text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        Dimensione del conto (USD)
+                      </span>
+                      <Input
+                        inputMode="numeric"
+                        value={customSize}
+                        onChange={event => setCustomSize(event.target.value)}
+                        className="h-10"
+                      />
+                    </label>
+                    <RulesEditor rules={rules} isEvaluation={kind === 'evaluation'} onChange={setCustomRules} />
+                  </div>
+                )}
                 <dl className="flex flex-col gap-3 font-sans text-sm">
                   {[
                     ['Tipo di conto', KIND_LABEL[kind]],
-                    ['Dimensione', formatUsd(size.size)],
+                    ['Dimensione', formatUsd(effectiveSize?.size ?? size.size)],
                     ['Obiettivo di profitto', kind === 'evaluation' ? dollars(rules.profitTarget) : 'Nessuno'],
                     [
                       'Max drawdown',

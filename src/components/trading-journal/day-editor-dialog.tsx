@@ -31,6 +31,8 @@ import {
   X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getFirm } from '@/lib/propfirm/firms';
+import { FirmFolder } from '@/components/propfirm/shared';
 import {
   CUSTOM_TAG_PREFIX,
   TRADE_TAGS,
@@ -161,7 +163,7 @@ interface DayEditorDialogProps {
   existingTrades: Trade[];
   onSave: (trades: Trade[]) => void;
   /** Prop firm accounts a trade can be assigned to; empty hides the choice. */
-  propAccountChoices?: { id: string; name: string; firmName: string }[];
+  propAccountChoices?: { id: string; name: string; firmId: string; firmName: string }[];
   onDeleteDay: () => void;
   strategies: string[];
   availableStandardTags: string[];
@@ -1021,42 +1023,62 @@ export function DayEditorDialog({
                       <Label className="text-xs font-medium tracking-normalr text-muted-foreground">
                         Eseguito su
                       </Label>
-                      <div className="flex flex-wrap gap-2">
-                        {propAccountChoices.map(choice => {
-                          const active = row.propAccountIds.includes(choice.id);
+                      <div className="flex flex-col gap-2">
+                        {Array.from(
+                          propAccountChoices.reduce((map, choice) => {
+                            map.set(choice.firmId, [...(map.get(choice.firmId) ?? []), choice]);
+                            return map;
+                          }, new Map<string, typeof propAccountChoices>())
+                        ).map(([firmId, items]) => {
+                          const firm = getFirm(firmId);
 
                           return (
-                            <button
-                              key={choice.id}
-                              type="button"
-                              aria-pressed={active}
-                              onClick={() =>
-                                replaceTradeRows(
-                                  previous =>
-                                    previous.map(item =>
-                                      item.id === row.id
-                                        ? {
-                                            ...item,
-                                            propAccountIds: active
-                                              ? item.propAccountIds.filter(id => id !== choice.id)
-                                              : [...item.propAccountIds, choice.id],
-                                          }
-                                        : item
-                                    ),
-                                  0
-                                )
-                              }
-                              className={cn(
-                                'inline-flex h-8 items-center gap-1.5 rounded-full border px-3 font-sans text-xs transition-colors',
-                                active
-                                  ? 'border-[#0a84ff] bg-[#0a84ff]/15 text-foreground'
-                                  : 'border-border text-muted-foreground hover:text-foreground'
-                              )}
+                            <FirmFolder
+                              key={firmId}
+                              firm={firm ?? { initials: items[0].firmName.slice(0, 2), tile: '' }}
+                              name={items[0].firmName}
+                              count={items.length}
+                              selected={items.filter(item => row.propAccountIds.includes(item.id)).length}
                             >
-                              {active && <Check className="size-3" />}
-                              {choice.name}
-                              <span className="text-muted-foreground">{choice.firmName}</span>
-                            </button>
+                              <div className="flex flex-wrap gap-2">
+                                {items.map(choice => {
+                                  const active = row.propAccountIds.includes(choice.id);
+
+                                  return (
+                                    <button
+                                      key={choice.id}
+                                      type="button"
+                                      aria-pressed={active}
+                                      onClick={() =>
+                                        replaceTradeRows(
+                                          previous =>
+                                            previous.map(item =>
+                                              item.id === row.id
+                                                ? {
+                                                    ...item,
+                                                    propAccountIds: active
+                                                      ? item.propAccountIds.filter(id => id !== choice.id)
+                                                      : [...item.propAccountIds, choice.id],
+                                                  }
+                                                : item
+                                            ),
+                                          0
+                                        )
+                                      }
+                                      className={cn(
+                                        'inline-flex h-8 items-center gap-1.5 rounded-full border px-3 font-sans text-xs transition-colors',
+                                        active
+                                          ? 'border-[#0a84ff] bg-[#0a84ff]/15 text-foreground'
+                                          : 'border-border text-muted-foreground hover:text-foreground'
+                                      )}
+                                    >
+                                      {active && <Check className="size-3" />}
+                                      {choice.name}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </FirmFolder>
                           );
                         })}
                       </div>

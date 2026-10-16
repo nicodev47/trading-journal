@@ -77,8 +77,9 @@ test('ogni piano è completo: niente numeri da inserire a mano', () => {
   });
 });
 
-test('non esiste più una firm con regole modificabili', () => {
-  assert.equal(getFirm('custom'), undefined);
+test('solo la prop personalizzata ha regole scritte dall’utente', () => {
+  assert.deepEqual(FIRMS.filter(firm => firm.custom).map(firm => firm.id), ['custom']);
+  assert.equal(getFirm('custom')!.ruleSets[0].sizes.length, 4);
 });
 
 test('Lucid: il DLL del Flex è un’opzione, il drawdown si blocca a saldo iniziale + 100', () => {

@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from 'react';
+import { ChevronDown } from 'lucide-react';
 import { useStreamerMode } from '@/contexts/streamer-mode-context';
 import type { AccountKind } from '@/lib/propfirm/types';
 import type { AccountStatus, FailReason } from '@/lib/propfirm/engine';
@@ -131,6 +133,46 @@ export function FirmMark({ firm, className }: { firm: FirmVisual; className?: st
   }
 
   return <FirmTile initials={firm.initials} tile={firm.tile} className={className} />;
+}
+
+/** A firm as a folder: logo, name and a count, with its accounts inside. */
+export function FirmFolder({
+  firm,
+  name,
+  count,
+  selected = 0,
+  defaultOpen = false,
+  children,
+}: {
+  firm: FirmVisual;
+  name: string;
+  count: number;
+  selected?: number;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen || selected > 0);
+
+  return (
+    <div className="rounded-xl border border-border bg-background/30">
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => setOpen(value => !value)}
+        className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left"
+      >
+        <FirmMark firm={firm} className="size-7" />
+        <span className="font-sans text-sm font-semibold tracking-tight">{name}</span>
+        <span className="font-sans text-xs text-muted-foreground">
+          {selected > 0 ? `${selected} di ${count} selezionati` : count}
+        </span>
+        <ChevronDown
+          className={cn('ml-auto size-4 text-muted-foreground transition-transform', open && 'rotate-180')}
+        />
+      </button>
+      {open && <div className="border-t border-border/60 p-3">{children}</div>}
+    </div>
+  );
 }
 
 export function FirmTile({

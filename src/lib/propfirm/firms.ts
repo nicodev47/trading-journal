@@ -28,6 +28,8 @@ export interface FirmDef {
   logoOnDark?: boolean;
   /** Tailwind classes for the firm tile. */
   tile: string;
+  /** Rules are written by the user instead of copied from a firm. */
+  custom?: boolean;
   ruleSets: RuleSetDef[];
 }
 
@@ -764,6 +766,31 @@ export const FIRMS: FirmDef[] = [
           }),
           fundedOverrides: { drawdown: trailing(item.dd, 'intraday-trailing', 0) },
         })),
+      },
+    ],
+  },
+  {
+    id: 'custom',
+    name: 'Personalizzata',
+    initials: '＋',
+    tile: 'from-[#2a2a2d] to-[#1f1f22] border-white/10',
+    custom: true,
+    ruleSets: [
+      {
+        id: 'custom',
+        name: 'Regole tue',
+        note: 'Prop simulata con regole scelte da te: imposti obiettivo, drawdown, limiti e payout come vuoi.',
+        sizes: [25000, 50000, 100000, 150000].map(size =>
+          ({
+            label: k(size),
+            size,
+            rules: rule({
+              target: Math.round(size * 0.06),
+              drawdown: Math.round(size * 0.04),
+              split: 0.9,
+            }),
+          })
+        ),
       },
     ],
   },
