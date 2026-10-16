@@ -22,7 +22,7 @@
   --destructive-foreground: #ffffff;
   --border: rgba(255, 255, 255, 0.08);
   --input: rgba(255, 255, 255, 0.14);
-  --ring: #737373;
+  --ring: rgba(255, 255, 255, 0.14);
   --chart-1: #5cb8ff;
   --chart-2: #ff6568;
   --chart-3: #bf5af2;
@@ -65,7 +65,7 @@
   --destructive-foreground: #ffffff;
   --border: rgba(255, 255, 255, 0.08);
   --input: rgba(255, 255, 255, 0.14);
-  --ring: #737373;
+  --ring: rgba(255, 255, 255, 0.14);
   --chart-1: #5cb8ff;
   --chart-2: #ff6568;
   --chart-3: #bf5af2;
@@ -136,7 +136,15 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border;
+  }
+
+  /* No highlighted borders or rings when something is clicked or focused. */
+  :focus,
+  :focus-visible {
+    outline: none !important;
+    --tw-ring-shadow: 0 0 #0000 !important;
+    --tw-ring-offset-shadow: 0 0 #0000 !important;
   }
   body {
     @apply bg-background text-foreground;
