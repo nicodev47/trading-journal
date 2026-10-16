@@ -45,7 +45,8 @@ interface NavEntry {
 const MAIN_ENTRIES: NavEntry[] = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, view: 'calendar' },
   { id: 'reports', label: 'Reports', icon: BarChart3, view: 'monthly', tutorial: 'analysis-tab' },
-  { id: 'strategies', label: 'Strategies', icon: Target, view: 'strategies' },
+  // Strategies is hidden for now: the page is still in the app, add this entry back to show it.
+  // { id: 'strategies', label: 'Strategies', icon: Target, view: 'strategies' },
   { id: 'progress', label: 'Progress Tracker', icon: Trophy, view: 'progress' },
   { id: 'news', label: 'News', icon: Newspaper, view: 'news' },
   { id: 'propfirm', label: 'Propfirm', icon: Building2, view: 'propfirm' },
