@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { getCopiedTo } from '@/lib/copy-trading';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -157,7 +158,9 @@ interface DayEditorDialogProps {
   onClose: () => void;
   date: string;
   existingTrades: Trade[];
-  onSave: (trades: Trade[]) => void;
+  onSave: (trades: Trade[], copyTo: string[]) => void;
+  /** Other accounts the day can be copied to (copy trading). */
+  copyTargets?: { id: string; name: string }[];
   onDeleteDay: () => void;
   strategies: string[];
   availableStandardTags: string[];
@@ -178,6 +181,7 @@ export function DayEditorDialog({
   date,
   existingTrades,
   onSave,
+  copyTargets = [],
   onDeleteDay,
   availableStandardTags = [],
   customTags = [],
@@ -208,6 +212,8 @@ export function DayEditorDialog({
     index: number;
     name: string;
   } | null>(null);
+  const [copyTo, setCopyTo] = useState<string[]>([]);
+  const copyToRef = useRef<string[]>([]);
   const [autosaveStatus, setAutosaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const tradeRowsRef = useRef<TradeRow[]>([]);
   const timeDraftsRef = useRef<Record<string, string>>({});
@@ -380,7 +386,7 @@ export function DayEditorDialog({
     }
 
     setAutosaveStatus('saving');
-    onSave(trades);
+    onSave(trades, copyToRef.current);
     existingTradesByIdRef.current = new Map(trades.map(trade => [trade.id, trade]));
     lastSavedSignatureRef.current = signature;
     setAutosaveStatus(signature ? 'saved' : 'idle');
@@ -428,6 +434,27 @@ export function DayEditorDialog({
   useEffect(() => {
     isOpenRef.current = isOpen;
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const initial = getCopiedTo(existingTrades).filter(id => copyTargets.some(target => target.id === id));
+
+    copyToRef.current = initial;
+    setCopyTo(initial);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, date]);
+
+  const toggleCopyTarget = (id: string) => {
+    const next = copyToRef.current.includes(id)
+      ? copyToRef.current.filter(item => item !== id)
+      : [...copyToRef.current, id];
+
+    copyToRef.current = next;
+    setCopyTo(next);
+    hasUserChangedRef.current = true;
+    persistCurrentRows({ force: true });
+  };
 
   useEffect(() => {
     tradeRowsRef.current = tradeRows;
@@ -748,6 +775,40 @@ export function DayEditorDialog({
             disabled={readOnly}
             className="contents [&_:disabled]:!cursor-default [&_:disabled]:!opacity-100"
           >
+
+          {copyTargets.length > 0 && !readOnly && (
+            <div className="flex flex-col gap-2 rounded-[14px] border border-border bg-secondary/15 p-3 sm:p-4">
+              <div>
+                <p className="font-sans text-xs font-medium text-muted-foreground">Eseguito su altri account</p>
+                <p className="mt-0.5 font-sans text-[11px] text-muted-foreground/80">
+                  I trade di questa giornata vengono copiati negli account selezionati e restano allineati.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {copyTargets.map(target => {
+                  const active = copyTo.includes(target.id);
+
+                  return (
+                    <button
+                      key={target.id}
+                      type="button"
+                      aria-pressed={active}
+                      onClick={() => toggleCopyTarget(target.id)}
+                      className={cn(
+                        'inline-flex h-8 items-center gap-1.5 rounded-full border px-3 font-sans text-xs transition-colors',
+                        active
+                          ? 'border-[#0a84ff] bg-[#0a84ff]/15 text-foreground'
+                          : 'border-border text-muted-foreground hover:text-foreground'
+                      )}
+                    >
+                      {active && <Check className="size-3" />}
+                      {target.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           <div className="flex flex-col gap-3 sm:gap-4">
             {tradeRows.map((row, rowIndex) => (
               <div
