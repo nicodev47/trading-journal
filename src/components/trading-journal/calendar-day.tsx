@@ -310,8 +310,9 @@ export function CalendarDay({
                     aria-label="Eseguito su questa prop"
                     style={{ zIndex: 3 - index }}
                     className={cn(
-                      'relative flex size-5 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-b font-sans text-[8px] font-bold leading-none text-white sm:size-6 sm:text-[9px]',
-                      item.tile
+                      'relative flex size-5 shrink-0 items-center justify-center overflow-hidden rounded-full font-sans text-[8px] font-bold leading-none text-white sm:size-6 sm:text-[9px]',
+                      // Logos are drawn as they are; the coloured tile is only for initials.
+                      !item.logo && cn('border bg-gradient-to-b', item.tile)
                     )}
                   >
                     {item.logo ? (
