@@ -927,12 +927,7 @@ export function MonthlyAnalysis({
       </div>
 
       <div className="mb-4">
-        <InsightsPanel
-          trades={yearFilteredTrades}
-          onOpenGroup={(title, subtitle, groupTrades) =>
-            openTradeGroup(title, subtitle, groupTrades)
-          }
-        />
+        <InsightsPanel trades={yearFilteredTrades} />
       </div>
 
       <Dialog

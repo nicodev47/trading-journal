@@ -11,7 +11,6 @@ import {
   Zap,
   type LucideIcon,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { usePreferences } from '@/contexts/preferences-context';
 import { useStreamerMode } from '@/contexts/streamer-mode-context';
 import { buildInsights, type Insight, type InsightTopic, type Segment } from '@/lib/insights';
@@ -56,11 +55,10 @@ function Sentence({ segments, hideMoney }: { segments: Segment[]; hideMoney: boo
 
 interface InsightsPanelProps {
   trades: Trade[];
-  onOpenGroup: (title: string, subtitle: string, trades: Trade[]) => void;
 }
 
 /** Plain findings computed from the user's own trades, one line each. */
-export function InsightsPanel({ trades, onOpenGroup }: InsightsPanelProps) {
+export function InsightsPanel({ trades }: InsightsPanelProps) {
   const { preferences } = usePreferences();
   const { streamerMode } = useStreamerMode();
   const insights = useMemo(
@@ -108,30 +106,13 @@ export function InsightsPanel({ trades, onOpenGroup }: InsightsPanelProps) {
                   {insights
                     .filter((insight: Insight) => insight.topic === topic)
                     .map(insight => (
-                      <li key={insight.id} className="flex items-start justify-between gap-4">
+                      <li key={insight.id}>
                         <div className="min-w-0">
                           <p className="font-sans text-sm leading-relaxed text-muted-foreground">
                             <Sentence segments={insight.segments} hideMoney={streamerMode} />
                           </p>
                         </div>
 
-                        {insight.trades && insight.trades.length > 0 && (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="h-8 shrink-0 rounded-lg px-3 text-xs"
-                            onClick={() =>
-                              onOpenGroup(
-                                insight.openTitle ?? label,
-                                'Operazioni collegate a questa osservazione.',
-                                insight.trades ?? []
-                              )
-                            }
-                          >
-                            Apri
-                          </Button>
-                        )}
                       </li>
                     ))}
                 </ul>

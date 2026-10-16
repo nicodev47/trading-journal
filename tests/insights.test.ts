@@ -22,7 +22,7 @@ test('senza trade non ci sono frasi', () => {
   assert.deepEqual(buildInsights([], []), []);
 });
 
-test('riporta setup migliore e peggiore come semplici dati', () => {
+test('riporta setup migliore e peggiore con il riepilogo completo dei trade', () => {
   const insights = buildInsights(
     [trade('01', '10:00', 300, 'A'), trade('02', '10:00', -100, 'B')],
     []
@@ -30,8 +30,26 @@ test('riporta setup migliore e peggiore come semplici dati', () => {
   const best = insights.find(insight => insight.id === 'setup-best');
   const worst = insights.find(insight => insight.id === 'setup-worst');
 
-  assert.match(text(best!), /^Setup migliore: A \(\+300,00 USD, 1 trade, win rate 100%\)\.$/);
-  assert.match(text(worst!), /^Setup peggiore: B \(-100,00 USD, 1 trade, win rate 0%\)\.$/);
+  assert.equal(
+    text(best!),
+    'Setup migliore: A, +300,00 USD, 1 trade totale di cui 1 win e 0 loss con un totale di winrate del 100%.'
+  );
+  assert.equal(
+    text(worst!),
+    'Setup peggiore: B, -100,00 USD, 1 trade totale di cui 0 wins e 1 loss con un totale di winrate del 0%.'
+  );
+});
+
+test('giorni e mesi hanno una riga per il migliore e una per il peggiore, senza parentesi', () => {
+  const insights = buildInsights(
+    [trade('01', '10:00', 300), trade('02', '10:00', -100), trade('03', '10:00', 50)],
+    []
+  );
+  const lines = insights.map(text);
+
+  assert.ok(insights.some(insight => insight.id === 'weekday-best'));
+  assert.ok(insights.some(insight => insight.id === 'weekday-worst'));
+  assert.ok(lines.every(line => !line.includes('(')));
 });
 
 test('nessuna frase contiene consigli o toni colloquiali', () => {

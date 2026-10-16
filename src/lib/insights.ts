@@ -32,8 +32,6 @@ export interface Insight {
   id: string;
   topic: InsightTopic;
   segments: Segment[];
-  trades?: Trade[];
-  openTitle?: string;
 }
 
 const WEEKDAYS = ['domenica', 'lunedì', 'martedì', 'mercoledì', 'giovedì', 'venerdì', 'sabato'];
@@ -72,7 +70,19 @@ const strong = (text: string) => ({ text, tone: 'strong' as const });
 
 const capitalize = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
 
-const count = (value: number) => `${value} trade`;
+/** "+8078,00 USD, 15 trade totali di cui 15 wins e 0 loss con un totale di winrate del 100%" */
+function stat(items: Trade[]): Segment[] {
+  const wins = items.filter(trade => getTradeOutcome(trade) === 'win').length;
+  const losses = items.filter(trade => getTradeOutcome(trade) === 'loss').length;
+  const total = items.length;
+
+  return [
+    moneyTone(sum(items)),
+    `, ${total === 1 ? '1 trade totale' : `${total} trade totali`} di cui ${
+      wins === 1 ? '1 win' : `${wins} wins`
+    } e ${losses} loss con un totale di winrate del ${number(winRateOf(items), 0)}%`,
+  ];
+}
 
 function groupBy(trades: Trade[], keyOf: (trade: Trade) => string | null) {
   const groups = new Map<string, Trade[]>();
@@ -114,42 +124,21 @@ export function buildInsights(
   const insights: Insight[] = [];
   const stats = calculateStatistics(trades);
   const totalPnl = sum(trades);
+  const add = (id: string, topic: InsightTopic, segments: Segment[]) =>
+    insights.push({ id, topic, segments });
 
   // Setup
   const setups = getStrategyRows(trades).filter(row => row.name !== 'Senza Setup');
+  const ofSetup = (name: string) => trades.filter(trade => trade.strategy?.trim() === name);
 
   if (setups.length > 0) {
     const best = setups[0];
     const worst = setups.length > 1 ? setups[setups.length - 1] : null;
 
-    insights.push({
-      id: 'setup-best',
-      topic: 'setup',
-      segments: [
-        'Setup migliore: ',
-        strong(best.name),
-        ' (',
-        moneyTone(best.pnl),
-        `, ${count(best.trades)}, win rate ${number(best.winRate, 0)}%).`,
-      ],
-      trades: trades.filter(trade => trade.strategy?.trim() === best.name),
-      openTitle: `Setup ${best.name}`,
-    });
+    add('setup-best', 'setup', ['Setup migliore: ', strong(best.name), ', ', ...stat(ofSetup(best.name)), '.']);
 
     if (worst && worst.name !== best.name) {
-      insights.push({
-        id: 'setup-worst',
-        topic: 'setup',
-        segments: [
-          'Setup peggiore: ',
-          strong(worst.name),
-          ' (',
-          moneyTone(worst.pnl),
-          `, ${count(worst.trades)}, win rate ${number(worst.winRate, 0)}%).`,
-        ],
-        trades: trades.filter(trade => trade.strategy?.trim() === worst.name),
-        openTitle: `Setup ${worst.name}`,
-      });
+      add('setup-worst', 'setup', ['Setup peggiore: ', strong(worst.name), ', ', ...stat(ofSetup(worst.name)), '.']);
     }
   }
 
@@ -161,38 +150,26 @@ export function buildInsights(
   const inWindow = (name: string) =>
     trades.filter(trade => getOperatingWindowName(trade, windows) === name);
   const when = (name: string, description: string) =>
-    name === description ? [strong(name)] : [strong(name), ` (${description})`];
+    name === description ? [strong(name)] : [strong(name), ` ${description}`];
 
   if (bestWindow) {
-    insights.push({
-      id: 'window-best',
-      topic: 'orari',
-      segments: [
-        'Finestra operativa migliore: ',
-        ...when(bestWindow.name, bestWindow.description),
-        ', ',
-        moneyTone(bestWindow.pnl),
-        ` in ${count(bestWindow.tradeCount)}.`,
-      ],
-      trades: inWindow(bestWindow.name),
-      openTitle: `Finestra ${bestWindow.name}`,
-    });
+    add('window-best', 'orari', [
+      'Finestra operativa migliore: ',
+      ...when(bestWindow.name, bestWindow.description),
+      ', ',
+      ...stat(inWindow(bestWindow.name)),
+      '.',
+    ]);
   }
 
   if (worstWindow) {
-    insights.push({
-      id: 'window-worst',
-      topic: 'orari',
-      segments: [
-        'Finestra operativa peggiore: ',
-        ...when(worstWindow.name, worstWindow.description),
-        ', ',
-        moneyTone(worstWindow.pnl),
-        ` in ${count(worstWindow.tradeCount)}.`,
-      ],
-      trades: inWindow(worstWindow.name),
-      openTitle: `Finestra ${worstWindow.name}`,
-    });
+    add('window-worst', 'orari', [
+      'Finestra operativa peggiore: ',
+      ...when(worstWindow.name, worstWindow.description),
+      ', ',
+      ...stat(inWindow(worstWindow.name)),
+      '.',
+    ]);
   }
 
   const outside = trades.filter(trade => {
@@ -202,21 +179,13 @@ export function buildInsights(
   });
 
   if (outside.length >= 3 && windows.length > 0) {
-    const share = (outside.length / trades.length) * 100;
-
-    insights.push({
-      id: 'window-outside',
-      topic: 'orari',
-      segments: [
-        'Trade fuori dalle finestre operative: ',
-        strong(`${outside.length} su ${trades.length} (${number(share, 0)}%)`),
-        ', risultato ',
-        moneyTone(sum(outside)),
-        '.',
-      ],
-      trades: outside,
-      openTitle: 'Trade fuori finestra',
-    });
+    add('window-outside', 'orari', [
+      'Trade fuori dalle finestre operative: ',
+      strong(`${outside.length} su ${trades.length}, ${number((outside.length / trades.length) * 100, 0)}% dei trade`),
+      ', ',
+      ...stat(outside),
+      '.',
+    ]);
   }
 
   // Weekdays
@@ -229,31 +198,24 @@ export function buildInsights(
 
   if (weekdayExtremes.best) {
     const { best, worst } = weekdayExtremes;
-    const bestDay = WEEKDAYS[Number(best.key)];
 
-    insights.push({
-      id: 'weekday',
-      topic: 'giorni',
-      segments: [
-        'Giorno della settimana migliore: ',
-        strong(bestDay),
-        ' (',
-        moneyTone(best.pnl),
-        `, ${count(best.items.length)})`,
-        ...(worst && worst.key !== best.key
-          ? [
-              '. Peggiore: ',
-              strong(WEEKDAYS[Number(worst.key)]),
-              ' (',
-              moneyTone(worst.pnl),
-              `, ${count(worst.items.length)})`,
-            ]
-          : []),
+    add('weekday-best', 'giorni', [
+      'Giorno della settimana migliore: ',
+      strong(WEEKDAYS[Number(best.key)]),
+      ', ',
+      ...stat(best.items),
+      '.',
+    ]);
+
+    if (worst && worst.key !== best.key) {
+      add('weekday-worst', 'giorni', [
+        'Giorno della settimana peggiore: ',
+        strong(WEEKDAYS[Number(worst.key)]),
+        ', ',
+        ...stat(worst.items),
         '.',
-      ],
-      trades: best.items,
-      openTitle: `Trade del ${bestDay}`,
-    });
+      ]);
+    }
   }
 
   // Months
@@ -267,46 +229,42 @@ export function buildInsights(
   if (monthExtremes.best) {
     const { best, worst } = monthExtremes;
 
-    insights.push({
-      id: 'month',
-      topic: 'mesi',
-      segments: [
-        'Mese migliore: ',
-        strong(capitalize(MONTHS[Number(best.key)])),
-        ' (',
-        moneyTone(best.pnl),
-        `, win rate ${number(best.winRate, 0)}%)`,
-        ...(worst && worst.key !== best.key
-          ? ['. Peggiore: ', strong(capitalize(MONTHS[Number(worst.key)])), ' (', moneyTone(worst.pnl), ')']
-          : []),
+    add('month-best', 'mesi', [
+      'Mese migliore: ',
+      strong(capitalize(MONTHS[Number(best.key)])),
+      ', ',
+      ...stat(best.items),
+      '.',
+    ]);
+
+    if (worst && worst.key !== best.key) {
+      add('month-worst', 'mesi', [
+        'Mese peggiore: ',
+        strong(capitalize(MONTHS[Number(worst.key)])),
+        ', ',
+        ...stat(worst.items),
         '.',
-      ],
-      trades: best.items,
-      openTitle: `Trade di ${MONTHS[Number(best.key)]}`,
-    });
+      ]);
+    }
   }
 
   // Streaks
   if (stats.longestWinStreak > 0 || stats.longestLoseStreak > 0) {
-    const current =
-      stats.streakType === 'winning'
+    add('streak-best', 'serie', [
+      'Serie massima: ',
+      { text: `${stats.longestWinStreak} win`, tone: 'profit' },
+      ' consecutive.',
+    ]);
+    add('streak-worst', 'serie', [
+      'Serie peggiore: ',
+      { text: `${stats.longestLoseStreak} loss`, tone: 'loss' },
+      ' consecutive.',
+      ...(stats.streakType === 'winning'
         ? [' Serie in corso: ', strong(`${stats.currentStreak} win`), '.']
         : stats.streakType === 'losing'
           ? [' Serie in corso: ', strong(`${stats.currentStreak} loss`), '.']
-          : [];
-
-    insights.push({
-      id: 'streak',
-      topic: 'serie',
-      segments: [
-        'Serie massima: ',
-        { text: `${stats.longestWinStreak} win`, tone: 'profit' },
-        ' consecutive. Serie peggiore: ',
-        { text: `${stats.longestLoseStreak} loss`, tone: 'loss' },
-        ' consecutive.',
-        ...current,
-      ],
-    });
+          : []),
+    ]);
   }
 
   // Risk
@@ -315,56 +273,35 @@ export function buildInsights(
   if (maxDrawdown !== null) {
     const drawdown = Math.abs(maxDrawdown);
 
-    insights.push({
-      id: 'drawdown',
-      topic: 'rischio',
-      segments:
-        drawdown === 0
-          ? ['Drawdown massimo: ', strong('nessuno'), '.']
-          : [
-              'Drawdown massimo: ',
-              { text: `${number(drawdown)} USD`, tone: 'loss' as const },
-              totalPnl > 0 ? ` (${number((drawdown / totalPnl) * 100, 0)}% del profitto netto).` : '.',
-            ],
-    });
+    add(
+      'drawdown',
+      'rischio',
+      drawdown === 0
+        ? ['Drawdown massimo: ', strong('nessuno'), '.']
+        : [
+            'Drawdown massimo: ',
+            { text: `${number(drawdown)} USD`, tone: 'loss' },
+            totalPnl > 0 ? `, ${number((drawdown / totalPnl) * 100, 0)}% del profitto netto.` : '.',
+          ]
+    );
   }
 
   if (stats.avgWin > 0 && stats.avgLoss > 0) {
-    insights.push({
-      id: 'average',
-      topic: 'rischio',
-      segments: [
-        'Media win: ',
-        { text: `${number(stats.avgWin)} USD`, tone: 'profit' },
-        '. Media loss: ',
-        { text: `${number(stats.avgLoss)} USD`, tone: 'loss' },
-        '. Rapporto media win / media loss: ',
-        strong(number(stats.avgWin / stats.avgLoss)),
-        '.',
-      ],
-    });
+    add('average', 'rischio', [
+      'Media win: ',
+      { text: `${number(stats.avgWin)} USD`, tone: 'profit' },
+      '. Media loss: ',
+      { text: `${number(stats.avgLoss)} USD`, tone: 'loss' },
+      '. Rapporto media win / media loss: ',
+      strong(number(stats.avgWin / stats.avgLoss)),
+      '.',
+    ]);
   } else if (stats.avgWin > 0) {
-    insights.push({
-      id: 'average',
-      topic: 'rischio',
-      segments: [
-        'Media win: ',
-        { text: `${number(stats.avgWin)} USD`, tone: 'profit' },
-        '. Nessuna perdita registrata.',
-      ],
-    });
-  }
-
-  if (stats.bestDayPercentOfGross > 0) {
-    insights.push({
-      id: 'concentration',
-      topic: 'rischio',
-      segments: [
-        'Il giorno migliore vale il ',
-        strong(`${number(stats.bestDayPercentOfGross, 0)}%`),
-        ' dei profitti lordi.',
-      ],
-    });
+    add('average', 'rischio', [
+      'Media win: ',
+      { text: `${number(stats.avgWin)} USD`, tone: 'profit' },
+      '. Nessuna perdita registrata.',
+    ]);
   }
 
   // Direction
@@ -372,23 +309,8 @@ export function buildInsights(
   const shorts = trades.filter(trade => trade.direction === 'short');
 
   if (longs.length > 0 && shorts.length > 0) {
-    const longPnl = sum(longs);
-    const shortPnl = sum(shorts);
-    const weaker = longPnl < shortPnl ? 'long' : 'short';
-
-    insights.push({
-      id: 'direction',
-      topic: 'direzione',
-      segments: [
-        `Long: ${count(longs.length)} (`,
-        moneyTone(longPnl),
-        `). Short: ${count(shorts.length)} (`,
-        moneyTone(shortPnl),
-        ').',
-      ],
-      trades: weaker === 'long' ? longs : shorts,
-      openTitle: `Trade ${weaker}`,
-    });
+    add('direction-long', 'direzione', ['Long: ', ...stat(longs), '.']);
+    add('direction-short', 'direzione', ['Short: ', ...stat(shorts), '.']);
   }
 
   return insights;
