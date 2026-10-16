@@ -1,9 +1,6 @@
 import type { Trade } from '@/lib/types/trade';
 import { getTradeSharePresentation } from '@/lib/trade-share-outcome';
 import { usePreferences } from '@/contexts/preferences-context';
-import { usePropAccountList } from '@/contexts/prop-accounts-context';
-import { getFirm } from '@/lib/propfirm/firms';
-import { FirmMark } from '@/components/propfirm/shared';
 import {
   ShareCardFooter,
   ShareCardFrame,
@@ -71,18 +68,6 @@ export function TradeShareCard({
   className,
 }: TradeShareCardProps) {
   const { preferences } = usePreferences();
-  const propAccounts = usePropAccountList();
-  // Companies the trade was executed on (one entry per firm).
-  const firms = Array.from(
-    new Set(
-      (trade.propAccountIds ?? [])
-        .map(id => propAccounts.find(account => account.id === id)?.firmId)
-        .filter((id): id is string => Boolean(id))
-    )
-  )
-    .map(id => getFirm(id))
-    .filter((firm): firm is NonNullable<ReturnType<typeof getFirm>> => Boolean(firm));
-  const firmNames = firms.map(firm => firm.name).join(' · ');
   const netPnl = trade.pnl - (trade.commission || 0);
   const { accent, badgeLabel } = getTradeSharePresentation(netPnl);
   const identity = getShareIdentity(handle);
@@ -100,7 +85,6 @@ export function TradeShareCard({
         label="Net P&L"
         accent={accent}
         trend={netPnl > 0 ? 'up' : netPnl < 0 ? 'down' : 'flat'}
-        badge={badgeLabel}
       />
 
       <div className="mt-14 space-y-3">
@@ -117,27 +101,8 @@ export function TradeShareCard({
             identity?.initials ?? 'EJ'
           )
         }
-        name={identity?.displayName ?? 'EclipseJournal'}
-        caption={
-          firms.length > 0 ? (
-            <span className="flex min-w-0 items-center gap-3 whitespace-nowrap">
-              <span>x</span>
-              <span className="flex shrink-0 items-center -space-x-2.5">
-                {firms.map(firm => (
-                  <FirmMark key={firm.id} firm={firm} className="size-9 rounded-full" />
-                ))}
-              </span>
-              {/* Always the names; smaller when there are several, cut with an ellipsis if still too long. */}
-              <span
-                className={`min-w-0 truncate font-medium text-white/70 ${
-                  firms.length > 2 ? 'text-[18px]' : 'text-[20px]'
-                }`}
-              >
-                {firmNames}
-              </span>
-            </span>
-          ) : undefined
-        }
+        name={identity ? `${identity.displayName} x EclipseJournal` : 'EclipseJournal'}
+        right={badgeLabel}
       />
     </ShareCardFrame>
   );

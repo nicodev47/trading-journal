@@ -79,9 +79,7 @@ export function ShareGlowAmount({
   label,
   accent,
   trend,
-  badge,
 }: {
-  badge?: string;
   sign: string;
   amount: string;
   currency: string;
@@ -116,14 +114,7 @@ export function ShareGlowAmount({
           )}
         </div>
       </div>
-      <div className="mt-4 flex items-center justify-between gap-6">
-        <div className="text-[22px] font-medium text-white/50">{label}</div>
-        {badge && (
-          <div className="rounded-full border border-white/15 bg-white/[0.06] px-5 py-1.5 text-[18px] font-semibold tracking-wide text-white/75">
-            {badge}
-          </div>
-        )}
-      </div>
+      <div className="mt-4 text-[22px] font-medium text-white/50">{label}</div>
     </section>
   );
 }
@@ -176,30 +167,25 @@ export function ShareCardFooter({
 }: {
   avatar: ReactNode;
   name: string;
-  caption?: ReactNode;
-  right?: string;
+  caption?: string;
+  right: string;
 }) {
   return (
     <footer className="mt-auto flex items-center pt-8 justify-between gap-6">
-      <div className="flex min-w-0 items-center gap-4">
-        <div className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/10 text-[24px] font-semibold text-white">
+      <div className="flex items-center gap-4">
+        <div className="flex size-16 items-center justify-center overflow-hidden rounded-full bg-white/10 text-[24px] font-semibold text-white">
           {avatar}
         </div>
-        {typeof caption === 'string' || !caption ? (
-          <div>
-            <div className="text-[22px] font-semibold text-white">{name}</div>
-            {caption && (
-              <div className="mt-0.5 text-[15px] font-medium text-white/45">{caption}</div>
-            )}
-          </div>
-        ) : (
-          <div className="flex min-w-0 flex-nowrap items-center gap-3 overflow-hidden whitespace-nowrap text-[22px] font-semibold text-white">
-            <span className="shrink-0">{name}</span>
-            {caption}
-          </div>
-        )}
+        <div>
+          <div className="text-[22px] font-semibold text-white">{name}</div>
+          {caption && (
+            <div className="mt-0.5 text-[15px] font-medium text-white/45">
+              {caption}
+            </div>
+          )}
+        </div>
       </div>
-      {right && <div className="text-[20px] font-semibold text-white/70">{right}</div>}
+      <div className="text-[20px] font-semibold text-white/70">{right}</div>
     </footer>
   );
 }
