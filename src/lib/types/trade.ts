@@ -27,6 +27,8 @@ export interface Trade {
   setupRating: number; // 1-5
   createdAt: string;
   updatedAt: string;
+  /** Prop firm accounts this trade was executed on (empty: not assigned). */
+  propAccountIds?: string[];
 }
 
 export interface CaseStudy {

@@ -34,5 +34,10 @@ export function getAccountDays(
     );
   }
 
-  return tradesToDays(getJournalTrades(account.source.journalId), account.startDate);
+  // Trades assigned to specific prop accounts only count for those; unassigned ones count for every account of the journal.
+  const trades = getJournalTrades(account.source.journalId).filter(
+    trade => !trade.propAccountIds?.length || trade.propAccountIds.includes(account.id)
+  );
+
+  return tradesToDays(trades, account.startDate);
 }

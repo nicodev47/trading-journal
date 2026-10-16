@@ -69,6 +69,8 @@ interface TradeRow {
   isFavorite: boolean;
   screenshots: ScreenshotData[];
   notes: string;
+  /** Prop firm accounts this trade was executed on. */
+  propAccountIds: string[];
 }
 
 type LegacyTrade = Trade & { mistakes?: string[] };
@@ -158,6 +160,8 @@ interface DayEditorDialogProps {
   date: string;
   existingTrades: Trade[];
   onSave: (trades: Trade[]) => void;
+  /** Prop firm accounts a trade can be assigned to; empty hides the choice. */
+  propAccountChoices?: { id: string; name: string; firmName: string }[];
   onDeleteDay: () => void;
   strategies: string[];
   availableStandardTags: string[];
@@ -178,6 +182,7 @@ export function DayEditorDialog({
   date,
   existingTrades,
   onSave,
+  propAccountChoices = [],
   onDeleteDay,
   availableStandardTags = [],
   customTags = [],
@@ -239,6 +244,7 @@ export function DayEditorDialog({
     isFavorite: false,
     screenshots: [],
     notes: '',
+    propAccountIds: [],
   });
 
   const normalizeScreenshots = (screenshots: Trade['screenshots']): ScreenshotData[] =>
@@ -281,6 +287,7 @@ export function DayEditorDialog({
         isFavorite: t.isFavorite ?? false,
         screenshots: normalizeScreenshots(t.screenshots),
         notes: t.notes || '',
+        propAccountIds: t.propAccountIds ?? [],
       };
     });
 
@@ -347,9 +354,10 @@ export function DayEditorDialog({
           setupRating: 3,
           createdAt: existingTrade?.createdAt || now,
           updatedAt: now,
+          ...(propAccountChoices.length > 0 ? { propAccountIds: row.propAccountIds } : {}),
         };
       });
-  }, [date, rowHasContent]);
+  }, [date, rowHasContent, propAccountChoices.length]);
 
   const getAutosaveSignature = (trades: Trade[]) =>
     JSON.stringify(
@@ -1008,6 +1016,52 @@ export function DayEditorDialog({
                     </Select>
                   </div>
                 </div>
+                  {propAccountChoices.length > 0 && (
+                    <div className="mt-3 flex flex-col gap-1.5">
+                      <Label className="text-xs font-medium tracking-normalr text-muted-foreground">
+                        Eseguito su
+                      </Label>
+                      <div className="flex flex-wrap gap-2">
+                        {propAccountChoices.map(choice => {
+                          const active = row.propAccountIds.includes(choice.id);
+
+                          return (
+                            <button
+                              key={choice.id}
+                              type="button"
+                              aria-pressed={active}
+                              onClick={() =>
+                                replaceTradeRows(
+                                  previous =>
+                                    previous.map(item =>
+                                      item.id === row.id
+                                        ? {
+                                            ...item,
+                                            propAccountIds: active
+                                              ? item.propAccountIds.filter(id => id !== choice.id)
+                                              : [...item.propAccountIds, choice.id],
+                                          }
+                                        : item
+                                    ),
+                                  0
+                                )
+                              }
+                              className={cn(
+                                'inline-flex h-8 items-center gap-1.5 rounded-full border px-3 font-sans text-xs transition-colors',
+                                active
+                                  ? 'border-[#0a84ff] bg-[#0a84ff]/15 text-foreground'
+                                  : 'border-border text-muted-foreground hover:text-foreground'
+                              )}
+                            >
+                              {active && <Check className="size-3" />}
+                              {choice.name}
+                              <span className="text-muted-foreground">{choice.firmName}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div className="flex min-w-0 flex-col gap-3 rounded-lg border border-border/70 bg-background/30 p-3 sm:p-3.5">
                   <p className="font-sans tabular-nums text-[11px] font-medium tracking-normal text-muted-foreground">

@@ -44,3 +44,16 @@ test('un conto manuale usa i saldi aggiornati', () => {
     { date: '2026-06-03', pnl: -300 },
   ]);
 });
+
+test('un trade assegnato a una prop conta solo per quella', async () => {
+  const { getAccountDays } = await import('../src/lib/propfirm/days.ts');
+  const trade = (id: string, ids?: string[]) =>
+    ({ id, pnl: 100, commission: 0, exitDate: '2026-06-02T10:00:00', entryDate: '2026-06-02T10:00:00', propAccountIds: ids }) as never;
+  const trades = [trade('a', ['x']), trade('b', ['y']), trade('c')];
+  const account = (id: string) =>
+    ({ id, source: { kind: 'journal', journalId: 'personal' }, startDate: '2026-01-01', size: 50000, balanceUpdates: [] }) as never;
+
+  assert.equal(getAccountDays(account('x'), () => trades)[0].pnl, 200);
+  assert.equal(getAccountDays(account('y'), () => trades)[0].pnl, 200);
+  assert.equal(getAccountDays(account('z'), () => trades)[0].pnl, 100);
+});

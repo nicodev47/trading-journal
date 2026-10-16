@@ -1202,6 +1202,12 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
               : getTradesByDate(selectedDate)
           }
           onSave={handleSaveDayTrades}
+          propAccountChoices={propStore.accounts
+            .filter(
+              account =>
+                account.source.kind === 'journal' && account.source.journalId === activeWorkspace
+            )
+            .map(account => ({ id: account.id, name: account.name, firmName: account.firmName }))}
           onDeleteDay={handleDeleteDay}
           strategies={strategies}
           availableStandardTags={tags}
