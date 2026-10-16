@@ -1,6 +1,5 @@
 'use client';
 
-import { AssetName } from '@/components/ui/asset-icon';
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -896,7 +895,7 @@ export function DayEditorDialog({
                         <SelectGroup>
                           {getMenuOptions(preferences.assets, row.symbol).map(option => (
                             <SelectItem key={option.value} value={option.value}>
-                              <AssetName symbol={option.value} />
+                              {option.value}
                               {option.orphan ? ' (non più nelle preferenze)' : ''}
                             </SelectItem>
                           ))}

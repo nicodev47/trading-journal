@@ -1,6 +1,5 @@
 'use client';
 
-import { AssetName } from '@/components/ui/asset-icon';
 import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useStreamerMode } from '@/contexts/streamer-mode-context';
@@ -101,7 +100,7 @@ export function TradeLog({ trades, onOpenTrade }: TradeLogProps) {
                           : '—'}
                       </td>
                       <td className="px-3 py-3 text-muted-foreground">{timeOf(trade)}</td>
-                      <td className="px-3 py-3 text-foreground"><AssetName symbol={trade.pair} /></td>
+                      <td className="px-3 py-3 text-foreground">{trade.pair?.trim() || '—'}</td>
                       <td className="px-3 py-3 capitalize text-muted-foreground">
                         {trade.direction || '—'}
                       </td>

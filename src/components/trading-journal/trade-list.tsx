@@ -1,6 +1,5 @@
 'use client';
 
-import { AssetName } from '@/components/ui/asset-icon';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -125,7 +124,7 @@ export function TradeList({
                         )}
                       </div>
                       <div>
-                        <p className="font-medium"><AssetName symbol={trade.pair} /></p>
+                        <p className="font-medium">{trade.pair}</p>
                         <p className="text-xs text-muted-foreground">
                           {trade.direction === 'long' ? 'Long' : 'Short'} • {trade.lotSize} lots
                         </p>
