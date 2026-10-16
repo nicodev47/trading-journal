@@ -248,16 +248,35 @@ export function TradeGroupContent({
                       {trade.strategy?.trim() || '-'}
                     </span>
                     {getAccounts && (
-                      <span className="flex items-center -space-x-1.5">
-                        {getAccounts(trade).map(account => {
-                          const firm = getFirm(account.firmId);
+                      <span className="flex items-center gap-1.5">
+                        {(() => {
+                          // One logo per company; at most three, then "+N".
+                          const accounts = getAccounts(trade);
+                          const firms = Array.from(new Set(accounts.map(account => account.firmId)))
+                            .map(id => ({
+                              id,
+                              firm: getFirm(id),
+                              names: accounts.filter(account => account.firmId === id).map(account => account.name),
+                            }))
+                            .filter(item => item.firm);
 
-                          return firm ? (
-                            <span key={account.name} title={account.name}>
-                              <FirmMark firm={firm} className="size-6 rounded-full" />
-                            </span>
-                          ) : null;
-                        })}
+                          return (
+                            <>
+                              <span className="flex items-center -space-x-1.5">
+                                {firms.slice(0, 3).map(item => (
+                                  <span key={item.id} title={item.names.join(', ')}>
+                                    <FirmMark firm={item.firm!} className="size-6 rounded-full" />
+                                  </span>
+                                ))}
+                              </span>
+                              {firms.length > 3 && (
+                                <span className="text-[11px] font-semibold text-muted-foreground">
+                                  +{firms.length - 3}
+                                </span>
+                              )}
+                            </>
+                          );
+                        })()}
                       </span>
                     )}
                     <EconomicValue
