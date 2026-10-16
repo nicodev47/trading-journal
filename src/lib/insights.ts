@@ -1,6 +1,7 @@
 import type { Trade } from './types/trade';
 import {
   calculateMaxDrawdown,
+  calculateMaxProfit,
   calculateStatistics,
   calculateWinRate,
   getTradeOutcome,
@@ -24,6 +25,7 @@ export type InsightTopic =
   | 'mesi'
   | 'serie'
   | 'rischio'
+  | 'metriche'
   | 'direzione';
 
 export type Segment = string | { text: string; tone: 'profit' | 'loss' | 'strong' };
@@ -268,40 +270,38 @@ export function buildInsights(
   }
 
   // Risk
+  if (stats.avgWin > 0) {
+    add('average-win', 'rischio', ['Media win: ', { text: `${number(stats.avgWin)} USD`, tone: 'profit' }, '.']);
+  }
+
+  if (stats.avgLoss > 0) {
+    add('average-loss', 'rischio', ['Media loss: ', { text: `${number(stats.avgLoss)} USD`, tone: 'loss' }, '.']);
+  } else if (stats.avgWin > 0) {
+    add('average-loss', 'rischio', ['Media loss: ', strong('nessuna perdita registrata'), '.']);
+  }
+
+  // Metrics
+  const maxProfit = calculateMaxProfit(trades);
   const maxDrawdown = calculateMaxDrawdown(trades);
+
+  if (maxProfit !== null && maxProfit > 0) {
+    add('max-profit', 'metriche', [
+      'Profitto massimo raggiunto: ',
+      { text: `${number(maxProfit)} USD`, tone: 'profit' },
+      '.',
+    ]);
+  }
 
   if (maxDrawdown !== null) {
     const drawdown = Math.abs(maxDrawdown);
 
     add(
       'drawdown',
-      'rischio',
+      'metriche',
       drawdown === 0
         ? ['Drawdown massimo: ', strong('nessuno'), '.']
-        : [
-            'Drawdown massimo: ',
-            { text: `${number(drawdown)} USD`, tone: 'loss' },
-            totalPnl > 0 ? `, ${number((drawdown / totalPnl) * 100, 0)}% del profitto netto.` : '.',
-          ]
+        : ['Drawdown massimo: ', { text: `${number(drawdown)} USD`, tone: 'loss' }, '.']
     );
-  }
-
-  if (stats.avgWin > 0 && stats.avgLoss > 0) {
-    add('average', 'rischio', [
-      'Media win: ',
-      { text: `${number(stats.avgWin)} USD`, tone: 'profit' },
-      '. Media loss: ',
-      { text: `${number(stats.avgLoss)} USD`, tone: 'loss' },
-      '. Rapporto media win / media loss: ',
-      strong(number(stats.avgWin / stats.avgLoss)),
-      '.',
-    ]);
-  } else if (stats.avgWin > 0) {
-    add('average', 'rischio', [
-      'Media win: ',
-      { text: `${number(stats.avgWin)} USD`, tone: 'profit' },
-      '. Nessuna perdita registrata.',
-    ]);
   }
 
   // Direction

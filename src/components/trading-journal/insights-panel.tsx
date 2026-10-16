@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 import {
+  BarChart3,
   CalendarDays,
   Clock,
   Scale,
@@ -24,6 +25,7 @@ const TOPICS: Record<InsightTopic, { label: string; icon: LucideIcon }> = {
   mesi: { label: 'Mesi', icon: CalendarDays },
   serie: { label: 'Serie', icon: Zap },
   rischio: { label: 'Rischio', icon: Scale },
+  metriche: { label: 'Metriche', icon: BarChart3 },
   direzione: { label: 'Direzione', icon: TrendingUp },
 };
 

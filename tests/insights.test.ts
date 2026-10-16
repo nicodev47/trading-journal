@@ -80,8 +80,19 @@ test('i trade senza orario (00:00) non compaiono nelle finestre', () => {
 
 test('con soli profitti riporta che non ci sono perdite', () => {
   const average = buildInsights([trade('01', '10:00', 100), trade('02', '10:00', 200)], []).find(
-    insight => insight.id === 'average'
+    insight => insight.id === 'average-loss'
   );
 
-  assert.match(text(average!), /Nessuna perdita registrata/);
+  assert.match(text(average!), /nessuna perdita registrata/);
+});
+
+test('metriche riporta profitto massimo e drawdown massimo', () => {
+  const insights = buildInsights(
+    [trade('01', '10:00', 500), trade('02', '10:00', -200), trade('03', '10:00', 100)],
+    []
+  );
+
+  assert.match(text(insights.find(i => i.id === 'max-profit')!), /500,00 USD/);
+  assert.match(text(insights.find(i => i.id === 'drawdown')!), /200,00 USD/);
+  assert.equal(insights.find(i => i.id === 'drawdown')!.topic, 'metriche');
 });

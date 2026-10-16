@@ -247,7 +247,7 @@ function getChronologicalTradeTimestamp(trade: Trade): number | null {
  * Worst equity decline from a previous peak. The result is always negative or
  * zero; `null` means that no statistical trade is available.
  */
-export function calculateMaxDrawdown(trades: Trade[]): number | null {
+function walkEquity(trades: Trade[]): { maxDrawdown: number; peak: number } | null {
   const validTrades = trades
     .filter(isValidStatTrade)
     .map((trade, originalIndex) => ({
@@ -277,7 +277,16 @@ export function calculateMaxDrawdown(trades: Trade[]): number | null {
     maxDrawdown = Math.min(maxDrawdown, currentEquity - equityPeak);
   });
 
-  return normalizePnl(maxDrawdown);
+  return { maxDrawdown: normalizePnl(maxDrawdown), peak: normalizePnl(equityPeak) };
+}
+
+export function calculateMaxDrawdown(trades: Trade[]): number | null {
+  return walkEquity(trades)?.maxDrawdown ?? null;
+}
+
+/** Highest cumulative profit the account reached (never below 0). */
+export function calculateMaxProfit(trades: Trade[]): number | null {
+  return walkEquity(trades)?.peak ?? null;
 }
 
 export function filterCalendarTrades(
