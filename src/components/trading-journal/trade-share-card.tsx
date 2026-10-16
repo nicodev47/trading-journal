@@ -93,7 +93,7 @@ export function TradeShareCard({
           label="Asset"
           value={
             <span className="inline-flex items-center gap-3">
-              <AssetIcon symbol={trade.pair} className="[&_img]:size-8" />
+              <AssetIcon symbol={trade.pair} size={34} />
               {trade.pair || '--'}
             </span>
           }

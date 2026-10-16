@@ -79,3 +79,46 @@ export function getAssetLogos(symbol: string | undefined | null): string[] {
 
   return key.length === 6 && base && quote ? [base, quote] : [];
 }
+
+/** Futures: a round badge with the contract root on the colour of its market. */
+const FUTURES_BADGES: Record<string, { color: string; dark?: boolean }> = {
+  NQ: { color: '#0091BA' },
+  MNQ: { color: '#0091BA' },
+  ES: { color: '#C4162E' },
+  MES: { color: '#C4162E' },
+  YM: { color: '#13A3D7' },
+  MYM: { color: '#13A3D7' },
+  RTY: { color: '#511732' },
+  M2K: { color: '#511732' },
+  DAX: { color: '#2F68AE' },
+  FDAX: { color: '#2F68AE' },
+  FESX: { color: '#192E8B' },
+  GC: { color: '#D69A00' },
+  MGC: { color: '#D69A00' },
+  SI: { color: '#8E8C9A' },
+  SIL: { color: '#8E8C9A' },
+  CL: { color: '#4B5563' },
+  MCL: { color: '#4B5563' },
+  HG: { color: '#C26A44' },
+  MHG: { color: '#C26A44' },
+  NG: { color: '#42A5F5' },
+  ZC: { color: '#FBC02D', dark: true },
+  ZS: { color: '#388E3C' },
+  ZW: { color: '#FFD600', dark: true },
+  '6E': { color: '#1565C0' },
+  M6E: { color: '#1565C0' },
+  '6B': { color: '#2F3C7E' },
+  M6B: { color: '#2F3C7E' },
+  '6A': { color: '#0D47A1' },
+  M6A: { color: '#0D47A1' },
+  '6J': { color: '#BC002D' },
+  '6C': { color: '#D52B1E' },
+  '6S': { color: '#EF5350' },
+  ZB: { color: '#1E88E9' },
+  ZN: { color: '#1E88E9' },
+  ZF: { color: '#1E88E9' },
+};
+
+export function getFuturesBadge(symbol: string | undefined | null) {
+  return FUTURES_BADGES[(symbol ?? '').trim().toUpperCase()] ?? null;
+}
