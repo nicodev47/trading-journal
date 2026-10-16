@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { getFirm } from '@/lib/propfirm/firms';
+import { usePropAccountList } from '@/contexts/prop-accounts-context';
 import { FirmMark } from '@/components/propfirm/shared';
 import { usePreferences } from '@/contexts/preferences-context';
 import { getMenuOptions } from '@/lib/preferences';
@@ -33,6 +34,8 @@ interface TradeDetailDialogProps {
   onBack?: () => void;
   /** Accounts the trade was executed on. */
   accounts?: AccountChip[];
+  /** Imported files have no accounts: hide the row. */
+  hideAccounts?: boolean;
 }
 
 export function netPnl(trade: Trade) {
@@ -287,8 +290,10 @@ export function TradeDetailDialog({
   showBackButton = false,
   onBack,
   accounts,
+  hideAccounts = false,
 }: TradeDetailDialogProps) {
   const { preferences } = usePreferences();
+  const propAccounts = usePropAccountList();
   const [setupDraft, setSetupDraft] = useState('');
   const [savedSetup, setSavedSetup] = useState('');
 
@@ -300,6 +305,13 @@ export function TradeDetailDialog({
 
   if (!trade) return null;
 
+  // Where the trade was executed: given by the caller or read from the prop accounts.
+  const executedOn: AccountChip[] =
+    accounts ??
+    (trade.propAccountIds ?? [])
+      .map(id => propAccounts.find(account => account.id === id))
+      .filter((account): account is NonNullable<typeof account> => Boolean(account))
+      .map(account => ({ name: `${account.firmName} · ${account.name}`, firmId: account.firmId }));
   const date = getTradeDate(trade);
   const screenshots = normalizeScreenshots(trade);
   const tags = trade.tags ?? [];
@@ -405,9 +417,9 @@ export function TradeDetailDialog({
             </DetailCard>
           </div>
 
-          {accounts !== undefined && (
+          {!hideAccounts && (accounts !== undefined || propAccounts.length > 0) && (
             <DetailCard label="Eseguito su" className="mt-3">
-              <AccountList accounts={accounts} />
+              <AccountList accounts={executedOn} />
             </DetailCard>
           )}
 

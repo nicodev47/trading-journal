@@ -205,6 +205,7 @@ function PreviewContent({ data, fileName, view, onClose }: ImportPreviewProps) {
       />
 
       <TradeDetailDialog
+        hideAccounts
         trade={selectedTrade}
         streamerMode={streamerMode}
         onClose={() => {

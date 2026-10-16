@@ -14,6 +14,7 @@ import {
   hasStoredWorkspaceContent,
   type JournalWorkspace,
 } from '@/hooks/use-trades';
+import { PropAccountsProvider } from '@/contexts/prop-accounts-context';
 import { buildPropMarkers } from '@/lib/propfirm/markers';
 import { Toaster } from '@/components/ui/sonner';
 import { Button } from '@/components/ui/button';
@@ -1046,7 +1047,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
   ) : null;
 
   return (
-    <>
+    <PropAccountsProvider value={propStore.accounts}>
       <AppShell
         banner={bannerNode}
         activeView={activeView}
@@ -1247,10 +1248,6 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
 
       <TradeDetailDialog
         trade={selectedTrade}
-        accounts={(selectedTrade?.propAccountIds ?? [])
-          .map(id => propStore.accounts.find(account => account.id === id))
-          .filter((account): account is NonNullable<typeof account> => Boolean(account))
-          .map(account => ({ name: `${account.firmName} · ${account.name}`, firmId: account.firmId }))}
         streamerMode={streamerMode}
         onUpdateTrade={(id, updates) => {
           updateTrade(id, updates);
@@ -1672,7 +1669,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
       />
 
       <Toaster />
-    </>
+    </PropAccountsProvider>
   );
 }
 
