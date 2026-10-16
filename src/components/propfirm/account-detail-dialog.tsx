@@ -5,7 +5,9 @@ import { Pencil, RefreshCw, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { previewNextDay, type AccountSim } from '@/lib/propfirm/engine';
+import { Area, CartesianGrid, ComposedChart, Line, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { useStreamerMode } from '@/contexts/streamer-mode-context';
+import type { AccountSim } from '@/lib/propfirm/engine';
 import { getFirm } from '@/lib/propfirm/firms';
 import { RulesEditor } from './rules-editor';
 import type { DayResult, Payout, PropAccount, PropRules } from '@/lib/propfirm/types';
@@ -96,6 +98,7 @@ export function AccountDetailDialog({
   onReset,
 }: AccountDetailDialogProps) {
   const money = useMoney();
+  const { streamerMode } = useStreamerMode();
   const isEvaluation = account.kind === 'evaluation';
   const rules = account.rules;
   const firm = getFirm(account.firmId);
@@ -107,22 +110,25 @@ export function AccountDetailDialog({
   const [payoutAmount, setPayoutAmount] = useState('');
   const [payoutNote, setPayoutNote] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [tomorrow, setTomorrow] = useState(0);
 
   const drawdownAmount = rules.drawdown.amount ?? 0;
   const paidNet = account.payouts.reduce((total, payout) => total + payout.gross * rules.payout.split, 0);
-  const input = useMemo(
-    () => ({
-      kind: account.kind,
-      size: account.size,
-      rules,
-      days,
-      payouts: account.payouts.filter(payout => payout.date >= account.startDate),
-    }),
-    [account.kind, account.size, account.startDate, rules, days, account.payouts]
-  );
-  const preview = useMemo(() => previewNextDay(input, tomorrow), [input, tomorrow]);
-  const sliderMax = Math.max(drawdownAmount, rules.profitTarget ?? 0, 1000);
+
+  const winningDays = sim.days.filter(row => row.pnl > 0).length;
+  const bestDay = sim.days.reduce((best, row) => Math.max(best, row.pnl), 0);
+  const worstDay = sim.days.reduce((worst, row) => Math.min(worst, row.pnl), 0);
+  const targetBalance =
+    isEvaluation && sim.requiredProfit !== null ? account.size + sim.requiredProfit : null;
+  const chartData = [
+    { label: 'Inizio', balance: account.size, floor: account.size - drawdownAmount },
+    ...sim.days.map(row => ({ label: formatDate(row.date).replace(/ \d{4}$/, ''), balance: row.balance, floor: row.floor })),
+  ];
+  const chartValues = chartData.flatMap(point => [point.balance, point.floor]).concat(targetBalance ?? []);
+  const chartPadding = Math.max(100, (Math.max(...chartValues) - Math.min(...chartValues)) * 0.08);
+  const chartDomain: [number, number] = [
+    Math.floor((Math.min(...chartValues) - chartPadding) / 100) * 100,
+    Math.ceil((Math.max(...chartValues) + chartPadding) / 100) * 100,
+  ];
 
   const saveName = () => {
     const next = nameDraft.trim();
@@ -305,7 +311,7 @@ export function AccountDetailDialog({
               ['overview', 'Panoramica'],
               ['rules', 'Regole'],
               ['consistency', 'Consistenza'],
-              ['days', 'Giorni'],
+              ['days', 'Andamento'],
               ...(isEvaluation ? [] : [['payout', 'Payout']]),
             ].map(([value, label]) => (
               <button
@@ -513,79 +519,123 @@ export function AccountDetailDialog({
                   />
                 </div>
 
-                <div className="rounded-xl border border-border bg-background/30 p-4">
-                  <div className="flex items-center justify-between">
-                    <p className="font-sans text-sm font-semibold">Se domani faccio</p>
-                    <p className="font-sans text-sm font-semibold tabular-nums">{money.signed(tomorrow)}</p>
-                  </div>
-                  <input
-                    type="range"
-                    min={-drawdownAmount || -sliderMax}
-                    max={sliderMax}
-                    step={50}
-                    value={tomorrow}
-                    onChange={event => setTomorrow(Number(event.target.value))}
-                    className="mt-3 w-full accent-[#0a84ff]"
-                    aria-label="Risultato di domani"
-                  />
-                  <p className="mt-2 font-sans text-xs text-muted-foreground">
-                    Dopo un altro giorno la consistenza sarebbe{' '}
-                    <strong className={preview.consistency?.ok === false ? 'text-loss' : 'text-foreground'}>
-                      {preview.consistency?.share == null ? '—' : percent(preview.consistency.share)}
-                    </strong>{' '}
-                    (limite {percent(sim.consistency.limit)}) e il margine{' '}
-                    <strong className="text-foreground">{money.usd(preview.room)}</strong>
-                    {preview.status === 'failed' && <strong className="text-loss"> — il conto fallirebbe.</strong>}
-                    {preview.status === 'passed' && <strong className="text-profit"> — supereresti la valutazione.</strong>}
-                  </p>
-                </div>
               </>
             )}
           </section>
 
-          <section id="prop-section-days" className="scroll-mt-14 p-4 sm:p-6">
-            <h3 className="font-sans text-lg font-semibold tracking-tight">Giorni</h3>
+          <section id="prop-section-days" className="scroll-mt-14 flex flex-col gap-4 p-4 sm:p-6">
+            <h3 className="font-sans text-lg font-semibold tracking-tight">Andamento</h3>
             {sim.days.length === 0 ? (
               <p className="py-10 text-center font-sans text-sm text-muted-foreground">
                 {account.source.kind === 'journal'
-                  ? `Nessun trade nel journal dal ${formatDate(account.startDate)}.`
+                  ? `Nessun trade assegnato a questo conto dal ${formatDate(account.startDate)}.`
                   : 'Aggiorna il saldo per vedere i giorni.'}
               </p>
             ) : (
-              <div className="overflow-x-auto rounded-xl border border-border">
-                <table className="w-full min-w-[460px] border-collapse font-sans text-sm tabular-nums">
-                  <thead>
-                    <tr className="border-b border-border text-left text-xs text-muted-foreground">
-                      <th className="px-4 py-2.5 font-medium">Giorno</th>
-                      <th className="px-3 py-2.5 text-right font-medium">P&L</th>
-                      <th className="px-3 py-2.5 text-right font-medium">Saldo</th>
-                      <th className="px-4 py-2.5 text-right font-medium">Floor</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {[...sim.days].reverse().map(row => (
-                      <tr key={row.date} className="border-b border-border/60 last:border-0">
-                        <td className="px-4 py-2.5">
-                          {formatDate(row.date)}
-                          {row.dayLocked && (
-                            <span className="ml-2 rounded-full bg-loss/15 px-2 py-0.5 text-[10px] text-loss">limite giornaliero</span>
-                          )}
-                        </td>
-                        <td
+              <>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  <Tile label="Giorni di trading" value={String(sim.tradingDays)} />
+                  <Tile label="Giorni in profitto" value={`${winningDays} / ${sim.days.length}`} tone={winningDays > 0 ? 'profit' : undefined} />
+                  <Tile label="Giorno migliore" value={bestDay > 0 ? money.usd(bestDay) : '—'} tone={bestDay > 0 ? 'profit' : undefined} />
+                  <Tile label="Giorno peggiore" value={worstDay < 0 ? money.usd(worstDay) : '—'} tone={worstDay < 0 ? 'loss' : undefined} />
+                </div>
+
+                <div className="rounded-xl border border-border bg-background/30 p-4">
+                  <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 font-sans text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1.5"><span className="h-0.5 w-4 bg-[#0a84ff]" />Saldo</span>
+                    <span className="flex items-center gap-1.5"><span className="h-0.5 w-4 bg-loss" />Limite di drawdown</span>
+                    {targetBalance !== null && (
+                      <span className="flex items-center gap-1.5"><span className="h-0.5 w-4 bg-profit" />Obiettivo</span>
+                    )}
+                  </div>
+                  <div className="h-56 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <ComposedChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" vertical={false} />
+                        <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.5)' }} tickLine={false} axisLine={false} />
+                        <YAxis
+                          domain={chartDomain}
+                          tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.5)' }}
+                          tickLine={false}
+                          axisLine={false}
+                          width={56}
+                          tickFormatter={value => (streamerMode ? '***' : `$${Math.round(value).toLocaleString('it-IT')}`)}
+                        />
+                        <Tooltip
+                          cursor={{ stroke: 'rgba(255,255,255,0.2)' }}
+                          contentStyle={{ background: '#111114', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 10, fontSize: 12 }}
+                          formatter={(value, name) => [streamerMode ? '******' : money.usd(Number(value)), name]}
+                        />
+                        {targetBalance !== null && (
+                          <ReferenceLine y={targetBalance} stroke="#30d158" strokeDasharray="5 4" />
+                        )}
+                        <Line type="stepAfter" dataKey="floor" name="Limite" stroke="#ff453a" strokeDasharray="5 4" dot={false} strokeWidth={1.5} />
+                        <Area type="monotone" dataKey="balance" name="Saldo" stroke="#0a84ff" strokeWidth={2} fill="#0a84ff" fillOpacity={0.12} dot={{ r: 2.5 }} />
+                      </ComposedChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto rounded-xl border border-border">
+                  <table className="w-full min-w-[520px] border-collapse font-sans text-sm tabular-nums">
+                    <thead>
+                      <tr className="border-b border-border text-left text-xs text-muted-foreground">
+                        <th className="px-4 py-2.5 font-medium">Giorno</th>
+                        <th className="px-3 py-2.5 text-right font-medium">P&L</th>
+                        <th className="px-3 py-2.5 text-right font-medium">Saldo</th>
+                        <th className="px-3 py-2.5 text-right font-medium">Limite</th>
+                        <th className="px-4 py-2.5 text-right font-medium">Margine</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[...sim.days].reverse().map(row => (
+                        <tr
+                          key={row.date}
                           className={cn(
-                            'px-3 py-2.5 text-right font-medium',
-                            row.pnl > 0 ? 'text-profit' : row.pnl < 0 ? 'text-loss' : ''
+                            'border-b border-border/60',
+                            row.pnl > 0 && 'bg-profit/[0.06]',
+                            row.pnl < 0 && 'bg-loss/[0.06]'
                           )}
                         >
-                          {money.signed(row.pnl)}
+                          <td className="px-4 py-2.5">
+                            {formatDate(row.date)}
+                            {row.dayLocked && (
+                              <span className="ml-2 rounded-full bg-loss/15 px-2 py-0.5 text-[10px] text-loss">limite giornaliero</span>
+                            )}
+                          </td>
+                          <td
+                            className={cn(
+                              'px-3 py-2.5 text-right font-medium',
+                              row.pnl > 0 ? 'text-profit' : row.pnl < 0 ? 'text-loss' : ''
+                            )}
+                          >
+                            {money.signed(row.pnl)}
+                          </td>
+                          <td className="px-3 py-2.5 text-right">{money.usd(row.balance)}</td>
+                          <td className="px-3 py-2.5 text-right text-muted-foreground">{money.usd(row.floor)}</td>
+                          <td className="px-4 py-2.5 text-right">{money.usd(row.balance - row.floor)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot>
+                      <tr className="text-xs font-semibold">
+                        <td className="px-4 py-2.5 text-muted-foreground">Totale</td>
+                        <td
+                          className={cn(
+                            'px-3 py-2.5 text-right',
+                            sim.profit > 0 ? 'text-profit' : sim.profit < 0 ? 'text-loss' : ''
+                          )}
+                        >
+                          {money.signed(sim.profit)}
                         </td>
-                        <td className="px-3 py-2.5 text-right">{money.usd(row.balance)}</td>
-                        <td className="px-4 py-2.5 text-right text-muted-foreground">{money.usd(row.floor)}</td>
+                        <td className="px-3 py-2.5 text-right">{money.usd(sim.balance)}</td>
+                        <td className="px-3 py-2.5 text-right text-muted-foreground">{money.usd(sim.floor)}</td>
+                        <td className="px-4 py-2.5 text-right">{money.usd(sim.room)}</td>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </tfoot>
+                  </table>
+                </div>
+              </>
             )}
           </section>
 
