@@ -27,10 +27,8 @@ export interface Trade {
   setupRating: number; // 1-5
   createdAt: string;
   updatedAt: string;
-  /** Copy trading: journals this trade was also executed on. */
-  copiedTo?: string[];
-  /** Copy trading: id of the original trade this one was copied from. */
-  copySourceId?: string;
+  /** Accounts (journals) this trade was executed on; the same trade is stored in each. */
+  accounts?: string[];
 }
 
 export interface CaseStudy {

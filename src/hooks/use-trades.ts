@@ -10,7 +10,7 @@ import {
   type JournalState,
   type WeeklyPlan,
 } from '@/lib/types/trade';
-import { syncCopies } from '@/lib/copy-trading';
+import { applyDayRows } from '@/lib/day-accounts';
 import { hasWorkspaceContent } from '@/lib/workspace-content';
 import {
   getWorkspaceStorageKey,
@@ -841,36 +841,27 @@ export function useJournalWorkspaces() {
 }
 
 /**
- * Copy trading: writes a day of trades into other journals' storage (or
- * removes earlier copies when the account is no longer selected).
+ * Writes an edited day into a journal that is not the open one: the trades
+ * loaded in the editor are replaced by the rows that include this account.
  */
-export function syncTradeCopies(options: {
-  candidates: JournalWorkspace[];
-  selected: JournalWorkspace[];
-  sourceIds: string[];
-  sourceTrades: Trade[];
-}) {
-  options.candidates.forEach(target => {
-    const key = getWorkspaceStorageKey(target);
+export function writeDayToWorkspace(
+  target: JournalWorkspace,
+  loadedIds: string[],
+  rows: Trade[]
+) {
+  const key = getWorkspaceStorageKey(target);
 
-    try {
-      const stored = localStorage.getItem(key);
-      const state = (stored && parseImportedJournal(stored)) || initialState;
-      const trades = syncCopies(
-        state.trades,
-        options.sourceIds,
-        options.sourceTrades,
-        target,
-        options.selected.includes(target)
-      );
+  try {
+    const stored = localStorage.getItem(key);
+    const state = (stored && parseImportedJournal(stored)) || initialState;
+    const trades = applyDayRows(state.trades, loadedIds, rows, target);
 
-      if (trades.length === state.trades.length && !options.selected.includes(target) && !stored) return;
+    if (!stored && trades.length === 0) return;
 
-      localStorage.setItem(key, JSON.stringify({ ...state, trades }));
-    } catch (error) {
-      console.error('Failed to copy trades to', target, error);
-    }
-  });
+    localStorage.setItem(key, JSON.stringify({ ...state, trades }));
+  } catch (error) {
+    console.error('Failed to write trades to', target, error);
+  }
 }
 
 const getTradeDedupKey = (trade: Trade) => {

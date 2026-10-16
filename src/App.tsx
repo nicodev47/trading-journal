@@ -12,9 +12,11 @@ import {
   useJournalWorkspaces,
   useTrades,
   hasStoredWorkspaceContent,
-  syncTradeCopies,
+  writeDayToWorkspace,
   type JournalWorkspace,
 } from '@/hooks/use-trades';
+import { AccountSelector } from '@/components/trading-journal/account-selector';
+import { groupByTrade, getTradeAccounts, type StoredTrade } from '@/lib/day-accounts';
 import { Toaster } from '@/components/ui/sonner';
 import { Button } from '@/components/ui/button';
 import {
@@ -212,6 +214,9 @@ function AppContent() {
    deleteWorkspace,
  } = useJournalWorkspaces();
  const [activeWorkspace, setActiveWorkspace] = useState<JournalWorkspace>('personal');
+ // The dashboard shows every account together; the journal behind it stays 'personal'.
+ const [isAllScope, setIsAllScope] = useState(true);
+ const [storageVersion, setStorageVersion] = useState(0);
 const [activeView, setActiveView] = useState<AppView>('calendar');
 const [isHelpOpen, setIsHelpOpen] = useState(false);
 const [isWhatsNewOpen, setIsWhatsNewOpen] = useState(false);
@@ -298,11 +303,29 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
     (activeWorkspace === 'student' || activeWorkspace.startsWith('preview-')) &&
     hasWorkspaceContent(getWorkspaceData(activeWorkspace));
   // The Progress Tracker covers every account except Backtest and Preview.
-  const progressTrades = workspaces
-    .filter(workspace => workspace.group !== 'backtest' && workspace.group !== 'preview')
-    .flatMap(workspace => getWorkspaceData(workspace.id).trades);
+  const accountWorkspaces = workspaces.filter(
+    workspace => workspace.group !== 'backtest' && workspace.group !== 'preview'
+  );
+  // Reading journals from storage again whenever a day was written to another account.
+  void storageVersion;
+  const accountInstances: StoredTrade[] = accountWorkspaces.flatMap(workspace =>
+    getWorkspaceData(workspace.id).trades.map(trade => ({ workspaceId: workspace.id, trade }))
+  );
+  const progressTrades = accountInstances.map(item => item.trade);
+  // One entry per stored trade (a trade on two accounts earned on both), with a unique id.
+  const allAccountTrades = accountInstances.map(({ workspaceId, trade }) => ({
+    ...trade,
+    id: `${workspaceId}::${trade.id}`,
+  }));
   const showPreviewWorkspace = true;
-  const visibleTrades = isTutorialActive ? tutorialTrades : trades;
+  const scopedTrades = isAllScope ? allAccountTrades : trades;
+  const visibleTrades = isTutorialActive ? tutorialTrades : scopedTrades;
+  const inAccountScope =
+    isAllScope || accountWorkspaces.some(workspace => workspace.id === activeWorkspace);
+  const accountChoices = inAccountScope
+    ? accountWorkspaces.map(workspace => ({ id: workspace.id, name: workspace.name }))
+    : [];
+  const defaultAccounts = isAllScope ? [accountWorkspaces[0]?.id ?? 'personal'] : [activeWorkspace];
 
   useEffect(() => {
     if (!isTutorialActive) return;
@@ -471,37 +494,41 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
     setSelectedWeek({ weekKey, weekLabel });
   };
 
-  const copyTargets = workspaces.filter(
-    workspace =>
-      workspace.id !== activeWorkspace &&
-      workspace.group !== 'backtest' &&
-      workspace.group !== 'preview'
-  );
+  // Trades of a day as the editor sees them: one row per trade, with its accounts.
+  const getDayRows = (date: string): Trade[] => {
+    if (!isAllScope) {
+      return getTradesByDate(date).map(trade => ({
+        ...trade,
+        accounts: inAccountScope ? getTradeAccounts(trade, activeWorkspace) : undefined,
+      }));
+    }
 
-  const handleSaveDayTrades = (dayTrades: Trade[], copyTo: string[] = []) => {
+    return groupByTrade(
+      accountInstances.filter(({ trade }) => trade.exitDate.startsWith(date))
+    );
+  };
+
+  const handleSaveDayTrades = (dayTrades: Trade[]) => {
     if (isTutorialActive) {
       setSelectedDate(null);
       return;
     }
 
-    const existingTrades = selectedDate ? getTradesByDate(selectedDate) : [];
-    existingTrades.forEach((trade) => deleteTrade(trade.id));
+    const existingTrades = selectedDate ? getDayRows(selectedDate) : [];
+    const loadedIds = [...existingTrades.map(trade => trade.id), ...dayTrades.map(trade => trade.id)];
+    const mine = (trade: Trade) =>
+      !inAccountScope || getTradeAccounts(trade, activeWorkspace).includes(activeWorkspace);
 
-    const stamped = dayTrades.map(trade => ({
-      ...trade,
-      copiedTo: copyTo.length > 0 ? copyTo : undefined,
-    }));
+    // Open journal: through its own state. Everything else: straight to storage.
+    getTradesByDate(selectedDate ?? '').forEach(trade => deleteTrade(trade.id));
+    dayTrades.filter(mine).forEach(trade => addTrade(trade));
 
-    stamped.forEach((trade) => {
-      addTrade(trade);
-    });
-
-    syncTradeCopies({
-      candidates: copyTargets.map(target => target.id),
-      selected: copyTo as JournalWorkspace[],
-      sourceIds: [...existingTrades.map(trade => trade.id), ...stamped.map(trade => trade.id)],
-      sourceTrades: stamped,
-    });
+    if (inAccountScope) {
+      accountWorkspaces
+        .filter(workspace => workspace.id !== activeWorkspace)
+        .forEach(workspace => writeDayToWorkspace(workspace.id, loadedIds, dayTrades));
+      setStorageVersion(version => version + 1);
+    }
 
     if (activeWorkspace === 'backtest') {
       const nextTradeCount = trades.length - existingTrades.length + dayTrades.length;
@@ -525,13 +552,16 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
 
     if (selectedDate) {
       const existingTrades = getTradesByDate(selectedDate);
+      const loadedIds = getDayRows(selectedDate).map(trade => trade.id);
       existingTrades.forEach((trade) => deleteTrade(trade.id));
-      syncTradeCopies({
-        candidates: copyTargets.map(target => target.id),
-        selected: [],
-        sourceIds: existingTrades.map(trade => trade.id),
-        sourceTrades: [],
-      });
+
+      if (inAccountScope) {
+        accountWorkspaces
+          .filter(workspace => workspace.id !== activeWorkspace)
+          .forEach(workspace => writeDayToWorkspace(workspace.id, loadedIds, []));
+        setStorageVersion(version => version + 1);
+      }
+
       setSelectedDate(null);
 
       if (activeWorkspace === 'backtest') {
@@ -580,7 +610,18 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
     setBacktestHasData(getBacktestHasData());
     setBacktestHasTrades(getBacktestHasTrades());
     setImportTargetMonth(targetMonth);
+    setIsAllScope(false);
     setActiveWorkspace(workspace);
+  };
+
+  const handleSelectAllAccounts = () => {
+    setImportPreview(null);
+    setSelectedDate(null);
+    setSelectedWeek(null);
+    setImportExportMode(null);
+    setImportTargetMonth(getLatestTradeMonth(allAccountTrades));
+    setIsAllScope(true);
+    setActiveWorkspace('personal');
   };
 
   const getWorkspaceExportData = useCallback((workspace: JournalWorkspace) => {
@@ -1069,31 +1110,6 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
       <AppShell
         banner={bannerNode}
         activeView={activeView}
-        activeWorkspace={activeWorkspace}
-        workspaces={workspaces}
-        showPreviewWorkspace={showPreviewWorkspace}
-        maxCustomWorkspaces={maxCustomWorkspaces}
-        onWorkspaceChange={(workspace) => {
-          setImportPreview(null);
-          handleWorkspaceChange(workspace);
-        }}
-        previewLabel={
-          importPreview
-            ? extractImportedPreferences(importPreview.data)?.name || importPreview.fileName
-            : undefined
-        }
-        onExitPreview={() => setImportPreview(null)}
-        legacyPreviewWorkspaceIds={workspaces
-          .filter(
-            workspace =>
-              workspace.group === 'preview' &&
-              hasWorkspaceContent(getWorkspaceData(workspace.id))
-          )
-          .map(workspace => workspace.id)}
-        onCreateWorkspace={createWorkspace}
-        onUpdateWorkspace={updateWorkspace}
-        onBackupWorkspace={handleBackupWorkspace}
-        onDeleteWorkspace={handleDeleteWorkspace}
         pinnedForTutorial={
           isTutorialActive &&
           TUTORIAL_STEPS[tutorialStepIndex]?.target === 'analysis-section'
@@ -1118,11 +1134,43 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
         {activeView === 'calendar' ? (
           <>
           <>
+  <div className="mb-3 flex items-center gap-2">
+    <AccountSelector
+      activeWorkspace={activeWorkspace}
+      isAllActive={isAllScope}
+      onSelectAll={handleSelectAllAccounts}
+      workspaces={workspaces}
+      showPreviewWorkspace={showPreviewWorkspace}
+      maxCustomWorkspaces={maxCustomWorkspaces}
+      onWorkspaceChange={(workspace) => {
+        setImportPreview(null);
+        handleWorkspaceChange(workspace);
+      }}
+      onCreateWorkspace={createWorkspace}
+      onUpdateWorkspace={updateWorkspace}
+      onBackupWorkspace={handleBackupWorkspace}
+      onDeleteWorkspace={handleDeleteWorkspace}
+      previewLabel={
+        importPreview
+          ? extractImportedPreferences(importPreview.data)?.name || importPreview.fileName
+          : undefined
+      }
+      onExitPreview={() => setImportPreview(null)}
+      legacyPreviewWorkspaceIds={workspaces
+        .filter(
+          workspace =>
+            workspace.group === 'preview' &&
+            hasWorkspaceContent(getWorkspaceData(workspace.id))
+        )
+        .map(workspace => workspace.id)}
+    />
+  </div>
+
   <StatsGrid trades={visibleTrades} />
 
   <TradingCalendar
     trades={visibleTrades}
-    navigationTrades={isTutorialActive ? [] : trades}
+    navigationTrades={isTutorialActive ? [] : scopedTrades}
     weeklyPlans={isTutorialActive ? [] : weeklyPlans}
     activeWorkspace={activeWorkspace}
     showPreviewWorkspace={previewHasContent}
@@ -1225,10 +1273,11 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
                     (trade.exitDate || trade.entryDate).split('T')[0] ===
                     selectedDate
                 )
-              : getTradesByDate(selectedDate)
+              : getDayRows(selectedDate)
           }
           onSave={handleSaveDayTrades}
-          copyTargets={copyTargets.map(target => ({ id: target.id, name: target.name }))}
+          accountChoices={accountChoices}
+          defaultAccounts={defaultAccounts}
           onDeleteDay={handleDeleteDay}
           strategies={strategies}
           availableStandardTags={tags}
