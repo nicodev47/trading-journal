@@ -4,7 +4,7 @@ import {
   buildHeatmap,
   computeStreaks,
   getDayLevel,
-  getLevelsByDate,
+  getActivityLevels,
   summarizeYear,
 } from '../src/lib/progress-tracker.ts';
 
@@ -27,10 +27,17 @@ test('il livello conta le parti compilate del giorno', () => {
   assert.equal(getDayLevel(entry('2026-06-01', { a: '   ' })), 0);
 });
 
-test('un giorno con soli file ha livello 1', () => {
-  const levels = getLevelsByDate([entry('2026-06-02', { f: 1 })]);
+test('livelli di attività: trade in profitto, loss, caso studio', () => {
+  const trade = (date: string, pnl: number) => ({ exitDate: `${date}T10:00:00`, pnl, commission: 0 }) as never;
+  const levels = getActivityLevels(
+    [entry('2026-06-04', { a: 'x' }), entry('2026-06-01', { a: 'y' })],
+    [trade('2026-06-01', 300), trade('2026-06-02', -100), trade('2026-06-02', 40)]
+  );
 
-  assert.equal(levels.get('2026-06-02'), 1);
+  assert.equal(levels.get('2026-06-01'), 3); // trade, anche con un'analisi
+  assert.equal(levels.get('2026-06-02'), 2); // giornata chiusa in loss
+  assert.equal(levels.get('2026-06-04'), 1); // solo analisi: caso studio
+  assert.equal(levels.get('2026-06-03'), undefined);
 });
 
 test('la griglia parte da lunedì e copre tutto l’anno', () => {

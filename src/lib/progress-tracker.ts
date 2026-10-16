@@ -1,4 +1,4 @@
-import type { DailyAnalysis } from './types/trade';
+import type { DailyAnalysis, Trade } from './types/trade';
 
 export const MAX_LEVEL = 3;
 
@@ -13,15 +13,32 @@ export function getDayLevel(entry: DailyAnalysis | undefined): number {
   );
 }
 
-/** Level per YYYY-MM-DD, only for days with something filled in. */
-export function getLevelsByDate(entries: DailyAnalysis[]): Map<string, number> {
+export const CASE_STUDY_LEVEL = 1;
+export const LOSS_LEVEL = 2;
+export const TRADE_LEVEL = 3;
+
+/**
+ * Activity per YYYY-MM-DD for the Progress Tracker: a day with a trade (3, brightest),
+ * a day closed in loss (2), a day with only an analysis or files, i.e. a case study (1).
+ * Days with nothing are left out.
+ */
+export function getActivityLevels(entries: DailyAnalysis[], trades: Trade[]): Map<string, number> {
   const levels = new Map<string, number>();
+  const pnlByDate = new Map<string, number>();
+
+  trades.forEach(trade => {
+    const date = (trade.exitDate || trade.entryDate || '').split('T')[0];
+
+    if (!date) return;
+
+    pnlByDate.set(date, (pnlByDate.get(date) ?? 0) + trade.pnl - (trade.commission || 0));
+  });
 
   entries.forEach(entry => {
-    const level = getDayLevel(entry);
-
-    if (level > 0) levels.set(entry.date, level);
+    if (getDayLevel(entry) > 0) levels.set(entry.date, CASE_STUDY_LEVEL);
   });
+
+  pnlByDate.forEach((pnl, date) => levels.set(date, pnl < 0 ? LOSS_LEVEL : TRADE_LEVEL));
 
   return levels;
 }

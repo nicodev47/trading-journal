@@ -7,7 +7,7 @@ import {
   MAX_LEVEL,
   buildHeatmap,
   computeStreaks,
-  getLevelsByDate,
+  getActivityLevels,
   summarizeYear,
   toDateKey,
 } from '@/lib/progress-tracker';
@@ -19,6 +19,7 @@ import { TradingCalendar } from '@/components/trading-journal/trading-calendar';
 import { DailyAnalysisDialog } from './daily-analysis-dialog';
 
 const LEVEL_CLASSES = ['bg-white/[0.06]', 'bg-profit/30', 'bg-profit/60', 'bg-profit'];
+const ACTIVITY_LABEL = ['nessuna attività', 'caso studio', 'giornata in loss', 'trade preso'];
 const MONTH_LABELS = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
 
 interface ProgressTrackerPageProps {
@@ -54,10 +55,7 @@ export function ProgressTrackerPage({
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [hovered, setHovered] = useState<string | null>(null);
 
-  const levels = useMemo(
-    () => getLevelsByDate(dailyAnalyses),
-    [dailyAnalyses]
-  );
+  const levels = useMemo(() => getActivityLevels(dailyAnalyses, trades), [dailyAnalyses, trades]);
   const streaks = useMemo(() => computeStreaks(levels, today), [levels, today]);
   const summary = useMemo(() => summarizeYear(year, levels), [year, levels]);
   const weeks = useMemo(() => buildHeatmap(year, levels), [year, levels]);
@@ -98,7 +96,7 @@ export function ProgressTrackerPage({
         weekday: 'long',
         day: 'numeric',
         month: 'long',
-      })}: ${hoveredCell.level === 0 ? 'nessuna analisi' : `${hoveredCell.level} di ${MAX_LEVEL} parti compilate`}`
+      })}: ${ACTIVITY_LABEL[hoveredCell.level] ?? 'nessuna attività'}`
     : 'Passa sopra un giorno per vedere i dettagli, clicca per aprirlo.';
 
   const todayKey = toDateKey(today);
@@ -109,7 +107,7 @@ export function ProgressTrackerPage({
         <StatTile
           title="Serie attuale"
           value={`${streaks.current} ${streaks.current === 1 ? 'giorno' : 'giorni'}`}
-          hint="Giorni feriali di fila con analisi"
+          hint="Giorni feriali di fila con un trade o un caso studio"
         />
         <StatTile
           title="Serie più lunga"
@@ -117,14 +115,14 @@ export function ProgressTrackerPage({
           hint="Il tuo record"
         />
         <StatTile
-          title={`Giorni con analisi nel ${year}`}
+          title={`Giorni attivi nel ${year}`}
           value={String(summary.daysWithEntry)}
-          hint="Almeno una parte compilata"
+          hint="Con un trade o un caso studio"
         />
         <StatTile
-          title="Completamento medio"
-          value={`${summary.completion}%`}
-          hint="Parti compilate nei giorni con analisi"
+          title={`Giorni con un trade nel ${year}`}
+          value={String(Array.from(levels.entries()).filter(([date, level]) => date.startsWith(`${year}-`) && level >= 2).length)}
+          hint="Giorni in cui hai preso un trade"
         />
       </div>
 
@@ -133,7 +131,7 @@ export function ProgressTrackerPage({
           <div>
             <h2 className="font-sans text-[15px] font-semibold tracking-tight">Costanza</h2>
             <p className="font-sans text-xs text-muted-foreground">
-              Più il verde è intenso, più parti dell’analisi hai compilato quel giorno.
+              Verde acceso: giorno con un trade. Meno acceso: giorno in loss. Più tenue: caso studio.
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -191,12 +189,18 @@ export function ProgressTrackerPage({
 
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3 sm:px-5">
           <span className="font-sans text-xs text-muted-foreground">{hoveredText}</span>
-          <div className="flex items-center gap-1.5 font-sans text-[11px] text-muted-foreground">
-            Meno
-            {LEVEL_CLASSES.map((className, index) => (
-              <span key={index} className={cn('size-[16px] rounded-[3px]', className)} />
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 font-sans text-[11px] text-muted-foreground">
+            {[
+              ['Nessuna attività', 0],
+              ['Caso studio', 1],
+              ['Loss', 2],
+              ['Trade', 3],
+            ].map(([label, level]) => (
+              <span key={label} className="flex items-center gap-1.5">
+                <span className={cn('size-[14px] rounded-[3px]', LEVEL_CLASSES[level as number])} />
+                {label}
+              </span>
             ))}
-            Più
           </div>
         </div>
       </div>
