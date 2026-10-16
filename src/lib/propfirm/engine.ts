@@ -72,7 +72,9 @@ export function floorFor(rules: PropRules, size: number, peak: number): number {
 
   const trailing = peak - amount;
 
-  return rules.drawdown.locksAtStart ? Math.min(trailing, size) : trailing;
+  return rules.drawdown.locksAtStart
+    ? Math.min(trailing, size + (rules.drawdown.lockOffset ?? 0))
+    : trailing;
 }
 
 /** Profit the evaluation needs: the target, raised if one day is too large. */
@@ -215,7 +217,11 @@ export function simulateAccount({ kind, size, rules, days, payouts }: SimInput):
   if (kind !== 'evaluation') {
     const { payout: terms } = rules;
     const raw = Math.max(0, balance - size - terms.buffer);
-    const available = round(terms.capPerPayout === null ? raw : Math.min(raw, terms.capPerPayout));
+    const schedule = terms.capSchedule?.length ? terms.capSchedule : null;
+    const cap = schedule
+      ? schedule[Math.min(sortedPayouts.length, schedule.length - 1)]
+      : terms.capPerPayout;
+    const available = round(cap === null ? raw : Math.min(raw, cap));
     const missing: string[] = [];
 
     if (winningDays < terms.minWinningDays) {

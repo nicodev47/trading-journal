@@ -7,7 +7,6 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/compone
 import { Input } from '@/components/ui/input';
 import {
   FIRMS,
-  isIncomplete,
   rulesForKind,
   type FirmDef,
   type RuleSetDef,
@@ -191,7 +190,7 @@ export function AddAccountDialog({
             ))}
           </ol>
           <p className="mt-auto font-sans text-xs leading-relaxed text-muted-foreground">
-            Le regole sono precompilate dal piano della firm e le puoi modificare dopo.
+            Le regole sono quelle ufficiali del piano della firm e non si possono modificare.
           </p>
         </aside>
 
@@ -253,7 +252,7 @@ export function AddAccountDialog({
                   ))}
                   {filteredFirms.length === 0 && (
                     <p className="col-span-full py-8 text-center font-sans text-sm text-muted-foreground">
-                      Nessuna firm trovata: usa "Personalizzata" per impostare le regole a mano.
+                      Nessuna firm trovata.
                     </p>
                   )}
                 </div>
@@ -272,7 +271,11 @@ export function AddAccountDialog({
                         <button
                           key={item.id}
                           type="button"
-                          onClick={() => setRuleSet(item)}
+                          onClick={() => {
+                            setRuleSet(item);
+                            setSize(null);
+                            setKind(item.fundedOnly ? 'funded' : 'evaluation');
+                          }}
                           className={cn(
                             'rounded-xl border px-4 py-2 font-sans text-sm transition-colors',
                             ruleSet?.id === item.id
@@ -338,7 +341,7 @@ export function AddAccountDialog({
             {step === 'name' && firm && size && (
               <div className="mx-auto flex max-w-xl flex-col gap-6">
                 <div className="mx-auto flex rounded-xl bg-secondary p-1">
-                  {(['evaluation', 'funded', 'live'] as const).map(item => (
+                  {(ruleSet?.fundedOnly ? (['funded', 'live'] as const) : (['evaluation', 'funded', 'live'] as const)).map(item => (
                     <button
                       key={item}
                       type="button"
@@ -502,11 +505,6 @@ export function AddAccountDialog({
                     </div>
                   ))}
                 </dl>
-                {isIncomplete(rules, kind) && (
-                  <p className="rounded-lg border border-[#ff9f0a]/40 bg-[#ff9f0a]/10 px-3 py-2 font-sans text-xs text-[#ffb340]">
-                    Mancano alcuni numeri del piano: completali nella scheda Regole del conto.
-                  </p>
-                )}
                 <p className="font-sans text-[11px] leading-relaxed text-muted-foreground">{ruleSet?.note}</p>
               </div>
             )}

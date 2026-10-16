@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { FIRMS, getFirm, isIncomplete, rulesForKind } from '../src/lib/propfirm/firms.ts';
+import { floorFor } from '../src/lib/propfirm/engine.ts';
+import { FIRMS, getFirm, rulesForKind } from '../src/lib/propfirm/firms.ts';
 
 test('ogni piano ha dimensioni valide e regole coerenti', () => {
   FIRMS.forEach(firm => {
@@ -62,11 +63,51 @@ test('Take Profit Trader in funded usa il drawdown intraday', () => {
   assert.equal(rulesForKind(size, 'funded').drawdown.type, 'intraday-trailing');
 });
 
-test('i piani con dati mancanti risultano incompleti', () => {
-  const tradeify = getFirm('tradeify')!.ruleSets[0].sizes[0];
-  const mffu = getFirm('mffu')!.ruleSets[0].sizes[0];
+test('ogni piano è completo: niente numeri da inserire a mano', () => {
+  FIRMS.forEach(firm => {
+    firm.ruleSets.forEach(ruleSet => {
+      ruleSet.sizes.forEach(size => {
+        assert.notEqual(size.rules.drawdown.amount, null, `${firm.name} ${ruleSet.name}`);
 
-  assert.equal(isIncomplete(tradeify.rules, 'evaluation'), true);
-  assert.equal(isIncomplete(mffu.rules, 'evaluation'), true);
-  assert.equal(isIncomplete(mffu.rules, 'funded'), false);
+        if (!ruleSet.fundedOnly) {
+          assert.notEqual(size.rules.profitTarget, null, `${firm.name} ${ruleSet.name}`);
+        }
+      });
+    });
+  });
+});
+
+test('non esiste più una firm con regole modificabili', () => {
+  assert.equal(getFirm('custom'), undefined);
+});
+
+test('Lucid: il DLL del Flex è un’opzione, il drawdown si blocca a saldo iniziale + 100', () => {
+  const lucid = getFirm('lucid')!;
+  const off = lucid.ruleSets.find(set => set.id === 'flex')!.sizes[1].rules;
+  const on = lucid.ruleSets.find(set => set.id === 'flex-dll')!.sizes[1].rules;
+
+  assert.equal(off.dailyLossLimit, null);
+  assert.equal(on.dailyLossLimit?.amount, 1200);
+  assert.equal(on.dailyLossLimit?.effect, 'lock-day');
+  assert.equal(off.drawdown.lockOffset, 100);
+  assert.equal(floorFor(off, 50000, 60000), 50100);
+});
+
+test('Lucid Daily ha le quattro configurazioni e in funded è sempre intraday', () => {
+  const daily = getFirm('lucid')!.ruleSets.filter(set => set.id.startsWith('daily-'));
+
+  assert.equal(daily.length, 4);
+  daily.forEach(set => {
+    assert.equal(rulesForKind(set.sizes[0], 'funded').drawdown.type, 'intraday-trailing');
+  });
+});
+
+test('i piani senza valutazione sono solo funded', () => {
+  const direct = ['lucid', 'alpha'].map(id => getFirm(id)!.ruleSets.find(set => set.id === 'direct')!);
+  const lightning = getFirm('tradeify')!.ruleSets.find(set => set.id === 'lightning')!;
+
+  [...direct, lightning].forEach(set => {
+    assert.equal(set.fundedOnly, true);
+    assert.equal(set.sizes[0].rules.profitTarget, null);
+  });
 });

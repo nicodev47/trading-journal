@@ -9,6 +9,8 @@ export interface PropRules {
     type: DrawdownType;
     /** The floor stops trailing once it reaches the starting balance. */
     locksAtStart: boolean;
+    /** The locked floor sits this many USD above the starting balance (e.g. 100). */
+    lockOffset?: number;
   };
   dailyLossLimit: { amount: number; effect: 'breach' | 'lock-day' } | null;
   /** Best day must stay at or under this share (0–1) of the total profit. */
@@ -24,6 +26,8 @@ export interface PropRules {
     /** Profit above the starting balance that must stay in the account. */
     buffer: number;
     capPerPayout: number | null;
+    /** Cap for the 1st, 2nd, ... payout; the last value applies from then on. */
+    capSchedule?: number[];
   };
   maxContracts: string | null;
 }

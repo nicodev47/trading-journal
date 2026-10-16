@@ -6,10 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { previewNextDay, type AccountSim } from '@/lib/propfirm/engine';
-import { getFirm, isIncomplete } from '@/lib/propfirm/firms';
+import { getFirm } from '@/lib/propfirm/firms';
 import type { DayResult, Payout, PropAccount, PropRules } from '@/lib/propfirm/types';
 import { cn } from '@/lib/utils';
-import { RulesEditor } from './rules-editor';
 import {
   FAIL_LABEL,
   FirmMark,
@@ -447,42 +446,7 @@ export function AccountDetailDialog({
                   </div>
                 ))}
               </dl>
-              {isIncomplete(rules, account.kind) && (
-                <p className="mt-3 rounded-lg border border-[#ff9f0a]/40 bg-[#ff9f0a]/10 px-3 py-2 font-sans text-xs text-[#ffb340]">
-                  Mancano alcuni numeri del piano: completali qui sotto.
-                </p>
-              )}
               <p className="mt-3 font-sans text-[11px] leading-relaxed text-muted-foreground">{account.templateNote}</p>
-            </div>
-
-            <div className="rounded-xl border border-border bg-background/30 p-4">
-              <p className="mb-3 font-sans text-sm font-semibold">Modifica le regole</p>
-              <RulesEditor
-                rules={rules}
-                isEvaluation={isEvaluation}
-                onChange={(next: PropRules) => onUpdate({ rules: next })}
-              />
-            </div>
-
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-loss/30 bg-loss/5 p-4">
-              <p className="font-sans text-xs text-muted-foreground">
-                Eliminare il conto non tocca i tuoi journal.
-              </p>
-              {confirmDelete ? (
-                <div className="flex gap-2">
-                  <Button type="button" size="sm" variant="outline" onClick={() => setConfirmDelete(false)}>
-                    Annulla
-                  </Button>
-                  <Button type="button" size="sm" className="bg-loss text-white hover:bg-loss/90" onClick={onDelete}>
-                    Elimina davvero
-                  </Button>
-                </div>
-              ) : (
-                <Button type="button" size="sm" variant="outline" className="gap-2 text-loss" onClick={() => setConfirmDelete(true)}>
-                  <Trash2 className="size-3.5" />
-                  Elimina conto
-                </Button>
-              )}
             </div>
           </section>
 
@@ -712,6 +676,28 @@ export function AccountDetailDialog({
               )}
             </section>
           )}
+          <section className="p-4 sm:p-6">
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-loss/30 bg-loss/5 p-4">
+              <p className="font-sans text-xs text-muted-foreground">
+                Eliminare il conto non tocca i tuoi journal.
+              </p>
+              {confirmDelete ? (
+                <div className="flex gap-2">
+                  <Button type="button" size="sm" variant="outline" onClick={() => setConfirmDelete(false)}>
+                    Annulla
+                  </Button>
+                  <Button type="button" size="sm" className="bg-loss text-white hover:bg-loss/90" onClick={onDelete}>
+                    Elimina davvero
+                  </Button>
+                </div>
+              ) : (
+                <Button type="button" size="sm" variant="outline" className="gap-2 text-loss" onClick={() => setConfirmDelete(true)}>
+                  <Trash2 className="size-3.5" />
+                  Elimina conto
+                </Button>
+              )}
+            </div>
+          </section>
         </div>
       </DialogContent>
     </Dialog>

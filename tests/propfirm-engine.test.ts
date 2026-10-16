@@ -231,3 +231,20 @@ test('conto manuale: i saldi diventano risultati giornalieri', () => {
     ]
   );
 });
+
+test('il tetto del payout segue il numero del payout', () => {
+  const r = rules({
+    payout: { split: 0.9, minRequest: 0, minWinningDays: 0, winningDayMin: 0, buffer: 0, capPerPayout: null, capSchedule: [1000, 2000] },
+  });
+  const first = simulateAccount({ kind: 'funded', size: 50000, rules: r, days: days([5000]), payouts: [] });
+  const second = simulateAccount({
+    kind: 'funded',
+    size: 50000,
+    rules: r,
+    days: days([5000]),
+    payouts: [{ id: 'p', date: '2026-05-01', gross: 1000 }],
+  });
+
+  assert.equal(first.payout?.available, 1000);
+  assert.equal(second.payout?.available, 2000);
+});
