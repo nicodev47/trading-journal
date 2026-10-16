@@ -1,20 +1,16 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { ExternalLink, Plus, X } from 'lucide-react';
-import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
   MAX_IMAGES_PER_TRADE,
-  fileToCompressedDataUrl,
   getPreviewImageUrl,
   isDataImage,
   openImageInNewTab,
 } from '@/lib/image-upload';
 import type { ScreenshotData } from '@/lib/types/trade';
-
-const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
 
 interface AttachmentsFieldProps {
   value: ScreenshotData[];
@@ -24,7 +20,6 @@ interface AttachmentsFieldProps {
 /** Links or local images (PNG, JPG, WebP): "Aggiungi" uploads when no link is typed. */
 export function AttachmentsField({ value, onChange }: AttachmentsFieldProps) {
   const [link, setLink] = useState('');
-  const fileRef = useRef<HTMLInputElement>(null);
 
   const addLink = () => {
     const url = link.trim();
@@ -33,31 +28,6 @@ export function AttachmentsField({ value, onChange }: AttachmentsFieldProps) {
 
     onChange([...value, { url, name: '' }]);
     setLink('');
-  };
-
-  const addFiles = async (files: File[]) => {
-    const images = files.filter(file => ALLOWED_TYPES.includes(file.type));
-
-    if (images.length < files.length) {
-      toast.error('Sono supportati solo file PNG, JPG o WebP');
-    }
-
-    const added: ScreenshotData[] = [];
-
-    for (const file of images) {
-      if (value.length + added.length >= MAX_IMAGES_PER_TRADE) {
-        toast.error(`Puoi allegare al massimo ${MAX_IMAGES_PER_TRADE} immagini`);
-        break;
-      }
-
-      try {
-        added.push({ url: await fileToCompressedDataUrl(file), name: '' });
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'Impossibile caricare l’immagine');
-      }
-    }
-
-    if (added.length > 0) onChange([...value, ...added]);
   };
 
   return (
@@ -108,7 +78,7 @@ export function AttachmentsField({ value, onChange }: AttachmentsFieldProps) {
           value={link}
           onChange={event => setLink(event.target.value)}
           onKeyDown={event => event.key === 'Enter' && addLink()}
-          placeholder="Link di TradingView"
+          placeholder="Link di TradingView o Google Drive"
           className="h-8 border-border/70 bg-background/60 text-sm"
         />
         <Button
@@ -116,23 +86,12 @@ export function AttachmentsField({ value, onChange }: AttachmentsFieldProps) {
           variant="outline"
           size="sm"
           className="h-8 shrink-0 gap-1.5 text-xs"
-          disabled={!link.trim() && value.length >= MAX_IMAGES_PER_TRADE}
-          onClick={() => (link.trim() ? addLink() : fileRef.current?.click())}
+          disabled={!link.trim() || value.length >= MAX_IMAGES_PER_TRADE}
+          onClick={addLink}
         >
           <Plus className="size-3" />
           Aggiungi
         </Button>
-        <input
-          ref={fileRef}
-          type="file"
-          accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
-          multiple
-          className="hidden"
-          onChange={event => {
-            void addFiles(Array.from(event.target.files ?? []));
-            event.target.value = '';
-          }}
-        />
       </div>
     </div>
   );
