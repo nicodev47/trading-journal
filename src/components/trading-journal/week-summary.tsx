@@ -6,11 +6,9 @@ import { useStreamerMode } from '@/contexts/streamer-mode-context';
 interface WeekSummaryProps {
   totalPnl: number;
   tradeCount: number;
-  /** Progress Tracker mode: days with an analysis this week. */
-  analysisDays?: number;
 }
 
-export function WeekSummary({ totalPnl, tradeCount, analysisDays }: WeekSummaryProps) {
+export function WeekSummary({ totalPnl, tradeCount }: WeekSummaryProps) {
   const { streamerMode } = useStreamerMode();
   const fullPnl = `${totalPnl.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`;
   const compactPnl = (() => {
@@ -49,11 +47,6 @@ export function WeekSummary({ totalPnl, tradeCount, analysisDays }: WeekSummaryP
         <span className="font-sans tabular-nums text-[9px] text-muted-foreground sm:text-[10px] md:text-sm">
           {tradeCount}
         </span>
-        {analysisDays !== undefined && (
-          <span className={cn('mt-0.5 font-sans text-[9px] font-medium sm:text-[10px] md:text-xs', analysisDays > 0 ? 'text-profit' : 'text-muted-foreground')}>
-            {analysisDays} analisi
-          </span>
-        )}
       </div>
     </div>
   );

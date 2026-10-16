@@ -43,6 +43,11 @@ interface CalendarDayProps {
   onClick: () => void;
 }
 
+const ANALYSIS_STYLE = {
+  backgroundColor: 'rgba(255, 255, 255, 0.09)',
+  boxShadow: 'inset 0 0 0 1px rgba(255, 255, 255, 0.14)',
+};
+
 const SETUP_LABELS: Record<string, string> = {
   Continuation: 'Cont',
   'Reversal Sequence': 'Rev.Seq',
@@ -234,7 +239,7 @@ export function CalendarDay({
         'group relative flex h-[78px] w-full min-w-0 cursor-pointer flex-col bg-background p-1 pb-4 text-left transition-colors hover:bg-secondary/30 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring min-[380px]:h-[84px] min-[380px]:p-1.5 min-[380px]:pb-4 sm:h-[92px] sm:p-2 sm:pb-5 md:h-[106px] md:p-2.5 md:pb-6',
         isToday && 'ring-1 ring-inset ring-white/35'
       )}
-      style={getBackgroundStyle()}
+      style={analysis?.manual && !hasTrades ? ANALYSIS_STYLE : getBackgroundStyle()}
     >
       <div className="flex h-full w-full min-w-0 flex-col gap-1 sm:gap-1.5">
         <span
@@ -296,11 +301,11 @@ export function CalendarDay({
               </div>
             )}
 
-            {propMarkers.length === 0 && !analysis?.manual && <span className="mt-auto" aria-hidden="true" />}
+            {propMarkers.length === 0 && <span className="mt-auto" aria-hidden="true" />}
           </>
         )}
 
-        {(propMarkers.length > 0 || analysis?.manual) && (
+        {propMarkers.length > 0 && (
           <span className="mt-auto flex shrink-0 items-center gap-1.5 self-start">
             {firmMarkers.length > 0 && (
               <span className="flex items-center -space-x-1.5 sm:-space-x-2">
@@ -335,12 +340,6 @@ export function CalendarDay({
               <span className="font-sans text-[9px] font-semibold tabular-nums text-muted-foreground sm:text-[11px]">
                 +{firmMarkers.length - 3}
               </span>
-            )}
-            {analysis?.manual && (
-              <span
-                aria-label="Analisi inserita qui"
-                className="size-2 rounded-full bg-white sm:size-2.5"
-              />
             )}
           </span>
         )}

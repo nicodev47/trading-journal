@@ -385,15 +385,6 @@ export function TradingCalendar({
                 <WeekSummary
                   totalPnl={weekData[weekIndex].totalPnl}
                   tradeCount={weekData[weekIndex].tradeCount}
-                  analysisDays={
-                    analysisMode
-                      ? week.filter(
-                          day =>
-                            checkCurrentMonth(day, currentMonth) &&
-                            analysisMode.getCell(getDateKey(day)).level > 0
-                        ).length
-                      : undefined
-                  }
                 />
               </div>
             </div>
@@ -410,7 +401,7 @@ export function TradingCalendar({
             Prop su cui hai eseguito
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="size-2 rounded-full bg-white" />
+            <span className="size-3 rounded-sm bg-white/15" />
             Analisi inserita qui
           </span>
           <span>— il colore è il P&L del giorno, come nella dashboard</span>
