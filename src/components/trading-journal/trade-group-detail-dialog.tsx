@@ -6,7 +6,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useStreamerMode } from '@/contexts/streamer-mode-context';
@@ -101,14 +100,15 @@ function SummaryStat({
   );
 }
 
-export function TradeGroupDetailDialog({
-  open,
-  onOpenChange,
-  title,
-  subtitle,
-  trades,
-  onOpenTrade,
-}: TradeGroupDetailDialogProps) {
+type TradeGroupContentProps = {
+  title: string;
+  subtitle?: string;
+  trades: Trade[];
+  onOpenTrade: (trade: Trade) => void;
+};
+
+/** Header, summary and trade list: shared by the dialog and the Progress Tracker card. */
+export function TradeGroupContent({ title, subtitle, trades, onOpenTrade }: TradeGroupContentProps) {
   const { streamerMode } = useStreamerMode();
   const [currentPage, setCurrentPage] = useState(1);
   const sortedTrades = useMemo(
@@ -150,18 +150,17 @@ export function TradeGroupDetailDialog({
   const worstTrade = pnlValues.length > 0 ? Math.min(...pnlValues) : 0;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[92dvh] w-[calc(100vw-1.75rem)] max-w-[860px] gap-0 overflow-hidden border-border bg-card p-0 sm:max-h-[86vh] sm:w-[94vw]">
-        <DialogHeader className="border-b border-border px-4 py-3.5 pr-12 text-left sm:px-6 sm:py-4">
-          <DialogTitle className="font-sans tabular-nums text-base font-semibold tracking-wide">
+    <>
+        <div className="border-b border-border px-4 py-3.5 pr-12 text-left sm:px-6 sm:py-4">
+          <h2 className="font-sans tabular-nums text-base font-semibold tracking-wide">
             {title}
-          </DialogTitle>
+          </h2>
           {subtitle && (
-            <DialogDescription className="font-sans tabular-nums text-xs">
+            <p className="font-sans tabular-nums text-xs">
               {subtitle}
-            </DialogDescription>
+            </p>
           )}
-        </DialogHeader>
+        </div>
 
         <div className="ej-scrollbar max-h-[calc(92dvh-7rem)] overflow-y-auto overscroll-contain px-4 py-4 sm:max-h-none sm:px-6 sm:py-5">
           <div className="grid grid-cols-1 gap-2.5 min-[420px]:grid-cols-2 sm:gap-3 md:grid-cols-5">
@@ -282,6 +281,24 @@ export function TradeGroupDetailDialog({
             </div>
           )}
         </div>
+    </>
+  );
+}
+
+export function TradeGroupDetailDialog({
+  open,
+  onOpenChange,
+  title,
+  subtitle,
+  trades,
+  onOpenTrade,
+}: TradeGroupDetailDialogProps) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[92dvh] w-[calc(100vw-1.75rem)] max-w-[860px] gap-0 overflow-hidden border-border bg-card p-0 sm:max-h-[86vh] sm:w-[94vw]">
+        <DialogTitle className="sr-only">{title}</DialogTitle>
+        <DialogDescription className="sr-only">{subtitle ?? title}</DialogDescription>
+        <TradeGroupContent title={title} subtitle={subtitle} trades={trades} onOpenTrade={onOpenTrade} />
       </DialogContent>
     </Dialog>
   );

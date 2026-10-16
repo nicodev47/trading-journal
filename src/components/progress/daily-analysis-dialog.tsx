@@ -1,19 +1,14 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { useStreamerMode } from '@/contexts/streamer-mode-context';
 import { generateId } from '@/lib/calculations';
 import type { DailyAnalysis, ScreenshotData, Trade } from '@/lib/types/trade';
 import { AttachmentsField } from './attachments-field';
-import { ExecutedTrades } from './executed-trades';
+import { TradeDetailDialog } from '@/components/trading-journal/trade-detail-dialog';
+import { TradeGroupContent } from '@/components/trading-journal/trade-group-detail-dialog';
 
 interface DailyAnalysisDialogProps {
   open: boolean;
@@ -75,6 +70,7 @@ export function DailyAnalysisDialog({
   const { streamerMode } = useStreamerMode();
   const [analysis, setAnalysis] = useState('');
   const [observations, setObservations] = useState('');
+  const [openedTrade, setOpenedTrade] = useState<Trade | null>(null);
   const [attachments, setAttachments] = useState<ScreenshotData[]>([]);
   const loadedDate = useRef<string | null>(null);
   const timer = useRef<number | null>(null);
@@ -153,7 +149,50 @@ export function DailyAnalysisDialog({
   // Never lose the last keystrokes when the page is left.
   useEffect(() => flush, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const dayPnl = trades.reduce((sum, trade) => sum + trade.pnl - trade.commission, 0);
+  const hasTrades = trades.length > 0;
+  const dateLabel = new Date(`${date}T12:00:00`).toLocaleDateString('it-IT', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+
+  const analysisCard = (
+    <div className="overflow-hidden rounded-2xl border border-border bg-card">
+      <div className="border-b border-border px-4 py-3.5 sm:px-6 sm:py-4">
+        <DialogTitle className="font-sans text-base capitalize">{formatDate(date)}</DialogTitle>
+        <DialogDescription className="mt-0.5 font-sans text-xs">
+          {hasTrades
+            ? 'Qui scrivi l’analisi della giornata: si salva da solo.'
+            : 'Nessun trade eseguito questo giorno. Qui scrivi tutto quello che c’è dietro: si salva da solo.'}
+        </DialogDescription>
+      </div>
+
+      <div className="flex flex-col gap-4 p-4 sm:p-6">
+        <Section title="Analisi della giornata" hint="Contesto di mercato, bias, livelli che hai preparato.">
+          <Textarea
+            value={analysis}
+            onChange={event => update({ analysis: event.target.value })}
+            placeholder="Cosa ti aspettavi oggi e perché?"
+            className="min-h-[96px] resize-y border-border/70 bg-background/60 text-sm"
+          />
+        </Section>
+
+        <Section title="Cosa ho visto" hint="Cosa è successo davvero, cosa ti ha sorpreso, cosa hai imparato.">
+          <Textarea
+            value={observations}
+            onChange={event => update({ observations: event.target.value })}
+            placeholder="Com’è andata la giornata rispetto al piano?"
+            className="min-h-[96px] resize-y border-border/70 bg-background/60 text-sm"
+          />
+        </Section>
+
+        <Section title="Carica file" hint="Grafici, screenshot o link di TradingView della giornata.">
+          <AttachmentsField value={attachments} onChange={value => update({ attachments: value })} />
+        </Section>
+      </div>
+    </div>
+  );
+
   return (
     <Dialog
       open={open}
@@ -165,46 +204,32 @@ export function DailyAnalysisDialog({
       }}
     >
       <DialogContent
-        className="ej-scrollbar max-h-[92dvh] w-[calc(100vw-1.25rem)] max-w-3xl gap-0 overflow-y-auto p-0 sm:w-[92vw]"
+        className={
+          hasTrades
+            ? 'ej-scrollbar flex max-h-[92dvh] w-[calc(100vw-1.25rem)] max-w-[860px] flex-col gap-4 overflow-y-auto border-0 bg-transparent p-0 shadow-none sm:w-[94vw]'
+            : 'ej-scrollbar max-h-[92dvh] w-[calc(100vw-1.25rem)] max-w-3xl gap-0 overflow-y-auto p-0 sm:w-[92vw]'
+        }
         onOpenAutoFocus={event => event.preventDefault()}
       >
-        <DialogHeader className="sticky top-0 z-10 border-b border-border bg-card/95 px-4 py-3.5 text-left backdrop-blur sm:px-6 sm:py-4">
-          <DialogTitle className="font-sans text-base capitalize">{formatDate(date)}</DialogTitle>
-          <DialogDescription className="font-sans text-xs">
-            {trades.length > 0
-              ? `Eseguiti ${trades.length} ${trades.length === 1 ? 'trade' : 'trade'}${
-                  streamerMode ? '' : ` · ${dayPnl > 0 ? '+' : ''}${dayPnl.toFixed(2)} USD`
-                }. Qui scrivi tutto quello che c’è dietro: si salva da solo.`
-              : 'Nessun trade eseguito questo giorno. Qui scrivi tutto quello che c’è dietro: si salva da solo.'}
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="flex flex-col gap-4 p-4 sm:p-6">
-          <ExecutedTrades trades={trades} />
-
-          <Section title="Analisi della giornata" hint="Contesto di mercato, bias, livelli che hai preparato.">
-            <Textarea
-              value={analysis}
-              onChange={event => update({ analysis: event.target.value })}
-              placeholder="Cosa ti aspettavi oggi e perché?"
-              className="min-h-[96px] resize-y border-border/70 bg-background/60 text-sm"
+        {hasTrades && (
+          <div className="shrink-0 overflow-hidden rounded-2xl border border-border bg-card">
+            <TradeGroupContent
+              title={`Trade del ${dateLabel}`}
+              subtitle="Operazioni registrate nella Execution Map."
+              trades={trades}
+              onOpenTrade={trade => setOpenedTrade(trade)}
             />
-          </Section>
+          </div>
+        )}
 
-          <Section title="Cosa ho visto" hint="Cosa è successo davvero, cosa ti ha sorpreso, cosa hai imparato.">
-            <Textarea
-              value={observations}
-              onChange={event => update({ observations: event.target.value })}
-              placeholder="Com’è andata la giornata rispetto al piano?"
-              className="min-h-[96px] resize-y border-border/70 bg-background/60 text-sm"
-            />
-          </Section>
-
-          <Section title="Carica file" hint="Grafici, screenshot o link di TradingView della giornata.">
-            <AttachmentsField value={attachments} onChange={value => update({ attachments: value })} />
-          </Section>
-        </div>
+        {hasTrades ? <div className="shrink-0">{analysisCard}</div> : analysisCard}
       </DialogContent>
+
+      <TradeDetailDialog
+        trade={openedTrade}
+        streamerMode={streamerMode}
+        onClose={() => setOpenedTrade(null)}
+      />
     </Dialog>
   );
 }
