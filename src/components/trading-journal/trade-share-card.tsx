@@ -126,10 +126,14 @@ export function TradeShareCard({
                   <FirmMark key={firm.id} firm={firm} className="size-9 rounded-full" />
                 ))}
               </span>
-              {/* One company: its name too. More, or a long name: logos only. */}
-              {firms.length === 1 && firmNames.length <= 18 && (
-                <span className="truncate text-[20px] font-medium text-white/70">{firmNames}</span>
-              )}
+              {/* Always the names; smaller when there are several, cut with an ellipsis if still too long. */}
+              <span
+                className={`min-w-0 truncate font-medium text-white/70 ${
+                  firms.length > 2 ? 'text-[16px]' : firms.length === 2 ? 'text-[18px]' : 'text-[20px]'
+                }`}
+              >
+                {firmNames}
+              </span>
             </span>
           ) : undefined
         }
