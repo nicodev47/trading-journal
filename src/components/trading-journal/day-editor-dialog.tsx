@@ -88,7 +88,12 @@ function formatPnlDraft(value: string): string {
   const unsignedValue =
     decimalParts.length > 0 ? `${integerPart},${decimalPart}` : integerPart;
 
-  return isNegative ? `-${unsignedValue}` : unsignedValue;
+  if (isNegative) return `-${unsignedValue}`;
+
+  // A positive number gets its "+" straight away (zero stays plain).
+  const isZero = /^0*(,0*)?$/.test(unsignedValue);
+
+  return unsignedValue === '' || isZero ? unsignedValue : `+${unsignedValue}`;
 }
 
 function getPnlNumber(value: string): number {
@@ -860,8 +865,8 @@ export function DayEditorDialog({
                         placeholder="0"
                         className={cn(
                           'h-9 w-full border-border/70 bg-background/60 pr-7 font-sans tabular-nums text-sm',
-                          getPnlNumber(row.pnl) > 0 && 'border-profit/50 text-profit',
-                          getPnlNumber(row.pnl) < 0 && 'border-loss/50 text-loss'
+                          getPnlNumber(row.pnl) > 0 && 'text-profit',
+                          getPnlNumber(row.pnl) < 0 && 'text-loss'
                         )}
                       />
 
