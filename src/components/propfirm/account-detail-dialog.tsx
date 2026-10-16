@@ -310,9 +310,11 @@ export function AccountDetailDialog({
                 </>
               )}
             </p>
-            {sim.status === 'passed' && isEvaluation ? (
+            {sim.status === 'passed' && isEvaluation && account.promotedTo ? (
+              <span className="font-sans text-xs text-muted-foreground">Già passato a Funded</span>
+            ) : sim.status === 'passed' && isEvaluation ? (
               <Button type="button" size="sm" className="bg-[#0a84ff] text-white hover:bg-[#0a84ff]/90" onClick={onStartFunded}>
-                Avvia il conto funded
+                Passa a Funded
               </Button>
             ) : (
               <Button type="button" size="sm" variant="outline" onClick={onReset}>

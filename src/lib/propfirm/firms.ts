@@ -804,3 +804,17 @@ export function rulesForKind(size: SizeDef, kind: AccountKind): PropRules {
 
   return structuredClone({ ...size.rules, profitTarget: null, ...size.fundedOverrides });
 }
+
+/** Rules of the funded account that follows a passed evaluation. */
+export function fundedRulesFor(account: {
+  firmId: string;
+  ruleSetId: string;
+  sizeLabel: string;
+  rules: PropRules;
+}): PropRules {
+  const size = getFirm(account.firmId)
+    ?.ruleSets.find(set => set.id === account.ruleSetId)
+    ?.sizes.find(item => item.label === account.sizeLabel);
+
+  return structuredClone({ ...account.rules, profitTarget: null, ...size?.fundedOverrides });
+}

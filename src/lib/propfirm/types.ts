@@ -61,6 +61,10 @@ export interface PropAccount {
   balanceUpdates: { date: string; balance: number }[];
   payouts: Payout[];
   createdAt: string;
+  /** Evaluation that was passed: id of the funded account created from it. */
+  promotedTo?: string;
+  /** Funded account created from a passed evaluation: id of that evaluation. */
+  promotedFrom?: string;
 }
 
 export interface DayResult {
