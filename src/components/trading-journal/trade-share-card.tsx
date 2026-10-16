@@ -98,7 +98,10 @@ export function TradeShareCard({
             </span>
           }
         />
-        <ShareRow label="Direzione" value={directionLabel} />
+        <ShareRow
+          label="Direzione"
+          value={`${trade.direction === 'short' ? '📉' : '📈'} ${directionLabel}`}
+        />
         <ShareRow label="Orario apertura" value={getTradeOpenTime(trade)} />
       </div>
 
