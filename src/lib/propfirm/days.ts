@@ -34,10 +34,21 @@ export function getAccountDays(
     );
   }
 
-  // Trades assigned to specific prop accounts only count for those; unassigned ones count for every account of the journal.
-  const trades = getJournalTrades(account.source.journalId).filter(
-    trade => !trade.propAccountIds?.length || trade.propAccountIds.includes(account.id)
+  // Trades the user assigned to this account always count, even before its start date;
+  // unassigned ones count for every account of the journal, from the start date on.
+  const journalTrades = getJournalTrades(account.source.journalId);
+  const assigned = journalTrades.filter(trade => trade.propAccountIds?.includes(account.id));
+  const unassigned = tradesToDays(
+    journalTrades.filter(trade => !trade.propAccountIds?.length),
+    account.startDate
+  );
+  const merged = new Map<string, number>();
+
+  [...tradesToDays(assigned, '0000-00-00'), ...unassigned].forEach(day =>
+    merged.set(day.date, (merged.get(day.date) ?? 0) + day.pnl)
   );
 
-  return tradesToDays(trades, account.startDate);
+  return Array.from(merged.entries())
+    .map(([date, pnl]) => ({ date, pnl }))
+    .sort((a, b) => a.date.localeCompare(b.date));
 }

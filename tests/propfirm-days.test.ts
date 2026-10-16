@@ -57,3 +57,12 @@ test('un trade assegnato a una prop conta solo per quella', async () => {
   assert.equal(getAccountDays(account('y'), () => trades)[0].pnl, 200);
   assert.equal(getAccountDays(account('z'), () => trades)[0].pnl, 100);
 });
+
+test('un trade assegnato conta anche prima della data di inizio del conto', () => {
+  const trade = (date: string, ids?: string[]) =>
+    ({ id: date, pnl: 100, commission: 0, exitDate: `${date}T10:00:00`, entryDate: `${date}T10:00:00`, propAccountIds: ids }) as never;
+  const account = { id: 'x', source: { kind: 'journal', journalId: 'p' }, startDate: '2026-06-10', size: 50000, balanceUpdates: [] } as never;
+  const days = getAccountDays(account, () => [trade('2026-06-01', ['x']), trade('2026-06-02')]);
+
+  assert.deepEqual(days.map(day => day.date), ['2026-06-01']);
+});
