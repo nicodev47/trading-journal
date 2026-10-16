@@ -305,6 +305,12 @@ export function CalendarDay({
           </>
         )}
 
+        {analysis?.manual && !hasTrades && (
+          <span className="mt-auto block w-full min-w-0 font-sans text-[9px] font-semibold leading-tight text-foreground/80 sm:text-[11px] md:text-xs">
+            Caso studio
+          </span>
+        )}
+
         {propMarkers.length > 0 && (
           <span className="mt-auto flex shrink-0 items-center gap-1.5 self-start">
             {firmMarkers.length > 0 && (

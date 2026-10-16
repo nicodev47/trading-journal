@@ -119,7 +119,7 @@ function Ring({ parts }: { parts: Part[] }) {
 function Gauge({ win, breakEven, loss }: { win: number; breakEven: number; loss: number }) {
   const parts: Part[] = [
     { value: win, className: 'stroke-profit' },
-    { value: breakEven, className: 'stroke-[#0a84ff]' },
+    { value: breakEven, className: 'stroke-white' },
     { value: loss, className: 'stroke-loss' },
   ];
   const segments = toArcSegments(
@@ -148,7 +148,7 @@ function Gauge({ win, breakEven, loss }: { win: number; breakEven: number; loss:
       </svg>
       <div className="flex w-[92px] items-center justify-between font-sans text-[10px] font-medium tabular-nums">
         <span className="rounded-full bg-profit/15 px-1.5 text-profit">{win}</span>
-        <span className="rounded-full bg-[#0a84ff]/15 px-1.5 text-[#5cb8ff]">{breakEven}</span>
+        <span className="rounded-full bg-white/15 px-1.5 text-foreground">{breakEven}</span>
         <span className="rounded-full bg-loss/15 px-1.5 text-loss">{loss}</span>
       </div>
     </div>

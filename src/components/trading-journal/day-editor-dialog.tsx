@@ -775,7 +775,7 @@ export function DayEditorDialog({
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="h-10 gap-2 rounded-lg border-[#0a84ff]/45 bg-[#0a84ff]/10 px-3.5 font-sans text-sm font-medium text-[#5cb8ff] shadow-none transition-colors duration-150 hover:border-[#0a84ff]/70 hover:bg-[#0a84ff]/20 hover:text-[#5cb8ff] hover:shadow-none dark:border-[#0a84ff]/45 dark:bg-[#0a84ff]/10 dark:hover:border-[#0a84ff]/70 dark:hover:bg-[#0a84ff]/20 dark:hover:text-[#5cb8ff]"
+                      className="h-10 gap-2 rounded-lg border-white/30 bg-white/10 px-3.5 font-sans text-sm font-medium text-foreground shadow-none transition-colors duration-150 hover:border-white/35 hover:bg-white/20 hover:text-foreground hover:shadow-none dark:border-white/30 dark:bg-white/10 dark:hover:border-white/35 dark:hover:bg-white/20 dark:hover:text-foreground"
                       onClick={() => setSelectedShareTrade(getTradeFromRow(row))}
                     >
                       <span
@@ -1068,7 +1068,7 @@ export function DayEditorDialog({
                                       className={cn(
                                         'inline-flex h-8 items-center gap-1.5 rounded-full border px-3 font-sans text-xs transition-colors',
                                         active
-                                          ? 'border-[#0a84ff] bg-[#0a84ff]/15 text-foreground'
+                                          ? 'border-white/60 bg-white/15 text-foreground'
                                           : 'border-border text-muted-foreground hover:text-foreground'
                                       )}
                                     >

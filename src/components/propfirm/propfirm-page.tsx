@@ -78,7 +78,7 @@ function Pill({ tone, children }: { tone: 'neutral' | 'blue' | 'amber' | 'green'
       className={cn(
         'rounded-md border px-1.5 py-0.5 font-sans text-[9px] font-bold uppercase tracking-wider',
         tone === 'neutral' && 'border-border bg-white/[0.06] text-muted-foreground',
-        tone === 'blue' && 'border-[#0a84ff]/40 bg-[#0a84ff]/10 text-[#5cb8ff]',
+        tone === 'blue' && 'border-white/30 bg-white/10 text-foreground',
         tone === 'amber' && 'border-[#ff9f0a]/40 bg-[#ff9f0a]/10 text-[#ffb340]',
         tone === 'green' && 'border-profit/40 bg-profit/10 text-profit'
       )}
@@ -179,7 +179,7 @@ function AccountCard({
           className={cn(
             'rounded-md border px-1.5 py-0.5 font-sans text-[9px] font-bold uppercase tracking-wider',
             sim.status === 'active' && 'border-profit/40 bg-profit/10 text-profit',
-            sim.status === 'passed' && 'border-[#0a84ff]/40 bg-[#0a84ff]/10 text-[#5cb8ff]',
+            sim.status === 'passed' && 'border-white/30 bg-white/10 text-foreground',
             sim.status === 'failed' && 'border-loss/40 bg-loss/10 text-loss'
           )}
         >
@@ -422,7 +422,7 @@ export function PropfirmPage({ store, journals, getJournalTrades }: PropfirmPage
           <Button
             type="button"
             size="sm"
-            className="h-8 gap-1.5 bg-[#0a84ff] text-white hover:bg-[#0a84ff]/90"
+            className="h-8 gap-1.5 bg-white text-black hover:bg-white/90"
             onClick={() => setAdding({})}
           >
             <Plus className="size-3.5" />

@@ -1458,7 +1458,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
                 </div>
               </section>
 
-              <section className="rounded-[14px] border border-blue-400/30 bg-blue-500/[0.06] p-4 md:col-span-2">
+              <section className="rounded-[14px] border border-border bg-white/[0.07] p-4 md:col-span-2">
                 <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
                   <div>
                     <h3 className="font-sans text-sm font-semibold text-foreground">
@@ -1471,7 +1471,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
                   <button
                     type="button"
                     onClick={handleOpenWhatsNewFromHelp}
-                    className="shrink-0 rounded-lg border border-blue-300/30 bg-blue-300/10 px-3 py-2 font-sans text-xs font-semibold text-blue-100 transition hover:border-blue-200/50 hover:bg-blue-300/15"
+                    className="shrink-0 rounded-lg border border-border bg-white/[0.07] px-3 py-2 font-sans text-xs font-semibold text-foreground transition hover:border-border hover:bg-white/[0.07]"
                   >
                     Visualizza novità
                   </button>

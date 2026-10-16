@@ -183,7 +183,7 @@ function PreviewContent({ data, fileName, view, onClose }: ImportPreviewProps) {
             </Button>
             <Button
               type="button"
-              className="bg-[#0a84ff] text-white hover:bg-[#0a84ff]/90"
+              className="bg-white text-black hover:bg-white/90"
               onClick={() => {
                 setIsExportConfirmOpen(false);
                 handleExport();

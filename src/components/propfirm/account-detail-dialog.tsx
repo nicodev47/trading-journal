@@ -313,7 +313,7 @@ export function AccountDetailDialog({
             {sim.status === 'passed' && isEvaluation && account.promotedTo ? (
               <span className="font-sans text-xs text-muted-foreground">Già passato a Funded</span>
             ) : sim.status === 'passed' && isEvaluation ? (
-              <Button type="button" size="sm" className="bg-[#0a84ff] text-white hover:bg-[#0a84ff]/90" onClick={onStartFunded}>
+              <Button type="button" size="sm" className="bg-white text-black hover:bg-white/90" onClick={onStartFunded}>
                 Passa a Funded
               </Button>
             ) : (
@@ -561,7 +561,7 @@ export function AccountDetailDialog({
 
                 <div className="rounded-xl border border-border bg-background/30 p-4">
                   <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 font-sans text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1.5"><span className="h-0.5 w-4 bg-[#0a84ff]" />Saldo</span>
+                    <span className="flex items-center gap-1.5"><span className="h-0.5 w-4 bg-white" />Saldo</span>
                     <span className="flex items-center gap-1.5"><span className="h-0.5 w-4 bg-loss" />Limite di drawdown</span>
                     {targetBalance !== null && (
                       <span className="flex items-center gap-1.5"><span className="h-0.5 w-4 bg-profit" />Obiettivo</span>
@@ -589,7 +589,7 @@ export function AccountDetailDialog({
                           <ReferenceLine y={targetBalance} stroke="#30d158" strokeDasharray="5 4" />
                         )}
                         <Line type="stepAfter" dataKey="floor" name="Limite" stroke="#ff453a" strokeDasharray="5 4" dot={false} strokeWidth={1.5} />
-                        <Area type="monotone" dataKey="balance" name="Saldo" stroke="#0a84ff" strokeWidth={2} fill="#0a84ff" fillOpacity={0.12} dot={{ r: 2.5 }} />
+                        <Area type="monotone" dataKey="balance" name="Saldo" stroke="#e5e5e5" strokeWidth={2} fill="#e5e5e5" fillOpacity={0.12} dot={{ r: 2.5 }} />
                       </ComposedChart>
                     </ResponsiveContainer>
                   </div>

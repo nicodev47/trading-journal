@@ -150,7 +150,7 @@ export function NewsPage() {
               <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-xs text-muted-foreground">
                 <SlidersHorizontal className="size-3.5" />
                 Filtri
-                {!isDefault && <span className="size-1.5 rounded-full bg-[#0a84ff]" />}
+                {!isDefault && <span className="size-1.5 rounded-full bg-white" />}
               </Button>
             </PopoverTrigger>
             <PopoverContent align="end" className="w-[280px] rounded-xl p-3">
@@ -167,7 +167,7 @@ export function NewsPage() {
                       type="checkbox"
                       checked={filters.impacts.includes(impact)}
                       onChange={() => toggleImpact(impact)}
-                      className="size-3.5 accent-[#0a84ff]"
+                      className="size-3.5 accent-white"
                     />
                     <ImpactIcon impact={impact} />
                     {IMPACT_META[impact].label}
@@ -190,7 +190,7 @@ export function NewsPage() {
                       className={cn(
                         'rounded-full border px-2.5 py-1 font-sans text-xs font-medium transition',
                         active
-                          ? 'border-[#0a84ff] bg-[#0a84ff]/15 text-foreground'
+                          ? 'border-white/60 bg-white/15 text-foreground'
                           : 'border-border text-muted-foreground hover:text-foreground'
                       )}
                     >

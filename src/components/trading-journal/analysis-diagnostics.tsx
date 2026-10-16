@@ -275,9 +275,9 @@ function BreakdownTooltip({
 
   if (kind === 'setup') {
     return (
-      <div className="min-w-32 rounded-lg border border-blue-300/25 bg-[#1c1c1f]/98 px-3 py-2.5 font-sans tabular-nums text-xs shadow-[0_10px_30px_rgba(0,0,0,0.45),0_0_18px_rgba(10,132,255,0.08)]">
+      <div className="min-w-32 rounded-lg border border-border bg-[#1c1c1f]/98 px-3 py-2.5 font-sans tabular-nums text-xs shadow-[0_10px_30px_rgba(0,0,0,0.45),0_0_18px_rgba(10,132,255,0.08)]">
         <p className="font-semibold text-white">{item.name || 'Untagged'}</p>
-        <p className="mt-1 text-[11px] text-blue-200">
+        <p className="mt-1 text-[11px] text-foreground">
           {item.value ?? 0} trade · {Math.round(item.percentage ?? 0)}%
         </p>
       </div>
@@ -285,12 +285,12 @@ function BreakdownTooltip({
   }
 
   return (
-    <div className="min-w-36 rounded-lg border border-blue-300/25 bg-[#1c1c1f]/98 px-3 py-2.5 font-sans tabular-nums text-xs shadow-[0_10px_30px_rgba(0,0,0,0.45),0_0_18px_rgba(10,132,255,0.08)]">
+    <div className="min-w-36 rounded-lg border border-border bg-[#1c1c1f]/98 px-3 py-2.5 font-sans tabular-nums text-xs shadow-[0_10px_30px_rgba(0,0,0,0.45),0_0_18px_rgba(10,132,255,0.08)]">
       <p className="font-semibold text-white">{item.direction || '—'}</p>
       <p className="mt-1 text-[11px] text-slate-200">
         {item.trades ?? 0} trade · {Math.round(item.winRate ?? 0)}% WR
       </p>
-      <p className="mt-1 text-[11px] font-semibold text-blue-200">
+      <p className="mt-1 text-[11px] font-semibold text-foreground">
         P&amp;L:{' '}
         {streamerMode
           ? '******'
@@ -318,9 +318,9 @@ function DailyPnlTooltip({
   if (!active || !item) return null;
 
   return (
-    <div className="min-w-36 rounded-lg border border-blue-300/25 bg-[#1c1c1f]/98 px-3 py-2.5 font-sans tabular-nums text-xs shadow-[0_10px_30px_rgba(0,0,0,0.45),0_0_18px_rgba(10,132,255,0.08)]">
+    <div className="min-w-36 rounded-lg border border-border bg-[#1c1c1f]/98 px-3 py-2.5 font-sans tabular-nums text-xs shadow-[0_10px_30px_rgba(0,0,0,0.45),0_0_18px_rgba(10,132,255,0.08)]">
       <p className="font-semibold text-white">{item.dateLabel || '—'}</p>
-      <p className="mt-1 text-[11px] font-semibold text-blue-200">
+      <p className="mt-1 text-[11px] font-semibold text-foreground">
         P&amp;L:{' '}
         {streamerMode
           ? '******'
@@ -392,9 +392,9 @@ function CumulativePnlTooltip({
   if (!active || !item) return null;
 
   return (
-    <div className="min-w-40 rounded-lg border border-blue-300/25 bg-[#1c1c1f]/98 px-3 py-2.5 font-sans tabular-nums text-xs shadow-[0_10px_30px_rgba(0,0,0,0.45),0_0_18px_rgba(10,132,255,0.08)]">
+    <div className="min-w-40 rounded-lg border border-border bg-[#1c1c1f]/98 px-3 py-2.5 font-sans tabular-nums text-xs shadow-[0_10px_30px_rgba(0,0,0,0.45),0_0_18px_rgba(10,132,255,0.08)]">
       <p className="font-semibold text-white">{item.dateLabel || '—'}</p>
-      <p className="mt-1 text-[11px] font-semibold text-blue-200">
+      <p className="mt-1 text-[11px] font-semibold text-foreground">
         P&amp;L cumulativo:{' '}
         {streamerMode
           ? '******'

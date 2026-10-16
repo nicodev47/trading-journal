@@ -788,8 +788,8 @@ export function TutorialTour({
   const isTourVisible = isChromeReady || isTransitioning;
   const highlightClassName =
     step.target === 'analysis-section'
-      ? 'absolute rounded-b-[18px] border-x border-b border-[#0a84ff]'
-      : 'absolute rounded-2xl border-2 border-[#0a84ff]';
+      ? 'absolute rounded-b-[18px] border-x border-b border-white/60'
+      : 'absolute rounded-2xl border-2 border-white/60';
 
   return (
     <div
@@ -839,7 +839,7 @@ export function TutorialTour({
           aria-modal="true"
           aria-labelledby="tutorial-step-title"
         >
-          <div className="mb-2 font-sans tabular-nums text-[10px] font-semibold tracking-normal text-[#0a84ff]">
+          <div className="mb-2 font-sans tabular-nums text-[10px] font-semibold tracking-normal text-foreground">
             {stepIndex + 1} / {TUTORIAL_STEPS.length}
           </div>
 
@@ -880,7 +880,7 @@ export function TutorialTour({
             <Button
               type="button"
               data-tutorial-control="true"
-              className="bg-[#0a84ff] text-white hover:bg-[#0a84ff]/90 max-sm:w-full"
+              className="bg-white text-black hover:bg-white/90 max-sm:w-full"
               onClick={() => {
                 hideStepChrome();
 

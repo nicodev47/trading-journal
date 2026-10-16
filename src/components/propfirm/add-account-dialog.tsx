@@ -281,7 +281,7 @@ export function AddAccountDialog({
                           className={cn(
                             'rounded-xl border px-4 py-2 font-sans text-sm transition-colors',
                             ruleSet?.id === item.id
-                              ? 'border-[#0a84ff] bg-[#0a84ff]/15 text-foreground'
+                              ? 'border-white/60 bg-white/15 text-foreground'
                               : 'border-border text-muted-foreground hover:text-foreground'
                           )}
                         >
@@ -490,14 +490,14 @@ export function AddAccountDialog({
               {step === 'name' ? (
                 <Button
                   type="button"
-                  className="bg-[#0a84ff] px-6 text-white hover:bg-[#0a84ff]/90"
+                  className="bg-white px-6 text-black hover:bg-white/90"
                   disabled={!canContinueName}
                   onClick={() => setStep('confirm')}
                 >
                   Continua
                 </Button>
               ) : (
-                <Button type="button" className="bg-[#0a84ff] px-6 text-white hover:bg-[#0a84ff]/90" onClick={create}>
+                <Button type="button" className="bg-white px-6 text-black hover:bg-white/90" onClick={create}>
                   Crea conto
                 </Button>
               )}

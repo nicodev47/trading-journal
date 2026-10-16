@@ -214,7 +214,7 @@ export function ProfileDialog({
                 <Button
                   type="button"
                   size="sm"
-                  className="gap-2 bg-[#0a84ff] text-white hover:bg-[#0a84ff]/90"
+                  className="gap-2 bg-white text-black hover:bg-white/90"
                   onClick={handleShare}
                 >
                   <span className="text-base leading-none" aria-hidden="true">
