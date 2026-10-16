@@ -110,7 +110,8 @@ export function TradeShareCard({
             identity?.initials ?? 'EJ'
           )
         }
-        name={identity ? `${identity.displayName} x EclipseJournal` : 'EclipseJournal'}
+        name={identity?.displayName ?? 'EclipseJournal'}
+        caption="Trader"
         right={badgeLabel}
       />
     </ShareCardFrame>
