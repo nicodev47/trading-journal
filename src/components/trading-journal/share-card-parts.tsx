@@ -176,14 +176,19 @@ export function ShareCardFooter({
         <div className="flex size-16 items-center justify-center overflow-hidden rounded-full bg-white/10 text-[24px] font-semibold text-white">
           {avatar}
         </div>
-        <div>
-          <div className="text-[22px] font-semibold text-white">{name}</div>
-          {caption && (
-            <div className="mt-0.5 text-[15px] font-medium text-white/45">
-              {caption}
-            </div>
-          )}
-        </div>
+        {typeof caption === 'string' || !caption ? (
+          <div>
+            <div className="text-[22px] font-semibold text-white">{name}</div>
+            {caption && (
+              <div className="mt-0.5 text-[15px] font-medium text-white/45">{caption}</div>
+            )}
+          </div>
+        ) : (
+          <div className="flex min-w-0 items-center gap-3 text-[22px] font-semibold text-white">
+            <span className="shrink-0">{name}</span>
+            {caption}
+          </div>
+        )}
       </div>
       <div className="text-[20px] font-semibold text-white/70">{right}</div>
     </footer>

@@ -82,6 +82,7 @@ export function TradeShareCard({
   )
     .map(id => getFirm(id))
     .filter((firm): firm is NonNullable<ReturnType<typeof getFirm>> => Boolean(firm));
+  const firmNames = firms.map(firm => firm.name).join(' · ');
   const netPnl = trade.pnl - (trade.commission || 0);
   const { accent, badgeLabel } = getTradeSharePresentation(netPnl);
   const identity = getShareIdentity(handle);
@@ -118,14 +119,17 @@ export function TradeShareCard({
         name={identity?.displayName ?? 'EclipseJournal'}
         caption={
           firms.length > 0 ? (
-            <span className="inline-flex items-center gap-2.5">
-              <span>x</span>
-              <span className="flex items-center -space-x-2">
+            <span className="flex min-w-0 items-center gap-3 text-white/55">
+              <span className="font-medium">x</span>
+              <span className="flex shrink-0 items-center -space-x-2.5">
                 {firms.map(firm => (
-                  <FirmMark key={firm.id} firm={firm} className="size-6 rounded-full" />
+                  <FirmMark key={firm.id} firm={firm} className="size-9 rounded-full" />
                 ))}
               </span>
-              <span className="text-white/70">{firms.map(firm => firm.name).join(' · ')}</span>
+              {/* One company: its name too. More, or a long name: logos only. */}
+              {firms.length === 1 && firmNames.length <= 18 && (
+                <span className="truncate text-[20px] font-medium text-white/70">{firmNames}</span>
+              )}
             </span>
           ) : undefined
         }
