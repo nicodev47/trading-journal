@@ -64,9 +64,9 @@ function Stat({
 }) {
   return (
     <div className="min-w-0">
-      <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">{label}</p>
-      <div className="mt-1.5 font-sans text-xl font-semibold tabular-nums tracking-tight">{children}</div>
-      {hint && <p className="mt-0.5 font-sans text-[11px] font-medium text-muted-foreground">{hint}</p>}
+      <p className="font-sans text-[9px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">{label}</p>
+      <div className="mt-1 font-sans text-base font-semibold tabular-nums tracking-tight">{children}</div>
+      {hint && <p className="mt-0.5 font-sans text-[10px] font-medium text-muted-foreground">{hint}</p>}
     </div>
   );
 }
@@ -75,7 +75,7 @@ function Pill({ tone, children }: { tone: 'neutral' | 'blue' | 'amber' | 'green'
   return (
     <span
       className={cn(
-        'rounded-md border px-2 py-1 font-sans text-[10px] font-bold uppercase tracking-wider',
+        'rounded-md border px-1.5 py-0.5 font-sans text-[9px] font-bold uppercase tracking-wider',
         tone === 'neutral' && 'border-border bg-white/[0.06] text-muted-foreground',
         tone === 'blue' && 'border-[#0a84ff]/40 bg-[#0a84ff]/10 text-[#5cb8ff]',
         tone === 'amber' && 'border-[#ff9f0a]/40 bg-[#ff9f0a]/10 text-[#ffb340]',
@@ -108,7 +108,7 @@ function TargetTrack({
   return (
     <div className="relative mt-5 h-6">
       <span
-        className="absolute -top-4 -translate-x-1/2 font-sans text-[9px] font-semibold uppercase tracking-wider text-muted-foreground"
+        className="absolute -top-4 -translate-x-1/2 font-sans text-[8px] font-semibold uppercase tracking-wider text-muted-foreground"
         style={{ left: `${startAt}%` }}
       >
         Start
@@ -150,18 +150,20 @@ function AccountCard({
   const daysReady = payout ? payout.winningDays >= rules.payout.minWinningDays : false;
 
   return (
-    <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 text-left transition-colors hover:border-white/20">
+    <div className="flex flex-col gap-3.5 rounded-2xl border border-border bg-card p-4 text-left transition-colors hover:border-white/20">
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
-          {firm && <FirmMark firm={firm} className="size-9 text-xs" />}
+          {firm && <FirmMark firm={firm} className="size-8 text-xs" />}
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <p className="truncate font-sans text-[15px] font-bold uppercase tracking-tight">
-                {account.firmName} {account.ruleSetName} {account.sizeLabel}
+              <p className="truncate font-sans text-[13px] font-bold uppercase tracking-tight">
+                {account.firmName} {account.sizeLabel}
               </p>
               <Pill tone="neutral">{isEvaluation ? 'EVAL' : KIND_LABEL[account.kind].toUpperCase()}</Pill>
             </div>
-            <p className="mt-1 truncate font-sans text-xs tracking-wide text-muted-foreground">{account.name}</p>
+            <p className="mt-0.5 truncate font-sans text-[11px] tracking-wide text-muted-foreground">
+              {account.ruleSetName} · {account.name}
+            </p>
           </div>
         </div>
       </div>
@@ -170,7 +172,7 @@ function AccountCard({
         <Pill tone="neutral">{DRAWDOWN_LABEL[rules.drawdown.type]}</Pill>
         <span
           className={cn(
-            'rounded-md border px-2.5 py-1 font-sans text-xs font-bold uppercase tracking-wider',
+            'rounded-md border px-1.5 py-0.5 font-sans text-[9px] font-bold uppercase tracking-wider',
             sim.status === 'active' && 'border-profit/40 bg-profit/10 text-profit',
             sim.status === 'passed' && 'border-[#0a84ff]/40 bg-[#0a84ff]/10 text-[#5cb8ff]',
             sim.status === 'failed' && 'border-loss/40 bg-loss/10 text-loss'
@@ -185,19 +187,19 @@ function AccountCard({
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-x-4 gap-y-5 border-t border-border pt-4">
+      <div className="grid grid-cols-2 gap-x-3 gap-y-4 border-t border-border pt-3.5">
         <Stat label="Saldo conto">
-          <span>{money.usd(sim.balance)}</span>{' '}
-          <span className="text-sm font-semibold text-muted-foreground">/ {money.usd(sim.floor)}</span>
+          <span>{money.usd(sim.balance)}</span>
+          <span className="block text-[11px] font-semibold text-muted-foreground">limite {money.usd(sim.floor)}</span>
         </Stat>
 
         {isEvaluation ? (
           <Stat label="Obiettivo di profitto">
             <span className={sim.profit > 0 ? 'text-profit' : sim.profit < 0 ? 'text-loss' : undefined}>
               {money.usd(sim.profit)}
-            </span>{' '}
-            <span className="text-sm font-semibold text-muted-foreground">
-              / {money.usd(sim.requiredProfit ?? rules.profitTarget ?? 0)}
+            </span>
+            <span className="block text-[11px] font-semibold text-muted-foreground">
+              su {money.usd(sim.requiredProfit ?? rules.profitTarget ?? 0)}
             </span>
           </Stat>
         ) : (
@@ -213,7 +215,7 @@ function AccountCard({
             <Stat label="Giorni di trading">
               <span className="text-profit">{sim.tradingDays}</span>
               {rules.minTradingDays > 0 && (
-                <span className="text-sm font-semibold text-muted-foreground"> / {rules.minTradingDays}</span>
+                <span className="text-xs font-semibold text-muted-foreground"> / {rules.minTradingDays}</span>
               )}
             </Stat>
             <Stat
@@ -245,7 +247,7 @@ function AccountCard({
               {rules.payout.minWinningDays > 0 ? (
                 <>
                   <span className={daysReady ? 'text-profit' : 'text-loss'}>{payout?.winningDays ?? 0}</span>
-                  <span className="text-sm font-semibold text-muted-foreground"> / {rules.payout.minWinningDays}</span>
+                  <span className="text-xs font-semibold text-muted-foreground"> / {rules.payout.minWinningDays}</span>
                 </>
               ) : (
                 <span className="text-muted-foreground">Nessuno</span>
@@ -260,23 +262,23 @@ function AccountCard({
           <TargetTrack floor={sim.floor} start={account.size} balance={sim.balance} target={targetBalance} />
           <div className="mt-1 flex items-start justify-between">
             <div>
-              <p className="font-sans text-base font-bold tabular-nums text-loss">{money.usd(sim.floor)}</p>
-              <p className="font-sans text-[10px] font-semibold uppercase tracking-wider text-loss/50">Limite</p>
+              <p className="font-sans text-sm font-bold tabular-nums text-loss">{money.usd(sim.floor)}</p>
+              <p className="font-sans text-[9px] font-semibold uppercase tracking-wider text-loss/50">Limite</p>
             </div>
             <div className="text-right">
-              <p className="font-sans text-base font-bold tabular-nums text-profit">{money.usd(targetBalance)}</p>
-              <p className="font-sans text-[10px] font-semibold uppercase tracking-wider text-profit/50">Obiettivo</p>
+              <p className="font-sans text-sm font-bold tabular-nums text-profit">{money.usd(targetBalance)}</p>
+              <p className="font-sans text-[9px] font-semibold uppercase tracking-wider text-profit/50">Obiettivo</p>
             </div>
           </div>
         </div>
       )}
 
-      <div className="flex flex-col gap-2 border-t border-border pt-4">
+      <div className="flex flex-col gap-2 border-t border-border pt-3.5">
         {!isEvaluation && payout?.eligible && (
           <button
             type="button"
             onClick={() => onOpen('payout')}
-            className="h-11 rounded-xl bg-profit font-sans text-sm font-bold text-black transition-opacity hover:opacity-90"
+            className="h-9 rounded-lg bg-profit font-sans text-xs font-bold text-black transition-opacity hover:opacity-90"
           >
             Richiedi payout · {money.usd(payout.available)}
           </button>
@@ -295,7 +297,7 @@ function AccountCard({
               }}
               onBlur={() => setConfirmReset(false)}
               className={cn(
-                'h-11 flex-1 rounded-xl border font-sans text-sm font-semibold transition-colors',
+                'h-9 flex-1 rounded-lg border font-sans text-xs font-semibold transition-colors',
                 confirmReset
                   ? 'border-loss/50 bg-loss/10 text-loss'
                   : 'border-border bg-white/[0.04] hover:bg-white/10'
@@ -307,7 +309,7 @@ function AccountCard({
           <button
             type="button"
             onClick={() => onOpen()}
-            className="h-11 flex-1 rounded-xl border border-border bg-white/[0.04] font-sans text-sm font-semibold transition-colors hover:bg-white/10"
+            className="h-9 flex-1 rounded-lg border border-border bg-white/[0.04] font-sans text-xs font-semibold transition-colors hover:bg-white/10"
           >
             Dettagli
           </button>
