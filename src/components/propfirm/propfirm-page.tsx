@@ -174,8 +174,8 @@ function AccountCard({
           </Stat>
         ) : (
           <Stat label="Profitto">
-            <span className={sim.profit > 0 ? 'text-profit' : sim.profit < 0 ? 'text-loss' : 'text-profit'}>
-              {money.usd(sim.profit)}
+            <span className={sim.cycleProfit > 0 ? 'text-profit' : sim.cycleProfit < 0 ? 'text-loss' : 'text-profit'}>
+              {money.usd(sim.cycleProfit)}
             </span>
           </Stat>
         )}

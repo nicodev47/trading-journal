@@ -41,6 +41,8 @@ export interface AccountSim {
   failReason: FailReason | null;
   balance: number;
   profit: number;
+  /** Profit since the last payout (all of it before the first payout). */
+  cycleProfit: number;
   floor: number;
   /** How much the balance can still fall before the drawdown is breached. */
   room: number;
@@ -115,6 +117,7 @@ export function simulateAccount({ kind, size: planSize, rules, days, payouts }: 
   let bestDay = 0;
   let bestDayDate: string | null = null;
   let winningDays = 0;
+  let cycleStart = 0;
   let payoutIndex = 0;
   // Some plans freeze the floor for good once the first payout is taken.
   let floorLocked = false;
@@ -137,6 +140,7 @@ export function simulateAccount({ kind, size: planSize, rules, days, payouts }: 
       // does shrink the cushion above the floor.
       balance -= payout.gross;
       winningDays = 0;
+      cycleStart = balance;
       if (rules.drawdown.lockOnPayout) floorLocked = true;
       payoutIndex += 1;
     }
@@ -279,6 +283,7 @@ export function simulateAccount({ kind, size: planSize, rules, days, payouts }: 
     failReason,
     balance: round(balance),
     profit,
+    cycleProfit: round(kind === 'evaluation' || sortedPayouts.length === 0 ? profit : balance - cycleStart),
     floor: round(floor),
     room: round(balance - floor),
     tradingDays,

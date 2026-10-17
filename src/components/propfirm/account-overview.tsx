@@ -97,8 +97,8 @@ export function AccountOverview({
       <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
         <Stat label="Saldo conto">{money.usd(sim.balance)}</Stat>
         <Stat label="Saldo minimo">{money.usd(sim.floor)}</Stat>
-        <Stat label="P&L totale" tone={sim.profit > 0 ? 'profit' : sim.profit < 0 ? 'loss' : undefined}>
-          {money.signed(sim.profit)}
+        <Stat label="P&L totale" tone={sim.cycleProfit > 0 ? 'profit' : sim.cycleProfit < 0 ? 'loss' : undefined}>
+          {money.signed(sim.cycleProfit)}
         </Stat>
         <Stat label="Giorni trading">{sim.tradingDays}</Stat>
         {account.kind === 'evaluation' ? (
