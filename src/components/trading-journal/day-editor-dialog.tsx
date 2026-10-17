@@ -1744,7 +1744,8 @@ export function DayEditorDialog({
         ) : (
         <div className="flex flex-col-reverse gap-2 border-t border-border px-4 py-3.5 max-sm:[&_button]:w-full sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-4">
           <Button
-            variant="destructive"
+            type="button"
+            className="bg-loss text-white hover:bg-loss/90"
             onClick={() => setIsDeleteDayConfirmOpen(true)}
           >
             Elimina giorno
