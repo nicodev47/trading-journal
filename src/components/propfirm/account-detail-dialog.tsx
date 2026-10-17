@@ -336,7 +336,7 @@ export function AccountDetailDialog({
               </Button>
             ) : (
               <Button type="button" size="sm" variant="outline" onClick={onReset}>
-                Riparti da capo
+                {account.kind === 'funded' && account.firmId === 'topstep' ? 'Back2Funded' : 'Riparti da capo'}
               </Button>
             )}
           </div>

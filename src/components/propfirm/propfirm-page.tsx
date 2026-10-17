@@ -276,7 +276,7 @@ function AccountCard({
           </button>
         )}
         <div className="flex gap-2">
-          {isEvaluation && !account.promotedTo && sim.status !== 'passed' && (
+          {((isEvaluation && !account.promotedTo && sim.status !== 'passed') || isBack2Funded(account, sim.status)) && (
             <button
               type="button"
               onClick={() => {
@@ -295,7 +295,7 @@ function AccountCard({
                   : 'border-border bg-white/[0.04] hover:bg-white/10'
               )}
             >
-              {confirmReset ? 'Conferma reset' : 'Reset'}
+              {confirmReset ? 'Conferma' : isBack2Funded(account, sim.status) ? 'Back2Funded' : 'Reset'}
             </button>
           )}
           <button
@@ -310,6 +310,10 @@ function AccountCard({
     </div>
   );
 }
+
+/** Topstep: a burned Express Funded Account can be brought back to zero (Back2Funded, paid). */
+export const isBack2Funded = (account: PropAccount, status: string) =>
+  account.kind === 'funded' && account.firmId === 'topstep' && status === 'failed' && !account.promotedTo;
 
 /** The day before a new phase starts is the last day of the previous one. */
 const endOf = (startDate: string) => {
@@ -443,6 +447,31 @@ export function PropfirmPage({ store, journals, getJournalTrades }: PropfirmPage
   };
 
   const reset = (account: PropAccount, endedOn: string | null) => {
+    if (isBack2Funded(account, 'failed') && account.kind === 'funded' && endedOn) {
+      // Back2Funded: a fresh funded account; the burned one stays in the archive.
+      const start = nextDay(endedOn);
+      const created = store.addAccount({
+        firmId: account.firmId,
+        firmName: account.firmName,
+        ruleSetId: account.ruleSetId,
+        ruleSetName: account.ruleSetName,
+        sizeLabel: account.sizeLabel,
+        name: `${account.name} · B2F`,
+        kind: 'funded',
+        size: account.size,
+        rules: account.rules,
+        templateNote: account.templateNote,
+        source: account.source,
+        startDate: start,
+        promotedFrom: account.id,
+      });
+
+      store.updateAccount(account.id, { promotedTo: created.id, endDate: endedOn });
+      setOpenId(null);
+
+      return;
+    }
+
     store.updateAccount(account.id, {
       endDate: undefined,
       startDate: nextDay(endedOn ?? todayKey()),
