@@ -12,6 +12,14 @@ export interface JournalPreferences {
   assets: string[];
   setups: string[];
   windows: OperatingWindowConfig[];
+  /** Emotion chips of the trade editor: preset ones the user removed, own ones, chip colours. */
+  emotions?: EmotionPreferences;
+}
+
+export interface EmotionPreferences {
+  hidden: string[];
+  custom: string[];
+  colors: Record<string, string>;
 }
 
 export const PREFERENCES_STORAGE_KEY = 'eclipse-trading-journal-preferences';
@@ -74,6 +82,23 @@ export function addAsset(list: string[], raw: string): string[] {
   return [...list, value];
 }
 
+function parseEmotionPreferences(value: unknown): EmotionPreferences | undefined {
+  if (!value || typeof value !== 'object') return undefined;
+
+  const data = value as Partial<EmotionPreferences>;
+  const strings = (list: unknown) =>
+    Array.isArray(list) ? list.filter((item): item is string => typeof item === 'string') : [];
+  const colors: Record<string, string> = {};
+
+  if (data.colors && typeof data.colors === 'object') {
+    Object.entries(data.colors).forEach(([key, color]) => {
+      if (typeof color === 'string') colors[key] = color;
+    });
+  }
+
+  return { hidden: strings(data.hidden), custom: strings(data.custom), colors };
+}
+
 export function parseStoredPreferences(raw: string | null): JournalPreferences | null {
   if (!raw) return null;
 
@@ -104,6 +129,7 @@ export function parseStoredPreferences(raw: string | null): JournalPreferences |
       assets: strings(data.assets),
       setups: strings(data.setups),
       windows,
+      emotions: parseEmotionPreferences(data.emotions),
     };
   } catch {
     return null;

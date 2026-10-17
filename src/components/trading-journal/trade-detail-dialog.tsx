@@ -395,7 +395,7 @@ export function TradeDetailDialog({
                       key={value}
                       className="rounded-lg border border-border bg-white/[0.07] px-2.5 py-1.5 font-sans tabular-nums text-xs text-foreground"
                     >
-                      {emotion ? `${emotion.emoji} ${emotion.label}` : value}
+                      {emotion ? `${emotion.emoji} ${emotion.label}`.trim() : value}
                     </span>
                   );
                 })}

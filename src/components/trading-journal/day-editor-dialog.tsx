@@ -1,6 +1,11 @@
 'use client';
 
-import { TRADE_EMOTIONS, emotionColorKey } from '@/lib/trade-emotions';
+import {
+  CUSTOM_EMOTION_PREFIX,
+  TRADE_EMOTIONS,
+  emotionColorKey,
+  getEmotion,
+} from '@/lib/trade-emotions';
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -192,7 +197,17 @@ export function DayEditorDialog({
   onUpdateTagColor,
   onRemoveTag,
 }: DayEditorDialogProps) {
-  const { preferences } = usePreferences();
+  const { preferences, updatePreferences } = usePreferences();
+  const emotionPrefs = preferences.emotions ?? { hidden: [], custom: [], colors: {} };
+  const presetEmotions = TRADE_EMOTIONS.filter(item => !emotionPrefs.hidden.includes(item.value));
+  const canManageEmotions = presetEmotions.length > 0 || emotionPrefs.custom.length > 0;
+  const setEmotionColor = (value: string, color: string) =>
+    updatePreferences({
+      emotions: {
+        ...emotionPrefs,
+        colors: { ...emotionPrefs.colors, [emotionColorKey(value)]: color },
+      },
+    });
   const { streamerMode } = useStreamerMode();
   const [tradeRows, setTradeRows] = useState<TradeRow[]>([]);
   const [timeDrafts, setTimeDrafts] = useState<Record<string, string>>({});
@@ -203,6 +218,11 @@ export function DayEditorDialog({
   const [managedTagKey, setManagedTagKey] = useState<string | null>(null);
   const [tradeToDeleteId, setTradeToDeleteId] = useState<string | null>(null);
   const [tagToDelete, setTagToDelete] = useState<string | null>(null);
+  const [emotionToDelete, setEmotionToDelete] = useState<string | null>(null);
+  const [isManagingEmotions, setIsManagingEmotions] = useState(false);
+  const [managedEmotionKey, setManagedEmotionKey] = useState<string | null>(null);
+  const [customEmotionInputs, setCustomEmotionInputs] = useState<Record<string, string>>({});
+  const [customEmotionColors, setCustomEmotionColors] = useState<Record<string, string>>({});
   const [screenshotToDelete, setScreenshotToDelete] = useState<{
     tradeId: string;
     index: number;
@@ -504,6 +524,55 @@ export function DayEditorDialog({
       removeTradeRow(tradeToDeleteId);
       setTradeToDeleteId(null);
     }
+  };
+
+  const confirmRemoveEmotion = () => {
+    if (!emotionToDelete) return;
+
+    const removed = emotionToDelete;
+    const isCustom = removed.startsWith(CUSTOM_EMOTION_PREFIX);
+
+    updatePreferences({
+      emotions: {
+        hidden: isCustom ? emotionPrefs.hidden : [...emotionPrefs.hidden, removed],
+        custom: emotionPrefs.custom.filter(value => value !== removed),
+        colors: emotionPrefs.colors,
+      },
+    });
+    replaceTradeRows(
+      previous =>
+        previous.map(tradeRow => ({
+          ...tradeRow,
+          emotions: tradeRow.emotions.filter(value => value !== removed),
+        })),
+      0
+    );
+    setManagedEmotionKey(null);
+    setEmotionToDelete(null);
+  };
+
+  const addCustomEmotion = (rowId: string, current: string[]) => {
+    const label = customEmotionInputs[rowId]?.trim();
+
+    if (!label) return;
+
+    const value = `${CUSTOM_EMOTION_PREFIX}${label}`;
+
+    updatePreferences({
+      emotions: {
+        ...emotionPrefs,
+        custom: emotionPrefs.custom.includes(value) ? emotionPrefs.custom : [...emotionPrefs.custom, value],
+        colors: {
+          ...emotionPrefs.colors,
+          [emotionColorKey(value)]: customEmotionColors[rowId] ?? DEFAULT_TAG_COLOR,
+        },
+      },
+    });
+
+    if (!current.includes(value)) updateTradeRow(rowId, 'emotions', [...current, value], 0);
+
+    setCustomEmotionInputs(previous => ({ ...previous, [rowId]: '' }));
+    setCustomEmotionColors(previous => ({ ...previous, [rowId]: DEFAULT_TAG_COLOR }));
   };
 
   const confirmRemoveTag = () => {
@@ -1489,43 +1558,136 @@ export function DayEditorDialog({
                   </Label>
 
                   <div className="flex flex-wrap gap-2">
-                    {TRADE_EMOTIONS.map(emotion => {
-                      const isSelected = row.emotions.includes(emotion.value);
-                      const color = getTagColor(emotionColorKey(emotion.value), tagColors);
+                      {[...presetEmotions.map(item => item.value), ...emotionPrefs.custom].map(value => {
+                        const emotion = getEmotion(value);
+                        const isSelected = row.emotions.includes(value);
+                        const color = getTagColor(emotionColorKey(value), emotionPrefs.colors);
+                        const managementKey = `${row.id}:${value}`;
+                        const isManaged = managedEmotionKey === managementKey;
+                        const showColor = isSelected || isManaged;
 
-                      return (
-                        <button
-                          key={emotion.value}
-                          type="button"
-                          aria-pressed={isSelected}
-                          onClick={() =>
-                            updateTradeRow(
-                              row.id,
-                              'emotions',
-                              isSelected
-                                ? row.emotions.filter(value => value !== emotion.value)
-                                : [...row.emotions, emotion.value],
-                              0
-                            )
+                        return (
+                          <div key={value} className="relative">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (isManagingEmotions) {
+                                  setManagedEmotionKey(managementKey);
+                                  return;
+                                }
+
+                                updateTradeRow(
+                                  row.id,
+                                  'emotions',
+                                  isSelected
+                                    ? row.emotions.filter(item => item !== value)
+                                    : [...row.emotions, value],
+                                  0
+                                );
+                              }}
+                              className={cn(
+                                'w-full rounded-lg border px-2.5 py-1.5 text-left font-sans tabular-nums text-[13px] leading-4 transition-colors',
+                                isManaged && 'ring-1 ring-white/35',
+                                !showColor &&
+                                  'border-border bg-background/80 text-muted-foreground hover:bg-secondary hover:text-foreground'
+                              )}
+                              style={
+                                showColor
+                                  ? { borderColor: `${color}80`, backgroundColor: `${color}1a`, color }
+                                  : undefined
+                              }
+                            >
+                              {emotion?.emoji ? (
+                                <span className="mr-2" aria-hidden="true">
+                                  {emotion.emoji}
+                                </span>
+                              ) : null}
+                              {emotion?.label ?? value}
+                            </button>
+
+                            {isManagingEmotions && (
+                              <button
+                                type="button"
+                                aria-label={`Elimina ${emotion?.label ?? value}`}
+                                className="absolute -right-2 -top-2 flex size-5 items-center justify-center rounded-full border border-loss bg-background text-loss shadow-md transition-colors hover:bg-loss hover:text-white"
+                                onClick={event => {
+                                  event.stopPropagation();
+                                  setEmotionToDelete(value);
+                                }}
+                              >
+                                <X className="size-3" />
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
+                  </div>
+
+                  <div className="grid grid-cols-1 items-center gap-2 rounded-lg border border-border/70 bg-background/35 p-2 min-[430px]:grid-cols-[minmax(0,1fr)_auto_auto]">
+                    <Input
+                      value={customEmotionInputs[row.id] ?? ''}
+                      onChange={event =>
+                        setCustomEmotionInputs(previous => ({ ...previous, [row.id]: event.target.value }))
+                      }
+                      onKeyDown={event => {
+                        if (event.key !== 'Enter') return;
+
+                        event.preventDefault();
+                        addCustomEmotion(row.id, row.emotions);
+                      }}
+                      placeholder="Crea un'emozione personalizzata"
+                      className="h-8 min-w-0 border-border/70 bg-background/60 font-sans tabular-nums text-[13px] placeholder:text-muted-foreground/60"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-8 px-3 font-sans tabular-nums text-xs"
+                      disabled={!customEmotionInputs[row.id]?.trim()}
+                      onClick={() => addCustomEmotion(row.id, row.emotions)}
+                    >
+                      Aggiungi
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={isManagingEmotions ? 'default' : 'outline'}
+                      size="sm"
+                      className="h-8 px-3 font-sans tabular-nums text-xs"
+                      disabled={!canManageEmotions}
+                      onClick={() =>
+                        setIsManagingEmotions(previous => {
+                          setManagedEmotionKey(null);
+                          return !previous;
+                        })
+                      }
+                    >
+                      Gestisci
+                    </Button>
+                    {isManagingEmotions && managedEmotionKey?.startsWith(`${row.id}:`) ? (
+                      <div className="min-[430px]:col-span-3">
+                        {(() => {
+                          const managed = managedEmotionKey.slice(`${row.id}:`.length);
+
+                          return (
+                            <TagColorPicker
+                              value={getTagColor(emotionColorKey(managed), emotionPrefs.colors)}
+                              label={getEmotion(managed)?.label ?? managed}
+                              onChange={color => setEmotionColor(managed, color)}
+                            />
+                          );
+                        })()}
+                      </div>
+                    ) : customEmotionInputs[row.id]?.trim() ? (
+                      <div className="min-[430px]:col-span-3">
+                        <TagColorPicker
+                          value={customEmotionColors[row.id] ?? DEFAULT_TAG_COLOR}
+                          label="nuova emozione"
+                          onChange={color =>
+                            setCustomEmotionColors(previous => ({ ...previous, [row.id]: color }))
                           }
-                          className={cn(
-                            'rounded-lg border px-2.5 py-1.5 text-left font-sans tabular-nums text-[13px] leading-4 transition-colors',
-                            !isSelected &&
-                              'border-border bg-background/80 text-muted-foreground hover:bg-secondary hover:text-foreground'
-                          )}
-                          style={
-                            isSelected
-                              ? { borderColor: `${color}80`, backgroundColor: `${color}1a`, color }
-                              : undefined
-                          }
-                        >
-                          <span className="mr-2" aria-hidden="true">
-                            {emotion.emoji}
-                          </span>
-                          {emotion.label}
-                        </button>
-                      );
-                    })}
+                        />
+                      </div>
+                    ) : null}
                   </div>
                 </div>
 
@@ -1695,6 +1857,32 @@ export function DayEditorDialog({
               type="button"
               className="bg-loss text-white hover:bg-loss/90"
               onClick={confirmRemoveTag}
+            >
+              Elimina
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(emotionToDelete)}
+        onOpenChange={open => !open && setEmotionToDelete(null)}
+      >
+        <DialogContent className="max-h-[92dvh] w-[calc(100vw-1.75rem)] max-w-[460px] border-border bg-card">
+          <DialogHeader>
+            <DialogTitle>Elimina emozione</DialogTitle>
+            <DialogDescription>
+              Vuoi eliminare questa emozione? Verrà rimossa anche dai trade in cui è stata utilizzata.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="max-sm:[&_button]:w-full">
+            <Button type="button" variant="outline" onClick={() => setEmotionToDelete(null)}>
+              Annulla
+            </Button>
+            <Button
+              type="button"
+              className="bg-loss text-white hover:bg-loss/90"
+              onClick={confirmRemoveEmotion}
             >
               Elimina
             </Button>
