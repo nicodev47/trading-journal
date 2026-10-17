@@ -140,6 +140,10 @@ export function AccountDetailDialog({
   const worstDay = sim.days.reduce((worst, row) => Math.min(worst, row.pnl), 0);
   const targetBalance =
     isEvaluation && sim.requiredProfit !== null ? account.size + sim.requiredProfit : null;
+  // The payout area only exists while a payout can be requested (or there are payouts to look at).
+  const showPayoutSection =
+    !isEvaluation && Boolean(sim.payout?.eligible || account.payouts.length > 0);
+
   const saveName = () => {
     const next = nameDraft.trim();
 
@@ -324,7 +328,7 @@ export function AccountDetailDialog({
               ['calendar', 'Calendario'],
               ['history', 'Storico'],
               ...(account.firmId === 'custom' ? [['rules', 'Regole']] : []),
-              ...(isEvaluation ? [] : [['payout', 'Payout']]),
+              ...(showPayoutSection ? [['payout', 'Payout']] : []),
             ].map(([value, label]) => (
               <button
                 key={value}
@@ -392,9 +396,11 @@ export function AccountDetailDialog({
             </section>
           )}
 
-          {!isEvaluation && sim.payout && (
+          {showPayoutSection && sim.payout && (
             <section id="prop-section-payout" className="scroll-mt-14 flex flex-col gap-4 p-4 sm:p-6">
             <h3 className="font-sans text-lg font-semibold tracking-tight">Payout</h3>
+              {sim.payout.eligible && (
+                <>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <Tile label="Incassato (netto)" value={money.usd(Math.round(paidNet * 100) / 100)} tone={paidNet > 0 ? 'profit' : undefined} />
                 <Tile label="Payout disponibile" value={money.usd(sim.payout.available)} />
@@ -458,6 +464,9 @@ export function AccountDetailDialog({
                   Registra payout
                 </Button>
               </div>
+
+                </>
+              )}
 
               {account.payouts.length > 0 && (
                 <ul className="divide-y divide-border/60 rounded-xl border border-border">
