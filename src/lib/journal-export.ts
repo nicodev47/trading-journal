@@ -3,7 +3,6 @@ import type {
   JournalWorkspaceMeta,
 } from '@/hooks/use-trades';
 import type { DailyAnalysis, JournalState, MissedTrade, Trade } from './types/trade';
-import type { PropAccount } from './propfirm/types';
 
 export const JOURNAL_EXPORT_FORMAT_VERSION = 1;
 
@@ -25,8 +24,6 @@ export interface FullJournalBackup {
   exportMetadata: JournalExportMetadata;
   workspaces: Partial<Record<JournalWorkspace, JournalState>>;
   workspaceOptions: JournalWorkspaceMeta[];
-  /** Prop firm simulator accounts, when the backup includes them. */
-  propAccounts?: PropAccount[];
   /** Progress Tracker entries (daily analyses, missed trades, case studies). */
   progressJournal?: { dailyAnalyses: DailyAnalysis[]; missedTrades: MissedTrade[] };
 }
@@ -134,7 +131,6 @@ export function createFullBackupExportData(
   workspaces: Partial<Record<JournalWorkspace, JournalState>>,
   workspaceOptions: JournalWorkspaceMeta[],
   exportedAt = new Date(),
-  propAccounts: PropAccount[] = [],
   progressJournal?: { dailyAnalyses: DailyAnalysis[]; missedTrades: MissedTrade[] }
 ): string {
   const includedWorkspaceIds = new Set(Object.keys(workspaces));
@@ -148,7 +144,6 @@ export function createFullBackupExportData(
     workspaceOptions: workspaceOptions.filter((workspace) =>
       includedWorkspaceIds.has(workspace.id)
     ),
-    ...(propAccounts.length > 0 ? { propAccounts } : {}),
     ...(progressJournal &&
     (progressJournal.dailyAnalyses.length > 0 || progressJournal.missedTrades.length > 0)
       ? { progressJournal }
@@ -203,9 +198,6 @@ export function parseJournalExport(jsonString: string): ParsedJournalExport | nu
         exportMetadata: metadata as unknown as JournalExportMetadata,
         workspaces,
         workspaceOptions,
-        propAccounts: Array.isArray(parsed.propAccounts)
-          ? (parsed.propAccounts.filter(isRecord) as unknown as PropAccount[])
-          : [],
         progressJournal: isRecord(parsed.progressJournal)
           ? {
               dailyAnalyses: Array.isArray(parsed.progressJournal.dailyAnalyses)

@@ -14,8 +14,6 @@ import {
   hasStoredWorkspaceContent,
   type JournalWorkspace,
 } from '@/hooks/use-trades';
-import { PropAccountsProvider } from '@/contexts/prop-accounts-context';
-import { buildPropMarkers } from '@/lib/propfirm/markers';
 import { Toaster } from '@/components/ui/sonner';
 import { Button } from '@/components/ui/button';
 import {
@@ -47,8 +45,6 @@ import { TradeLog } from '@/components/trading-journal/trade-log';
 import { NewsPage } from '@/components/news/news-page';
 import { ProgressTrackerPage } from '@/components/progress/progress-tracker-page';
 import { StrategiesPage } from '@/components/trading-journal/strategies-page';
-import { PropfirmPage } from '@/components/propfirm/propfirm-page';
-import { usePropAccounts } from '@/hooks/use-prop-accounts';
 import { useProgressJournal } from '@/hooks/use-progress-journal';
 import { ImportPreview } from '@/components/trading-journal/import-preview';
 import { createFullBackupExportData, parseJournalExport } from '@/lib/journal-export';
@@ -261,7 +257,6 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
     };
   }, [isHelpOpen]);
 
-  const propStore = usePropAccounts();
   const progress = useProgressJournal();
   const {
     trades,
@@ -302,12 +297,6 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
   const progressTrades = workspaces
     .filter(workspace => workspace.group !== 'backtest' && workspace.group !== 'preview')
     .flatMap(workspace => getWorkspaceData(workspace.id).trades);
-  const dashboardPropMarkers = buildPropMarkers(
-    propStore.accounts.filter(
-      account => account.source.kind === 'journal' && account.source.journalId === activeWorkspace
-    ),
-    () => trades
-  );
   const showPreviewWorkspace = true;
   const visibleTrades = isTutorialActive ? tutorialTrades : trades;
 
@@ -754,23 +743,6 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
 
     if (parsed.data.progressJournal) progress.importJournal(parsed.data.progressJournal);
 
-    // Prop firm accounts follow their journal to its (possibly new) id.
-    if (parsed.data.propAccounts?.length) {
-      propStore.importAccounts(
-        parsed.data.propAccounts.map(account =>
-          account.source?.kind === 'journal'
-            ? {
-                ...account,
-                source: {
-                  kind: 'journal' as const,
-                  journalId: idMap.get(account.source.journalId) ?? account.source.journalId,
-                },
-              }
-            : account
-        )
-      );
-    }
-
     const allTrades = entries.flatMap(([, state]) => state.trades);
 
     justImportedRef.current = true;
@@ -884,7 +856,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
         return [workspace.id, journal];
       })
     );
-    const blob = new Blob([createFullBackupExportData(journals, included, new Date(), propStore.accounts, {
+    const blob = new Blob([createFullBackupExportData(journals, included, new Date(), {
       dailyAnalyses: progress.dailyAnalyses,
       missedTrades: progress.missedTrades,
     })], {
@@ -1047,7 +1019,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
   ) : null;
 
   return (
-    <PropAccountsProvider value={propStore.accounts}>
+    <>
       <AppShell
         banner={bannerNode}
         activeView={activeView}
@@ -1105,7 +1077,6 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
   <TradingCalendar
     trades={visibleTrades}
     navigationTrades={isTutorialActive ? [] : trades}
-    getPropMarkers={date => (isTutorialActive ? undefined : dashboardPropMarkers.get(date))}
     weeklyPlans={isTutorialActive ? [] : weeklyPlans}
     activeWorkspace={activeWorkspace}
     showPreviewWorkspace={previewHasContent}
@@ -1157,22 +1128,12 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
           <StrategiesPage trades={visibleTrades} />
         ) : activeView === 'news' ? (
           <NewsPage />
-        ) : activeView === 'progress' ? (
+        ) : (
           <ProgressTrackerPage
             trades={progressTrades}
-            propAccounts={propStore.accounts}
-            getJournalTrades={journalId => getWorkspaceData(journalId as JournalWorkspace).trades}
             dailyAnalyses={progress.dailyAnalyses}
             onSaveAnalysis={progress.saveDailyAnalysis}
             onDeleteAnalysis={progress.deleteDailyAnalysis}
-          />
-        ) : (
-          <PropfirmPage
-            store={propStore}
-            journals={workspaces
-              .filter(workspace => workspace.group !== 'preview')
-              .map(workspace => ({ id: workspace.id, name: workspace.name }))}
-            getJournalTrades={journalId => getWorkspaceData(journalId as JournalWorkspace).trades}
           />
         )}
       </main>
@@ -1211,17 +1172,6 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
               : getTradesByDate(selectedDate)
           }
           onSave={handleSaveDayTrades}
-          propAccountChoices={propStore.accounts
-            .filter(
-              account =>
-                account.source.kind === 'journal' && account.source.journalId === activeWorkspace
-            )
-            .map(account => ({
-              id: account.id,
-              name: account.name,
-              firmId: account.firmId,
-              firmName: account.firmName,
-            }))}
           onDeleteDay={handleDeleteDay}
           strategies={strategies}
           availableStandardTags={tags}
@@ -1669,7 +1619,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
       />
 
       <Toaster />
-    </PropAccountsProvider>
+    </>
   );
 }
 

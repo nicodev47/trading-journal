@@ -7,7 +7,6 @@ import { useStreamerMode } from '@/contexts/streamer-mode-context';
 import { generateId } from '@/lib/calculations';
 import type { DailyAnalysis, ScreenshotData, Trade } from '@/lib/types/trade';
 import { AttachmentsField } from './attachments-field';
-import type { AccountChip } from '@/components/trading-journal/trade-detail-dialog';
 import { TradeDetailDialog } from '@/components/trading-journal/trade-detail-dialog';
 import { TradeGroupContent } from '@/components/trading-journal/trade-group-detail-dialog';
 
@@ -16,8 +15,6 @@ interface DailyAnalysisDialogProps {
   date: string;
   entry?: DailyAnalysis;
   trades: Trade[];
-  /** Prop accounts a trade was executed on. */
-  getAccounts: (trade: Trade) => AccountChip[];
   onClose: () => void;
   onSave: (entry: DailyAnalysis) => void;
   onDelete: (date: string) => void;
@@ -66,7 +63,6 @@ export function DailyAnalysisDialog({
   date,
   entry,
   trades,
-  getAccounts,
   onClose,
   onSave,
   onDelete,
@@ -222,7 +218,6 @@ export function DailyAnalysisDialog({
               subtitle="Operazioni registrate nella Execution Map."
               trades={trades}
               columnHeaders
-              getAccounts={getAccounts}
               onOpenTrade={trade => setOpenedTrade(trade)}
             />
           </div>

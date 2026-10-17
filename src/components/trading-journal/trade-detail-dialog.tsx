@@ -13,9 +13,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
-import { getFirm } from '@/lib/propfirm/firms';
-import { usePropAccountList } from '@/contexts/prop-accounts-context';
-import { FirmMark } from '@/components/propfirm/shared';
 import { usePreferences } from '@/contexts/preferences-context';
 import { getMenuOptions } from '@/lib/preferences';
 import {
@@ -32,10 +29,6 @@ interface TradeDetailDialogProps {
   onUpdateTrade?: (id: string, updates: Partial<Trade>) => void;
   showBackButton?: boolean;
   onBack?: () => void;
-  /** Accounts the trade was executed on. */
-  accounts?: AccountChip[];
-  /** Imported files have no accounts: hide the row. */
-  hideAccounts?: boolean;
 }
 
 export function netPnl(trade: Trade) {
@@ -255,33 +248,6 @@ export function AttachmentItem({
   );
 }
 
-export interface AccountChip {
-  name: string;
-  firmId: string;
-}
-
-export function AccountList({ accounts }: { accounts: AccountChip[] }) {
-  if (accounts.length === 0) return <span className="text-muted-foreground">Nessun account assegnato</span>;
-
-  return (
-    <div className="flex flex-wrap gap-2">
-      {accounts.map(account => {
-        const firm = getFirm(account.firmId);
-
-        return (
-          <span
-            key={account.name}
-            className="inline-flex items-center gap-2 rounded-lg border border-border bg-secondary/40 py-1.5 pl-1.5 pr-2.5 font-sans tabular-nums text-xs text-foreground"
-          >
-            {firm && <FirmMark firm={firm} className="size-5 rounded-md text-[8px]" />}
-            {account.name}
-          </span>
-        );
-      })}
-    </div>
-  );
-}
-
 export function TradeDetailDialog({
   trade,
   streamerMode,
@@ -289,11 +255,8 @@ export function TradeDetailDialog({
   onUpdateTrade,
   showBackButton = false,
   onBack,
-  accounts,
-  hideAccounts = false,
 }: TradeDetailDialogProps) {
   const { preferences } = usePreferences();
-  const propAccounts = usePropAccountList();
   const [setupDraft, setSetupDraft] = useState('');
   const [savedSetup, setSavedSetup] = useState('');
 
@@ -305,13 +268,6 @@ export function TradeDetailDialog({
 
   if (!trade) return null;
 
-  // Where the trade was executed: given by the caller or read from the prop accounts.
-  const executedOn: AccountChip[] =
-    accounts ??
-    (trade.propAccountIds ?? [])
-      .map(id => propAccounts.find(account => account.id === id))
-      .filter((account): account is NonNullable<typeof account> => Boolean(account))
-      .map(account => ({ name: `${account.firmName} · ${account.name}`, firmId: account.firmId }));
   const date = getTradeDate(trade);
   const screenshots = normalizeScreenshots(trade);
   const tags = trade.tags ?? [];
@@ -416,12 +372,6 @@ export function TradeDetailDialog({
               {trade.pair?.trim() || '—'}
             </DetailCard>
           </div>
-
-          {!hideAccounts && (accounts !== undefined || propAccounts.length > 0) && (
-            <DetailCard label="Eseguito su" className="mt-3">
-              <AccountList accounts={executedOn} />
-            </DetailCard>
-          )}
 
           <DetailCard label="Note complete" className="mt-3">
             <p className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-muted-foreground">

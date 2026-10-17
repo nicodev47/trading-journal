@@ -15,16 +15,6 @@ export interface AnalysisCell {
   level: number;
   /** Something was written directly in the Progress Tracker for this day. */
   manual: boolean;
-  /** Prop accounts on which trades were executed this day. */
-  props: PropMarkerCell[];
-}
-
-export interface PropMarkerCell {
-  id: string;
-  initials: string;
-  tile: string;
-  logo?: string;
-  logoOnDark?: boolean;
 }
 
 interface CalendarDayProps {
@@ -38,8 +28,6 @@ interface CalendarDayProps {
   bankHoliday?: boolean;
   /** Progress Tracker mode: show the daily analysis instead of the P&L. */
   analysis?: AnalysisCell;
-  /** Prop accounts on which trades were executed this day. */
-  propMarkers?: PropMarkerCell[];
   onClick: () => void;
 }
 
@@ -117,18 +105,12 @@ export function CalendarDay({
   minPnl,
   bankHoliday = false,
   analysis,
-  propMarkers = [],
   onClick,
 }: CalendarDayProps) {
   const { streamerMode, showCalendarSetup, showCalendarTags } =
     useStreamerMode();
   const canShowCalendarSetup = showCalendarSetup && !streamerMode;
   const canShowCalendarTags = showCalendarTags && !streamerMode;
-  // One logo per company: several accounts of the same firm count once.
-  const firmMarkers = propMarkers.filter(
-    (item, index) =>
-      propMarkers.findIndex(other => (other.logo ?? other.initials) === (item.logo ?? item.initials)) === index
-  );
   const hasTrades = dayData && dayData.tradeCount > 0;
   const pnl = dayData?.totalPnl ?? 0;
   const tradeCount = dayData?.tradeCount ?? 0;
@@ -301,48 +283,10 @@ export function CalendarDay({
               </div>
             )}
 
-            {propMarkers.length === 0 && <span className="mt-auto" aria-hidden="true" />}
+            <span className="mt-auto" aria-hidden="true" />
           </>
         )}
 
-        {propMarkers.length > 0 && (
-          <span className="mt-auto flex shrink-0 items-center gap-1.5 self-start">
-            {firmMarkers.length > 0 && (
-              <span className="flex items-center -space-x-1.5 sm:-space-x-2">
-                {firmMarkers.slice(0, 3).map((item, index) => (
-                  <span
-                    key={item.id}
-                    aria-label="Eseguito su questa prop"
-                    style={{ zIndex: 3 - index }}
-                    className={cn(
-                      'relative flex size-5 shrink-0 items-center justify-center overflow-hidden rounded-full font-sans text-[8px] font-bold leading-none text-white sm:size-6 sm:text-[9px]',
-                      // Logos are drawn as they are; the coloured tile is only for initials.
-                      !item.logo && cn('border bg-gradient-to-b', item.tile)
-                    )}
-                  >
-                    {item.logo ? (
-                      <img
-                        src={item.logo}
-                        alt=""
-                        className={cn(
-                          'size-full',
-                          item.logoOnDark ? 'bg-[#0b0b0d] object-contain p-[4px]' : 'object-cover'
-                        )}
-                      />
-                    ) : (
-                      item.initials
-                    )}
-                  </span>
-                ))}
-              </span>
-            )}
-            {firmMarkers.length > 3 && (
-              <span className="font-sans text-[9px] font-semibold tabular-nums text-muted-foreground sm:text-[11px]">
-                +{firmMarkers.length - 3}
-              </span>
-            )}
-          </span>
-        )}
       </div>
 
       {analysis?.manual && !hasTrades && !bankHoliday && (

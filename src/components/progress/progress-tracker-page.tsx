@@ -12,8 +12,6 @@ import {
   toDateKey,
 } from '@/lib/progress-tracker';
 import type { DailyAnalysis, Trade } from '@/lib/types/trade';
-import { buildPropMarkers } from '@/lib/propfirm/markers';
-import type { PropAccount } from '@/lib/propfirm/types';
 import { cn } from '@/lib/utils';
 import { TradingCalendar } from '@/components/trading-journal/trading-calendar';
 import { DailyAnalysisDialog } from './daily-analysis-dialog';
@@ -26,8 +24,6 @@ const MONTH_LABELS = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'S
 interface ProgressTrackerPageProps {
   /** Executions of every account except Backtest and Preview. */
   trades: Trade[];
-  propAccounts: PropAccount[];
-  getJournalTrades: (journalId: string) => Trade[];
   dailyAnalyses: DailyAnalysis[];
   onSaveAnalysis: (entry: DailyAnalysis) => void;
   onDeleteAnalysis: (date: string) => void;
@@ -45,8 +41,6 @@ function StatTile({ title, value, hint }: { title: string; value: string; hint: 
 
 export function ProgressTrackerPage({
   trades,
-  propAccounts,
-  getJournalTrades,
   dailyAnalyses,
   onSaveAnalysis,
   onDeleteAnalysis,
@@ -63,10 +57,6 @@ export function ProgressTrackerPage({
   const entryByDate = useMemo(
     () => new Map(dailyAnalyses.map(entry => [entry.date, entry])),
     [dailyAnalyses]
-  );
-  const propsByDate = useMemo(
-    () => buildPropMarkers(propAccounts, getJournalTrades),
-    [propAccounts, getJournalTrades]
   );
   const tradesByDate = useMemo(() => {
     const map = new Map<string, Trade[]>();
@@ -225,7 +215,6 @@ export function ProgressTrackerPage({
                 Boolean(entry?.analysis.trim()) ||
                 Boolean(entry?.observations.trim()) ||
                 (entry?.attachments?.length ?? 0) > 0,
-              props: propsByDate.get(date) ?? [],
             };
           },
         }}
@@ -237,12 +226,6 @@ export function ProgressTrackerPage({
           date={selectedDate}
           entry={entryByDate.get(selectedDate)}
           trades={tradesByDate.get(selectedDate) ?? []}
-          getAccounts={trade =>
-            (trade.propAccountIds ?? [])
-              .map(id => propAccounts.find(account => account.id === id))
-              .filter((account): account is NonNullable<typeof account> => Boolean(account))
-              .map(account => ({ name: `${account.firmName} · ${account.name}`, firmId: account.firmId }))
-          }
           onClose={() => setSelectedDate(null)}
           onSave={onSaveAnalysis}
           onDelete={onDeleteAnalysis}

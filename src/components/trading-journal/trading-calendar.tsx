@@ -9,7 +9,7 @@ import {
   Download,
   RotateCcw,
 } from 'lucide-react';
-import { CalendarDay, type AnalysisCell, type PropMarkerCell } from './calendar-day';
+import { CalendarDay, type AnalysisCell } from './calendar-day';
 import { isUsBankHoliday } from '@/lib/bank-holidays';
 import { WeekSummary } from './week-summary';
 import { MonthYearPicker } from './month-year-picker';
@@ -54,8 +54,6 @@ interface TradingCalendarProps {
     title: string;
     getCell: (dateKey: string) => AnalysisCell;
   };
-  /** Dashboard: prop accounts on which something was executed, per day. */
-  getPropMarkers?: (dateKey: string) => PropMarkerCell[] | undefined;
 }
 
 const WEEKDAYS = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
@@ -115,7 +113,6 @@ export function TradingCalendar({
   readOnly = false,
   hideActions = false,
   analysisMode,
-  getPropMarkers,
 }: TradingCalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const { sundayWeekStart, showZeroPnlTradesInCalendar } = useStreamerMode();
@@ -368,13 +365,6 @@ export function TradingCalendar({
                     minPnl={minPnl}
                     bankHoliday={isUsBankHoliday(dateKey)}
                     analysis={isDayCurrentMonth ? analysisMode?.getCell(dateKey) : undefined}
-                    propMarkers={
-                      isDayCurrentMonth
-                        ? analysisMode
-                          ? analysisMode.getCell(dateKey).props
-                          : getPropMarkers?.(dateKey)
-                        : undefined
-                    }
                     onClick={() => {
                       if (!isDayCurrentMonth) return;
 

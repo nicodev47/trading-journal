@@ -11,18 +11,12 @@ import {
 import { useStreamerMode } from '@/contexts/streamer-mode-context';
 import type { Trade } from '@/lib/types/trade';
 import { cn } from '@/lib/utils';
-import { getFirm } from '@/lib/propfirm/firms';
-import { usePropAccountList } from '@/contexts/prop-accounts-context';
-import { FirmMark } from '@/components/propfirm/shared';
-import type { AccountChip } from './trade-detail-dialog';
 import {
   calculateTradeWinRate,
   isValidStatTrade,
 } from '@/lib/calculations';
 
 type TradeGroupDetailDialogProps = {
-  /** Imported files have no accounts: pass null to hide the column. */
-  getAccounts?: ((trade: Trade) => AccountChip[]) | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
@@ -109,8 +103,6 @@ function SummaryStat({
 type TradeGroupContentProps = {
   /** Shows a header row naming the columns. */
   columnHeaders?: boolean;
-  /** Adds an "Eseguito su" column with the logos of the accounts. */
-  getAccounts?: ((trade: Trade) => AccountChip[]) | null;
   title: string;
   subtitle?: string;
   trades: Trade[];
@@ -124,22 +116,7 @@ export function TradeGroupContent({
   trades,
   onOpenTrade,
   columnHeaders = true,
-  getAccounts: getAccountsProp,
 }: TradeGroupContentProps) {
-  const propAccounts = usePropAccountList();
-  // Without an explicit resolver the accounts come from the trade's prop assignments;
-  // the column only exists when the user has prop accounts.
-  const getAccounts =
-    getAccountsProp === null
-      ? undefined
-      : getAccountsProp ??
-    (propAccounts.length > 0
-      ? (trade: Trade): AccountChip[] =>
-          (trade.propAccountIds ?? [])
-            .map(id => propAccounts.find(account => account.id === id))
-            .filter((account): account is NonNullable<typeof account> => Boolean(account))
-            .map(account => ({ name: `${account.firmName} · ${account.name}`, firmId: account.firmId }))
-      : undefined);
   const { streamerMode } = useStreamerMode();
   const [currentPage, setCurrentPage] = useState(1);
   const sortedTrades = useMemo(
@@ -213,7 +190,7 @@ export function TradeGroupContent({
               <div
                 className={cn(
                   'hidden items-center gap-3 px-3 font-sans text-[10px] font-semibold uppercase tracking-wider text-muted-foreground md:grid',
-                  getAccounts ? 'md:grid-cols-[112px_64px_82px_86px_minmax(0,1fr)_96px_96px_auto]' : 'md:grid-cols-[112px_64px_82px_86px_minmax(0,1fr)_96px_auto]'
+                  'md:grid-cols-[112px_64px_82px_86px_minmax(0,1fr)_96px_auto]'
                 )}
               >
                 <span>Data</span>
@@ -221,7 +198,6 @@ export function TradeGroupContent({
                 <span>Asset</span>
                 <span>Direzione</span>
                 <span>Setup</span>
-                {getAccounts && <span>Eseguito su</span>}
                 <span>P&L</span>
                 <span className="w-[54px]" />
               </div>
@@ -240,7 +216,7 @@ export function TradeGroupContent({
                     key={trade.id}
                     className={cn(
                       'grid grid-cols-2 items-center gap-2 rounded-lg border border-border/80 bg-background/35 p-3 font-sans tabular-nums text-xs sm:gap-3',
-                      getAccounts ? 'md:grid-cols-[112px_64px_82px_86px_minmax(0,1fr)_96px_96px_auto]' : 'md:grid-cols-[112px_64px_82px_86px_minmax(0,1fr)_96px_auto]'
+                      'md:grid-cols-[112px_64px_82px_86px_minmax(0,1fr)_96px_auto]'
                     )}
                   >
                     <span className="text-foreground">
@@ -264,38 +240,6 @@ export function TradeGroupContent({
                     <span className="truncate text-muted-foreground">
                       {trade.strategy?.trim() || '-'}
                     </span>
-                    {getAccounts && (
-                      <span className="flex items-center gap-1.5">
-                        {(() => {
-                          // One logo per company; at most three, then "+N".
-                          const accounts = getAccounts(trade);
-                          const firms = Array.from(new Set(accounts.map(account => account.firmId)))
-                            .map(id => ({
-                              id,
-                              firm: getFirm(id),
-                              names: accounts.filter(account => account.firmId === id).map(account => account.name),
-                            }))
-                            .filter(item => item.firm);
-
-                          return (
-                            <>
-                              <span className="flex items-center -space-x-1.5">
-                                {firms.slice(0, 3).map(item => (
-                                  <span key={item.id} title={item.names.join(', ')}>
-                                    <FirmMark firm={item.firm!} className="size-6 rounded-full" />
-                                  </span>
-                                ))}
-                              </span>
-                              {firms.length > 3 && (
-                                <span className="text-[11px] font-semibold text-muted-foreground">
-                                  +{firms.length - 3}
-                                </span>
-                              )}
-                            </>
-                          );
-                        })()}
-                      </span>
-                    )}
                     <EconomicValue
                       value={pnl}
                       streamerMode={streamerMode}
@@ -375,7 +319,6 @@ export function TradeGroupDetailDialog({
   subtitle,
   trades,
   onOpenTrade,
-  getAccounts,
 }: TradeGroupDetailDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -387,7 +330,6 @@ export function TradeGroupDetailDialog({
           subtitle={subtitle}
           trades={trades}
           onOpenTrade={onOpenTrade}
-          getAccounts={getAccounts}
         />
       </DialogContent>
     </Dialog>

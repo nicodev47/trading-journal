@@ -205,7 +205,6 @@ function PreviewContent({ data, fileName, view, onClose }: ImportPreviewProps) {
       />
 
       <TradeDetailDialog
-        hideAccounts
         trade={selectedTrade}
         streamerMode={streamerMode}
         onClose={() => {
@@ -217,7 +216,6 @@ function PreviewContent({ data, fileName, view, onClose }: ImportPreviewProps) {
         onBack={() => setSelectedTrade(null)}
       />
       <TradeGroupDetailDialog
-        getAccounts={null}
         open={Boolean(group) && !selectedTrade}
         onOpenChange={open => {
           if (!open) setGroup(null);

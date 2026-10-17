@@ -4,7 +4,6 @@ import { useEffect, useState, type ReactNode } from 'react';
 import {
   BarChart3,
   BookOpen,
-  Building2,
   GraduationCap,
   LayoutDashboard,
   Lightbulb,
@@ -30,7 +29,7 @@ import type {
 } from '@/hooks/use-trades';
 import { cn } from '@/lib/utils';
 
-export type AppView = 'calendar' | 'monthly' | 'strategies' | 'progress' | 'news' | 'propfirm';
+export type AppView = 'calendar' | 'monthly' | 'strategies' | 'progress' | 'news';
 
 interface NavEntry {
   id: string;
@@ -49,7 +48,6 @@ const MAIN_ENTRIES: NavEntry[] = [
   // { id: 'strategies', label: 'Strategies', icon: Target, view: 'strategies' },
   { id: 'progress', label: 'Progress Tracker', icon: Trophy, view: 'progress' },
   { id: 'news', label: 'News', icon: Newspaper, view: 'news' },
-  { id: 'propfirm', label: 'Propfirm', icon: Building2, view: 'propfirm' },
 ];
 
 const SOON_ENTRIES: NavEntry[] = [
@@ -64,7 +62,6 @@ const VIEW_TITLES: Record<AppView, string> = {
   strategies: 'Strategies',
   progress: 'Progress Tracker',
   news: 'News',
-  propfirm: 'Propfirm',
 };
 
 const COLLAPSED_KEY = 'eclipse-sidebar-collapsed';
