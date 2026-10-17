@@ -1791,7 +1791,7 @@ export function DayEditorDialog({
                     }}
                     onBlur={() => persistCurrentRows()}
                     placeholder="Cosa è successo in questo trade? Narrativa, contesto, cosa rifaresti..."
-                    className="min-h-[180px] resize-none overflow-hidden border-border/70 bg-background/60 text-sm sm:min-h-[220px]"
+                    className="min-h-[90px] resize-none overflow-hidden border-border/70 bg-background/60 text-sm sm:min-h-[110px]"
                   />
                 </div>
               </div>
