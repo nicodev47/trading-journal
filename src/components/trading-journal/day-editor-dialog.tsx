@@ -1790,8 +1790,8 @@ export function DayEditorDialog({
                       updateTradeRow(row.id, 'notes', event.target.value);
                     }}
                     onBlur={() => persistCurrentRows()}
-                    placeholder="Cosa è successo in questo trade? Narrativa, Setup, Emozioni..."
-                    className="min-h-[72px] resize-none overflow-hidden border-border/70 bg-background/60 text-sm"
+                    placeholder="Cosa è successo in questo trade? Narrativa, contesto, cosa rifaresti..."
+                    className="min-h-[180px] resize-none overflow-hidden border-border/70 bg-background/60 text-sm sm:min-h-[220px]"
                   />
                 </div>
               </div>
