@@ -1,6 +1,6 @@
 'use client';
 
-import { Area, CartesianGrid, ComposedChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { Area, CartesianGrid, ComposedChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { useStreamerMode } from '@/contexts/streamer-mode-context';
 import type { AccountSim } from '@/lib/propfirm/engine';
 import { formatDate, useMoney } from './shared';
@@ -27,7 +27,7 @@ export function BalanceChart({
       floor: row.floor,
     })),
   ];
-  const values = data.flatMap(point => [point.balance, point.floor]);
+  const values = data.flatMap(point => [point.balance, point.floor]).concat(targetBalance ?? []);
   const step = Math.max(500, Math.ceil((Math.max(...values) - Math.min(...values)) / 8 / 500) * 500);
   const min = Math.floor(Math.min(...values) / step) * step;
   const max = Math.ceil(Math.max(...values) / step) * step + step;
@@ -44,6 +44,12 @@ export function BalanceChart({
           <span className="size-2 rounded-full bg-loss" />
           Minimo
         </span>
+        {targetBalance !== null && (
+          <span className="flex items-center gap-1.5">
+            <span className="h-0.5 w-4 border-t-2 border-dashed border-profit" />
+            Obiettivo
+          </span>
+        )}
       </div>
       <div className="h-72 w-full">
         <ResponsiveContainer width="100%" height="100%">
@@ -82,6 +88,9 @@ export function BalanceChart({
               contentStyle={{ background: '#111114', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 10, fontSize: 12 }}
               formatter={(value, name) => [streamerMode ? '******' : money.usd(Number(value)), name]}
             />
+            {targetBalance !== null && (
+              <ReferenceLine y={targetBalance} stroke="#30d158" strokeDasharray="5 4" strokeWidth={1.5} />
+            )}
             <Area type="monotone" dataKey="floor" name="Minimo" stroke="#ff6568" strokeWidth={1.5} strokeDasharray="4 4" fill="url(#minimumFill)" dot={false} activeDot={false} />
             <Area type="monotone" dataKey="balance" name="Saldo" stroke="#4ade9a" strokeWidth={2.5} fill="url(#balanceFill)" dot={false} activeDot={{ r: 4, fill: '#4ade9a', stroke: '#0f0f11' }} />
           </ComposedChart>
