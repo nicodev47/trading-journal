@@ -4,7 +4,6 @@ import { useEffect, useState, type ReactNode } from 'react';
 import {
   BarChart3,
   BookOpen,
-  GraduationCap,
   LayoutDashboard,
   Lightbulb,
   Menu,
@@ -12,7 +11,6 @@ import {
   Newspaper,
   PanelLeftClose,
   PanelLeftOpen,
-  PlayCircle,
   Target,
   Trophy,
   UserRound,
@@ -52,8 +50,6 @@ const MAIN_ENTRIES: NavEntry[] = [
 
 const SOON_ENTRIES: NavEntry[] = [
   { id: 'notebook', label: 'Notebook', icon: BookOpen, soon: true },
-  { id: 'replay', label: 'Trade Replay', icon: PlayCircle, soon: true },
-  { id: 'resources', label: 'Resources', icon: GraduationCap, soon: true },
 ];
 
 const VIEW_TITLES: Record<AppView, string> = {
