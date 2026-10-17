@@ -959,7 +959,7 @@ export function DayEditorDialog({
                       value={row.symbol}
                       onValueChange={v => updateTradeRow(row.id, 'symbol', v, 0)}
                     >
-                      <SelectTrigger className="h-9 w-full border-border/70 bg-background/60 text-sm">
+                      <SelectTrigger className="h-9 w-full border-border/70 bg-background/60 text-sm data-[size=default]:h-9">
                         <SelectValue placeholder="--" />
                       </SelectTrigger>
 
@@ -985,7 +985,7 @@ export function DayEditorDialog({
                       value={row.direction}
                       onValueChange={v => updateTradeRow(row.id, 'direction', v, 0)}
                     >
-                      <SelectTrigger className="h-9 w-full border-border/70 bg-background/60 text-sm">
+                      <SelectTrigger className="h-9 w-full border-border/70 bg-background/60 text-sm data-[size=default]:h-9">
                         <SelectValue placeholder="--" />
                       </SelectTrigger>
 
@@ -1079,7 +1079,7 @@ export function DayEditorDialog({
                         updateTradeRow(row.id, 'setup', value, 0)
                       }
                     >
-                      <SelectTrigger className="h-9 w-full border-border/70 bg-background/60 text-sm">
+                      <SelectTrigger className="h-9 w-full border-border/70 bg-background/60 text-sm data-[size=default]:h-9">
                         <SelectValue placeholder="Seleziona setup" />
                       </SelectTrigger>
 
