@@ -248,3 +248,21 @@ test('il tetto del payout segue il numero del payout', () => {
   assert.equal(first.payout?.available, 1000);
   assert.equal(second.payout?.available, 2000);
 });
+
+test('il primo payout è una quota del profitto, i successivi prelevano tutto', () => {
+  const r = rules({
+    payout: { split: 0.9, minRequest: 0, minWinningDays: 0, winningDayMin: 0, buffer: 0, capPerPayout: null, firstPayoutShare: 0.5 },
+  });
+  const first = simulateAccount({ kind: 'funded', size: 50000, rules: r, days: days([4000]), payouts: [] });
+  const later = simulateAccount({
+    kind: 'funded',
+    size: 50000,
+    rules: r,
+    days: days([4000, 1000]),
+    payouts: [{ id: 'p', date: '2026-06-01', gross: 2000 }],
+  });
+
+  assert.equal(first.payout?.available, 2000);
+  // 4.000 - 2.000 prelevati + 1.000 = 3.000 di profitto: ora si può prelevare tutto
+  assert.equal(later.payout?.available, 3000);
+});

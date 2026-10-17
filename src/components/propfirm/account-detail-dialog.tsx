@@ -115,7 +115,6 @@ export function AccountDetailDialog({
   const [balanceValue, setBalanceValue] = useState('');
   const [payoutDate, setPayoutDate] = useState(todayKey());
   const [payoutAmount, setPayoutAmount] = useState('');
-  const [payoutNote, setPayoutNote] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const drawdownAmount = rules.drawdown.amount ?? 0;
@@ -171,9 +170,8 @@ export function AccountDetailDialog({
 
     if (!Number.isFinite(parsed) || parsed <= 0) return;
 
-    onAddPayout({ date: payoutDate, gross: parsed, note: payoutNote.trim() || undefined });
+    onAddPayout({ date: payoutDate, gross: parsed });
     setPayoutAmount('');
-    setPayoutNote('');
   };
 
   const roomPercent = drawdownAmount > 0 ? (sim.room / drawdownAmount) * 100 : 100;
@@ -451,15 +449,6 @@ export function AccountDetailDialog({
                     className="h-9"
                   />
                 </label>
-                <label className="flex min-w-28 flex-1 flex-col gap-1">
-                  <span className="font-sans text-[11px] text-muted-foreground">Nota</span>
-                  <Input
-                    value={payoutNote}
-                    onChange={event => setPayoutNote(event.target.value)}
-                    className="h-9"
-                    placeholder="Facoltativa"
-                  />
-                </label>
                 <Button type="button" size="sm" className="h-9" onClick={addPayout}>
                   Registra payout
                 </Button>
@@ -483,7 +472,6 @@ export function AccountDetailDialog({
                           </p>
                           <p className="truncate text-xs text-muted-foreground">
                             {formatDate(payout.date)}
-                            {payout.note ? ` · ${payout.note}` : ''}
                           </p>
                         </div>
                         <button

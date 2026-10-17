@@ -28,6 +28,8 @@ export interface PropRules {
     capPerPayout: number | null;
     /** Cap for the 1st, 2nd, ... payout; the last value applies from then on. */
     capSchedule?: number[];
+    /** The first payout can only take this share (0–1) of the profit; later ones take everything. */
+    firstPayoutShare?: number;
   };
   maxContracts: string | null;
 }
