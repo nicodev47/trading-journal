@@ -45,7 +45,7 @@ import { TradeLog } from '@/components/trading-journal/trade-log';
 import { NewsPage } from '@/components/news/news-page';
 import { ProgressTrackerPage } from '@/components/progress/progress-tracker-page';
 import { StrategiesPage } from '@/components/trading-journal/strategies-page';
-import { useProgressJournal } from '@/hooks/use-progress-journal';
+import { readProgressJournal, useProgressJournal } from '@/hooks/use-progress-journal';
 import { ImportPreview } from '@/components/trading-journal/import-preview';
 import { createFullBackupExportData, parseJournalExport } from '@/lib/journal-export';
 import {
@@ -258,7 +258,12 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
     };
   }, [isHelpOpen]);
 
-  const progress = useProgressJournal();
+  const progress = useProgressJournal(activeWorkspace);
+  // Progress Tracker of any journal: the open one is read from state, the others from storage.
+  const getProgressFor = (workspace: string) =>
+    workspace === activeWorkspace
+      ? { dailyAnalyses: progress.dailyAnalyses, missedTrades: progress.missedTrades }
+      : readProgressJournal(workspace);
   const {
     trades,
     missedTrades,
@@ -294,10 +299,6 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
   const previewHasContent =
     (activeWorkspace === 'student' || activeWorkspace.startsWith('preview-')) &&
     hasWorkspaceContent(getWorkspaceData(activeWorkspace));
-  // The Progress Tracker covers every account except Backtest and Preview.
-  const progressTrades = workspaces
-    .filter(workspace => workspace.group !== 'backtest' && workspace.group !== 'preview')
-    .flatMap(workspace => getWorkspaceData(workspace.id).trades);
   const showPreviewWorkspace = true;
   const visibleTrades = isTutorialActive ? tutorialTrades : trades;
 
@@ -556,11 +557,8 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
   };
 
   const getWorkspaceExportData = useCallback((workspace: JournalWorkspace) => {
-    return createWorkspaceExportData(workspace, getWorkspaceData(workspace), new Date(), undefined, {
-      dailyAnalyses: progress.dailyAnalyses,
-      missedTrades: progress.missedTrades,
-    });
-  }, [getWorkspaceData, progress.dailyAnalyses, progress.missedTrades]);
+    return createWorkspaceExportData(workspace, getWorkspaceData(workspace), new Date(), undefined, getProgressFor(workspace));
+  }, [getWorkspaceData, progress.dailyAnalyses, progress.missedTrades, activeWorkspace]);
 
   // Used by the backup reminder: downloads the open journal as a single JSON file.
   exportCurrentJournalRef.current = () => {
@@ -641,10 +639,10 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
   };
 
   // Progress Tracker entries in a journal file: added to the ones already there.
-  const adoptImportedProgress = (data: string) => {
+  const adoptImportedProgress = (data: string, workspace: JournalWorkspace) => {
     const incoming = extractProgressJournal(data);
 
-    if (incoming) progress.importJournal(incoming);
+    if (incoming) progress.importJournalFor(workspace, incoming);
   };
 
   const handleImportData = (data: string, workspace: JournalWorkspace) => {
@@ -654,7 +652,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
       justImportedRef.current = true;
       window.setTimeout(() => { justImportedRef.current = false; }, 1500);
       adoptImportedPreferences(data);
-      adoptImportedProgress(data);
+      adoptImportedProgress(data, workspace);
       completeImportNavigation(data, workspace);
     }
 
@@ -672,7 +670,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
       justImportedRef.current = true;
       window.setTimeout(() => { justImportedRef.current = false; }, 1500);
       adoptImportedPreferences(data);
-      adoptImportedProgress(data);
+      adoptImportedProgress(data, workspace);
       completeImportNavigation(data, workspace);
       setImportTargetMonth(targetMonth);
     }
@@ -757,7 +755,16 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
 
     if (restoredCount === 0) return false;
 
-    if (parsed.data.progressJournal) progress.importJournal(parsed.data.progressJournal);
+    // Each journal gets its own Progress Tracker; the one of older backups goes to Personale.
+    Object.entries(parsed.data.progressJournals ?? {}).forEach(([id, data]) => {
+      const target = idMap.get(id);
+
+      if (target) progress.importJournalFor(target, data);
+    });
+
+    if (parsed.data.progressJournal) {
+      progress.importJournalFor(idMap.get('personal') ?? 'personal', parsed.data.progressJournal);
+    }
 
     const allTrades = entries.flatMap(([, state]) => state.trades);
 
@@ -872,10 +879,9 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
         return [workspace.id, journal];
       })
     );
-    const blob = new Blob([createFullBackupExportData(journals, included, new Date(), {
-      dailyAnalyses: progress.dailyAnalyses,
-      missedTrades: progress.missedTrades,
-    })], {
+    const blob = new Blob([createFullBackupExportData(journals, included, new Date(), Object.fromEntries(
+      included.map(workspace => [workspace.id, getProgressFor(workspace.id)])
+    ))], {
       type: 'application/json',
     });
     const url = URL.createObjectURL(blob);
@@ -908,10 +914,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
   const handleBackupWorkspace = (workspace: JournalWorkspace) => {
     const workspaceData = getWorkspaceData(workspace);
     const workspaceName = workspaces.find((item) => item.id === workspace)?.name;
-    const backupData = createWorkspaceExportData(workspace, workspaceData, new Date(), undefined, {
-      dailyAnalyses: progress.dailyAnalyses,
-      missedTrades: progress.missedTrades,
-    });
+    const backupData = createWorkspaceExportData(workspace, workspaceData, new Date(), undefined, getProgressFor(workspace));
     const blob = new Blob([backupData], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
@@ -1149,7 +1152,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
           <NewsPage />
         ) : (
           <ProgressTrackerPage
-            trades={progressTrades}
+            trades={trades}
             dailyAnalyses={progress.dailyAnalyses}
             onSaveAnalysis={progress.saveDailyAnalysis}
             onDeleteAnalysis={progress.deleteDailyAnalysis}

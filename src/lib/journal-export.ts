@@ -28,8 +28,10 @@ export interface FullJournalBackup {
   exportMetadata: JournalExportMetadata;
   workspaces: Partial<Record<JournalWorkspace, JournalState>>;
   workspaceOptions: JournalWorkspaceMeta[];
-  /** Progress Tracker entries (daily analyses, missed trades, case studies). */
-  progressJournal?: { dailyAnalyses: DailyAnalysis[]; missedTrades: MissedTrade[] };
+  /** Progress Tracker of each journal, by journal id. */
+  progressJournals?: Record<string, ProgressJournalExport>;
+  /** Older backups: one Progress Tracker for all journals (it goes to Personale). */
+  progressJournal?: ProgressJournalExport;
 }
 
 export type ParsedJournalExport =
@@ -136,11 +138,21 @@ export function createWorkspaceExportData(
   return JSON.stringify(payload, null, 2);
 }
 
+const withEntries = (
+  journals?: Record<string, ProgressJournalExport>
+): Record<string, ProgressJournalExport> | undefined => {
+  const kept = Object.entries(journals ?? {}).filter(
+    ([, data]) => data.dailyAnalyses.length > 0 || data.missedTrades.length > 0
+  );
+
+  return kept.length > 0 ? Object.fromEntries(kept) : undefined;
+};
+
 export function createFullBackupExportData(
   workspaces: Partial<Record<JournalWorkspace, JournalState>>,
   workspaceOptions: JournalWorkspaceMeta[],
   exportedAt = new Date(),
-  progressJournal?: { dailyAnalyses: DailyAnalysis[]; missedTrades: MissedTrade[] }
+  progressJournals?: Record<string, ProgressJournalExport>
 ): string {
   const includedWorkspaceIds = new Set(Object.keys(workspaces));
   const payload: FullJournalBackup = {
@@ -153,10 +165,7 @@ export function createFullBackupExportData(
     workspaceOptions: workspaceOptions.filter((workspace) =>
       includedWorkspaceIds.has(workspace.id)
     ),
-    ...(progressJournal &&
-    (progressJournal.dailyAnalyses.length > 0 || progressJournal.missedTrades.length > 0)
-      ? { progressJournal }
-      : {}),
+    ...(withEntries(progressJournals) ? { progressJournals: withEntries(progressJournals) } : {}),
   };
 
   return JSON.stringify(payload, null, 2);
@@ -207,6 +216,18 @@ export function parseJournalExport(jsonString: string): ParsedJournalExport | nu
         exportMetadata: metadata as unknown as JournalExportMetadata,
         workspaces,
         workspaceOptions,
+        progressJournals: isRecord(parsed.progressJournals)
+          ? Object.fromEntries(
+              Object.entries(parsed.progressJournals).flatMap(([id, value]) =>
+                isRecord(value)
+                  ? [[id, {
+                      dailyAnalyses: Array.isArray(value.dailyAnalyses) ? (value.dailyAnalyses as DailyAnalysis[]) : [],
+                      missedTrades: Array.isArray(value.missedTrades) ? (value.missedTrades as MissedTrade[]) : [],
+                    }]]
+                  : []
+              )
+            )
+          : undefined,
         progressJournal: isRecord(parsed.progressJournal)
           ? {
               dailyAnalyses: Array.isArray(parsed.progressJournal.dailyAnalyses)
