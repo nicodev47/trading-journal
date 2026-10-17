@@ -157,15 +157,17 @@ export const TRADE_TAGS = [
   { value: 'revenge_trade', emoji: '🔄', label: 'Revenge Trade' },
   { value: 'off_plan', emoji: '🚫', label: 'Fuori Piano' },
   { value: 'choppy_market', emoji: '🌀', label: 'Mercato Laterale' },
-  { value: 'strong_trend', emoji: '🚀', label: 'Trend Forte' },
-  { value: 'a_plus_setup', emoji: '⭐', label: 'A+ Setup' },
 ] as const;
 
 /** Bump when TRADE_TAGS gets new presets: journals saved before receive them once. */
 export const TAG_PRESETS_VERSION = 1;
 
 /** Old standard tags that moved elsewhere: still readable on trades saved before. */
-export const LEGACY_TRADE_TAGS = [{ value: 'fomo', emoji: '🏃', label: 'FOMO' }] as const;
+export const LEGACY_TRADE_TAGS = [
+  { value: 'fomo', emoji: '🏃', label: 'FOMO' },
+  { value: 'strong_trend', emoji: '🚀', label: 'Trend Forte' },
+  { value: 'a_plus_setup', emoji: '⭐', label: 'A+ Setup' },
+] as const;
 
 export const CUSTOM_TAG_PREFIX = 'custom:';
 
