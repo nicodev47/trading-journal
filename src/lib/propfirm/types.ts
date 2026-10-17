@@ -11,6 +11,8 @@ export interface PropRules {
     locksAtStart: boolean;
     /** The locked floor sits this many USD above the starting balance (e.g. 100). */
     lockOffset?: number;
+    /** After the first payout the floor locks for good at the starting balance + lockOffset. */
+    lockOnPayout?: boolean;
   };
   dailyLossLimit: { amount: number; effect: 'breach' | 'lock-day' } | null;
   /** Best day must stay at or under this share (0–1) of the total profit. */

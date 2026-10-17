@@ -259,3 +259,34 @@ test('un payout può prendere al massimo la quota di profitto, con il suo tetto'
   assert.equal(small.payout?.available, 1500); // il 50% di 3.000
   assert.equal(big.payout?.available, 2000); // il 50% sarebbe 4.500: vale il tetto
 });
+
+test('il payout del giorno si prende a fine giornata: quel giorno appartiene al ciclo pagato', () => {
+  const r = rules();
+  const sim = simulateAccount({
+    kind: 'funded',
+    size: 50000,
+    rules: r,
+    days: [{ date: '2026-06-01', pnl: 400 }],
+    payouts: [{ id: 'p', date: '2026-06-01', gross: 200 }],
+  });
+
+  assert.equal(sim.payout?.winningDays, 0); // dopo il payout il conteggio riparte da zero
+  assert.equal(sim.balance, 50200);
+});
+
+test('dopo il primo payout il floor si blocca a saldo iniziale + 100', () => {
+  const r = rules({
+    drawdown: { amount: 2000, type: 'eod-trailing', locksAtStart: true, lockOffset: 100, lockOnPayout: true },
+  });
+  const before = simulateAccount({ kind: 'funded', size: 50000, rules: r, days: days([1000]), payouts: [] });
+  const after = simulateAccount({
+    kind: 'funded',
+    size: 50000,
+    rules: r,
+    days: days([1000]),
+    payouts: [{ id: 'p', date: '2026-06-01', gross: 500 }],
+  });
+
+  assert.equal(before.floor, 49000); // ancora trailing: picco 51.000 - 2.000
+  assert.equal(after.floor, 50100); // bloccato dopo il payout
+});

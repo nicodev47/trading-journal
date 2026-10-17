@@ -114,12 +114,20 @@ export function simulateAccount({ kind, size, rules, days, payouts }: SimInput):
   let bestDayDate: string | null = null;
   let winningDays = 0;
   let payoutIndex = 0;
+  // Some plans freeze the floor for good once the first payout is taken.
+  let floorLocked = false;
+  const currentFloor = () =>
+    floorLocked ? size + (rules.drawdown.lockOffset ?? 0) : floorFor(rules, size, peak);
   const rows: DayRow[] = [];
 
-  const applyPayoutsUntil = (date: string | null) => {
+  /** Applies the payouts up to a date (that day included unless `inclusive` is false). */
+  const applyPayoutsUntil = (date: string | null, inclusive = true) => {
     while (
       payoutIndex < sortedPayouts.length &&
-      (date === null || sortedPayouts[payoutIndex].date <= date)
+      (date === null ||
+        (inclusive
+          ? sortedPayouts[payoutIndex].date <= date
+          : sortedPayouts[payoutIndex].date < date))
     ) {
       const payout = sortedPayouts[payoutIndex];
 
@@ -127,13 +135,15 @@ export function simulateAccount({ kind, size, rules, days, payouts }: SimInput):
       // does shrink the cushion above the floor.
       balance -= payout.gross;
       winningDays = 0;
+      if (rules.drawdown.lockOnPayout) floorLocked = true;
       payoutIndex += 1;
     }
   };
 
   for (const day of sortedDays) {
-    // Payouts made on or before this day happen before its result.
-    if (kind !== 'evaluation') applyPayoutsUntil(day.date);
+    // Payouts made on earlier days are already behind us; a payout of this very day
+    // is taken at its close, after the day's result, so that day belongs to the paid cycle.
+    if (kind !== 'evaluation') applyPayoutsUntil(day.date, false);
 
     balance += day.pnl;
     peak = Math.max(peak, balance);
@@ -146,7 +156,7 @@ export function simulateAccount({ kind, size, rules, days, payouts }: SimInput):
 
     if (day.pnl > 0 && day.pnl >= rules.payout.winningDayMin) winningDays += 1;
 
-    const floor = floorFor(rules, size, peak);
+    const floor = currentFloor();
     const limit = rules.dailyLossLimit;
     const dailyHit = Boolean(limit && day.pnl <= -limit.amount);
 
@@ -172,6 +182,14 @@ export function simulateAccount({ kind, size, rules, days, payouts }: SimInput):
       break;
     }
 
+    if (kind !== 'evaluation') {
+      const before = payoutIndex;
+
+      applyPayoutsUntil(day.date);
+
+      if (payoutIndex > before) rows[rows.length - 1].balance = round(balance);
+    }
+
     if (kind === 'evaluation') {
       const required = getRequiredProfit(rules, bestDay);
 
@@ -189,7 +207,7 @@ export function simulateAccount({ kind, size, rules, days, payouts }: SimInput):
 
   if (kind !== 'evaluation' && status === 'active') applyPayoutsUntil(null);
 
-  const floor = floorFor(rules, size, peak);
+  const floor = currentFloor();
   const profit = round(balance - size);
   const required = kind === 'evaluation' ? getRequiredProfit(rules, bestDay) : null;
 

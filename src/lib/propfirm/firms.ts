@@ -39,6 +39,7 @@ interface RuleInput {
   type?: DrawdownType;
   locks?: boolean;
   lockOffset?: number;
+  lockOnPayout?: boolean;
   dailyLoss?: { amount: number; effect: 'breach' | 'lock-day' } | null;
   consistency?: PropRules['consistency'];
   minDays?: number;
@@ -60,6 +61,7 @@ const rule = (input: RuleInput): PropRules => ({
     type: input.type ?? 'eod-trailing',
     locksAtStart: input.locks ?? true,
     lockOffset: input.lockOffset ?? 0,
+    ...(input.lockOnPayout ? { lockOnPayout: true } : {}),
   },
   dailyLossLimit: input.dailyLoss ?? null,
   consistency: input.consistency ?? null,
@@ -139,6 +141,7 @@ export const FIRMS: FirmDef[] = [
           rules: rule({
             target: item.target,
             drawdown: item.dd,
+            lockOnPayout: true,
             consistency: share(0.55, 'evaluation'),
             split: 0.9,
             minRequest: 125,
@@ -364,6 +367,7 @@ export const FIRMS: FirmDef[] = [
             target: item.target,
             drawdown: item.dd,
             lockOffset: 100,
+            lockOnPayout: true,
             dailyLoss: withDll && index > 0 ? soft(item.dll) : null,
             consistency: share(0.5, 'evaluation'),
             split: 0.9,
@@ -651,6 +655,7 @@ export const FIRMS: FirmDef[] = [
               target: item.target,
               drawdown: item.dd,
               lockOffset: 100,
+              lockOnPayout: true,
               consistency: share(0.4, 'evaluation'),
               minDays: 3,
               split: 0.9,
@@ -692,6 +697,7 @@ export const FIRMS: FirmDef[] = [
             target: item.target,
             drawdown: item.dd,
             lockOffset: 100,
+            lockOnPayout: true,
             dailyLoss: soft(item.dll),
             consistency: share(0.35, 'funded'),
             minDays: 1,
@@ -730,6 +736,7 @@ export const FIRMS: FirmDef[] = [
             target: null,
             drawdown: item.dd,
             lockOffset: 100,
+            lockOnPayout: true,
             dailyLoss: soft(item.dll),
             consistency: share(0.2, 'funded'),
             split: 0.9,
