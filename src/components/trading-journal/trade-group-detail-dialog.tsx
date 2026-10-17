@@ -194,11 +194,11 @@ export function TradeGroupContent({
                 )}
               >
                 <span>Data</span>
-                <span>Orario</span>
-                <span>Asset</span>
-                <span>Direzione</span>
-                <span>Setup</span>
-                <span>P&L</span>
+                <span className="text-center">Orario</span>
+                <span className="text-center">Asset</span>
+                <span className="text-center">Direzione</span>
+                <span className="text-center">Setup</span>
+                <span className="text-center">P&L</span>
                 <span className="w-[54px]" />
               </div>
             )}
@@ -228,22 +228,22 @@ export function TradeGroupContent({
                           })
                         : '-'}
                     </span>
-                    <span className="text-muted-foreground">
+                    <span className="text-center text-muted-foreground">
                       {getTradeTime(trade)}
                     </span>
-                    <span className="text-muted-foreground">
+                    <span className="text-center text-muted-foreground">
                       {trade.pair?.trim() || '-'}
                     </span>
-                    <span className="capitalize text-muted-foreground">
+                    <span className="text-center capitalize text-muted-foreground">
                       {trade.direction || '-'}
                     </span>
-                    <span className="truncate text-muted-foreground">
+                    <span className="truncate text-center text-muted-foreground">
                       {trade.strategy?.trim() || '-'}
                     </span>
                     <EconomicValue
                       value={pnl}
                       streamerMode={streamerMode}
-                      className="font-semibold"
+                      className="text-center font-semibold"
                     />
                     <Button
                       type="button"
