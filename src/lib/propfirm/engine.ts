@@ -217,8 +217,7 @@ export function simulateAccount({ kind, size, rules, days, payouts }: SimInput):
   if (kind !== 'evaluation') {
     const { payout: terms } = rules;
     const profitAboveBuffer = Math.max(0, balance - size - terms.buffer);
-    const isFirstPayout = sortedPayouts.length === 0 && terms.firstPayoutShare !== undefined;
-    const raw = isFirstPayout ? profitAboveBuffer * (terms.firstPayoutShare as number) : profitAboveBuffer;
+    const raw = profitAboveBuffer * (terms.profitShare ?? 1);
     const schedule = terms.capSchedule?.length ? terms.capSchedule : null;
     const cap = schedule
       ? schedule[Math.min(sortedPayouts.length, schedule.length - 1)]

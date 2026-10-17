@@ -249,20 +249,13 @@ test('il tetto del payout segue il numero del payout', () => {
   assert.equal(second.payout?.available, 2000);
 });
 
-test('il primo payout è una quota del profitto, i successivi prelevano tutto', () => {
+test('un payout può prendere al massimo la quota di profitto, con il suo tetto', () => {
   const r = rules({
-    payout: { split: 0.9, minRequest: 0, minWinningDays: 0, winningDayMin: 0, buffer: 0, capPerPayout: null, firstPayoutShare: 0.5 },
+    payout: { split: 0.9, minRequest: 0, minWinningDays: 0, winningDayMin: 0, buffer: 0, capPerPayout: 2000, profitShare: 0.5 },
   });
-  const first = simulateAccount({ kind: 'funded', size: 50000, rules: r, days: days([4000]), payouts: [] });
-  const later = simulateAccount({
-    kind: 'funded',
-    size: 50000,
-    rules: r,
-    days: days([4000, 1000]),
-    payouts: [{ id: 'p', date: '2026-06-01', gross: 2000 }],
-  });
+  const small = simulateAccount({ kind: 'funded', size: 50000, rules: r, days: days([3000]), payouts: [] });
+  const big = simulateAccount({ kind: 'funded', size: 50000, rules: r, days: days([9000]), payouts: [] });
 
-  assert.equal(first.payout?.available, 2000);
-  // 4.000 - 2.000 prelevati + 1.000 = 3.000 di profitto: ora si può prelevare tutto
-  assert.equal(later.payout?.available, 3000);
+  assert.equal(small.payout?.available, 1500); // il 50% di 3.000
+  assert.equal(big.payout?.available, 2000); // il 50% sarebbe 4.500: vale il tetto
 });

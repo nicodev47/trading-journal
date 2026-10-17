@@ -49,7 +49,7 @@ interface RuleInput {
   buffer?: number;
   cap?: number | null;
   caps?: number[];
-  firstPayoutShare?: number;
+  profitShare?: number;
   contracts?: string | null;
 }
 
@@ -72,7 +72,7 @@ const rule = (input: RuleInput): PropRules => ({
     buffer: input.buffer ?? 0,
     capPerPayout: input.cap ?? null,
     ...(input.caps ? { capSchedule: input.caps } : {}),
-    ...(input.firstPayoutShare !== undefined ? { firstPayoutShare: input.firstPayoutShare } : {}),
+    ...(input.profitShare !== undefined ? { profitShare: input.profitShare } : {}),
   },
   maxContracts: input.contracts ?? null,
 });
@@ -145,6 +145,7 @@ export const FIRMS: FirmDef[] = [
             minWinningDays: 5,
             winningDayMin: 150,
             cap: item.cap,
+            profitShare: 0.5,
             contracts: item.contracts,
           }),
         })),
@@ -248,6 +249,7 @@ export const FIRMS: FirmDef[] = [
             minWinningDays: 5,
             winningDayMin: 200,
             cap: item.cap,
+            profitShare: 0.5,
             contracts: item.contracts,
           }),
           fundedOverrides: {
@@ -279,6 +281,7 @@ export const FIRMS: FirmDef[] = [
             minWinningDays: 5,
             winningDayMin: 200,
             cap: 15000,
+            profitShare: 0.5,
             contracts: item.contracts,
           }),
         })),
@@ -306,6 +309,7 @@ export const FIRMS: FirmDef[] = [
             minWinningDays: 5,
             winningDayMin: 200,
             cap: item.cap,
+            profitShare: 0.5,
             contracts: item.contracts,
           }),
         })),
@@ -350,7 +354,7 @@ export const FIRMS: FirmDef[] = [
         note: note(
           'Lucid Trading',
           withDll
-            ? 'Il limite giornaliero è facoltativo e si sceglie all’acquisto: fa solo fermare la giornata. Lucid non pubblica gli importi per il Flex: qui sono usati quelli di LucidPro. Nessuna consistenza in funded, nessun buffer, massimo 5 payout. Il primo payout è il 50% del profitto, i successivi possono prelevare tutto.'
+            ? 'Il limite giornaliero è facoltativo e si sceglie all’acquisto: fa solo fermare la giornata. Lucid non pubblica gli importi per il Flex: qui sono usati quelli di LucidPro. Nessuna consistenza in funded, nessun buffer, massimo 5 payout. Ogni payout è al massimo il 50% del profitto, con un tetto per taglia che non cresce.'
             : 'Il limite giornaliero è facoltativo e si sceglie all’acquisto: qui è disattivato. Nessuna consistenza in funded, nessun buffer, massimo 5 payout. Il primo payout è il 50% del profitto, i successivi possono prelevare tutto.'
         ),
         sizes: lucidEval.map((item, index) => ({
@@ -366,7 +370,8 @@ export const FIRMS: FirmDef[] = [
             minRequest: 500,
             minWinningDays: 5,
             winningDayMin: [100, 150, 200, 250][index],
-            firstPayoutShare: 0.5,
+            profitShare: 0.5,
+            cap: [1000, 2000, 2500, 3000][index],
             contracts: item.contracts,
           }),
         })),
@@ -653,6 +658,7 @@ export const FIRMS: FirmDef[] = [
               minWinningDays: flex ? 5 : 0,
               winningDayMin: flex ? item.winDay : 0,
               buffer: flex ? 0 : item.buffer,
+              ...(flex ? { profitShare: 0.5 } : {}),
               cap: item.cap,
               contracts: item.contracts,
             }),
