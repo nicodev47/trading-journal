@@ -47,6 +47,8 @@ interface TradingCalendarProps {
   tutorialDemoDateKey?: string;
   /** Hides import and reset (export stays): used by the import preview. */
   readOnly?: boolean;
+  /** Hides the import/export buttons altogether. */
+  hideActions?: boolean;
   /** Progress Tracker mode: same calendar, showing the daily analyses. */
   analysisMode?: {
     title: string;
@@ -111,6 +113,7 @@ export function TradingCalendar({
   importTargetMonth,
   tutorialDemoDateKey,
   readOnly = false,
+  hideActions = false,
   analysisMode,
   getPropMarkers,
 }: TradingCalendarProps) {
@@ -288,7 +291,7 @@ export function TradingCalendar({
           </Button>
         </div>
 
-        {!analysisMode && (
+        {!analysisMode && !hideActions && (
           <div
             className="flex items-center gap-2 max-md:w-full"
             data-tutorial="import-export-buttons"

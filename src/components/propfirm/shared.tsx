@@ -196,3 +196,43 @@ export function FirmTile({
     </span>
   );
 }
+
+/** From the drawdown limit to the profit target, with the starting balance marked. */
+export function TargetTrack({
+  floor,
+  start,
+  balance,
+  target,
+}: {
+  floor: number;
+  start: number;
+  balance: number;
+  target: number;
+}) {
+  const span = Math.max(1, target - floor);
+  const position = (value: number) => Math.min(100, Math.max(0, ((value - floor) / span) * 100));
+  const startAt = position(start);
+  const balanceAt = position(balance);
+  const up = balance >= start;
+
+  return (
+    <div className="relative mt-5 h-6">
+      <span
+        className="absolute -top-4 -translate-x-1/2 font-sans text-[8px] font-semibold uppercase tracking-wider text-muted-foreground"
+        style={{ left: `${startAt}%` }}
+      >
+        Start
+      </span>
+      <div className="absolute inset-x-0 top-2.5 h-1.5 rounded-full bg-secondary" />
+      <div
+        className={cn('absolute top-2.5 h-1.5 rounded-full', up ? 'bg-profit shadow-[0_0_10px] shadow-profit/50' : 'bg-loss')}
+        style={{
+          left: `${Math.min(startAt, balanceAt)}%`,
+          width: `${Math.abs(balanceAt - startAt)}%`,
+        }}
+      />
+      <div className="absolute top-1 h-4 w-0.5 -translate-x-1/2 bg-white/60" style={{ left: `${startAt}%` }} />
+    </div>
+  );
+}
+

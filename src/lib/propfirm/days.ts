@@ -52,3 +52,20 @@ export function getAccountDays(
     .map(([date, pnl]) => ({ date, pnl }))
     .sort((a, b) => a.date.localeCompare(b.date));
 }
+
+/** Trades that count for a journal-linked account (see getAccountDays), newest first. */
+export function getAccountTrades(
+  account: PropAccount,
+  getJournalTrades: (journalId: string) => Trade[]
+): Trade[] {
+  if (account.source.kind === 'manual') return [];
+
+  return getJournalTrades(account.source.journalId)
+    .filter(trade => isValidStatTrade(trade))
+    .filter(trade => {
+      if (trade.propAccountIds?.length) return trade.propAccountIds.includes(account.id);
+
+      return dayOf(trade) >= account.startDate;
+    })
+    .sort((a, b) => (b.exitDate || b.entryDate).localeCompare(a.exitDate || a.entryDate));
+}

@@ -5,12 +5,13 @@ import { Pencil, RefreshCw, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Area, CartesianGrid, ComposedChart, Line, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { useStreamerMode } from '@/contexts/streamer-mode-context';
 import type { AccountSim } from '@/lib/propfirm/engine';
 import { getFirm } from '@/lib/propfirm/firms';
 import { RulesEditor } from './rules-editor';
+import { AccountOverview } from './account-overview';
 import type { DayResult, Payout, PropAccount, PropRules } from '@/lib/propfirm/types';
+import type { Trade } from '@/lib/types/trade';
 import { cn } from '@/lib/utils';
 import {
   FAIL_LABEL,
@@ -27,6 +28,8 @@ interface AccountDetailDialogProps {
   account: PropAccount;
   sim: AccountSim;
   days: DayResult[];
+  /** Trades that count for this account. */
+  trades: Trade[];
   journalName: string | null;
   onClose: () => void;
   onUpdate: (patch: Partial<PropAccount>) => void;
@@ -90,6 +93,7 @@ export function AccountDetailDialog({
   account,
   sim,
   days,
+  trades,
   journalName,
   onClose,
   onUpdate,
@@ -136,17 +140,6 @@ export function AccountDetailDialog({
   const worstDay = sim.days.reduce((worst, row) => Math.min(worst, row.pnl), 0);
   const targetBalance =
     isEvaluation && sim.requiredProfit !== null ? account.size + sim.requiredProfit : null;
-  const chartData = [
-    { label: 'Inizio', balance: account.size, floor: account.size - drawdownAmount },
-    ...sim.days.map(row => ({ label: formatDate(row.date).replace(/ \d{4}$/, ''), balance: row.balance, floor: row.floor })),
-  ];
-  const chartValues = chartData.flatMap(point => [point.balance, point.floor]).concat(targetBalance ?? []);
-  const chartPadding = Math.max(100, (Math.max(...chartValues) - Math.min(...chartValues)) * 0.08);
-  const chartDomain: [number, number] = [
-    Math.floor((Math.min(...chartValues) - chartPadding) / 100) * 100,
-    Math.ceil((Math.max(...chartValues) + chartPadding) / 100) * 100,
-  ];
-
   const saveName = () => {
     const next = nameDraft.trim();
 
@@ -328,9 +321,10 @@ export function AccountDetailDialog({
           <nav className="sticky top-0 z-10 flex flex-wrap gap-1 border-b border-border bg-background/90 px-4 py-3 backdrop-blur sm:px-6">
             {[
               ['overview', 'Panoramica'],
+              ['calendar', 'Calendario'],
+              ['history', 'Storico'],
               ['rules', 'Regole'],
               ['consistency', 'Consistenza'],
-              ['days', 'Andamento'],
               ...(isEvaluation ? [] : [['payout', 'Payout']]),
             ].map(([value, label]) => (
               <button
@@ -377,72 +371,7 @@ export function AccountDetailDialog({
               </div>
             )}
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <Tile label="Saldo" value={money.usd(sim.balance)} />
-              <Tile
-                label="P&L"
-                value={money.signed(sim.profit)}
-                tone={sim.profit > 0 ? 'profit' : sim.profit < 0 ? 'loss' : undefined}
-              />
-              <Tile
-                label="Margine prima della violazione"
-                value={money.usd(sim.room)}
-                tone={sim.room <= drawdownAmount * 0.25 ? 'loss' : undefined}
-              />
-            </div>
-
-            <div className="divide-y divide-border/60 rounded-xl border border-border bg-background/30 px-4">
-              {sim.consistency && (
-                <ProgressRow
-                  title="Consistenza"
-                  hint="Il tuo giorno migliore rispetto al profitto"
-                  value={sim.consistency.share === null ? `— di ${percent(sim.consistency.limit)}` : `${percent(share)} di ${percent(sim.consistency.limit)}`}
-                  percent={sim.consistency.limit > 0 ? (share / sim.consistency.limit) * 100 : 0}
-                  tone={sim.consistency.ok ? 'neutral' : 'loss'}
-                />
-              )}
-              <ProgressRow
-                title="Margine prima della violazione"
-                hint={`Il floor è a ${money.usd(sim.floor)}`}
-                value={money.usd(sim.room)}
-                percent={roomPercent}
-                tone={roomPercent <= 25 ? 'loss' : 'neutral'}
-              />
-              {isEvaluation && (
-                <ProgressRow
-                  title="Obiettivo di profitto"
-                  hint={
-                    sim.profitToGo === null
-                      ? 'Obiettivo non impostato'
-                      : sim.profitToGo === 0
-                        ? 'Raggiunto'
-                        : `Ne mancano ${money.usd(sim.profitToGo)}`
-                  }
-                  value={
-                    sim.requiredProfit === null
-                      ? '—'
-                      : `${money.usd(Math.max(0, sim.profit))} di ${money.usd(sim.requiredProfit)}`
-                  }
-                  percent={targetPercent}
-                  tone="profit"
-                />
-              )}
-              {!isEvaluation && sim.payout && (
-                <ProgressRow
-                  title="Payout disponibile"
-                  hint={`${sim.payout.winningDays} di ${rules.payout.minWinningDays} giorni vincenti`}
-                  value={money.usd(sim.payout.available)}
-                  percent={
-                    rules.payout.minWinningDays > 0
-                      ? (sim.payout.winningDays / rules.payout.minWinningDays) * 100
-                      : sim.payout.available > 0
-                        ? 100
-                        : 0
-                  }
-                  tone="profit"
-                />
-              )}
-            </div>
+            <AccountOverview account={account} sim={sim} trades={trades} />
 
             {sim.approximate && (
               <p className="font-sans text-xs text-muted-foreground">
@@ -538,122 +467,6 @@ export function AccountDetailDialog({
                   />
                 </div>
 
-              </>
-            )}
-          </section>
-
-          <section id="prop-section-days" className="scroll-mt-14 flex flex-col gap-4 p-4 sm:p-6">
-            <h3 className="font-sans text-lg font-semibold tracking-tight">Andamento</h3>
-            {sim.days.length === 0 ? (
-              <p className="py-10 text-center font-sans text-sm text-muted-foreground">
-                {account.source.kind === 'journal'
-                  ? `Nessun trade assegnato a questo conto dal ${formatDate(account.startDate)}.`
-                  : 'Aggiorna il saldo per vedere i giorni.'}
-              </p>
-            ) : (
-              <>
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                  <Tile label="Giorni di trading" value={String(sim.tradingDays)} />
-                  <Tile label="Giorni in profitto" value={`${winningDays} / ${sim.days.length}`} tone={winningDays > 0 ? 'profit' : undefined} />
-                  <Tile label="Giorno migliore" value={bestDay > 0 ? money.usd(bestDay) : '—'} tone={bestDay > 0 ? 'profit' : undefined} />
-                  <Tile label="Giorno peggiore" value={worstDay < 0 ? money.usd(worstDay) : '—'} tone={worstDay < 0 ? 'loss' : undefined} />
-                </div>
-
-                <div className="rounded-xl border border-border bg-background/30 p-4">
-                  <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 font-sans text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1.5"><span className="h-0.5 w-4 bg-white" />Saldo</span>
-                    <span className="flex items-center gap-1.5"><span className="h-0.5 w-4 bg-loss" />Limite di drawdown</span>
-                    {targetBalance !== null && (
-                      <span className="flex items-center gap-1.5"><span className="h-0.5 w-4 bg-profit" />Obiettivo</span>
-                    )}
-                  </div>
-                  <div className="h-56 w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <ComposedChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" vertical={false} />
-                        <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.5)' }} tickLine={false} axisLine={false} />
-                        <YAxis
-                          domain={chartDomain}
-                          tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.5)' }}
-                          tickLine={false}
-                          axisLine={false}
-                          width={56}
-                          tickFormatter={value => (streamerMode ? '***' : `$${Math.round(value).toLocaleString('it-IT')}`)}
-                        />
-                        <Tooltip
-                          cursor={{ stroke: 'rgba(255,255,255,0.2)' }}
-                          contentStyle={{ background: '#111114', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 10, fontSize: 12 }}
-                          formatter={(value, name) => [streamerMode ? '******' : money.usd(Number(value)), name]}
-                        />
-                        {targetBalance !== null && (
-                          <ReferenceLine y={targetBalance} stroke="#30d158" strokeDasharray="5 4" />
-                        )}
-                        <Line type="stepAfter" dataKey="floor" name="Limite" stroke="#ff453a" strokeDasharray="5 4" dot={false} strokeWidth={1.5} />
-                        <Area type="monotone" dataKey="balance" name="Saldo" stroke="#e5e5e5" strokeWidth={2} fill="#e5e5e5" fillOpacity={0.12} dot={{ r: 2.5 }} />
-                      </ComposedChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-
-                <div className="overflow-x-auto rounded-xl border border-border">
-                  <table className="w-full min-w-[520px] border-collapse font-sans text-sm tabular-nums">
-                    <thead>
-                      <tr className="border-b border-border text-left text-xs text-muted-foreground">
-                        <th className="px-4 py-2.5 font-medium">Giorno</th>
-                        <th className="px-3 py-2.5 text-right font-medium">P&L</th>
-                        <th className="px-3 py-2.5 text-right font-medium">Saldo</th>
-                        <th className="px-3 py-2.5 text-right font-medium">Limite</th>
-                        <th className="px-4 py-2.5 text-right font-medium">Margine</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {[...sim.days].reverse().map(row => (
-                        <tr
-                          key={row.date}
-                          className={cn(
-                            'border-b border-border/60',
-                            row.pnl > 0 && 'bg-profit/[0.06]',
-                            row.pnl < 0 && 'bg-loss/[0.06]'
-                          )}
-                        >
-                          <td className="px-4 py-2.5">
-                            {formatDate(row.date)}
-                            {row.dayLocked && (
-                              <span className="ml-2 rounded-full bg-loss/15 px-2 py-0.5 text-[10px] text-loss">limite giornaliero</span>
-                            )}
-                          </td>
-                          <td
-                            className={cn(
-                              'px-3 py-2.5 text-right font-medium',
-                              row.pnl > 0 ? 'text-profit' : row.pnl < 0 ? 'text-loss' : ''
-                            )}
-                          >
-                            {money.signed(row.pnl)}
-                          </td>
-                          <td className="px-3 py-2.5 text-right">{money.usd(row.balance)}</td>
-                          <td className="px-3 py-2.5 text-right text-muted-foreground">{money.usd(row.floor)}</td>
-                          <td className="px-4 py-2.5 text-right">{money.usd(row.balance - row.floor)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                    <tfoot>
-                      <tr className="text-xs font-semibold">
-                        <td className="px-4 py-2.5 text-muted-foreground">Totale</td>
-                        <td
-                          className={cn(
-                            'px-3 py-2.5 text-right',
-                            sim.profit > 0 ? 'text-profit' : sim.profit < 0 ? 'text-loss' : ''
-                          )}
-                        >
-                          {money.signed(sim.profit)}
-                        </td>
-                        <td className="px-3 py-2.5 text-right">{money.usd(sim.balance)}</td>
-                        <td className="px-3 py-2.5 text-right text-muted-foreground">{money.usd(sim.floor)}</td>
-                        <td className="px-4 py-2.5 text-right">{money.usd(sim.room)}</td>
-                      </tr>
-                    </tfoot>
-                  </table>
-                </div>
               </>
             )}
           </section>
