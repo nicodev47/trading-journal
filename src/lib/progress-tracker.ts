@@ -92,43 +92,6 @@ export function buildHeatmap(year: number, levels: Map<string, number>): Heatmap
   return weeks;
 }
 
-/**
- * One quarter as a rectangle: weeks as columns (Monday first), every week with all
- * seven days. Days of the neighbouring quarters fill the corners and are not `inYear`.
- */
-export function buildQuarterHeatmap(
-  year: number,
-  quarter: number,
-  levels: Map<string, number>
-): HeatmapCell[][] {
-  const first = new Date(year, quarter * 3, 1, 12);
-  const last = new Date(year, quarter * 3 + 3, 0, 12);
-  const cursor = new Date(first);
-
-  cursor.setDate(first.getDate() - ((first.getDay() + 6) % 7));
-
-  const weeks: HeatmapCell[][] = [];
-
-  while (cursor <= last) {
-    const week: HeatmapCell[] = [];
-
-    for (let day = 0; day < 7; day += 1) {
-      const key = toDateKey(cursor);
-
-      week.push({
-        date: key,
-        level: levels.get(key) ?? 0,
-        inYear: cursor >= first && cursor <= last,
-      });
-      cursor.setDate(cursor.getDate() + 1);
-    }
-
-    weeks.push(week);
-  }
-
-  return weeks;
-}
-
 export interface Streaks {
   current: number;
   longest: number;

@@ -2,7 +2,6 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   buildHeatmap,
-  buildQuarterHeatmap,
   computeStreaks,
   getDayLevel,
   getActivityLevels,
@@ -91,24 +90,4 @@ test('riepilogo annuale', () => {
   );
 
   assert.deepEqual(summary, { daysWithEntry: 2, completion: 75 });
-});
-
-test('ogni trimestre è un rettangolo di settimane intere che parte da lunedì', () => {
-  const levels = new Map([['2026-02-10', 3]]);
-
-  [0, 1, 2, 3].forEach(quarter => {
-    const weeks = buildQuarterHeatmap(2026, quarter, levels);
-
-    assert.ok(weeks.every(week => week.length === 7), `trimestre ${quarter + 1}`);
-    assert.equal(new Date(`${weeks[0][0].date}T12:00:00`).getDay(), 1);
-    assert.equal(weeks.flat().filter(cell => cell.inYear).length, [90, 91, 92, 92][quarter]);
-  });
-
-  const first = buildQuarterHeatmap(2026, 0, levels);
-
-  // 1 gennaio 2026 è un giovedì: lunedì-mercoledì sono dicembre e restano fuori dal trimestre.
-  assert.equal(first[0][0].date, '2025-12-29');
-  assert.equal(first[0][0].inYear, false);
-  assert.equal(first[0][3].inYear, true);
-  assert.equal(first.flat().find(cell => cell.date === '2026-02-10')?.level, 3);
 });
