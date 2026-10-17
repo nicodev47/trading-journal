@@ -41,7 +41,7 @@ export function PromoteDialog({ account, target = 'funded', passedOn, onClose, o
     if (!account) return;
 
     setName(suggestName(account.name, target));
-    setStartDate(nextDay(passedOn ?? todayKey()));
+    setStartDate(target === 'live' ? todayKey() : nextDay(passedOn ?? todayKey()));
   }, [account, passedOn, target]);
 
   if (!account) return null;
