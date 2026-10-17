@@ -241,6 +241,15 @@ function getTopCenteredCardPosition(width: number): CSSProperties {
   };
 }
 
+/** Horizontal span of the page without the left sidebar. */
+function getContentBounds() {
+  const sidebar = document.querySelector<HTMLElement>('aside');
+  const left =
+    sidebar && window.innerWidth >= 768 ? Math.max(0, sidebar.getBoundingClientRect().right) : 0;
+
+  return { left, width: window.innerWidth - left };
+}
+
 function getCardPosition(rect: Rect | null, target?: string): CSSProperties {
   const width = Math.min(CARD_WIDTH, window.innerWidth - VIEWPORT_PADDING * 2);
 
@@ -267,9 +276,10 @@ function getCardPosition(rect: Rect | null, target?: string): CSSProperties {
     const sideLeft = rect.left + rect.width + ANALYSIS_CARD_GAP;
     const fitsOnRight =
       sideLeft + width <= window.innerWidth - VIEWPORT_PADDING;
+    const content = getContentBounds();
     const left = fitsOnRight
       ? sideLeft
-      : window.innerWidth / 2 - width / 2;
+      : content.left + content.width / 2 - width / 2;
 
     return {
       width,
@@ -329,9 +339,14 @@ function getCardPosition(rect: Rect | null, target?: string): CSSProperties {
     };
   }
 
-  const centerLeft = rect
-    ? rect.left + rect.width / 2 - width / 2
-    : window.innerWidth / 2 - width / 2;
+  const content = getContentBounds();
+  // The stats card sits in the middle of the page area, not of the whole window.
+  const centerLeft =
+    target === 'stats-grid'
+      ? content.left + content.width / 2 - width / 2
+      : rect
+        ? rect.left + rect.width / 2 - width / 2
+        : window.innerWidth / 2 - width / 2;
   const left = clamp(
     centerLeft,
     VIEWPORT_PADDING,

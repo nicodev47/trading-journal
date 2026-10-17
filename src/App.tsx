@@ -47,7 +47,7 @@ import { ProgressTrackerPage } from '@/components/progress/progress-tracker-page
 import { StrategiesPage } from '@/components/trading-journal/strategies-page';
 import { readProgressJournal, useProgressJournal } from '@/hooks/use-progress-journal';
 import { ImportPreview } from '@/components/trading-journal/import-preview';
-import { createFullBackupExportData, parseJournalExport } from '@/lib/journal-export';
+import { createFullBackupExportData, extractSenderProfile, parseJournalExport } from '@/lib/journal-export';
 import {
   getBackupBaseline,
   setBackupBaseline,
@@ -259,6 +259,15 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
   }, [isHelpOpen]);
 
   const progress = useProgressJournal(activeWorkspace);
+  // Who is exporting: shown to whoever opens the file in the import preview.
+  const exportProfile = {
+    name: preferences.name,
+    photo: preferences.photo,
+    assets: preferences.assets,
+    setups: preferences.setups,
+    windows: preferences.windows,
+    emotions: preferences.emotions,
+  };
   // Progress Tracker of any journal: the open one is read from state, the others from storage.
   const getProgressFor = (workspace: string) =>
     workspace === activeWorkspace
@@ -565,8 +574,8 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
   };
 
   const getWorkspaceExportData = useCallback((workspace: JournalWorkspace) => {
-    return createWorkspaceExportData(workspace, getWorkspaceData(workspace), new Date(), undefined, getProgressFor(workspace));
-  }, [getWorkspaceData, progress.dailyAnalyses, progress.missedTrades, activeWorkspace]);
+    return createWorkspaceExportData(workspace, getWorkspaceData(workspace), new Date(), undefined, getProgressFor(workspace), exportProfile);
+  }, [getWorkspaceData, progress.dailyAnalyses, progress.missedTrades, activeWorkspace, preferences]);
 
   // Used by the backup reminder: downloads the open journal as a single JSON file.
   exportCurrentJournalRef.current = () => {
@@ -889,7 +898,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
     );
     const blob = new Blob([createFullBackupExportData(journals, included, new Date(), Object.fromEntries(
       included.map(workspace => [workspace.id, getProgressFor(workspace.id)])
-    ))], {
+    ), exportProfile)], {
       type: 'application/json',
     });
     const url = URL.createObjectURL(blob);
@@ -922,7 +931,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
   const handleBackupWorkspace = (workspace: JournalWorkspace) => {
     const workspaceData = getWorkspaceData(workspace);
     const workspaceName = workspaces.find((item) => item.id === workspace)?.name;
-    const backupData = createWorkspaceExportData(workspace, workspaceData, new Date(), undefined, getProgressFor(workspace));
+    const backupData = createWorkspaceExportData(workspace, workspaceData, new Date(), undefined, getProgressFor(workspace), exportProfile);
     const blob = new Blob([backupData], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
@@ -1063,7 +1072,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
         }}
         previewLabel={
           importPreview
-            ? extractImportedPreferences(importPreview.data)?.name || importPreview.fileName
+            ? extractSenderProfile(importPreview.data)?.name || importPreview.fileName
             : undefined
         }
         onExitPreview={() => setImportPreview(null)}
@@ -1094,7 +1103,11 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
           key={`${importPreview.fileName}-${importPreview.data.length}`}
           data={importPreview.data}
           fileName={importPreview.fileName}
-          view={activeView === 'monthly' ? 'monthly' : 'calendar'}
+          view={
+            activeView === 'monthly' || activeView === 'progress' || activeView === 'news'
+              ? activeView
+              : 'calendar'
+          }
           onClose={() => setImportPreview(null)}
         />
       ) : (

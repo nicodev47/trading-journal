@@ -15,10 +15,12 @@ import type { ScreenshotData } from '@/lib/types/trade';
 interface AttachmentsFieldProps {
   value: ScreenshotData[];
   onChange: (value: ScreenshotData[]) => void;
+  /** Shows the files without any way to add or remove them. */
+  readOnly?: boolean;
 }
 
 /** Links or local images (PNG, JPG, WebP): "Aggiungi" uploads when no link is typed. */
-export function AttachmentsField({ value, onChange }: AttachmentsFieldProps) {
+export function AttachmentsField({ value, onChange, readOnly = false }: AttachmentsFieldProps) {
   const [link, setLink] = useState('');
 
   const addLink = () => {
@@ -60,6 +62,7 @@ export function AttachmentsField({ value, onChange }: AttachmentsFieldProps) {
                   <ExternalLink className="size-3" />
                 </button>
               </div>
+              {!readOnly && (
               <button
                 type="button"
                 aria-label="Rimuovi allegato"
@@ -68,11 +71,13 @@ export function AttachmentsField({ value, onChange }: AttachmentsFieldProps) {
               >
                 <X className="size-3" />
               </button>
+              )}
             </div>
           ))}
         </div>
       )}
 
+      {!readOnly && (
       <div className="flex gap-2">
         <Input
           value={link}
@@ -93,6 +98,7 @@ export function AttachmentsField({ value, onChange }: AttachmentsFieldProps) {
           Aggiungi
         </Button>
       </div>
+      )}
     </div>
   );
 }

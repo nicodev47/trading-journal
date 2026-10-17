@@ -18,6 +18,8 @@ interface DailyAnalysisDialogProps {
   onClose: () => void;
   onSave: (entry: DailyAnalysis) => void;
   onDelete: (date: string) => void;
+  /** Shows the day without any way to change it (import preview). */
+  readOnly?: boolean;
 }
 
 const formatDate = (date: string) => {
@@ -66,6 +68,7 @@ export function DailyAnalysisDialog({
   onClose,
   onSave,
   onDelete,
+  readOnly = false,
 }: DailyAnalysisDialogProps) {
   const { streamerMode } = useStreamerMode();
   const [analysis, setAnalysis] = useState('');
@@ -129,6 +132,8 @@ export function DailyAnalysisDialog({
   };
 
   const persist = (next: Draft) => {
+    if (readOnly) return;
+
     pending.current = next;
 
     if (timer.current) window.clearTimeout(timer.current);
@@ -162,7 +167,9 @@ export function DailyAnalysisDialog({
         <DialogTitle className="font-sans text-base capitalize">{formatDate(date)}</DialogTitle>
         <DialogDescription className="mt-0.5 font-sans text-xs">
           {hasTrades
-            ? 'Qui scrivi l’analisi della giornata: si salva da solo.'
+            ? readOnly
+              ? 'Analisi della giornata del trader.'
+              : 'Qui scrivi l’analisi della giornata: si salva da solo.'
             : 'Nessun trade eseguito questo giorno. Qui scrivi tutto quello che c’è dietro: si salva da solo.'}
         </DialogDescription>
       </div>
@@ -171,6 +178,7 @@ export function DailyAnalysisDialog({
         <Section title="Analisi della giornata" hint="Contesto di mercato, bias, livelli che hai preparato.">
           <Textarea
             value={analysis}
+            readOnly={readOnly}
             onChange={event => update({ analysis: event.target.value })}
             placeholder="Cosa ti aspettavi oggi e perché?"
             className="min-h-[96px] resize-y border-border/70 bg-background/60 text-sm"
@@ -180,6 +188,7 @@ export function DailyAnalysisDialog({
         <Section title="Cosa ho visto" hint="Cosa è successo davvero, cosa ti ha sorpreso, cosa hai imparato.">
           <Textarea
             value={observations}
+            readOnly={readOnly}
             onChange={event => update({ observations: event.target.value })}
             placeholder="Com’è andata la giornata rispetto al piano?"
             className="min-h-[96px] resize-y border-border/70 bg-background/60 text-sm"
@@ -187,7 +196,11 @@ export function DailyAnalysisDialog({
         </Section>
 
         <Section title="Carica file" hint="Grafici, screenshot o link di TradingView della giornata.">
-          <AttachmentsField value={attachments} onChange={value => update({ attachments: value })} />
+          <AttachmentsField
+            value={attachments}
+            readOnly={readOnly}
+            onChange={value => update({ attachments: value })}
+          />
         </Section>
       </div>
     </div>

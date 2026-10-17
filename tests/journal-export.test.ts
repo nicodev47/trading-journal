@@ -158,3 +158,20 @@ test('l’export di un journal porta con sé il Progress Tracker e si rilegge', 
   assert.equal(extractProgressJournal(without), null);
   assert.equal(extractProgressJournal('non json'), null);
 });
+
+test('il file porta il profilo di chi lo ha esportato e l’anteprima lo rilegge', async () => {
+  const { createWorkspaceExportData, extractSenderProfile } = await import('../src/lib/journal-export.ts');
+  const state = { trades: [], missedTrades: [], tags: [], strategies: [], customTags: [], tagColors: {}, weeklyPlans: [], settings: { currency: 'USD', defaultLotSize: 0.01 } };
+  const file = createWorkspaceExportData('personal', state as never, new Date(), undefined, undefined, {
+    name: 'Mittente',
+    photo: null,
+    assets: ['NQ'],
+    setups: ['Mio'],
+    windows: [],
+  });
+
+  assert.equal(extractSenderProfile(file)?.name, 'Mittente');
+  assert.deepEqual(extractSenderProfile(file)?.assets, ['NQ']);
+  assert.equal(extractSenderProfile(createWorkspaceExportData('personal', state as never)), null);
+  assert.equal(extractSenderProfile('non json'), null);
+});

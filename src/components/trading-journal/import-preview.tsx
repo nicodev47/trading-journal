@@ -13,9 +13,15 @@ import { ProfileAvatar } from '@/components/preferences/profile-fields';
 import { PreferencesOverrideProvider, usePreferences } from '@/contexts/preferences-context';
 import { DefaultDisplaySettingsProvider, useStreamerMode } from '@/contexts/streamer-mode-context';
 import { parseImportedJournal } from '@/hooks/use-trades';
-import { extractImportedPreferences, withImportedChoices } from '@/lib/import-preferences';
+import { withImportedChoices } from '@/lib/import-preferences';
+import { NewsPage } from '@/components/news/news-page';
+import { ProgressTrackerPage } from '@/components/progress/progress-tracker-page';
 import { getExportDateSlug, normalizeExportName } from '@/lib/export-filename';
-import { createWorkspaceExportData } from '@/lib/journal-export';
+import {
+  createWorkspaceExportData,
+  extractProgressJournal,
+  extractSenderProfile,
+} from '@/lib/journal-export';
 import type { Trade } from '@/lib/types/trade';
 import { ProfileDialog } from './profile-dialog';
 import { DayEditorDialog } from './day-editor-dialog';
@@ -30,7 +36,7 @@ import { TradingCalendar } from './trading-calendar';
 interface ImportPreviewProps {
   data: string;
   fileName: string;
-  view: 'calendar' | 'monthly';
+  view: 'calendar' | 'monthly' | 'progress' | 'news';
   onClose: () => void;
 }
 
@@ -45,6 +51,10 @@ function PreviewContent({ data, fileName, view, onClose }: ImportPreviewProps) {
   const { preferences } = usePreferences();
   const { streamerMode } = useStreamerMode();
   const journal = useMemo(() => parseImportedJournal(data), [data]);
+  const progress = useMemo(
+    () => extractProgressJournal(data) ?? { dailyAnalyses: [], missedTrades: [] },
+    [data]
+  );
   const [group, setGroup] = useState<GroupDialog | null>(null);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -68,7 +78,16 @@ function PreviewContent({ data, fileName, view, onClose }: ImportPreviewProps) {
 
   const handleExport = () => {
     const blob = new Blob(
-      [createWorkspaceExportData('personal', journal)],
+      [
+        createWorkspaceExportData('personal', journal, new Date(), undefined, progress, {
+          name: preferences.name,
+          photo: preferences.photo,
+          assets: preferences.assets,
+          setups: preferences.setups,
+          windows: preferences.windows,
+          emotions: preferences.emotions,
+        }),
+      ],
       { type: 'application/json' }
     );
     const url = URL.createObjectURL(blob);
@@ -139,6 +158,16 @@ function PreviewContent({ data, fileName, view, onClose }: ImportPreviewProps) {
               <EquityCurve trades={journal.trades} onOpenTradeGroup={openGroup} />
             </div>
           </>
+        ) : view === 'progress' ? (
+          <ProgressTrackerPage
+            readOnly
+            trades={journal.trades}
+            dailyAnalyses={progress.dailyAnalyses}
+            onSaveAnalysis={noop}
+            onDeleteAnalysis={noop}
+          />
+        ) : view === 'news' ? (
+          <NewsPage />
         ) : (
           <MonthlyAnalysis
             trades={journal.trades}
@@ -239,7 +268,7 @@ export function ImportPreview(props: ImportPreviewProps) {
   // preferences must not change what the preview shows.
   const [preferences] = useState(() =>
     withImportedChoices(
-      extractImportedPreferences(props.data) ?? { ...own, name: '', photo: null },
+      extractSenderProfile(props.data) ?? { ...own, name: '', photo: null },
       props.data
     )
   );

@@ -2,6 +2,7 @@ import type {
   JournalWorkspace,
   JournalWorkspaceMeta,
 } from '@/hooks/use-trades';
+import { parseStoredPreferences, type JournalPreferences } from './preferences.ts';
 import type { DailyAnalysis, JournalState, MissedTrade, Trade } from './types/trade';
 
 export const JOURNAL_EXPORT_FORMAT_VERSION = 1;
@@ -16,12 +17,20 @@ export interface JournalExportMetadata {
   workspaceGroup?: JournalWorkspaceMeta['group'];
 }
 
+/** Who exported the file: shown in the preview, never adopted by the person who opens it. */
+export type ExportProfile = Pick<
+  JournalPreferences,
+  'name' | 'photo' | 'assets' | 'setups' | 'windows' | 'emotions'
+>;
+
 export type ProgressJournalExport = { dailyAnalyses: DailyAnalysis[]; missedTrades: MissedTrade[] };
 
 export type WorkspaceJournalExport = JournalState & {
   exportMetadata: JournalExportMetadata;
   /** Progress Tracker entries, so a single journal file carries them too. */
   progressJournal?: ProgressJournalExport;
+  /** Profile of the trader who exported the file. */
+  profile?: ExportProfile;
 };
 
 export interface FullJournalBackup {
@@ -30,6 +39,8 @@ export interface FullJournalBackup {
   workspaceOptions: JournalWorkspaceMeta[];
   /** Progress Tracker of each journal, by journal id. */
   progressJournals?: Record<string, ProgressJournalExport>;
+  /** Profile of the trader who exported the file. */
+  profile?: ExportProfile;
   /** Older backups: one Progress Tracker for all journals (it goes to Personale). */
   progressJournal?: ProgressJournalExport;
 }
@@ -112,7 +123,8 @@ export function createWorkspaceExportData(
   data: JournalState,
   exportedAt = new Date(),
   workspaceMetadata?: JournalWorkspaceMeta,
-  progressJournal?: ProgressJournalExport
+  progressJournal?: ProgressJournalExport,
+  profile?: ExportProfile
 ): string {
   // Only the journal is exported: drop profile data left over from older versions.
   const { preferences: _preferences, ...journal } = data as JournalState & {
@@ -133,6 +145,7 @@ export function createWorkspaceExportData(
     (progressJournal.dailyAnalyses.length > 0 || progressJournal.missedTrades.length > 0)
       ? { progressJournal }
       : {}),
+    ...(profile ? { profile } : {}),
   };
 
   return JSON.stringify(payload, null, 2);
@@ -152,7 +165,8 @@ export function createFullBackupExportData(
   workspaces: Partial<Record<JournalWorkspace, JournalState>>,
   workspaceOptions: JournalWorkspaceMeta[],
   exportedAt = new Date(),
-  progressJournals?: Record<string, ProgressJournalExport>
+  progressJournals?: Record<string, ProgressJournalExport>,
+  profile?: ExportProfile
 ): string {
   const includedWorkspaceIds = new Set(Object.keys(workspaces));
   const payload: FullJournalBackup = {
@@ -166,6 +180,7 @@ export function createFullBackupExportData(
       includedWorkspaceIds.has(workspace.id)
     ),
     ...(withEntries(progressJournals) ? { progressJournals: withEntries(progressJournals) } : {}),
+    ...(profile ? { profile } : {}),
   };
 
   return JSON.stringify(payload, null, 2);
@@ -263,6 +278,21 @@ export function extractProgressJournal(jsonString: string): ProgressJournalExpor
     return dailyAnalyses.length > 0 || missedTrades.length > 0
       ? { dailyAnalyses, missedTrades }
       : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Profile of the trader who exported a file (older files may carry `preferences`). */
+export function extractSenderProfile(jsonString: string): JournalPreferences | null {
+  try {
+    const parsed = JSON.parse(jsonString) as unknown;
+
+    if (!isRecord(parsed)) return null;
+
+    const raw = parsed.profile ?? parsed.preferences;
+
+    return raw ? parseStoredPreferences(JSON.stringify(raw)) : null;
   } catch {
     return null;
   }

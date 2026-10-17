@@ -27,6 +27,8 @@ interface ProgressTrackerPageProps {
   dailyAnalyses: DailyAnalysis[];
   onSaveAnalysis: (entry: DailyAnalysis) => void;
   onDeleteAnalysis: (date: string) => void;
+  /** Shows the entries without any way to change them (import preview). */
+  readOnly?: boolean;
 }
 
 function StatTile({ title, value, hint }: { title: string; value: string; hint: string }) {
@@ -44,6 +46,7 @@ export function ProgressTrackerPage({
   dailyAnalyses,
   onSaveAnalysis,
   onDeleteAnalysis,
+  readOnly = false,
 }: ProgressTrackerPageProps) {
   const today = useMemo(() => new Date(), []);
   const [year, setYear] = useState(today.getFullYear());
@@ -219,6 +222,7 @@ export function ProgressTrackerPage({
 
       {selectedDate && (
         <DailyAnalysisDialog
+          readOnly={readOnly}
           open
           date={selectedDate}
           entry={entryByDate.get(selectedDate)}
