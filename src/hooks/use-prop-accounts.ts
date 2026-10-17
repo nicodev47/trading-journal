@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { generateId } from '@/lib/calculations';
 import { refreshOfficialRules } from '@/lib/propfirm/firms';
 import type { Payout, PropAccount } from '@/lib/propfirm/types';
@@ -99,8 +99,11 @@ export function usePropAccounts() {
     });
   }, []);
 
+  // Official plans always read their numbers from the current catalog, whatever was saved.
+  const currentAccounts = useMemo(() => accounts.map(refreshOfficialRules), [accounts]);
+
   return {
-    accounts,
+    accounts: currentAccounts,
     addAccount,
     updateAccount,
     deleteAccount,
