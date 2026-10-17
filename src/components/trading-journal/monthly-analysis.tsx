@@ -37,11 +37,14 @@ import {
 import { cn } from '@/lib/utils';
 import {
   CUSTOM_TAG_PREFIX,
+  LEGACY_TRADE_TAGS,
   TRADE_TAGS,
   type Trade,
 } from '@/lib/types/trade';
 import { useStreamerMode } from '@/contexts/streamer-mode-context';
 import { getTagColor } from '@/lib/tag-colors';
+import { emotionColorKey, getEmotion } from '@/lib/trade-emotions';
+import { usePreferences } from '@/contexts/preferences-context';
 
 interface MonthlyAnalysisProps {
   trades: Trade[];
@@ -49,7 +52,7 @@ interface MonthlyAnalysisProps {
   onUpdateTrade: (id: string, updates: Partial<Trade>) => void;
 }
 
-type TagAnalytics = {
+type AnalyticsItem = {
   value: string;
   label: string;
   tradeCount: number;
@@ -59,7 +62,7 @@ type TagAnalytics = {
   trades: Trade[];
 };
 
-type TagAnalyticsOrder =
+type AnalyticsOrder =
   | 'most-used'
   | 'least-used'
   | 'winrate-high'
@@ -180,12 +183,231 @@ function getBestSetup(trades: Trade[]) {
   );
 }
 
+function buildAnalytics(
+  trades: Trade[],
+  getValues: (trade: Trade) => string[],
+  getLabel: (value: string) => string
+): AnalyticsItem[] {
+  const map = new Map<string, { trades: Trade[]; totalPnl: number }>();
+
+  trades.forEach(trade => {
+    Array.from(new Set(getValues(trade))).forEach(value => {
+      const current = map.get(value) || { trades: [], totalPnl: 0 };
+
+      current.trades.push(trade);
+      current.totalPnl += netPnl(trade);
+      map.set(value, current);
+    });
+  });
+
+  return Array.from(map.entries()).map(([value, stats]) => ({
+    value,
+    label: getLabel(value),
+    trades: stats.trades,
+    tradeCount: stats.trades.length,
+    totalPnl: stats.totalPnl,
+    winRate: calculateTradeWinRate(stats.trades),
+    percent: trades.length > 0 ? (stats.trades.length / trades.length) * 100 : 0,
+  }));
+}
+
+/** Card with one row per tag or emotion: trades, P&L, winrate, share bar, ordering and pages. */
+function AnalyticsRankCard({
+  title,
+  items,
+  resetKey,
+  getColor,
+  emptyText,
+  openTitle,
+  openSubtitle,
+  streamerMode,
+  onOpen,
+}: {
+  title: string;
+  items: AnalyticsItem[];
+  resetKey: number;
+  getColor: (value: string) => string;
+  emptyText: string;
+  openTitle: string;
+  openSubtitle: string;
+  streamerMode: boolean;
+  onOpen: (title: string, subtitle: string, trades: Trade[]) => void;
+}) {
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [order, setOrder] = useState<AnalyticsOrder>('most-used');
+  const [page, setPage] = useState(1);
+  const sorted = useMemo(
+    () =>
+      [...items].sort((a, b) => {
+        switch (order) {
+          case 'least-used':
+            return a.tradeCount - b.tradeCount;
+          case 'winrate-high':
+            return b.winRate - a.winRate;
+          case 'winrate-low':
+            return a.winRate - b.winRate;
+          case 'profit-high':
+            return b.totalPnl - a.totalPnl;
+          case 'profit-low':
+            return a.totalPnl - b.totalPnl;
+          case 'most-used':
+          default:
+            return b.tradeCount - a.tradeCount;
+        }
+      }),
+    [items, order]
+  );
+  const totalPages = Math.max(1, Math.ceil(sorted.length / TAG_ANALYTICS_PAGE_SIZE));
+  const visible = sorted.slice((page - 1) * TAG_ANALYTICS_PAGE_SIZE, page * TAG_ANALYTICS_PAGE_SIZE);
+  const pageNumbers = Array.from({ length: totalPages }, (_, index) => index + 1);
+
+  useEffect(() => {
+    setPage(1);
+  }, [resetKey, order]);
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+
+  return (
+    <div className="rounded-2xl border border-border bg-card/95 p-3.5 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="font-sans tabular-nums text-xs font-medium tracking-normal text-muted-foreground">
+          {title}
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="h-8 gap-2 rounded-lg border-border bg-background/50 px-3 font-sans text-xs font-semibold text-muted-foreground hover:bg-secondary hover:text-foreground"
+          onClick={() => setIsFilterOpen(isOpen => !isOpen)}
+        >
+          <SlidersHorizontal className="size-4" />
+          Filtri
+        </Button>
+      </div>
+
+      {isFilterOpen && (
+        <div className="mb-4 rounded-lg border border-border bg-background/25 p-3">
+          <label className="grid gap-1.5">
+            <span className="font-sans tabular-nums text-xs font-medium tracking-normal text-muted-foreground">
+              Ordine di visualizzazione
+            </span>
+            <select
+              value={order}
+              onChange={event => setOrder(event.target.value as AnalyticsOrder)}
+              className="ej-filter-select h-9 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-ring/60"
+            >
+              <option value="most-used">Più utilizzato</option>
+              <option value="least-used">Meno utilizzato</option>
+              <option value="winrate-high">Winrate più alto</option>
+              <option value="winrate-low">Winrate più basso</option>
+              <option value="profit-high">Profitto più alto</option>
+              <option value="profit-low">Profitto più basso</option>
+            </select>
+          </label>
+        </div>
+      )}
+
+      <div className="space-y-3">
+        {visible.length > 0 ? (
+          visible.map(item => (
+            <div key={item.value} className="space-y-2 rounded-lg p-2 transition-colors hover:bg-secondary/10">
+              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 font-sans tabular-nums text-xs sm:grid-cols-[minmax(0,1fr)_auto_auto_auto_auto] sm:gap-3">
+                <span className="truncate text-foreground">{item.label}</span>
+                <span className="text-muted-foreground">{item.tradeCount} trade</span>
+                <span
+                  className={cn(
+                    'max-sm:col-span-2',
+                    item.totalPnl > 0 && 'text-profit',
+                    item.totalPnl < 0 && 'text-loss',
+                    item.totalPnl === 0 && 'text-muted-foreground'
+                  )}
+                >
+                  {streamerMode ? '******' : formatCurrency(item.totalPnl)}
+                </span>
+                <span className="text-muted-foreground max-sm:col-span-2">
+                  {formatPercent(item.winRate)} WR
+                </span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-9 rounded-lg border-border bg-background/50 px-3 font-sans tabular-nums text-xs text-muted-foreground hover:border-highlight/50 hover:bg-secondary hover:text-foreground max-sm:col-span-2 max-sm:w-full"
+                  onClick={() => onOpen(`${openTitle}: ${item.label}`, openSubtitle, item.trades)}
+                >
+                  Apri
+                </Button>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-secondary">
+                <div
+                  className="h-full rounded-full transition-all duration-200 hover:brightness-110"
+                  style={{ width: `${item.percent}%`, backgroundColor: getColor(item.value) }}
+                />
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="rounded-lg border border-border bg-background/50 p-4 font-sans tabular-nums text-xs text-muted-foreground">
+            {emptyText}
+          </div>
+        )}
+      </div>
+
+      {totalPages > 1 && (
+        <div className="mt-4 flex flex-wrap items-center justify-end gap-1.5">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-8 min-w-8 rounded-lg border border-border bg-background/50 px-2 font-sans tabular-nums text-xs text-muted-foreground hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+            disabled={page === 1}
+            onClick={() => setPage(current => Math.max(1, current - 1))}
+          >
+            &lt;
+          </Button>
+
+          {pageNumbers.map(number => (
+            <Button
+              key={number}
+              type="button"
+              variant={number === page ? 'default' : 'outline'}
+              size="sm"
+              className={
+                number === page
+                  ? 'h-8 min-w-8 rounded-lg border border-transparent bg-primary px-2 font-sans tabular-nums text-xs font-semibold text-primary-foreground hover:bg-primary hover:text-primary-foreground'
+                  : 'h-8 min-w-8 rounded-lg border border-border bg-background/50 px-2 font-sans tabular-nums text-xs text-muted-foreground hover:bg-secondary hover:text-foreground'
+              }
+              onClick={() => setPage(number)}
+            >
+              {number}
+            </Button>
+          ))}
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-8 min-w-8 rounded-lg border border-border bg-background/50 px-2 font-sans tabular-nums text-xs text-muted-foreground hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+            disabled={page === totalPages}
+            onClick={() => setPage(current => Math.min(totalPages, current + 1))}
+          >
+            &gt;
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function MonthlyAnalysis({
   trades,
   tagColors,
   onUpdateTrade,
 }: MonthlyAnalysisProps) {
   const { streamerMode } = useStreamerMode();
+  const { preferences } = usePreferences();
+  const emotionColors = preferences.emotions?.colors ?? {};
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
   const [tradeGroupDialog, setTradeGroupDialog] =
     useState<TradeGroupDialogState | null>(null);
@@ -193,11 +415,6 @@ export function MonthlyAnalysis({
   const [returnToTradeGroup, setReturnToTradeGroup] = useState(false);
   const [selectedMonthIndex, setSelectedMonthIndex] = useState<number | null>(null);
   const [monthlyTradesPage, setMonthlyTradesPage] = useState(1);
-  const [isTagAnalyticsFilterOpen, setIsTagAnalyticsFilterOpen] =
-    useState(false);
-  const [tagAnalyticsOrder, setTagAnalyticsOrder] =
-    useState<TagAnalyticsOrder>('most-used');
-  const [tagAnalyticsPage, setTagAnalyticsPage] = useState(1);
   const availableYears = useMemo(() => {
     const years = Array.from(
       new Set(trades.map((trade) => new Date(trade.exitDate).getFullYear()))
@@ -330,87 +547,28 @@ export function MonthlyAnalysis({
     setSelectedYear(availableYears[nextIndex] || selectedYear + 1);
   };
 
-  const tagAnalytics = useMemo<TagAnalytics[]>(() => {
-    const tagMap = new Map<string, { trades: Trade[]; totalPnl: number }>();
+  const tagAnalytics = useMemo<AnalyticsItem[]>(
+    () =>
+      buildAnalytics(yearFilteredTrades, trade => trade.tags ?? [], value => {
+        const standardTag = [...TRADE_TAGS, ...LEGACY_TRADE_TAGS].find(tag => tag.value === value);
 
-    yearFilteredTrades.forEach((trade) => {
-      const uniqueTags = Array.from(new Set(trade.tags ?? []));
-
-      uniqueTags.forEach((tag) => {
-        const current = tagMap.get(tag) || { trades: [], totalPnl: 0 };
-        const pnl = netPnl(trade);
-
-        current.trades.push(trade);
-        current.totalPnl += pnl;
-        tagMap.set(tag, current);
-      });
-    });
-
-    const analytics = Array.from(tagMap.entries())
-      .map(([value, stats]) => {
-        const standardTag = TRADE_TAGS.find((tag) => tag.value === value);
-        const label = standardTag
+        return standardTag
           ? `${standardTag.emoji} ${standardTag.label}`
           : value.startsWith(CUSTOM_TAG_PREFIX)
             ? value.slice(CUSTOM_TAG_PREFIX.length)
             : value;
-
-        return {
-          value,
-          label,
-          trades: stats.trades,
-          tradeCount: stats.trades.length,
-          totalPnl: stats.totalPnl,
-          winRate: calculateTradeWinRate(stats.trades),
-          percent:
-            yearFilteredTrades.length > 0
-              ? (stats.trades.length / yearFilteredTrades.length) * 100
-              : 0,
-        };
-      });
-
-    return analytics.sort((a, b) => {
-        switch (tagAnalyticsOrder) {
-          case 'least-used':
-            return a.tradeCount - b.tradeCount;
-          case 'winrate-high':
-            return b.winRate - a.winRate;
-          case 'winrate-low':
-            return a.winRate - b.winRate;
-          case 'profit-high':
-            return b.totalPnl - a.totalPnl;
-          case 'profit-low':
-            return a.totalPnl - b.totalPnl;
-          case 'most-used':
-          default:
-            return b.tradeCount - a.tradeCount;
-        }
-      });
-  }, [tagAnalyticsOrder, yearFilteredTrades]);
-  const tagAnalyticsTotalPages = Math.max(
-    1,
-    Math.ceil(tagAnalytics.length / TAG_ANALYTICS_PAGE_SIZE)
+      }),
+    [yearFilteredTrades]
   );
-  const tagAnalyticsStartIndex =
-    (tagAnalyticsPage - 1) * TAG_ANALYTICS_PAGE_SIZE;
-  const visibleTagAnalytics = tagAnalytics.slice(
-    tagAnalyticsStartIndex,
-    tagAnalyticsStartIndex + TAG_ANALYTICS_PAGE_SIZE
-  );
-  const tagAnalyticsPageNumbers = Array.from(
-    { length: tagAnalyticsTotalPages },
-    (_, index) => index + 1
-  );
+  const emotionAnalytics = useMemo<AnalyticsItem[]>(
+    () =>
+      buildAnalytics(yearFilteredTrades, trade => trade.emotions ?? [], value => {
+        const emotion = getEmotion(value);
 
-  useEffect(() => {
-    setTagAnalyticsPage(1);
-  }, [selectedYear, tagAnalyticsOrder]);
-
-  useEffect(() => {
-    if (tagAnalyticsPage > tagAnalyticsTotalPages) {
-      setTagAnalyticsPage(tagAnalyticsTotalPages);
-    }
-  }, [tagAnalyticsPage, tagAnalyticsTotalPages]);
+        return emotion ? `${emotion.emoji} ${emotion.label}`.trim() : value;
+      }),
+    [yearFilteredTrades]
+  );
 
   const openTradeGroup = (
     title: string,
@@ -769,163 +927,31 @@ export function MonthlyAnalysis({
       </div>
 
       <div className="mb-4">
-        <div className="rounded-2xl border border-border bg-card/95 p-3.5 shadow-[0_16px_36px_rgba(0,0,0,0.22)] sm:p-5">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <div className="font-sans tabular-nums text-xs font-medium tracking-normal text-muted-foreground">
-              TAG ANALYTICS
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="h-8 gap-2 rounded-lg border-border bg-background/50 px-3 font-sans text-xs font-semibold text-muted-foreground hover:bg-secondary hover:text-foreground"
-              onClick={() =>
-                setIsTagAnalyticsFilterOpen((isOpen) => !isOpen)
-              }
-            >
-              <SlidersHorizontal className="size-4" />
-              Filtri
-            </Button>
-          </div>
+        <AnalyticsRankCard
+          title="TAG ANALYTICS"
+          items={tagAnalytics}
+          resetKey={selectedYear}
+          getColor={value => getTagColor(value, tagColors)}
+          emptyText="Nessun tag registrato per questo anno."
+          openTitle="Tag"
+          openSubtitle="Tutti i trade associati a questo tag."
+          streamerMode={streamerMode}
+          onOpen={openTradeGroup}
+        />
+      </div>
 
-          {isTagAnalyticsFilterOpen && (
-            <div className="mb-4 rounded-lg border border-border bg-background/25 p-3">
-              <label className="grid gap-1.5">
-                <span className="font-sans tabular-nums text-xs font-medium tracking-normal text-muted-foreground">
-                  Ordine di visualizzazione
-                </span>
-                <select
-                  value={tagAnalyticsOrder}
-                  onChange={(event) =>
-                    setTagAnalyticsOrder(
-                      event.target.value as TagAnalyticsOrder
-                    )
-                  }
-                  className="ej-filter-select h-9 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs text-foreground outline-none transition-colors hover:bg-secondary/40 focus:border-ring/60"
-                >
-                  <option value="most-used">Più utilizzato</option>
-                  <option value="least-used">Meno utilizzato</option>
-                  <option value="winrate-high">Winrate più alto</option>
-                  <option value="winrate-low">Winrate più basso</option>
-                  <option value="profit-high">Profitto più alto</option>
-                  <option value="profit-low">Profitto più basso</option>
-                </select>
-              </label>
-            </div>
-          )}
-
-          <div className="space-y-3">
-            {visibleTagAnalytics.length > 0 ? (
-              visibleTagAnalytics.map((tag) => {
-                const tagColor = getTagColor(tag.value, tagColors);
-
-                return (
-                  <div
-                    key={tag.value}
-                    className="space-y-2 rounded-lg p-2 transition-colors hover:bg-secondary/10"
-                  >
-                  <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 font-sans tabular-nums text-xs sm:grid-cols-[minmax(0,1fr)_auto_auto_auto_auto] sm:gap-3">
-                    <span className="truncate text-foreground">{tag.label}</span>
-                    <span className="text-muted-foreground">
-                      {tag.tradeCount} trade
-                    </span>
-                    <span
-                      className={cn(
-                        'max-sm:col-span-2',
-                        tag.totalPnl > 0 && 'text-profit',
-                        tag.totalPnl < 0 && 'text-loss',
-                        tag.totalPnl === 0 && 'text-muted-foreground'
-                      )}
-                    >
-                      {streamerMode ? '******' : formatCurrency(tag.totalPnl)}
-                    </span>
-                    <span className="text-muted-foreground max-sm:col-span-2">
-                      {formatPercent(tag.winRate)} WR
-                    </span>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="h-9 rounded-lg border-border bg-background/50 px-3 font-sans tabular-nums text-xs text-muted-foreground hover:border-highlight/50 hover:bg-secondary hover:text-foreground max-sm:col-span-2 max-sm:w-full"
-                      onClick={() =>
-                        openTradeGroup(
-                          `Tag: ${tag.label}`,
-                          'Tutti i trade associati a questo tag.',
-                          tag.trades
-                        )
-                      }
-                    >
-                      Apri
-                    </Button>
-                  </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-secondary">
-                    <div
-                      className="h-full rounded-full transition-all duration-200 hover:brightness-110"
-                      style={{
-                        width: `${tag.percent}%`,
-                        backgroundColor: tagColor,
-                      }}
-                    />
-                  </div>
-                  </div>
-                );
-              })
-            ) : (
-              <div className="rounded-lg border border-border bg-background/50 p-4 font-sans tabular-nums text-xs text-muted-foreground">
-                Nessun tag registrato per questo anno.
-              </div>
-            )}
-          </div>
-
-          {tagAnalyticsTotalPages > 1 && (
-            <div className="mt-4 flex flex-wrap items-center justify-end gap-1.5">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-8 min-w-8 rounded-lg border border-border bg-background/50 px-2 font-sans tabular-nums text-xs text-muted-foreground hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
-                disabled={tagAnalyticsPage === 1}
-                onClick={() =>
-                  setTagAnalyticsPage((page) => Math.max(1, page - 1))
-                }
-              >
-                &lt;
-              </Button>
-
-              {tagAnalyticsPageNumbers.map((page) => (
-                <Button
-                  key={page}
-                  type="button"
-                  variant={page === tagAnalyticsPage ? 'default' : 'outline'}
-                  size="sm"
-                  className={
-                    page === tagAnalyticsPage
-                      ? 'h-8 min-w-8 rounded-lg border border-transparent bg-primary px-2 font-sans tabular-nums text-xs font-semibold text-primary-foreground hover:bg-primary hover:text-primary-foreground'
-                      : 'h-8 min-w-8 rounded-lg border border-border bg-background/50 px-2 font-sans tabular-nums text-xs text-muted-foreground hover:bg-secondary hover:text-foreground'
-                  }
-                  onClick={() => setTagAnalyticsPage(page)}
-                >
-                  {page}
-                </Button>
-              ))}
-
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-8 min-w-8 rounded-lg border border-border bg-background/50 px-2 font-sans tabular-nums text-xs text-muted-foreground hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
-                disabled={tagAnalyticsPage === tagAnalyticsTotalPages}
-                onClick={() =>
-                  setTagAnalyticsPage((page) =>
-                    Math.min(tagAnalyticsTotalPages, page + 1)
-                  )
-                }
-              >
-                &gt;
-              </Button>
-            </div>
-          )}
-        </div>
+      <div className="mb-4">
+        <AnalyticsRankCard
+          title="EMOTION ANALYTICS"
+          items={emotionAnalytics}
+          resetKey={selectedYear}
+          getColor={value => getTagColor(emotionColorKey(value), emotionColors)}
+          emptyText="Nessuna emozione registrata per questo anno."
+          openTitle="Emozione"
+          openSubtitle="Tutti i trade associati a questa emozione."
+          streamerMode={streamerMode}
+          onOpen={openTradeGroup}
+        />
       </div>
 
       <div className="mb-4">
