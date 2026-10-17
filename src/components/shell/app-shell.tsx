@@ -3,7 +3,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import {
   BarChart3,
-  BookOpen,
   LayoutDashboard,
   Lightbulb,
   Menu,
@@ -48,9 +47,8 @@ const MAIN_ENTRIES: NavEntry[] = [
   { id: 'news', label: 'News', icon: Newspaper, view: 'news' },
 ];
 
-const SOON_ENTRIES: NavEntry[] = [
-  { id: 'notebook', label: 'Notebook', icon: BookOpen, soon: true },
-];
+// Entries marked `soon` show as disabled placeholders; none right now.
+const SOON_ENTRIES: NavEntry[] = [];
 
 const VIEW_TITLES: Record<AppView, string> = {
   calendar: 'Dashboard',
@@ -136,8 +134,12 @@ function NavList({
   return (
     <nav className="flex flex-col gap-1">
       {MAIN_ENTRIES.map(renderEntry)}
-      <div className="my-2 h-px bg-border" />
-      {SOON_ENTRIES.map(renderEntry)}
+      {SOON_ENTRIES.length > 0 && (
+        <>
+          <div className="my-2 h-px bg-border" />
+          {SOON_ENTRIES.map(renderEntry)}
+        </>
+      )}
     </nav>
   );
 }
