@@ -58,7 +58,7 @@ const splitPnl = (pnl: number, streamerMode: boolean) => {
 
 const getTradeOpenTime = (trade: Trade) => {
   return (trade.entryDate?.split('T')[1] || trade.exitDate?.split('T')[1] || '')
-    .slice(0, 5) || '--:--';
+    .slice(0, 5).replace(/^00:00$/, '') || '--:--';
 };
 
 export function TradeShareCard({
@@ -72,7 +72,7 @@ export function TradeShareCard({
   const netPnl = trade.pnl - (trade.commission || 0);
   const { accent, badgeLabel } = getTradeSharePresentation(netPnl);
   const identity = getShareIdentity(handle);
-  const directionLabel = trade.direction === 'short' ? 'Short' : 'Long';
+  const directionLabel = trade.direction === 'short' ? 'Short' : trade.direction === 'long' ? 'Long' : '—';
   const { sign, amount } = splitPnl(netPnl, streamerMode);
 
   return (
@@ -100,7 +100,7 @@ export function TradeShareCard({
         />
         <ShareRow
           label="Direzione"
-          value={`${trade.direction === 'short' ? '📉' : '📈'} ${directionLabel}`}
+          value={trade.direction ? `${trade.direction === 'short' ? '📉' : '📈'} ${directionLabel}` : '—'}
         />
         <ShareRow label="Orario apertura" value={getTradeOpenTime(trade)} />
       </div>

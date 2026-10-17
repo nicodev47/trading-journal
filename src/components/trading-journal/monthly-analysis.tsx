@@ -128,7 +128,9 @@ function getTagLabel(value: string) {
 
 function getTradeTime(trade: Trade) {
   const source = trade.exitDate || trade.entryDate;
-  return source?.split('T')[1]?.slice(0, 5) || '—';
+  const time = source?.split('T')[1]?.slice(0, 5);
+
+  return time && time !== '00:00' ? time : '—';
 }
 
 function getTradeDateLabel(trade: Trade) {

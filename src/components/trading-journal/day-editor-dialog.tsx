@@ -330,7 +330,7 @@ export function DayEditorDialog({
         return {
           id: row.id,
           pair: row.symbol || '',
-          direction: row.direction || 'long',
+          direction: row.direction,
           entryPrice: 0,
           exitPrice: 0,
           lotSize: 0.01,
@@ -614,7 +614,7 @@ export function DayEditorDialog({
     return {
       id: row.id,
       pair: row.symbol || '',
-      direction: row.direction || 'long',
+      direction: row.direction,
       entryPrice: 0,
       exitPrice: 0,
       lotSize: 0.01,

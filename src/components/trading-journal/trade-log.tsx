@@ -17,8 +17,12 @@ const dateOf = (trade: Trade) => {
   return Number.isNaN(date.getTime()) ? null : date;
 };
 
-const timeOf = (trade: Trade) =>
-  (trade.exitDate?.split('T')[1] || trade.entryDate?.split('T')[1] || '').slice(0, 5) || '—';
+const timeOf = (trade: Trade) => {
+  const time = (trade.exitDate?.split('T')[1] || trade.entryDate?.split('T')[1] || '').slice(0, 5);
+
+  // 00:00 is what an empty time field is saved as.
+  return time && time !== '00:00' ? time : '—';
+};
 
 const money = (value: number) =>
   `${value > 0 ? '+' : ''}${value.toLocaleString('it-IT', {

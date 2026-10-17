@@ -171,7 +171,10 @@ function getTradeSortTime(trade: Trade) {
 function getTradeTime(trade: Trade) {
   const time =
     trade.exitDate?.split('T')[1] || trade.entryDate?.split('T')[1] || '';
-  return time.slice(0, 5) || '—';
+  const text = time.slice(0, 5);
+
+  // 00:00 is what an empty time field is saved as.
+  return text && text !== '00:00' ? text : '—';
 }
 
 function getTradeDateKey(trade: Trade) {
