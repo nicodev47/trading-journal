@@ -36,12 +36,10 @@ function Stat({
 
 interface HistoryRow {
   date: string;
+  times: string;
   assets: string;
   pnl: number;
   count: number;
-  commission: number;
-  avgWin: number | null;
-  avgLoss: number | null;
   winRate: number;
 }
 
@@ -57,16 +55,20 @@ function buildHistory(trades: Trade[]): HistoryRow[] {
       const nets = list.map(trade => trade.pnl - (trade.commission || 0));
       const wins = nets.filter(value => value > 0);
       const losses = nets.filter(value => value < 0);
-      const avg = (values: number[]) => (values.length ? values.reduce((a, b) => a + b, 0) / values.length : null);
+      const times = Array.from(
+        new Set(
+          list
+            .map(trade => (trade.exitDate || trade.entryDate || '').split('T')[1]?.slice(0, 5) ?? '')
+            .filter(time => time && time !== '00:00')
+        )
+      ).sort();
 
       return {
         date,
+        times: times.join(', ') || '—',
         assets: Array.from(new Set(list.map(trade => trade.pair?.trim()).filter(Boolean))).join(', ') || '—',
         pnl: nets.reduce((a, b) => a + b, 0),
         count: list.length,
-        commission: list.reduce((sum, trade) => sum + (trade.commission || 0), 0),
-        avgWin: avg(wins),
-        avgLoss: avg(losses),
         winRate: (wins.length / list.length) * 100,
       };
     })
@@ -170,15 +172,14 @@ export function AccountOverview({
           </p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[560px] border-collapse font-sans text-sm tabular-nums">
+            <table className="w-full min-w-[480px] border-collapse font-sans text-sm tabular-nums">
               <thead>
                 <tr className="border-b border-border text-left text-[10px] uppercase tracking-wider text-muted-foreground">
                   <th className="px-4 py-2.5 font-semibold">Data</th>
+                  <th className="px-3 py-2.5 font-semibold">Orario</th>
                   <th className="px-3 py-2.5 font-semibold">Asset</th>
                   <th className="px-3 py-2.5 text-right font-semibold">P&L netto</th>
                   <th className="px-3 py-2.5 text-right font-semibold">Trade</th>
-                  <th className="px-3 py-2.5 text-right font-semibold">Media win</th>
-                  <th className="px-3 py-2.5 text-right font-semibold">Media loss</th>
                   <th className="px-4 py-2.5 text-right font-semibold">Win %</th>
                 </tr>
               </thead>
@@ -186,6 +187,7 @@ export function AccountOverview({
                 {history.map(row => (
                   <tr key={row.date} className="border-b border-border/60 last:border-0">
                     <td className="px-4 py-2.5">{formatDate(row.date)}</td>
+                    <td className="px-3 py-2.5 text-muted-foreground">{row.times}</td>
                     <td className="px-3 py-2.5 text-muted-foreground">{row.assets}</td>
                     <td
                       className={cn(
@@ -196,8 +198,6 @@ export function AccountOverview({
                       {money.signed(row.pnl)}
                     </td>
                     <td className="px-3 py-2.5 text-right">{row.count}</td>
-                    <td className="px-3 py-2.5 text-right text-profit">{row.avgWin === null ? '—' : money.usd(row.avgWin)}</td>
-                    <td className="px-3 py-2.5 text-right text-loss">{row.avgLoss === null ? '—' : money.usd(row.avgLoss)}</td>
                     <td className="px-4 py-2.5 text-right">
                       <span
                         className={cn(
