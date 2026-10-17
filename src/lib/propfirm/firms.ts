@@ -805,16 +805,38 @@ export function rulesForKind(size: SizeDef, kind: AccountKind): PropRules {
   return structuredClone({ ...size.rules, profitTarget: null, ...size.fundedOverrides });
 }
 
-/** Rules of the funded account that follows a passed evaluation. */
+/** The catalog size an account was created from, when it still exists. */
+const findSize = (account: { firmId: string; ruleSetId: string; sizeLabel: string }) =>
+  getFirm(account.firmId)
+    ?.ruleSets.find(set => set.id === account.ruleSetId)
+    ?.sizes.find(item => item.label === account.sizeLabel);
+
+/** Rules of the funded account that follows a passed evaluation, from the current catalog. */
 export function fundedRulesFor(account: {
   firmId: string;
   ruleSetId: string;
   sizeLabel: string;
   rules: PropRules;
 }): PropRules {
-  const size = getFirm(account.firmId)
-    ?.ruleSets.find(set => set.id === account.ruleSetId)
-    ?.sizes.find(item => item.label === account.sizeLabel);
+  const size = findSize(account);
 
-  return structuredClone({ ...account.rules, profitTarget: null, ...size?.fundedOverrides });
+  return structuredClone({ ...(size?.rules ?? account.rules), profitTarget: null, ...size?.fundedOverrides });
+}
+
+/**
+ * Official plans always follow the current catalog (accounts created before a rule
+ * update get the new numbers); accounts with rules written by the user are left alone.
+ */
+export function refreshOfficialRules<T extends {
+  firmId: string;
+  ruleSetId: string;
+  sizeLabel: string;
+  kind: AccountKind;
+  rules: PropRules;
+}>(account: T): T {
+  if (getFirm(account.firmId)?.custom) return account;
+
+  const size = findSize(account);
+
+  return size ? { ...account, rules: rulesForKind(size, account.kind) } : account;
 }

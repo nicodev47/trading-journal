@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { generateId } from '@/lib/calculations';
+import { refreshOfficialRules } from '@/lib/propfirm/firms';
 import type { Payout, PropAccount } from '@/lib/propfirm/types';
 
 export const PROP_ACCOUNTS_STORAGE_KEY = 'eclipse-trading-journal-propfirm';
@@ -16,7 +17,7 @@ export function readPropAccounts(): PropAccount[] {
     const parsed = JSON.parse(localStorage.getItem(PROP_ACCOUNTS_STORAGE_KEY) ?? '[]') as unknown;
 
     return Array.isArray(parsed)
-      ? parsed.filter(isAccount).map(account => ({
+      ? parsed.filter(isAccount).map(account => refreshOfficialRules({
           ...account,
           balanceUpdates: Array.isArray(account.balanceUpdates) ? account.balanceUpdates : [],
           payouts: Array.isArray(account.payouts) ? account.payouts : [],
@@ -88,7 +89,7 @@ export function usePropAccounts() {
     setAccounts(current => {
       const ids = new Set(current.map(item => item.id));
 
-      return [...current, ...incoming.filter(item => !ids.has(item.id))];
+      return [...current, ...incoming.filter(item => !ids.has(item.id)).map(refreshOfficialRules)];
     });
   }, []);
 

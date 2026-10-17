@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { floorFor } from '../src/lib/propfirm/engine.ts';
-import { FIRMS, getFirm, rulesForKind } from '../src/lib/propfirm/firms.ts';
+import { FIRMS, fundedRulesFor, getFirm, refreshOfficialRules, rulesForKind } from '../src/lib/propfirm/firms.ts';
 
 test('ogni piano ha dimensioni valide e regole coerenti', () => {
   FIRMS.forEach(firm => {
@@ -111,4 +111,28 @@ test('i piani senza valutazione sono solo funded', () => {
     assert.equal(set.fundedOnly, true);
     assert.equal(set.sizes[0].rules.profitTarget, null);
   });
+});
+
+test('i piani ufficiali seguono il catalogo: un conto vecchio riceve le regole aggiornate', () => {
+  const size = getFirm('lucid')!.ruleSets.find(set => set.id === 'flex')!.sizes[1];
+  const stale = {
+    firmId: 'lucid',
+    ruleSetId: 'flex',
+    sizeLabel: '50K',
+    kind: 'funded' as const,
+    rules: { ...rulesForKind(size, 'funded'), payout: { ...size.rules.payout, minWinningDays: 0, winningDayMin: 0 } },
+  };
+  const fresh = refreshOfficialRules(stale);
+
+  assert.equal(fresh.rules.payout.minWinningDays, 5);
+  assert.equal(fresh.rules.payout.winningDayMin, 150);
+  assert.equal(fundedRulesFor(stale).payout.minWinningDays, 5);
+});
+
+test('le regole scritte dall’utente non vengono toccate', () => {
+  const size = getFirm('custom')!.ruleSets[0].sizes[1];
+  const rules = { ...rulesForKind(size, 'evaluation'), profitTarget: 777 };
+  const account = { firmId: 'custom', ruleSetId: 'custom', sizeLabel: '50K', kind: 'evaluation' as const, rules };
+
+  assert.equal(refreshOfficialRules(account).rules.profitTarget, 777);
 });
