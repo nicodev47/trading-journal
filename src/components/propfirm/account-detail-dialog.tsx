@@ -174,7 +174,9 @@ export function AccountDetailDialog({
   // A payout can never exceed what the rules allow; an empty field means "all of it".
   const availablePayout = sim.payout?.available ?? 0;
   const typedPayout = payoutAmount.trim() === '' ? availablePayout : Number(payoutAmount.replace(',', '.'));
-  const payoutIssue = !Number.isFinite(typedPayout) || typedPayout <= 0
+  const payoutIssue = rules.payout.maxPayouts !== undefined && account.payouts.length >= rules.payout.maxPayouts
+    ? `Hai già fatto il massimo di ${rules.payout.maxPayouts} payout.`
+    : !Number.isFinite(typedPayout) || typedPayout <= 0
     ? 'Scrivi un importo valido.'
     : typedPayout > availablePayout + 0.005
       ? `Puoi richiedere al massimo ${money.plain(availablePayout)}.`

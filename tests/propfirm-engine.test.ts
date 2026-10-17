@@ -290,3 +290,23 @@ test('dopo il primo payout il floor si blocca a saldo iniziale + 100', () => {
   assert.equal(before.floor, 49000); // ancora trailing: picco 51.000 - 2.000
   assert.equal(after.floor, 50100); // bloccato dopo il payout
 });
+
+test('dopo il massimo di payout non se ne possono più richiedere', async () => {
+  const { simulateAccount } = await import('../src/lib/propfirm/engine.ts');
+  const { FIRMS, rulesForKind } = await import('../src/lib/propfirm/firms.ts');
+  const apex = FIRMS.find(f => f.id === 'apex')!.ruleSets[0].sizes[0];
+  const rules = rulesForKind(apex, 'funded', 'apex', 'eod');
+
+  assert.equal(rules.payout.maxPayouts, 6);
+
+  const sim = simulateAccount({
+    kind: 'funded',
+    size: apex.size,
+    rules,
+    days: [{ date: '2026-10-01', pnl: 9000 }],
+    payouts: Array.from({ length: 6 }, (_, i) => ({ id: String(i), date: `2026-10-0${i + 2}`, gross: 100 })),
+  });
+
+  assert.equal(sim.payout?.eligible, false);
+  assert.ok(sim.payout?.missing.some(m => m.includes('massimo di 6')));
+});

@@ -261,6 +261,10 @@ export function simulateAccount({ kind, size: planSize, rules, days, payouts }: 
       );
     }
 
+    if (terms.maxPayouts !== undefined && sortedPayouts.length >= terms.maxPayouts) {
+      missing.push(`Hai già fatto il massimo di ${terms.maxPayouts} payout`);
+    }
+
     if (consistency && !consistency.ok) {
       missing.push('La regola di consistenza non è rispettata');
     }

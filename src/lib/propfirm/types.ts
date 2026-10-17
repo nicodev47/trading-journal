@@ -34,6 +34,8 @@ export interface PropRules {
     capSchedule?: number[];
     /** A payout request can take at most this share (0–1) of the profit (e.g. 0.5). */
     profitShare?: number;
+    /** The account can pay out at most this many times. */
+    maxPayouts?: number;
   };
   maxContracts: string | null;
 }

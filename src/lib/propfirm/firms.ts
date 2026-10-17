@@ -51,6 +51,7 @@ interface RuleInput {
   cap?: number | null;
   caps?: number[];
   profitShare?: number;
+  maxPayouts?: number;
   contracts?: string | null;
 }
 
@@ -75,6 +76,7 @@ const rule = (input: RuleInput): PropRules => ({
     capPerPayout: input.cap ?? null,
     ...(input.caps ? { capSchedule: input.caps } : {}),
     ...(input.profitShare !== undefined ? { profitShare: input.profitShare } : {}),
+    ...(input.maxPayouts ? { maxPayouts: input.maxPayouts } : {}),
   },
   maxContracts: input.contracts ?? null,
 });
@@ -192,6 +194,7 @@ export const FIRMS: FirmDef[] = [
             dailyLoss: eod ? soft(item.dll) : null,
             consistency: share(0.5, 'funded'),
             split: 1,
+            maxPayouts: 6,
             minRequest: 500,
             minWinningDays: 5,
             winningDayMin: item.winDay,
@@ -371,6 +374,7 @@ export const FIRMS: FirmDef[] = [
             dailyLoss: withDll && index > 0 ? soft(item.dll) : null,
             consistency: share(0.5, 'evaluation'),
             split: 0.9,
+            maxPayouts: 5,
             minRequest: 500,
             minWinningDays: 5,
             winningDayMin: [100, 150, 200, 250][index],
@@ -609,6 +613,7 @@ export const FIRMS: FirmDef[] = [
             consistency: share(0.5, 'funded'),
             minDays: 1,
             split: 0.8,
+            maxPayouts: 5,
             minRequest: item.minRequest,
             buffer: item.dd + 100,
             cap: item.cap,
@@ -863,6 +868,7 @@ export function liveRulesFor(account: { firmId: string; ruleSetId?: string; size
       capPerPayout: null,
       capSchedule: undefined,
       profitShare: undefined,
+      maxPayouts: undefined,
     },
   };
   const index = sizeIndex(account.size);
