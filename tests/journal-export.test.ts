@@ -143,3 +143,18 @@ test('append in un workspace vuoto apre il mese del primo trade importato', () =
   assert.equal(target?.getFullYear(), 2025);
   assert.equal(target?.getMonth(), 11);
 });
+
+test('l’export di un journal porta con sé il Progress Tracker e si rilegge', async () => {
+  const { createWorkspaceExportData, extractProgressJournal } = await import('../src/lib/journal-export.ts');
+  const state = { trades: [], missedTrades: [], tags: [], strategies: [], customTags: [], tagColors: {}, weeklyPlans: [], settings: { currency: 'USD', defaultLotSize: 0.01 } };
+  const progress = {
+    dailyAnalyses: [{ date: '2026-10-06', analysis: 'ok', observations: '', createdAt: '', updatedAt: '' }],
+    missedTrades: [],
+  };
+  const withProgress = createWorkspaceExportData('personal', state as never, new Date(), undefined, progress as never);
+  const without = createWorkspaceExportData('personal', state as never, new Date(), undefined, { dailyAnalyses: [], missedTrades: [] });
+
+  assert.equal(extractProgressJournal(withProgress)?.dailyAnalyses.length, 1);
+  assert.equal(extractProgressJournal(without), null);
+  assert.equal(extractProgressJournal('non json'), null);
+});

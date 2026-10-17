@@ -150,6 +150,8 @@ export const parseImportedJournal = (jsonString: string): JournalState | null =>
     delete journalData.exportMetadata;
     // Profile/preferences are never part of a journal.
     delete (journalData as Record<string, unknown>).preferences;
+    // Progress Tracker entries travel in the file but are stored apart from the journal.
+    delete (journalData as Record<string, unknown>).progressJournal;
 
     return {
       ...initialState,

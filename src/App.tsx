@@ -65,6 +65,7 @@ import {
 import { hasWorkspaceContent } from '@/lib/workspace-content';
 import {
   createWorkspaceExportData,
+  extractProgressJournal,
   getAppendImportTargetMonth,
 } from '@/lib/journal-export';
 
@@ -555,8 +556,11 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
   };
 
   const getWorkspaceExportData = useCallback((workspace: JournalWorkspace) => {
-    return createWorkspaceExportData(workspace, getWorkspaceData(workspace));
-  }, [getWorkspaceData]);
+    return createWorkspaceExportData(workspace, getWorkspaceData(workspace), new Date(), undefined, {
+      dailyAnalyses: progress.dailyAnalyses,
+      missedTrades: progress.missedTrades,
+    });
+  }, [getWorkspaceData, progress.dailyAnalyses, progress.missedTrades]);
 
   // Used by the backup reminder: downloads the open journal as a single JSON file.
   exportCurrentJournalRef.current = () => {
@@ -636,6 +640,13 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
     });
   };
 
+  // Progress Tracker entries in a journal file: added to the ones already there.
+  const adoptImportedProgress = (data: string) => {
+    const incoming = extractProgressJournal(data);
+
+    if (incoming) progress.importJournal(incoming);
+  };
+
   const handleImportData = (data: string, workspace: JournalWorkspace) => {
     const success = importData(data, workspace);
 
@@ -643,6 +654,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
       justImportedRef.current = true;
       window.setTimeout(() => { justImportedRef.current = false; }, 1500);
       adoptImportedPreferences(data);
+      adoptImportedProgress(data);
       completeImportNavigation(data, workspace);
     }
 
@@ -660,6 +672,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
       justImportedRef.current = true;
       window.setTimeout(() => { justImportedRef.current = false; }, 1500);
       adoptImportedPreferences(data);
+      adoptImportedProgress(data);
       completeImportNavigation(data, workspace);
       setImportTargetMonth(targetMonth);
     }
@@ -895,7 +908,10 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
   const handleBackupWorkspace = (workspace: JournalWorkspace) => {
     const workspaceData = getWorkspaceData(workspace);
     const workspaceName = workspaces.find((item) => item.id === workspace)?.name;
-    const backupData = createWorkspaceExportData(workspace, workspaceData);
+    const backupData = createWorkspaceExportData(workspace, workspaceData, new Date(), undefined, {
+      dailyAnalyses: progress.dailyAnalyses,
+      missedTrades: progress.missedTrades,
+    });
     const blob = new Blob([backupData], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');

@@ -16,8 +16,12 @@ export interface JournalExportMetadata {
   workspaceGroup?: JournalWorkspaceMeta['group'];
 }
 
+export type ProgressJournalExport = { dailyAnalyses: DailyAnalysis[]; missedTrades: MissedTrade[] };
+
 export type WorkspaceJournalExport = JournalState & {
   exportMetadata: JournalExportMetadata;
+  /** Progress Tracker entries, so a single journal file carries them too. */
+  progressJournal?: ProgressJournalExport;
 };
 
 export interface FullJournalBackup {
@@ -105,7 +109,8 @@ export function createWorkspaceExportData(
   workspace: JournalWorkspace,
   data: JournalState,
   exportedAt = new Date(),
-  workspaceMetadata?: JournalWorkspaceMeta
+  workspaceMetadata?: JournalWorkspaceMeta,
+  progressJournal?: ProgressJournalExport
 ): string {
   // Only the journal is exported: drop profile data left over from older versions.
   const { preferences: _preferences, ...journal } = data as JournalState & {
@@ -122,6 +127,10 @@ export function createWorkspaceExportData(
       workspaceNotes: workspaceMetadata?.notes,
       workspaceGroup: workspaceMetadata?.group,
     },
+    ...(progressJournal &&
+    (progressJournal.dailyAnalyses.length > 0 || progressJournal.missedTrades.length > 0)
+      ? { progressJournal }
+      : {}),
   };
 
   return JSON.stringify(payload, null, 2);
@@ -210,6 +219,29 @@ export function parseJournalExport(jsonString: string): ParsedJournalExport | nu
           : undefined,
       },
     };
+  } catch {
+    return null;
+  }
+}
+
+/** Progress Tracker entries carried by an exported journal file, if any. */
+export function extractProgressJournal(jsonString: string): ProgressJournalExport | null {
+  try {
+    const parsed = JSON.parse(jsonString) as unknown;
+    const raw = isRecord(parsed) ? parsed.progressJournal : null;
+
+    if (!isRecord(raw)) return null;
+
+    const dailyAnalyses = Array.isArray(raw.dailyAnalyses)
+      ? (raw.dailyAnalyses.filter(isRecord) as unknown as DailyAnalysis[])
+      : [];
+    const missedTrades = Array.isArray(raw.missedTrades)
+      ? (raw.missedTrades.filter(isRecord) as unknown as MissedTrade[])
+      : [];
+
+    return dailyAnalyses.length > 0 || missedTrades.length > 0
+      ? { dailyAnalyses, missedTrades }
+      : null;
   } catch {
     return null;
   }
