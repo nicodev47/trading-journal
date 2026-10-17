@@ -165,12 +165,21 @@ export function AccountDetailDialog({
     setBalanceValue('');
   };
 
+  // A payout can never exceed what the rules allow; an empty field means "all of it".
+  const availablePayout = sim.payout?.available ?? 0;
+  const typedPayout = payoutAmount.trim() === '' ? availablePayout : Number(payoutAmount.replace(',', '.'));
+  const payoutIssue = !Number.isFinite(typedPayout) || typedPayout <= 0
+    ? 'Scrivi un importo valido.'
+    : typedPayout > availablePayout + 0.005
+      ? `Puoi richiedere al massimo ${money.usd(availablePayout)}.`
+      : typedPayout < rules.payout.minRequest
+        ? `Il payout minimo è ${money.usd(rules.payout.minRequest)}.`
+        : null;
+
   const addPayout = () => {
-    const parsed = Number(payoutAmount.replace(',', '.'));
+    if (payoutIssue) return;
 
-    if (!Number.isFinite(parsed) || parsed <= 0) return;
-
-    onAddPayout({ date: payoutDate, gross: parsed });
+    onAddPayout({ date: payoutDate, gross: typedPayout });
     setPayoutAmount('');
   };
 
@@ -449,11 +458,14 @@ export function AccountDetailDialog({
                     className="h-9"
                   />
                 </label>
-                <Button type="button" size="sm" className="h-9" onClick={addPayout}>
+                <Button type="button" size="sm" className="h-9" disabled={Boolean(payoutIssue)} onClick={addPayout}>
                   Registra payout
                 </Button>
               </div>
 
+              {payoutIssue && payoutAmount.trim() !== '' && (
+                <p className="font-sans text-xs text-loss">{payoutIssue}</p>
+              )}
                 </>
               )}
 
