@@ -7,6 +7,7 @@ export const TAG_COLOR_PALETTE = [
   '#f472b6',
   '#fb7185',
   '#f59e0b',
+  '#ffffff',
 ] as const;
 
 export const DEFAULT_TAG_COLOR = TAG_COLOR_PALETTE[6];
