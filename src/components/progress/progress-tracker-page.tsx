@@ -5,7 +5,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   MAX_LEVEL,
-  buildHeatmap,
+  buildQuarterHeatmap,
   computeStreaks,
   getActivityLevels,
   summarizeYear,
@@ -53,7 +53,29 @@ export function ProgressTrackerPage({
   const levels = useMemo(() => getActivityLevels(dailyAnalyses, trades), [dailyAnalyses, trades]);
   const streaks = useMemo(() => computeStreaks(levels, today), [levels, today]);
   const summary = useMemo(() => summarizeYear(year, levels), [year, levels]);
-  const weeks = useMemo(() => buildHeatmap(year, levels), [year, levels]);
+  const quarters = useMemo(
+    () =>
+      [0, 1, 2, 3].map(quarter => {
+        const weeks = buildQuarterHeatmap(year, quarter, levels);
+
+        return {
+          quarter,
+          weeks,
+          // Month name above the first week that starts a month inside the quarter.
+          labels: weeks.map((week, index) => {
+            const firstIn = week.find(cell => cell.inYear);
+            const previous = weeks[index - 1]?.find(cell => cell.inYear);
+
+            if (!firstIn) return null;
+
+            const month = Number(firstIn.date.slice(5, 7)) - 1;
+
+            return !previous || Number(previous.date.slice(5, 7)) - 1 !== month ? month : null;
+          }),
+        };
+      }),
+    [year, levels]
+  );
   const entryByDate = useMemo(
     () => new Map(dailyAnalyses.map(entry => [entry.date, entry])),
     [dailyAnalyses]
@@ -70,18 +92,9 @@ export function ProgressTrackerPage({
     return map;
   }, [trades]);
 
-  const monthLabelAt = weeks.map((week, index) => {
-    const firstInYear = week.find(cell => cell.inYear);
-    const previous = weeks[index - 1]?.find(cell => cell.inYear);
-
-    if (!firstInYear) return null;
-
-    const monthOf = Number(firstInYear.date.slice(5, 7)) - 1;
-
-    return !previous || Number(previous.date.slice(5, 7)) - 1 !== monthOf ? monthOf : null;
-  });
-
-  const hoveredCell = hovered ? weeks.flat().find(cell => cell.date === hovered) : null;
+  const hoveredCell = hovered
+    ? quarters.flatMap(item => item.weeks.flat()).find(cell => cell.inYear && cell.date === hovered)
+    : null;
   const hoveredText = hoveredCell
     ? `${new Date(`${hoveredCell.date}T12:00:00`).toLocaleDateString('it-IT', {
         weekday: 'long',
@@ -137,44 +150,53 @@ export function ProgressTrackerPage({
         </div>
 
         <div className="px-4 py-4 sm:px-5">
-          <div className="flex w-full min-w-0 gap-1.5 sm:gap-2">
-            <div className="flex w-6 shrink-0 flex-col font-sans text-[9px] text-muted-foreground sm:w-7 sm:text-[10px]">
-              <span className="h-4" />
-              <div className="grid min-h-0 flex-1 grid-rows-7 items-center gap-[2px] sm:gap-[3px]">
-                {['Lun', '', 'Mer', '', 'Ven', '', ''].map((label, index) => (
-                  <span key={index} className="flex h-0 items-center overflow-visible">{label}</span>
-                ))}
-              </div>
-            </div>
-            <div
-              className="grid min-w-0 flex-1 gap-[2px] sm:gap-[3px]"
-              style={{ gridTemplateColumns: `repeat(${weeks.length}, minmax(0, 1fr))` }}
-            >
-              {weeks.map((week, index) => (
-                <div key={week[0].date} className="flex min-w-0 flex-col gap-[2px] sm:gap-[3px]">
-                  <span className="h-4 whitespace-nowrap font-sans text-[9px] text-muted-foreground sm:text-[10px]">
-                    {monthLabelAt[index] !== null ? MONTH_LABELS[monthLabelAt[index] as number] : ''}
-                  </span>
-                  {week.map(cell => (
-                    <button
-                      key={cell.date}
-                      type="button"
-                      aria-label={`${cell.date}: ${cell.level} parti compilate`}
-                      disabled={!cell.inYear}
-                      onMouseEnter={() => setHovered(cell.date)}
-                      onMouseLeave={() => setHovered(null)}
-                      onClick={() => setSelectedDate(cell.date)}
-                      className={cn(
-                        'aspect-square w-full rounded-[2px] outline-none transition-transform focus-visible:ring-1 focus-visible:ring-ring sm:rounded-[3px]',
-                        cell.inYear ? LEVEL_CLASSES[cell.level] : 'invisible',
-                        cell.inYear && 'hover:scale-125',
-                        cell.date === todayKey && 'ring-1 ring-white/50'
-                      )}
-                    />
-                  ))}
+          <div className="grid grid-cols-1 gap-x-5 gap-y-6 sm:grid-cols-2 xl:grid-cols-4">
+            {quarters.map(({ quarter, weeks, labels }) => (
+              <div key={quarter} className="min-w-0">
+                <p className="mb-2 font-sans text-xs font-semibold text-foreground">
+                  {quarter + 1}° trimestre
+                </p>
+                <div className="flex w-full min-w-0 gap-1.5">
+                  <div className="flex w-6 shrink-0 flex-col font-sans text-[9px] text-muted-foreground sm:text-[10px]">
+                    <span className="h-4" />
+                    <div className="grid min-h-0 flex-1 grid-rows-7 items-center gap-[2px] sm:gap-[3px]">
+                      {['Lun', '', 'Mer', '', 'Ven', '', ''].map((label, index) => (
+                        <span key={index} className="flex h-0 items-center overflow-visible">{label}</span>
+                      ))}
+                    </div>
+                  </div>
+                  <div
+                    className="grid min-w-0 flex-1 gap-[2px] sm:gap-[3px]"
+                    style={{ gridTemplateColumns: `repeat(${weeks.length}, minmax(0, 1fr))` }}
+                  >
+                    {weeks.map((week, index) => (
+                      <div key={week[0].date} className="flex min-w-0 flex-col gap-[2px] sm:gap-[3px]">
+                        <span className="h-4 whitespace-nowrap font-sans text-[9px] text-muted-foreground sm:text-[10px]">
+                          {labels[index] !== null ? MONTH_LABELS[labels[index] as number] : ''}
+                        </span>
+                        {week.map(cell => (
+                          <button
+                            key={cell.date}
+                            type="button"
+                            aria-label={`${cell.date}: ${cell.level} parti compilate`}
+                            disabled={!cell.inYear}
+                            onMouseEnter={() => setHovered(cell.date)}
+                            onMouseLeave={() => setHovered(null)}
+                            onClick={() => setSelectedDate(cell.date)}
+                            className={cn(
+                              'aspect-square w-full rounded-[2px] outline-none transition-transform focus-visible:ring-1 focus-visible:ring-ring sm:rounded-[3px]',
+                              cell.inYear ? LEVEL_CLASSES[cell.level] : 'bg-white/[0.025]',
+                              cell.inYear && 'hover:scale-125',
+                              cell.inYear && cell.date === todayKey && 'ring-1 ring-white/50'
+                            )}
+                          />
+                        ))}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
         </div>
 
