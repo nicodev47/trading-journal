@@ -1,6 +1,6 @@
 'use client';
 
-import { Area, CartesianGrid, ComposedChart, Line, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { Area, CartesianGrid, ComposedChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { useStreamerMode } from '@/contexts/streamer-mode-context';
 import type { AccountSim } from '@/lib/propfirm/engine';
 import { formatDate, useMoney } from './shared';
@@ -27,43 +27,63 @@ export function BalanceChart({
       floor: row.floor,
     })),
   ];
-  const values = data.flatMap(point => [point.balance, point.floor]).concat(targetBalance ?? []);
-  const padding = Math.max(100, (Math.max(...values) - Math.min(...values)) * 0.08);
-  const domain: [number, number] = [
-    Math.floor((Math.min(...values) - padding) / 100) * 100,
-    Math.ceil((Math.max(...values) + padding) / 100) * 100,
-  ];
+  const values = data.flatMap(point => [point.balance, point.floor]);
+  const step = Math.max(500, Math.ceil((Math.max(...values) - Math.min(...values)) / 8 / 500) * 500);
+  const min = Math.floor(Math.min(...values) / step) * step;
+  const max = Math.ceil(Math.max(...values) / step) * step + step;
+  const ticks = Array.from({ length: Math.round((max - min) / step) + 1 }, (_, index) => min + index * step);
 
   return (
     <div className="rounded-xl border border-border bg-background/30 p-4">
-      <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 font-sans text-xs text-muted-foreground">
-        <span className="flex items-center gap-1.5"><span className="h-0.5 w-4 bg-white" />Saldo</span>
-        <span className="flex items-center gap-1.5"><span className="h-0.5 w-4 bg-loss" />Limite di drawdown</span>
-        {targetBalance !== null && (
-          <span className="flex items-center gap-1.5"><span className="h-0.5 w-4 bg-profit" />Obiettivo</span>
-        )}
+      <div className="mb-3 flex items-center gap-4 font-sans text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+        <span className="flex items-center gap-1.5">
+          <span className="size-2 rounded-full bg-profit" />
+          Saldo
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="size-2 rounded-full bg-loss" />
+          Minimo
+        </span>
       </div>
-      <div className="h-56 w-full">
+      <div className="h-72 w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" vertical={false} />
-            <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.5)' }} tickLine={false} axisLine={false} />
-            <YAxis
-              domain={domain}
-              tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.5)' }}
+          <ComposedChart data={data} margin={{ top: 8, right: 4, left: 4, bottom: 0 }}>
+            <defs>
+              <linearGradient id="balanceFill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#34d27b" stopOpacity={0.38} />
+                <stop offset="100%" stopColor="#34d27b" stopOpacity={0} />
+              </linearGradient>
+              <linearGradient id="minimumFill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#ff6568" stopOpacity={0.14} />
+                <stop offset="100%" stopColor="#ff6568" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid stroke="rgba(255,255,255,0.06)" strokeDasharray="2 4" vertical={false} />
+            <XAxis
+              dataKey="label"
+              tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.45)' }}
               tickLine={false}
               axisLine={false}
-              width={56}
-              tickFormatter={value => (streamerMode ? '***' : `$${Math.round(value).toLocaleString('it-IT')}`)}
+              interval="preserveStartEnd"
+              minTickGap={24}
+            />
+            <YAxis
+              orientation="right"
+              domain={[min, max]}
+              ticks={ticks}
+              tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.45)' }}
+              tickLine={false}
+              axisLine={false}
+              width={58}
+              tickFormatter={value => (streamerMode ? '***' : `$${Math.round(value).toLocaleString('en-US')}`)}
             />
             <Tooltip
-              cursor={{ stroke: 'rgba(255,255,255,0.2)' }}
+              cursor={{ stroke: 'rgba(255,255,255,0.18)' }}
               contentStyle={{ background: '#111114', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 10, fontSize: 12 }}
               formatter={(value, name) => [streamerMode ? '******' : money.usd(Number(value)), name]}
             />
-            {targetBalance !== null && <ReferenceLine y={targetBalance} stroke="#30d158" strokeDasharray="5 4" />}
-            <Line type="stepAfter" dataKey="floor" name="Limite" stroke="#ff453a" strokeDasharray="5 4" dot={false} strokeWidth={1.5} />
-            <Area type="monotone" dataKey="balance" name="Saldo" stroke="#e5e5e5" strokeWidth={2} fill="#e5e5e5" fillOpacity={0.12} dot={{ r: 2.5 }} />
+            <Area type="monotone" dataKey="floor" name="Minimo" stroke="#ff6568" strokeWidth={1.5} strokeDasharray="4 4" fill="url(#minimumFill)" dot={false} activeDot={false} />
+            <Area type="monotone" dataKey="balance" name="Saldo" stroke="#4ade9a" strokeWidth={2.5} fill="url(#balanceFill)" dot={false} activeDot={{ r: 4, fill: '#4ade9a', stroke: '#0f0f11' }} />
           </ComposedChart>
         </ResponsiveContainer>
       </div>
