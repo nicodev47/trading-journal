@@ -54,7 +54,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     title: 'Reports',
     description:
       'La sezione Reports (nella barra laterale) raccoglie grafici e dati sul tuo journal, filtrabili per i tuoi asset e setup.\n\nLa pagina scorrerà per mostrarti distribuzioni, statistiche mensili, Execution Map e Trade Log.\n\nClicca sui grafici per vedere le operazioni collegate a ogni dato.',
-    cta: 'Vai ad Analisi',
+    cta: 'Avanti',
   },
   {
     target: 'progress-tab',
