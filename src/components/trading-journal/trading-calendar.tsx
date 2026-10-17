@@ -388,12 +388,6 @@ export function TradingCalendar({
       {analysisMode ? (
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-border px-3 py-2 font-sans text-xs font-medium text-muted-foreground max-md:gap-x-3 max-md:text-[11px]">
           <span className="flex items-center gap-1.5">
-            <span className="relative flex size-4 items-center justify-center rounded-full border border-white/15 bg-white/10 text-[7px] font-bold text-white">
-              P
-            </span>
-            Prop su cui hai eseguito
-          </span>
-          <span className="flex items-center gap-1.5">
             <span className="size-3 rounded-sm bg-white/15" />
             Analisi inserita qui
           </span>
