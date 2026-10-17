@@ -128,7 +128,7 @@ export function TradeForm({
         trade.pair,
         trade.entryPrice,
         trade.exitPrice,
-        trade.direction
+        trade.direction || 'long'
       );
       const pnl = calculatePnL(trade.pair, pips, trade.lotSize);
       const riskReward = calculateRiskReward(pips, trade.stopLoss);

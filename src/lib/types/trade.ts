@@ -6,7 +6,7 @@ export interface ScreenshotData {
 export interface Trade {
   id: string;
   pair: string;
-  direction: 'long' | 'short';
+  direction: 'long' | 'short' | '';
   entryPrice: number;
   exitPrice: number;
   lotSize: number;
