@@ -1,3 +1,4 @@
+import { Play } from 'lucide-react';
 import {
   useEffect,
   useLayoutEffect,
@@ -862,6 +863,19 @@ export function TutorialTour({
               </p>
             ))}
           </div>
+
+          {step.link && (
+            <a
+              href={step.link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              data-tutorial-control="true"
+              className="mt-3 inline-flex h-9 items-center gap-2 rounded-lg border border-border px-3 font-sans text-xs font-semibold text-foreground transition-colors hover:bg-white/10"
+            >
+              <Play className="size-3.5" />
+              {step.link.label}
+            </a>
+          )}
 
           <div className="mt-4 flex flex-col-reverse gap-2 sm:mt-5 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
             <Button
