@@ -72,7 +72,7 @@ export function PromoteDialog({ account, passedOn, onClose, onConfirm }: Promote
       '—',
       [
         after.payout.minWinningDays > 0
-          ? `${after.payout.minWinningDays} giorni da ${usd(after.payout.winningDayMin)}`
+          ? `${after.payout.minWinningDays} giorni da +${usd(after.payout.winningDayMin)}`
           : null,
         after.payout.buffer > 0 ? `buffer ${usd(after.payout.buffer)}` : null,
       ]
