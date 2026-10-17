@@ -1480,7 +1480,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
                   bullets: [
                     'Inserisci P&L, simbolo, direzione, orario e setup.',
                     'Aggiungi note per ricordare cosa è successo nel trade.',
-                    'Salva link TradingView oppure carica un’immagine dal tuo computer.',
+                    'Salva link di TradingView o di Google Drive per i grafici e le immagini.',
                     'Usa la stella per segnare i trade più importanti.',
                   ],
                 },
