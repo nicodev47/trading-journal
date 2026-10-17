@@ -359,7 +359,8 @@ export function PropfirmPage({ store, journals, getJournalTrades }: PropfirmPage
       promotedFrom: account.id,
     });
 
-    store.updateAccount(account.id, { promotedTo: created.id });
+    // The passed evaluation is done: it leaves the list and the funded account takes over.
+    store.deleteAccount(account.id);
     setPromoting(null);
     setOpenAt(created.id);
   };

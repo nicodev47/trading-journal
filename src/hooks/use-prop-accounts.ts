@@ -16,13 +16,19 @@ export function readPropAccounts(): PropAccount[] {
   try {
     const parsed = JSON.parse(localStorage.getItem(PROP_ACCOUNTS_STORAGE_KEY) ?? '[]') as unknown;
 
-    return Array.isArray(parsed)
-      ? parsed.filter(isAccount).map(account => refreshOfficialRules({
-          ...account,
-          balanceUpdates: Array.isArray(account.balanceUpdates) ? account.balanceUpdates : [],
-          payouts: Array.isArray(account.payouts) ? account.payouts : [],
-        }))
-      : [];
+    if (!Array.isArray(parsed)) return [];
+
+    const accounts = parsed.filter(isAccount).map(account =>
+      refreshOfficialRules({
+        ...account,
+        balanceUpdates: Array.isArray(account.balanceUpdates) ? account.balanceUpdates : [],
+        payouts: Array.isArray(account.payouts) ? account.payouts : [],
+      })
+    );
+    const ids = new Set(accounts.map(account => account.id));
+
+    // An evaluation that already became a funded account is not shown any more.
+    return accounts.filter(account => !(account.promotedTo && ids.has(account.promotedTo)));
   } catch {
     return [];
   }

@@ -138,7 +138,7 @@ export function PromoteDialog({ account, passedOn, onClose, onConfirm }: Promote
 
           <p className="font-sans text-[11px] leading-relaxed text-muted-foreground">
             Il conto funded riparte da {money.usd(account.size)}: i trade assegnati o collegati al journal contano dalla data
-            di inizio. L’evaluation resta nell’elenco come superata.
+            di inizio. L’evaluation superata viene tolta dall’elenco.
           </p>
         </div>
 
