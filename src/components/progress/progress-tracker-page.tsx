@@ -98,7 +98,7 @@ export function ProgressTrackerPage({
         <StatTile
           title="Serie attuale"
           value={`${streaks.current} ${streaks.current === 1 ? 'giorno' : 'giorni'}`}
-          hint="Giorni feriali di fila con un trade o un caso studio"
+          hint="Giorni di fila con un trade o un caso studio"
         />
         <StatTile
           title="Serie più lunga"
