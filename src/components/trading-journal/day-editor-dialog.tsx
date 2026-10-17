@@ -1,5 +1,6 @@
 'use client';
 
+import { TRADE_EMOTIONS } from '@/lib/trade-emotions';
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -65,6 +66,7 @@ interface TradeRow {
   setup: string;
   originalSetup: string;
   tags: string[];
+  emotions: string[];
   isFavorite: boolean;
   screenshots: ScreenshotData[];
   notes: string;
@@ -240,6 +242,7 @@ export function DayEditorDialog({
     setup: '',
     originalSetup: '',
     tags: [],
+    emotions: [],
     isFavorite: false,
     screenshots: [],
     notes: '',
@@ -282,6 +285,7 @@ export function DayEditorDialog({
         setup: getEditableSetupValue(t.strategy),
         originalSetup: t.strategy || '',
         tags: t.tags?.length ? t.tags : legacyTrade.mistakes ?? [],
+        emotions: t.emotions ?? [],
         isFavorite: t.isFavorite ?? false,
         screenshots: normalizeScreenshots(t.screenshots),
         notes: t.notes || '',
@@ -297,6 +301,7 @@ export function DayEditorDialog({
       row.time !== '00:00' ||
       row.setup !== '' ||
       row.tags.length > 0 ||
+      row.emotions.length > 0 ||
       row.isFavorite ||
       row.screenshots.length > 0 ||
       row.notes.trim() !== ''
@@ -344,6 +349,7 @@ export function DayEditorDialog({
           riskReward: 0,
           screenshots: row.screenshots,
           tags,
+          emotions: row.emotions,
           isFavorite: row.isFavorite,
           strategy: row.setup || row.originalSetup,
           notes: row.notes,
@@ -628,6 +634,7 @@ export function DayEditorDialog({
       riskReward: 0,
       screenshots: row.screenshots,
       tags,
+      emotions: row.emotions,
       isFavorite: row.isFavorite,
       strategy: row.setup || row.originalSetup,
       notes: row.notes,
@@ -1470,6 +1477,47 @@ export function DayEditorDialog({
                         />
                       </div>
                     ) : null}
+                  </div>
+                </div>
+
+                <div className="flex min-w-0 flex-col gap-2.5 rounded-lg border border-border/70 bg-background/30 p-3 sm:p-3.5">
+                  <Label className="text-[11px] font-medium tracking-normal text-muted-foreground">
+                    EMOZIONI
+                  </Label>
+
+                  <div className="flex flex-wrap gap-2">
+                    {TRADE_EMOTIONS.map(emotion => {
+                      const isSelected = row.emotions.includes(emotion.value);
+
+                      return (
+                        <button
+                          key={emotion.value}
+                          type="button"
+                          aria-pressed={isSelected}
+                          onClick={() =>
+                            updateTradeRow(
+                              row.id,
+                              'emotions',
+                              isSelected
+                                ? row.emotions.filter(value => value !== emotion.value)
+                                : [...row.emotions, emotion.value],
+                              0
+                            )
+                          }
+                          className={cn(
+                            'rounded-lg border px-2.5 py-1.5 text-left font-sans tabular-nums text-[13px] leading-4 transition-colors',
+                            isSelected
+                              ? 'border-white/50 bg-white/15 text-foreground'
+                              : 'border-border bg-background/80 text-muted-foreground hover:bg-secondary hover:text-foreground'
+                          )}
+                        >
+                          <span className="mr-2" aria-hidden="true">
+                            {emotion.emoji}
+                          </span>
+                          {emotion.label}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 

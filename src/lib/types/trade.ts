@@ -23,6 +23,8 @@ export interface Trade {
   isFavorite: boolean;
   strategy: string;
   notes: string;
+  /** Emotions felt during the trade (values of TRADE_EMOTIONS). */
+  emotions?: string[];
   emotionalState: 'confident' | 'nervous' | 'neutral' | 'fomo' | 'revenge' | 'disciplined';
   setupRating: number; // 1-5
   createdAt: string;

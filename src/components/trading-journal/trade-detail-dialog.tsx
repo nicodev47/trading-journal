@@ -1,5 +1,6 @@
 'use client';
 
+import { getEmotion } from '@/lib/trade-emotions';
 import { useEffect, useState } from 'react';
 import { ArrowLeft, ExternalLink, Star } from 'lucide-react';
 import { isDataImage, openImageInNewTab } from '@/lib/image-upload';
@@ -380,6 +381,27 @@ export function TradeDetailDialog({
             <p className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-muted-foreground">
               {trade.notes?.trim() || '—'}
             </p>
+          </DetailCard>
+
+          <DetailCard label="Emozioni" className="mt-3">
+            {(trade.emotions ?? []).length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {(trade.emotions ?? []).map(value => {
+                  const emotion = getEmotion(value);
+
+                  return (
+                    <span
+                      key={value}
+                      className="rounded-lg border border-border bg-white/[0.07] px-2.5 py-1.5 font-sans tabular-nums text-xs text-foreground"
+                    >
+                      {emotion ? `${emotion.emoji} ${emotion.label}` : value}
+                    </span>
+                  );
+                })}
+              </div>
+            ) : (
+              <span className="text-muted-foreground">—</span>
+            )}
           </DetailCard>
 
           <DetailCard label="Tags" className="mt-3">
