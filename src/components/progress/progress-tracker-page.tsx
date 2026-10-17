@@ -166,7 +166,7 @@ export function ProgressTrackerPage({
                       onClick={() => setSelectedDate(cell.date)}
                       className={cn(
                         'aspect-square w-full rounded-[2px] outline-none transition-transform focus-visible:ring-1 focus-visible:ring-ring sm:rounded-[3px]',
-                        cell.inYear ? LEVEL_CLASSES[cell.level] : 'invisible',
+                        cell.inYear ? LEVEL_CLASSES[cell.level] : 'bg-white/[0.025]',
                         cell.inYear && 'hover:scale-125',
                         cell.date === todayKey && 'ring-1 ring-white/50'
                       )}
