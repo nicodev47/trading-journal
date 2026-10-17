@@ -1115,7 +1115,7 @@ export function DayEditorDialog({
                       </p>
                       <ol className="list-decimal space-y-1 pl-4 font-sans text-xs leading-relaxed text-muted-foreground">
                         <li>Scrivi il timeframe del grafico (per esempio 5m).</li>
-                        <li>Carica lo screenshot su Google Drive e copia il link di condivisione.</li>
+                        <li>Carica lo screenshot in una cartella su Google Drive, imposta la visualizzazione su “Chiunque abbia il link” e copia il link di condivisione dell’immagine.</li>
                         <li>Incolla il link qui sotto e premi “Aggiungi”.</li>
                       </ol>
                       <div className="flex flex-wrap gap-2">
