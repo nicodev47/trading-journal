@@ -38,7 +38,7 @@ export function TutorialWelcomeDialog({
           </Button>
           <Button
             type="button"
-            className="bg-white text-black hover:bg-white/90"
+            className="bg-profit font-semibold text-black hover:bg-profit/90"
             onClick={onStart}
           >
             Inizia tutorial

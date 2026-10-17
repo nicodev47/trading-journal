@@ -853,7 +853,7 @@ export function DayEditorDialog({
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="h-10 gap-2 rounded-lg border-white/30 bg-white/10 px-3.5 font-sans text-sm font-medium text-foreground shadow-none transition-colors duration-150 hover:border-white/35 hover:bg-white/20 hover:text-foreground hover:shadow-none dark:border-white/30 dark:bg-white/10 dark:hover:border-white/35 dark:hover:bg-white/20 dark:hover:text-foreground"
+                      className="h-10 gap-2 rounded-lg border-transparent bg-profit px-3.5 font-sans text-sm font-semibold text-black shadow-none transition-colors duration-150 hover:border-transparent hover:bg-profit/90 hover:text-black hover:shadow-none dark:border-transparent dark:bg-profit dark:hover:bg-profit/90 dark:hover:text-black"
                       onClick={() => setSelectedShareTrade(getTradeFromRow(row))}
                     >
                       <span
