@@ -113,7 +113,10 @@ export function AccountDetailDialog({
   const [nameDraft, setNameDraft] = useState(account.name);
   const [balanceDate, setBalanceDate] = useState(todayKey());
   const [balanceValue, setBalanceValue] = useState('');
-  const [payoutDate, setPayoutDate] = useState(todayKey());
+  // A payout covers every trade registered so far, including days dated after today.
+  const [payoutDate, setPayoutDate] = useState(() =>
+    days.reduce((latest, day) => (day.date > latest ? day.date : latest), todayKey())
+  );
   const [payoutAmount, setPayoutAmount] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
 
