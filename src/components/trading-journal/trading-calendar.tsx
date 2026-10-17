@@ -115,18 +115,18 @@ export function TradingCalendar({
   analysisMode,
 }: TradingCalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const { sundayWeekStart, showZeroPnlTradesInCalendar } = useStreamerMode();
+  const { sundayWeekStart } = useStreamerMode();
   const calendarTrades = useMemo(
-    () => filterCalendarTrades(trades, showZeroPnlTradesInCalendar),
-    [showZeroPnlTradesInCalendar, trades]
+    () => filterCalendarTrades(trades, true),
+    [trades]
   );
   const calendarNavigationTrades = useMemo(
     () =>
       filterCalendarTrades(
         navigationTrades,
-        showZeroPnlTradesInCalendar
+        true
       ),
-    [navigationTrades, showZeroPnlTradesInCalendar]
+    [navigationTrades]
   );
 
   useEffect(() => {

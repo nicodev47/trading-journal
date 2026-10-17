@@ -1,5 +1,6 @@
 'use client';
 
+import { getEmotion } from '@/lib/trade-emotions';
 import { type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { cn } from '@/lib/utils';
 import {
@@ -108,10 +109,15 @@ export function CalendarDay({
   analysis,
   onClick,
 }: CalendarDayProps) {
-  const { streamerMode, showCalendarSetup, showCalendarTags } =
+  const { streamerMode, showCalendarSetup, showCalendarTags, showCalendarEmotions } =
     useStreamerMode();
   const canShowCalendarSetup = showCalendarSetup && !streamerMode;
   const canShowCalendarTags = showCalendarTags && !streamerMode;
+  const canShowCalendarEmotions = showCalendarEmotions && !streamerMode;
+  const dayEmotions = dayData
+    ? Array.from(new Set(dayData.trades.flatMap(trade => trade.emotions ?? [])))
+    : [];
+  const visibleEmotion = dayEmotions[0] ? getEmotion(dayEmotions[0]) : undefined;
   const hasTrades = dayData && dayData.tradeCount > 0;
   const pnl = dayData?.totalPnl ?? 0;
   const tradeCount = dayData?.tradeCount ?? 0;
@@ -254,7 +260,7 @@ export function CalendarDay({
               )}
             </span>
 
-            {(canShowCalendarSetup || canShowCalendarTags) && (
+            {(canShowCalendarSetup || canShowCalendarTags || canShowCalendarEmotions) && (
               <div className="flex max-h-[26px] w-full min-w-0 flex-wrap items-center gap-1 overflow-hidden sm:max-h-[30px]">
                 {canShowCalendarSetup && primarySetup && (
                   <span
@@ -265,6 +271,19 @@ export function CalendarDay({
                   >
                     <span className="min-w-0 truncate whitespace-nowrap">
                       {getCompactSetupLabel(primarySetup)}
+                    </span>
+                  </span>
+                )}
+
+                {canShowCalendarEmotions && visibleEmotion && (
+                  <span
+                    className="inline-flex max-w-[54px] shrink items-center gap-0.5 rounded-full border border-border/80 bg-secondary/45 px-1.5 py-[2px] font-sans tabular-nums text-[7px] font-semibold leading-none text-muted-foreground shadow-sm min-[380px]:max-w-[62px] min-[380px]:text-[8px] sm:max-w-[78px] sm:px-2 sm:text-[9px]"
+                    title={dayEmotions.map(value => getEmotion(value)?.label ?? value).join(', ')}
+                  >
+                    {visibleEmotion.emoji && <span aria-hidden="true">{visibleEmotion.emoji}</span>}
+                    <span className="min-w-0 truncate whitespace-nowrap">
+                      {visibleEmotion.label}
+                      {dayEmotions.length > 1 ? ` +${dayEmotions.length - 1}` : ''}
                     </span>
                   </span>
                 )}

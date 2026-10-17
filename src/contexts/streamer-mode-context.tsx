@@ -18,8 +18,8 @@ const CALENDAR_SETUP_VISIBILITY_KEY =
   'eclipsejournal_calendar_show_setup';
 const CALENDAR_TAG_VISIBILITY_KEY =
   'eclipsejournal_calendar_show_tags';
-const CALENDAR_ZERO_PNL_VISIBILITY_KEY =
-  'eclipsejournal_calendar_show_zero_pnl_trades';
+const CALENDAR_EMOTION_VISIBILITY_KEY =
+  'eclipsejournal_calendar_show_emotions';
 
 interface StreamerModeContextValue {
   streamerMode: boolean;
@@ -31,8 +31,8 @@ interface StreamerModeContextValue {
   setShowCalendarSetup: (enabled: boolean) => void;
   showCalendarTags: boolean;
   setShowCalendarTags: (enabled: boolean) => void;
-  showZeroPnlTradesInCalendar: boolean;
-  setShowZeroPnlTradesInCalendar: (enabled: boolean) => void;
+  showCalendarEmotions: boolean;
+  setShowCalendarEmotions: (enabled: boolean) => void;
 }
 
 const StreamerModeContext = createContext<StreamerModeContextValue | null>(null);
@@ -74,14 +74,12 @@ export function StreamerModeProvider({ children }: { children: ReactNode }) {
       return false;
     }
   });
-  const [showZeroPnlTradesInCalendar, setShowZeroPnlTradesInCalendarState] =
+  const [showCalendarEmotions, setShowCalendarEmotionsState] =
     useState(() => {
       try {
-        const stored = localStorage.getItem(CALENDAR_ZERO_PNL_VISIBILITY_KEY);
-
-        return stored === null ? true : stored === 'true';
+        return localStorage.getItem(CALENDAR_EMOTION_VISIBILITY_KEY) === 'true';
       } catch {
-        return true;
+        return false;
       }
     });
 
@@ -129,13 +127,13 @@ export function StreamerModeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     try {
       localStorage.setItem(
-        CALENDAR_ZERO_PNL_VISIBILITY_KEY,
-        String(showZeroPnlTradesInCalendar)
+        CALENDAR_EMOTION_VISIBILITY_KEY,
+        String(showCalendarEmotions)
       );
     } catch {
       // The preference remains active for the current session.
     }
-  }, [showZeroPnlTradesInCalendar]);
+  }, [showCalendarEmotions]);
 
   const value = useMemo(
     () => ({
@@ -148,15 +146,15 @@ export function StreamerModeProvider({ children }: { children: ReactNode }) {
       setShowCalendarSetup: setShowCalendarSetupState,
       showCalendarTags,
       setShowCalendarTags: setShowCalendarTagsState,
-      showZeroPnlTradesInCalendar,
-      setShowZeroPnlTradesInCalendar: setShowZeroPnlTradesInCalendarState,
+      showCalendarEmotions,
+      setShowCalendarEmotions: setShowCalendarEmotionsState,
     }),
     [
       streamerMode,
       sundayWeekStart,
       showCalendarSetup,
       showCalendarTags,
-      showZeroPnlTradesInCalendar,
+      showCalendarEmotions,
     ]
   );
 
@@ -180,8 +178,8 @@ export function DefaultDisplaySettingsProvider({ children }: { children: ReactNo
       setShowCalendarSetup: () => {},
       showCalendarTags: false,
       setShowCalendarTags: () => {},
-      showZeroPnlTradesInCalendar: true,
-      setShowZeroPnlTradesInCalendar: () => {},
+      showCalendarEmotions: false,
+      setShowCalendarEmotions: () => {},
     }),
     []
   );

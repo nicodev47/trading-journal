@@ -78,8 +78,8 @@ export function ProfileDialog({
     setShowCalendarSetup,
     showCalendarTags,
     setShowCalendarTags,
-    showZeroPnlTradesInCalendar,
-    setShowZeroPnlTradesInCalendar,
+    showCalendarEmotions,
+    setShowCalendarEmotions,
   } = useStreamerMode();
 
   const profile = useMemo(() => {
@@ -448,32 +448,31 @@ export function ProfileDialog({
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="min-w-0">
                       <p className="font-sans text-sm font-semibold text-foreground">
-                        Mostra Operazioni Mancate
+                        Mostra Emozioni
                       </p>
                       <p className="mt-1 font-sans text-xs leading-relaxed text-muted-foreground">
-                        Mostra nel calendario le operazioni con risultato nullo,
-                        come trade missati o break-even.
+                        Mostra le emozioni principali della giornata sotto il P&L.
                       </p>
                     </div>
                     <button
                       type="button"
                       role="switch"
-                      aria-checked={showZeroPnlTradesInCalendar}
-                      aria-label="Mostra Operazioni Mancate"
+                      aria-checked={showCalendarEmotions}
+                      aria-label="Mostra Emozioni"
                       onClick={() =>
-                        setShowZeroPnlTradesInCalendar(
-                          !showZeroPnlTradesInCalendar
+                        setShowCalendarEmotions(
+                          !showCalendarEmotions
                         )
                       }
                       className={`relative h-6 w-11 shrink-0 rounded-full border transition-colors ${
-                        showZeroPnlTradesInCalendar
+                        showCalendarEmotions
                           ? 'border-profit/60 bg-profit'
                           : 'border-border bg-input/80'
                       }`}
                     >
                       <span
                         className={`absolute left-0.5 top-0.5 size-5 rounded-full bg-background shadow-sm transition-transform ${
-                          showZeroPnlTradesInCalendar
+                          showCalendarEmotions
                             ? 'translate-x-5'
                             : 'translate-x-0'
                         }`}
