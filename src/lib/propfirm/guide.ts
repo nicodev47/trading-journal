@@ -333,7 +333,8 @@ export const GUIDES: FirmGuide[] = [
     ],
     gaps: [
       'Il drawdown intraday è approssimato con i saldi a fine giornata.',
-      'Nel simulatore il buffer del PRO non è ancora applicato come descritto dalla pagina ufficiale.',
+      'Il buffer del PRO è applicato: sopra il buffer il simulatore calcola l’80% del profitto; il prelievo del 50% del buffer a conto chiuso non è modellato.',
+      'Lo split del PRO+ (90/10) viene da fonti non ufficiali: la pagina PRO+ che ho letto non lo indica.',
       'Il requisito settimanale e il blocco dei 5.000 non sono simulati.',
     ],
     sources: [
