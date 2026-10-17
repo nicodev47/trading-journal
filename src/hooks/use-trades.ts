@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import {
   CUSTOM_TAG_PREFIX,
   TRADE_TAGS,
+  TAG_PRESETS_VERSION,
   type MissedTrade,
   type Trade,
   type JournalState,
@@ -98,6 +99,7 @@ const initialState: JournalState = {
   missedTrades: [],
   tags: DEFAULT_AVAILABLE_TAGS,
   tagsInitialized: true,
+  tagPresetsVersion: TAG_PRESETS_VERSION,
   strategies: [],
   customTags: [],
   tagColors: {},
@@ -133,11 +135,16 @@ export const parseImportedJournal = (jsonString: string): JournalState | null =>
       ])
     );
 
-    const tags = data.tagsInitialized
+    const storedTags = data.tagsInitialized
       ? data.tags || []
       : Array.isArray(data.tags) && data.tags.length > 0
         ? data.tags
         : DEFAULT_AVAILABLE_TAGS;
+    // Journals saved before new preset tags existed get them once.
+    const tags =
+      (data.tagPresetsVersion ?? 0) < TAG_PRESETS_VERSION
+        ? Array.from(new Set([...storedTags, ...DEFAULT_AVAILABLE_TAGS]))
+        : storedTags;
     const journalData = { ...data };
 
     delete journalData.exportMetadata;
@@ -153,6 +160,7 @@ export const parseImportedJournal = (jsonString: string): JournalState | null =>
         : [],
       tags,
       tagsInitialized: true,
+      tagPresetsVersion: TAG_PRESETS_VERSION,
       strategies: data.strategies || [],
       customTags,
       tagColors:

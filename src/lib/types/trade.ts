@@ -101,6 +101,8 @@ export interface JournalState {
   missedTrades: MissedTrade[];
   tags: string[];
   tagsInitialized?: boolean;
+  /** Version of the preset tags this journal already received. */
+  tagPresetsVersion?: number;
   strategies: string[];
   customTags: string[];
   tagColors: Record<string, string>;
@@ -148,7 +150,19 @@ export const FOREX_PAIRS = ['MNQ', 'NQ'] as const;
 export const TRADE_TAGS = [
   { value: 'early_entry', emoji: '⏳', label: 'Entrata in Anticipo' },
   { value: 'late_entry', emoji: '🥶', label: 'Entrata in Ritardo' },
+  { value: 'early_exit', emoji: '🚪', label: 'Uscita Anticipata' },
+  { value: 'late_exit', emoji: '🐢', label: 'Uscita in Ritardo' },
+  { value: 'moved_stop', emoji: '📏', label: 'Stop Spostato' },
+  { value: 'oversized', emoji: '💥', label: 'Size Eccessiva' },
+  { value: 'revenge_trade', emoji: '🔄', label: 'Revenge Trade' },
+  { value: 'off_plan', emoji: '🚫', label: 'Fuori Piano' },
+  { value: 'choppy_market', emoji: '🌀', label: 'Mercato Laterale' },
+  { value: 'strong_trend', emoji: '🚀', label: 'Trend Forte' },
+  { value: 'a_plus_setup', emoji: '⭐', label: 'A+ Setup' },
 ] as const;
+
+/** Bump when TRADE_TAGS gets new presets: journals saved before receive them once. */
+export const TAG_PRESETS_VERSION = 1;
 
 /** Old standard tags that moved elsewhere: still readable on trades saved before. */
 export const LEGACY_TRADE_TAGS = [{ value: 'fomo', emoji: '🏃', label: 'FOMO' }] as const;
