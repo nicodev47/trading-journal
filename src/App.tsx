@@ -336,6 +336,14 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
       setActiveView('monthly');
     }
 
+    if (step?.target === 'progress-tab') {
+      setActiveView('progress');
+    }
+
+    if (step?.target === 'news-tab') {
+      setActiveView('news');
+    }
+
     if (selectedDate) {
       setSelectedDate(null);
     }
@@ -1152,7 +1160,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
           <NewsPage />
         ) : (
           <ProgressTrackerPage
-            trades={trades}
+            trades={visibleTrades}
             dailyAnalyses={progress.dailyAnalyses}
             onSaveAnalysis={progress.saveDailyAnalysis}
             onDeleteAnalysis={progress.deleteDailyAnalysis}

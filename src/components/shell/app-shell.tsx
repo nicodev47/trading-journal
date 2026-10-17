@@ -43,8 +43,8 @@ const MAIN_ENTRIES: NavEntry[] = [
   { id: 'reports', label: 'Reports', icon: BarChart3, view: 'monthly', tutorial: 'analysis-tab' },
   // Strategies is hidden for now: the page is still in the app, add this entry back to show it.
   // { id: 'strategies', label: 'Strategies', icon: Target, view: 'strategies' },
-  { id: 'progress', label: 'Progress Tracker', icon: Trophy, view: 'progress' },
-  { id: 'news', label: 'News', icon: Newspaper, view: 'news' },
+  { id: 'progress', label: 'Progress Tracker', icon: Trophy, view: 'progress', tutorial: 'progress-tab' },
+  { id: 'news', label: 'News', icon: Newspaper, view: 'news', tutorial: 'news-tab' },
 ];
 
 // Entries marked `soon` show as disabled placeholders; none right now.
@@ -204,9 +204,17 @@ export function AppShell({
   return (
     <div className="flex min-h-screen bg-background">
       {/* Desktop rail + sidebar */}
+      {/* The rail is fixed to the viewport (not sticky): it stays put while dialogs or the tutorial scroll the page. */}
+      <div
+        aria-hidden="true"
+        className={cn(
+          'hidden shrink-0 transition-[width] duration-200 md:block',
+          collapsed ? 'w-[72px]' : 'w-[248px]'
+        )}
+      />
       <aside
         className={cn(
-          'sticky top-0 hidden h-screen shrink-0 flex-col border-r border-border bg-card/60 py-4 transition-[width] duration-200 md:flex',
+          'fixed inset-y-0 left-0 z-30 hidden flex-col border-r border-border bg-card py-4 transition-[width] duration-200 md:flex',
           collapsed ? 'w-[72px] px-3' : 'w-[248px] px-3'
         )}
       >

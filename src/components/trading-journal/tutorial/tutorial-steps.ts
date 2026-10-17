@@ -57,6 +57,20 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     cta: 'Vai ad Analisi',
   },
   {
+    target: 'progress-tab',
+    title: 'Progress Tracker',
+    description:
+      'Il Progress Tracker misura la tua costanza: ogni giorno in cui inserisci un trade o un caso studio si colora di verde, e la serie ti dice quanti giorni di fila sei stato presente.\n\nOgni conto ha il suo Progress Tracker. Clicca un giorno per aprirlo, scrivere l’analisi e vedere i trade di quella giornata.',
+    cta: 'Avanti',
+  },
+  {
+    target: 'news-tab',
+    title: 'News e bank holiday',
+    description:
+      'La sezione News ti dice quando sono le notizie economiche e, soprattutto, i bank holiday.\n\nI bank holiday sono i giorni in cui conviene evitare di operare: statisticamente il mercato è più laterale. Li ritrovi segnati anche nel calendario, così sai subito quali giornate saltare.',
+    cta: 'Avanti',
+  },
+  {
     target: 'profile-button',
     title: 'Profilo trader',
     description:

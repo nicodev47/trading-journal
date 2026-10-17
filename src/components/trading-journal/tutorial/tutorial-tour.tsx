@@ -519,7 +519,9 @@ export function TutorialTour({
 
     root.style.overflow = 'hidden';
     root.style.overscrollBehavior = 'none';
-    body.style.overflow = 'hidden';
+    // `clip` blocks scrolling without making the body a scroll container, so the
+    // sticky sidebar keeps following the viewport while the tour scrolls the page.
+    body.style.overflow = 'clip';
     body.style.overscrollBehavior = 'none';
 
     const preventManualScroll = (event: Event) => {
