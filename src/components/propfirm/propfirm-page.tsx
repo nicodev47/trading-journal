@@ -117,7 +117,10 @@ function AccountCard({
   const daysReady = payout ? payout.winningDays >= rules.payout.minWinningDays : false;
 
   return (
-    <div className="flex h-full flex-col gap-3.5 rounded-2xl border border-border bg-card p-4 text-left transition-colors hover:border-white/20">
+    <div className={cn(
+        'flex h-full flex-col gap-3.5 rounded-2xl border border-border bg-card p-4 text-left transition-colors hover:border-white/20',
+        !isEvaluation && payout?.eligible && 'ej-payout-ready'
+      )}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
           {firm && <FirmMark firm={firm} className="size-8 text-xs" />}
@@ -209,7 +212,6 @@ function AccountCard({
             </Stat>
             <Stat
               label="Giorni in profitto"
-              hint={payout && payout.available > 0 ? `Disponibile ${money.usd(payout.available)}` : undefined}
             >
               {rules.payout.minWinningDays > 0 ? (
                 <>
@@ -268,9 +270,9 @@ function AccountCard({
           <button
             type="button"
             onClick={() => onOpen('payout')}
-            className="h-9 rounded-lg bg-profit font-sans text-xs font-bold text-black transition-opacity hover:opacity-90"
+            className="ej-payout-button h-9 rounded-lg bg-profit font-sans text-xs font-bold text-black transition-opacity hover:opacity-90"
           >
-            Richiedi payout · {money.usd(payout.available)}
+            Richiedi payout
           </button>
         )}
         <div className="flex gap-2">
