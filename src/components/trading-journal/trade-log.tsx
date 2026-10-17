@@ -72,9 +72,9 @@ export function TradeLog({ trades, onOpenTrade }: TradeLogProps) {
                 <tr className="border-b border-border text-left text-[11px] text-muted-foreground">
                   <th className="px-4 py-2.5 font-medium sm:px-5">Data</th>
                   <th className="px-3 py-2.5 font-medium">Orario</th>
-                  <th className="px-3 py-2.5 font-medium">Asset</th>
-                  <th className="px-3 py-2.5 font-medium">Direzione</th>
-                  <th className="px-3 py-2.5 font-medium">Setup</th>
+                  <th className="px-3 py-2.5 text-center font-medium">Asset</th>
+                  <th className="px-3 py-2.5 text-center font-medium">Direzione</th>
+                  <th className="px-3 py-2.5 text-center font-medium">Setup</th>
                   <th className="px-3 py-2.5 text-center font-medium">P&L</th>
                   <th className="px-3 py-2.5 text-center font-medium">Note</th>
                   <th className="px-4 py-2.5 text-right font-medium sm:px-5" />
@@ -100,11 +100,11 @@ export function TradeLog({ trades, onOpenTrade }: TradeLogProps) {
                           : '—'}
                       </td>
                       <td className="px-3 py-3 text-muted-foreground">{timeOf(trade)}</td>
-                      <td className="px-3 py-3 text-foreground">{trade.pair?.trim() || '—'}</td>
-                      <td className="px-3 py-3 capitalize text-muted-foreground">
+                      <td className="px-3 py-3 text-center text-foreground">{trade.pair?.trim() || '—'}</td>
+                      <td className="px-3 py-3 text-center capitalize text-muted-foreground">
                         {trade.direction || '—'}
                       </td>
-                      <td className="max-w-[180px] truncate px-3 py-3 text-muted-foreground">
+                      <td className="max-w-[180px] truncate px-3 py-3 text-center text-muted-foreground">
                         {trade.strategy?.trim() || '—'}
                       </td>
                       <td
