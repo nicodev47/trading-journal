@@ -1,6 +1,8 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import { TradeDetailDialog } from '@/components/trading-journal/trade-detail-dialog';
+import { TradeGroupDetailDialog } from '@/components/trading-journal/trade-group-detail-dialog';
 import { TradingCalendar } from '@/components/trading-journal/trading-calendar';
 import type { AccountSim } from '@/lib/propfirm/engine';
 import { startBalanceOf } from '@/lib/propfirm/days';
@@ -88,6 +90,15 @@ export function AccountOverview({
 }) {
   const money = useMoney();
   const history = useMemo(() => buildHistory(trades), [trades]);
+  const [openDay, setOpenDay] = useState<string | null>(null);
+  const [openTrade, setOpenTrade] = useState<Trade | null>(null);
+  const dayTrades = useMemo(
+    () => (openDay ? trades.filter(trade => dayOf(trade) === openDay) : []),
+    [trades, openDay]
+  );
+  const openDayWithTrades = (date: string) => {
+    if (trades.some(trade => dayOf(trade) === date)) setOpenDay(date);
+  };
   const drawdownAmount = account.rules.drawdown.amount ?? 0;
   const targetBalance = sim.requiredProfit !== null ? account.size + sim.requiredProfit : null;
   const consistency = sim.consistency;
@@ -155,7 +166,7 @@ export function AccountOverview({
           weeklyPlans={[]}
           activeWorkspace="personal"
           onResetStudentJournal={() => {}}
-          onDayClick={() => {}}
+          onDayClick={openDayWithTrades}
           onWeekPlanClick={() => {}}
           onImport={() => {}}
           onExport={() => {}}
@@ -186,7 +197,11 @@ export function AccountOverview({
               </thead>
               <tbody>
                 {history.map(row => (
-                  <tr key={row.date} className="border-b border-border/60 last:border-0">
+                  <tr
+                    key={row.date}
+                    onClick={() => setOpenDay(row.date)}
+                    className="cursor-pointer border-b border-border/60 transition-colors last:border-0 hover:bg-white/[0.04]"
+                  >
                     <td className="px-4 py-2.5">{formatDate(row.date)}</td>
                     <td className="px-3 py-2.5 text-muted-foreground">{row.assets}</td>
                     <td
@@ -216,6 +231,26 @@ export function AccountOverview({
           </div>
         )}
       </div>
+
+      <TradeGroupDetailDialog
+        open={openDay !== null && openTrade === null}
+        onOpenChange={open => !open && setOpenDay(null)}
+        title={openDay ? formatDate(openDay) : ''}
+        subtitle={account.name}
+        trades={dayTrades}
+        onOpenTrade={trade => setOpenTrade(trade)}
+      />
+      <TradeDetailDialog
+        trade={openTrade}
+        streamerMode={false}
+        onUpdateTrade={() => {}}
+        onClose={() => {
+          setOpenTrade(null);
+          setOpenDay(null);
+        }}
+        showBackButton
+        onBack={() => setOpenTrade(null)}
+      />
     </div>
   );
 }

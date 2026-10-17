@@ -542,9 +542,9 @@ export function PropfirmPage({ store, journals, getJournalTrades }: PropfirmPage
             onClick={() => setArchiveOpen(value => !value)}
             className="flex items-center gap-2 text-left"
           >
-            <h2 className="font-sans text-[15px] font-semibold tracking-tight">Archivio</h2>
+            <h2 className="font-sans text-[15px] font-semibold tracking-tight">Conti archiviati</h2>
             <span className="font-sans text-xs text-muted-foreground">
-              {archivedAccounts.length} · conti passati o bruciati
+              {archivedAccounts.length}
             </span>
             <ChevronDown className={cn('size-4 text-muted-foreground transition-transform', archiveOpen && 'rotate-180')} />
           </button>
