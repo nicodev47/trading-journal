@@ -814,10 +814,94 @@ export const FIRMS: FirmDef[] = [
 export const getFirm = (id: string) => FIRMS.find(firm => firm.id === id);
 
 /** Rules for a new account of the given kind (funded/live have no profit target). */
-export function rulesForKind(size: SizeDef, kind: AccountKind): PropRules {
+export function rulesForKind(size: SizeDef, kind: AccountKind, firmId?: string, ruleSetId?: string): PropRules {
   if (kind === 'evaluation') return structuredClone(size.rules);
 
-  return structuredClone({ ...size.rules, profitTarget: null, ...size.fundedOverrides });
+  const funded = structuredClone({ ...size.rules, profitTarget: null, ...size.fundedOverrides });
+
+  return kind === 'live' && firmId ? liveRulesFor({ firmId, ruleSetId, size: size.size, rules: funded }) : funded;
+}
+
+/** Live drawdown by plan size (25K, 50K, 100K, 150K), from each firm's help center. */
+const LIVE_DD = {
+  lucid: [1000, 2000, 3000, 4500],
+  alpha: [1000, 2000, 3000, 4500],
+  mffu: [1000, 2000, 3000, 4500],
+  tradeify: [1500, 2000, 3000, 4500],
+} as const;
+
+/** Daily loss limit of Topstep's Live Funded Account by plan size. */
+const TOPSTEP_LIVE_DLL: Record<number, number> = { 50000: 2000, 100000: 3000, 150000: 4500 };
+
+const sizeIndex = (size: number) => Math.max(0, SIZES4.indexOf(size));
+
+/**
+ * Rules of the live phase, taken from the funded rules of the same plan. Live accounts
+ * start from $0: the drawdown is measured from there and the profit is the balance.
+ * What a firm does not publish stays as in the funded phase.
+ */
+export function liveRulesFor(account: { firmId: string; ruleSetId?: string; size: number; rules: PropRules }): PropRules {
+  const funded = structuredClone(account.rules);
+  const trail = (amount: number): PropRules['drawdown'] => ({
+    amount,
+    type: 'eod-trailing',
+    locksAtStart: true,
+    lockOffset: 100,
+  });
+  const base: PropRules = {
+    ...funded,
+    startBalance: 0,
+    profitTarget: null,
+    consistency: null,
+    dailyLossLimit: null,
+    minTradingDays: 0,
+    payout: {
+      ...funded.payout,
+      buffer: 0,
+      minWinningDays: 0,
+      winningDayMin: 0,
+      capPerPayout: null,
+      capSchedule: undefined,
+      profitShare: undefined,
+    },
+  };
+  const index = sizeIndex(account.size);
+  const withSplit = (split: number, minRequest = funded.payout.minRequest) => ({
+    ...base.payout,
+    split,
+    minRequest,
+  });
+
+  switch (account.firmId) {
+    case 'apex':
+      return { ...base, drawdown: trail(3000), payout: withSplit(0.9, 500), maxContracts: '3 mini o 30 micro' };
+    case 'lucid':
+      return { ...base, drawdown: trail(LIVE_DD.lucid[index]) };
+    case 'alpha':
+      return { ...base, drawdown: trail(LIVE_DD.alpha[index]), payout: withSplit(0.8) };
+    case 'tradeify':
+      return { ...base, drawdown: trail(LIVE_DD.tradeify[index]), payout: withSplit(0.8) };
+    case 'mffu':
+      if (account.ruleSetId === 'builder') {
+        return {
+          ...base,
+          drawdown: trail(2000),
+          dailyLossLimit: { amount: 1000, effect: 'lock-day' },
+          payout: withSplit(0.8, 250),
+        };
+      }
+
+      return { ...base, drawdown: trail(LIVE_DD.mffu[index]), payout: withSplit(0.9) };
+    case 'topstep': {
+      const limit = TOPSTEP_LIVE_DLL[account.size];
+
+      return { ...base, drawdown: funded.drawdown, dailyLossLimit: limit ? { amount: limit, effect: 'lock-day' } : null };
+    }
+    case 'tpt':
+      return { ...base, drawdown: trail(funded.drawdown.amount ?? 0), payout: withSplit(0.9) };
+    default:
+      return funded;
+  }
 }
 
 /** The catalog size an account was created from, when it still exists. */
@@ -853,5 +937,5 @@ export function refreshOfficialRules<T extends {
 
   const size = findSize(account);
 
-  return size ? { ...account, rules: rulesForKind(size, account.kind) } : account;
+  return size ? { ...account, rules: rulesForKind(size, account.kind, account.firmId, account.ruleSetId) } : account;
 }

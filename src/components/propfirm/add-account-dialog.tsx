@@ -107,7 +107,7 @@ export function AddAccountDialog({
   const effectiveSize =
     firm?.custom && size ? { ...size, size: parsedCustomSize > 0 ? parsedCustomSize : size.size } : size;
   const rules =
-    effectiveSize && size ? (firm?.custom ? customRules ?? rulesForKind(size, kind) : rulesForKind(size, kind)) : null;
+    effectiveSize && size ? (firm?.custom ? customRules ?? rulesForKind(size, kind, firm.id, ruleSet?.id) : rulesForKind(size, kind, firm?.id, ruleSet?.id)) : null;
   const filteredFirms = FIRMS.filter(item =>
     item.name.toLowerCase().includes(search.trim().toLowerCase())
   );

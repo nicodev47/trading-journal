@@ -38,6 +38,8 @@ interface AccountDetailDialogProps {
   onRemovePayout: (payoutId: string) => void;
   /** Starts the next phase (funded after a passed evaluation) as a new account. */
   onStartFunded: () => void;
+  /** Manual step from funded to the live phase. */
+  onStartLive: () => void;
   onReset: () => void;
   /** Section to scroll to when the dialog opens (e.g. 'payout'). */
   initialSection?: string;
@@ -101,6 +103,7 @@ export function AccountDetailDialog({
   onAddPayout,
   onRemovePayout,
   onStartFunded,
+  onStartLive,
   onReset,
   initialSection,
 }: AccountDetailDialogProps) {
@@ -296,6 +299,14 @@ export function AccountDetailDialog({
               </p>
             </div>
           </div>
+          {account.kind === 'funded' && sim.status === 'active' && !account.promotedTo && (
+            <Button type="button" size="sm" className="mt-3 bg-white text-black hover:bg-white/90" onClick={onStartLive}>
+              Passa a Live
+            </Button>
+          )}
+          {account.kind === 'funded' && account.promotedTo && (
+            <span className="mt-3 block font-sans text-xs text-muted-foreground">Già passato a Live</span>
+          )}
         </div>
 
         {sim.status !== 'active' && (

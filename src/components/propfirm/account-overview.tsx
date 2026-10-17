@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import { TradingCalendar } from '@/components/trading-journal/trading-calendar';
 import type { AccountSim } from '@/lib/propfirm/engine';
+import { startBalanceOf } from '@/lib/propfirm/days';
 import type { PropAccount } from '@/lib/propfirm/types';
 import type { Trade } from '@/lib/types/trade';
 import { cn } from '@/lib/utils';
@@ -114,11 +115,11 @@ export function AccountOverview({
         )}
       </div>
 
-      <BalanceChart sim={sim} size={account.size} drawdownAmount={drawdownAmount} targetBalance={targetBalance} />
+      <BalanceChart sim={sim} size={startBalanceOf(account)} drawdownAmount={drawdownAmount} targetBalance={targetBalance} />
 
       {targetBalance !== null && (
         <div className="rounded-xl border border-border bg-background/30 px-4 pb-4 pt-2">
-          <TargetTrack floor={sim.floor} start={account.size} balance={sim.balance} target={targetBalance} />
+          <TargetTrack floor={sim.floor} start={startBalanceOf(account)} balance={sim.balance} target={targetBalance} />
           <div className="mt-1 flex items-start justify-between">
             <div>
               <p className="font-sans text-sm font-bold tabular-nums text-loss">{money.usd(sim.floor)}</p>

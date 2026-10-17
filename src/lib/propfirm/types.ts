@@ -2,6 +2,8 @@ export type AccountKind = 'evaluation' | 'funded' | 'live';
 export type DrawdownType = 'eod-trailing' | 'intraday-trailing' | 'static';
 
 export interface PropRules {
+  /** Live accounts start from this balance (0) instead of the plan size. */
+  startBalance?: number;
   /** Evaluation profit target in USD; null when not defined (funded/live or to fill in). */
   profitTarget: number | null;
   drawdown: {
@@ -65,8 +67,10 @@ export interface PropAccount {
   balanceUpdates: { date: string; balance: number }[];
   payouts: Payout[];
   createdAt: string;
-  /** Evaluation that was passed: id of the funded account created from it. */
+  /** Account that moved on to the next phase (evaluation→funded, funded→live): id of the new one. */
   promotedTo?: string;
+  /** Last day the account was in use (passed on, burned on): later unassigned trades don't count. */
+  endDate?: string;
   /** Funded account created from a passed evaluation: id of that evaluation. */
   promotedFrom?: string;
 }

@@ -6,13 +6,13 @@ import type { DayResult, PropAccount } from './types.ts';
 const dayOf = (trade: Trade) => (trade.exitDate || trade.entryDate || '').split('T')[0];
 
 /** Net result per trading day, from the start date on. Zero-P&L trades are ignored. */
-export function tradesToDays(trades: Trade[], startDate: string): DayResult[] {
+export function tradesToDays(trades: Trade[], startDate: string, endDate?: string): DayResult[] {
   const days = new Map<string, number>();
 
   trades.filter(isValidStatTrade).forEach(trade => {
     const date = dayOf(trade);
 
-    if (!date || date < startDate) return;
+    if (!date || date < startDate || (endDate && date > endDate)) return;
 
     days.set(date, (days.get(date) ?? 0) + trade.pnl - trade.commission);
   });
@@ -22,6 +22,9 @@ export function tradesToDays(trades: Trade[], startDate: string): DayResult[] {
     .sort((a, b) => a.date.localeCompare(b.date));
 }
 
+/** Balance the account starts from: the plan size, or 0 on a live account. */
+export const startBalanceOf = (account: PropAccount) => account.rules?.startBalance ?? account.size;
+
 /** Daily results of an account, whether it follows a journal or is updated by hand. */
 export function getAccountDays(
   account: PropAccount,
@@ -29,7 +32,7 @@ export function getAccountDays(
 ): DayResult[] {
   if (account.source.kind === 'manual') {
     return balanceUpdatesToDays(
-      account.size,
+      startBalanceOf(account),
       account.balanceUpdates.filter(update => update.date >= account.startDate)
     );
   }
@@ -40,7 +43,8 @@ export function getAccountDays(
   const assigned = journalTrades.filter(trade => trade.propAccountIds?.includes(account.id));
   const unassigned = tradesToDays(
     journalTrades.filter(trade => !trade.propAccountIds?.length),
-    account.startDate
+    account.startDate,
+    account.endDate
   );
   const merged = new Map<string, number>();
 

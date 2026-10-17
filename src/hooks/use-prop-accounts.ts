@@ -18,17 +18,14 @@ export function readPropAccounts(): PropAccount[] {
 
     if (!Array.isArray(parsed)) return [];
 
-    const accounts = parsed.filter(isAccount).map(account =>
+    // Passed or burned accounts stay in the list (in the archive) so the calendar keeps their trace.
+    return parsed.filter(isAccount).map(account =>
       refreshOfficialRules({
         ...account,
         balanceUpdates: Array.isArray(account.balanceUpdates) ? account.balanceUpdates : [],
         payouts: Array.isArray(account.payouts) ? account.payouts : [],
       })
     );
-    const ids = new Set(accounts.map(account => account.id));
-
-    // An evaluation that already became a funded account is not shown any more.
-    return accounts.filter(account => !(account.promotedTo && ids.has(account.promotedTo)));
   } catch {
     return [];
   }

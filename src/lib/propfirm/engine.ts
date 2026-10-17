@@ -100,7 +100,9 @@ const consistencyApplies = (rules: PropRules, kind: AccountKind) => {
   return appliesTo === 'both' || (appliesTo === 'evaluation') === (kind === 'evaluation');
 };
 
-export function simulateAccount({ kind, size, rules, days, payouts }: SimInput): AccountSim {
+export function simulateAccount({ kind, size: planSize, rules, days, payouts }: SimInput): AccountSim {
+  // Live accounts start from $0 (or the given amount): every level is relative to it.
+  const size = rules.startBalance ?? planSize;
   const sortedDays = [...days].sort((a, b) => a.date.localeCompare(b.date));
   const sortedPayouts = [...payouts].sort((a, b) => a.date.localeCompare(b.date));
 

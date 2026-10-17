@@ -136,3 +136,29 @@ test('le regole scritte dall’utente non vengono toccate', () => {
 
   assert.equal(refreshOfficialRules(account).rules.profitTarget, 777);
 });
+
+test('live rules start from zero with the firm live drawdown and lock at +100', async () => {
+  const { liveRulesFor, fundedRulesFor, FIRMS } = await import('../src/lib/propfirm/firms.ts');
+  const { simulateAccount } = await import('../src/lib/propfirm/engine.ts');
+  const lucid = FIRMS.find(f => f.id === 'lucid')!;
+  const set = lucid.ruleSets[0];
+  const size = set.sizes[1];
+  const account = { firmId: 'lucid', ruleSetId: set.id, sizeLabel: size.label, size: size.size, rules: size.rules };
+  const live = liveRulesFor({ ...account, rules: fundedRulesFor(account) });
+
+  assert.equal(live.startBalance, 0);
+  assert.equal(live.drawdown.amount, 2000);
+  assert.equal(live.consistency, null);
+
+  const sim = simulateAccount({
+    kind: 'live',
+    size: size.size,
+    rules: live,
+    days: [{ date: '2026-10-01', pnl: 2500 }, { date: '2026-10-02', pnl: -500 }],
+    payouts: [],
+  });
+
+  assert.equal(sim.balance, 2000);
+  assert.equal(sim.floor, 100);
+  assert.equal(sim.status, 'active');
+});

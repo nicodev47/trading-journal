@@ -1,12 +1,12 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { Plus } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { ChevronDown, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { usePropAccounts } from '@/hooks/use-prop-accounts';
-import { getAccountDays, getAccountTrades } from '@/lib/propfirm/days';
+import { getAccountDays, getAccountTrades, startBalanceOf } from '@/lib/propfirm/days';
 import { simulateAccount } from '@/lib/propfirm/engine';
-import { FIRMS, fundedRulesFor, getFirm } from '@/lib/propfirm/firms';
+import { FIRMS, fundedRulesFor, getFirm, liveRulesFor } from '@/lib/propfirm/firms';
 import type { PropAccount } from '@/lib/propfirm/types';
 import type { Trade } from '@/lib/types/trade';
 import { cn } from '@/lib/utils';
@@ -228,7 +228,7 @@ function AccountCard({
 
       {isEvaluation && targetBalance !== null && (
         <div>
-          <TargetTrack floor={sim.floor} start={account.size} balance={sim.balance} target={targetBalance} />
+          <TargetTrack floor={sim.floor} start={startBalanceOf(account)} balance={sim.balance} target={targetBalance} />
           <div className="mt-1 flex items-start justify-between">
             <div>
               <p className="font-sans text-sm font-bold tabular-nums text-loss">{money.usd(sim.floor)}</p>
@@ -257,13 +257,13 @@ function AccountCard({
             Passa a Funded
           </button>
         )}
-        {isEvaluation && account.promotedTo && (
+        {account.promotedTo && (
           <button
             type="button"
             onClick={() => onOpenAccount(account.promotedTo as string)}
             className="h-9 rounded-lg border border-profit/30 bg-profit/10 font-sans text-xs font-semibold text-profit transition-colors hover:bg-profit/15"
           >
-            Passato a Funded · apri il conto
+            Passato a {isEvaluation ? 'Funded' : 'Live'} · apri il conto
           </button>
         )}
         {!isEvaluation && payout?.eligible && (
@@ -311,6 +311,15 @@ function AccountCard({
   );
 }
 
+/** The day before a new phase starts is the last day of the previous one. */
+const endOf = (startDate: string) => {
+  const date = new Date(`${startDate}T12:00:00`);
+
+  date.setDate(date.getDate() - 1);
+
+  return date.toISOString().slice(0, 10);
+};
+
 export function PropfirmPage({ store, journals, getJournalTrades }: PropfirmPageProps) {
   const [adding, setAdding] = useState<{ firmId?: string } | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -326,6 +335,67 @@ export function PropfirmPage({ store, journals, getJournalTrades }: PropfirmPage
     [openAccount, getJournalTrades]
   );
 
+  // Burned accounts remember the day they ended, so later trades don't mark them on the calendar.
+  const statuses = useMemo(
+    () => new Map(store.accounts.map(account => [account.id, simulate(account, getJournalTrades).sim] as const)),
+    [store.accounts, getJournalTrades]
+  );
+
+  useEffect(() => {
+    store.accounts.forEach(account => {
+      const sim = statuses.get(account.id);
+
+      if (sim?.status === 'failed' && sim.endedOn && account.endDate !== sim.endedOn) {
+        store.updateAccount(account.id, { endDate: sim.endedOn });
+      }
+    });
+  }, [store, statuses]);
+
+  const isArchived = (account: PropAccount) =>
+    Boolean(account.promotedTo) || statuses.get(account.id)?.status === 'failed';
+  const activeAccounts = store.accounts.filter(account => !isArchived(account));
+  const archivedAccounts = store.accounts.filter(isArchived);
+  const [archiveOpen, setArchiveOpen] = useState(false);
+
+  const renderFolders = (list: PropAccount[], open: boolean) => (
+    <>
+            {FIRMS.map(firm => ({
+              firm,
+              accounts: list.filter(account => account.firmId === firm.id),
+            }))
+              .filter(group => group.accounts.length > 0)
+              .map(({ firm, accounts }) => (
+                <FirmFolder key={firm.id} firm={firm} name={firm.name} count={accounts.length} defaultOpen={open}>
+                  <div className="flex flex-col gap-5">
+                    {(['evaluation', 'funded', 'live'] as const)
+                      .map(kind => ({ kind, items: accounts.filter(account => account.kind === kind) }))
+                      .filter(group => group.items.length > 0)
+                      .map(({ kind, items }) => (
+                        <div key={kind} className="flex flex-col gap-2.5">
+                          <p className="font-sans text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                            {KIND_LABEL[kind]} <span className="font-medium">· {items.length}</span>
+                          </p>
+                          <div className="grid grid-cols-1 items-stretch gap-3 md:grid-cols-2 xl:grid-cols-3 md:gap-4">
+                            {items.map(account => (
+                              <AccountCard
+                                key={account.id}
+                                account={account}
+                                getJournalTrades={getJournalTrades}
+                                onOpen={section => openAccountAt(account.id, section)}
+                                onReset={endedOn => reset(account, endedOn)}
+                                onPromote={passedOn => setPromoting({ account, passedOn, target: 'funded' })}
+                                onOpenAccount={id => openAccountAt(id)}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                </FirmFolder>
+              ))}
+    </>
+  );
+
   const create = ({ initialBalance, ...data }: NewAccount) => {
     const created = store.addAccount(data);
 
@@ -339,11 +409,16 @@ export function PropfirmPage({ store, journals, getJournalTrades }: PropfirmPage
     setOpenId(created.id);
   };
 
-  const [promoting, setPromoting] = useState<{ account: PropAccount; passedOn: string | null } | null>(null);
+  const [promoting, setPromoting] = useState<{
+    account: PropAccount;
+    passedOn: string | null;
+    target: 'funded' | 'live';
+  } | null>(null);
 
   const startFunded = (
     account: PropAccount,
-    options: { name: string; startDate: string }
+    options: { name: string; startDate: string },
+    target: 'funded' | 'live' = 'funded'
   ) => {
     const created = store.addAccount({
       firmId: account.firmId,
@@ -352,23 +427,24 @@ export function PropfirmPage({ store, journals, getJournalTrades }: PropfirmPage
       ruleSetName: account.ruleSetName,
       sizeLabel: account.sizeLabel,
       name: options.name,
-      kind: 'funded',
+      kind: target,
       size: account.size,
-      rules: fundedRulesFor(account),
+      rules: target === 'live' ? liveRulesFor(account) : fundedRulesFor(account),
       templateNote: account.templateNote,
       source: account.source,
       startDate: options.startDate,
       promotedFrom: account.id,
     });
 
-    // The passed evaluation is done: it leaves the list and the funded account takes over.
-    store.deleteAccount(account.id);
+    // The old phase is done: it moves to the archive (its trades stay on the calendar).
+    store.updateAccount(account.id, { promotedTo: created.id, endDate: endOf(options.startDate) });
     setPromoting(null);
     setOpenAt(created.id);
   };
 
   const reset = (account: PropAccount, endedOn: string | null) => {
     store.updateAccount(account.id, {
+      endDate: undefined,
       startDate: nextDay(endedOn ?? todayKey()),
       balanceUpdates: account.source.kind === 'manual' ? [] : account.balanceUpdates,
     });
@@ -395,7 +471,7 @@ export function PropfirmPage({ store, journals, getJournalTrades }: PropfirmPage
           </Button>
         </div>
 
-        {store.accounts.length === 0 ? (
+        {activeAccounts.length === 0 && archivedAccounts.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border px-6 py-12 text-center">
             <p className="font-sans text-sm font-semibold">Nessun conto simulato</p>
             <p className="mx-auto mt-1 max-w-md font-sans text-xs text-muted-foreground">
@@ -404,41 +480,8 @@ export function PropfirmPage({ store, journals, getJournalTrades }: PropfirmPage
           </div>
         ) : (
           <div className="flex flex-col gap-6">
-            {FIRMS.map(firm => ({
-              firm,
-              accounts: store.accounts.filter(account => account.firmId === firm.id),
-            }))
-              .filter(group => group.accounts.length > 0)
-              .map(({ firm, accounts }) => (
-                <FirmFolder key={firm.id} firm={firm} name={firm.name} count={accounts.length} defaultOpen>
-                  <div className="flex flex-col gap-5">
-                    {(['evaluation', 'funded', 'live'] as const)
-                      .map(kind => ({ kind, items: accounts.filter(account => account.kind === kind) }))
-                      .filter(group => group.items.length > 0)
-                      .map(({ kind, items }) => (
-                        <div key={kind} className="flex flex-col gap-2.5">
-                          <p className="font-sans text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                            {KIND_LABEL[kind]} <span className="font-medium">· {items.length}</span>
-                          </p>
-                          <div className="grid grid-cols-1 items-stretch gap-3 md:grid-cols-2 xl:grid-cols-3 md:gap-4">
-                            {items.map(account => (
-                              <AccountCard
-                                key={account.id}
-                                account={account}
-                                getJournalTrades={getJournalTrades}
-                                onOpen={section => openAccountAt(account.id, section)}
-                                onReset={endedOn => reset(account, endedOn)}
-                                onPromote={passedOn => setPromoting({ account, passedOn })}
-                                onOpenAccount={id => openAccountAt(id)}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-                </FirmFolder>
-              ))}
-            {store.accounts
+            {renderFolders(activeAccounts, true)}
+            {activeAccounts
               .filter(account => !FIRMS.some(firm => firm.id === account.firmId))
               .map(account => (
                 <AccountCard
@@ -447,13 +490,31 @@ export function PropfirmPage({ store, journals, getJournalTrades }: PropfirmPage
                   getJournalTrades={getJournalTrades}
                   onOpen={section => openAccountAt(account.id, section)}
                   onReset={endedOn => reset(account, endedOn)}
-                  onPromote={passedOn => setPromoting({ account, passedOn })}
+                  onPromote={passedOn => setPromoting({ account, passedOn, target: 'funded' })}
                   onOpenAccount={id => openAccountAt(id)}
                 />
               ))}
           </div>
         )}
       </section>
+
+      {archivedAccounts.length > 0 && (
+        <section className="flex flex-col gap-3">
+          <button
+            type="button"
+            aria-expanded={archiveOpen}
+            onClick={() => setArchiveOpen(value => !value)}
+            className="flex items-center gap-2 text-left"
+          >
+            <h2 className="font-sans text-[15px] font-semibold tracking-tight">Archivio</h2>
+            <span className="font-sans text-xs text-muted-foreground">
+              {archivedAccounts.length} · conti passati o bruciati
+            </span>
+            <ChevronDown className={cn('size-4 text-muted-foreground transition-transform', archiveOpen && 'rotate-180')} />
+          </button>
+          {archiveOpen && <div className="flex flex-col gap-6">{renderFolders(archivedAccounts, false)}</div>}
+        </section>
+      )}
 
       <section className="flex flex-col gap-3">
         <h2 className="font-sans text-[15px] font-semibold tracking-tight">Scegli una firm</h2>
@@ -488,9 +549,10 @@ export function PropfirmPage({ store, journals, getJournalTrades }: PropfirmPage
 
       <PromoteDialog
         account={promoting?.account ?? null}
+        target={promoting?.target}
         passedOn={promoting?.passedOn ?? null}
         onClose={() => setPromoting(null)}
-        onConfirm={options => promoting && startFunded(promoting.account, options)}
+        onConfirm={options => promoting && startFunded(promoting.account, options, promoting.target)}
       />
 
       {openAccount && detail && (
@@ -513,7 +575,8 @@ export function PropfirmPage({ store, journals, getJournalTrades }: PropfirmPage
           }}
           onAddPayout={payout => store.addPayout(openAccount.id, payout)}
           onRemovePayout={payoutId => store.removePayout(openAccount.id, payoutId)}
-          onStartFunded={() => setPromoting({ account: openAccount, passedOn: detail.sim.endedOn })}
+          onStartFunded={() => setPromoting({ account: openAccount, passedOn: detail.sim.endedOn, target: 'funded' })}
+          onStartLive={() => setPromoting({ account: openAccount, passedOn: null, target: 'live' })}
           initialSection={openSection}
           onReset={() => reset(openAccount, detail.sim.endedOn)}
         />
