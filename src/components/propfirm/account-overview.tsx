@@ -170,14 +170,13 @@ export function AccountOverview({
           </p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[640px] border-collapse font-sans text-sm tabular-nums">
+            <table className="w-full min-w-[560px] border-collapse font-sans text-sm tabular-nums">
               <thead>
                 <tr className="border-b border-border text-left text-[10px] uppercase tracking-wider text-muted-foreground">
                   <th className="px-4 py-2.5 font-semibold">Data</th>
                   <th className="px-3 py-2.5 font-semibold">Asset</th>
                   <th className="px-3 py-2.5 text-right font-semibold">P&L netto</th>
                   <th className="px-3 py-2.5 text-right font-semibold">Trade</th>
-                  <th className="px-3 py-2.5 text-right font-semibold">Commissioni</th>
                   <th className="px-3 py-2.5 text-right font-semibold">Media win</th>
                   <th className="px-3 py-2.5 text-right font-semibold">Media loss</th>
                   <th className="px-4 py-2.5 text-right font-semibold">Win %</th>
@@ -197,7 +196,6 @@ export function AccountOverview({
                       {money.signed(row.pnl)}
                     </td>
                     <td className="px-3 py-2.5 text-right">{row.count}</td>
-                    <td className="px-3 py-2.5 text-right text-muted-foreground">{money.usd(row.commission)}</td>
                     <td className="px-3 py-2.5 text-right text-profit">{row.avgWin === null ? '—' : money.usd(row.avgWin)}</td>
                     <td className="px-3 py-2.5 text-right text-loss">{row.avgLoss === null ? '—' : money.usd(row.avgLoss)}</td>
                     <td className="px-4 py-2.5 text-right">
