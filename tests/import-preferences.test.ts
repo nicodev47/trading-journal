@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   collectImportedChoices,
+  collectImportedEmotions,
   extractImportedPreferences,
   getMissingChoices,
   planPreferencesImport,
@@ -90,4 +91,25 @@ test('la preview completa le preferenze con asset e setup usati dai trade', () =
   assert.deepEqual(result.assets, ['NQ', 'ES', 'GC']);
   assert.deepEqual(result.setups, ['Mio', 'Breakout']);
   assert.equal(result.name, 'Io');
+});
+
+test('le emozioni personalizzate dei trade importati vengono aggiunte alle preferenze', () => {
+  const withEmotions = JSON.stringify({
+    trades: [
+      { pair: 'NQ', strategy: 'Mio', emotions: ['fomo', 'custom:Tranquillo'] },
+      { pair: 'NQ', strategy: 'Mio', emotions: ['custom:Tranquillo', 'custom:Stanco'] },
+    ],
+  });
+
+  assert.deepEqual(collectImportedEmotions(withEmotions), ['custom:Tranquillo', 'custom:Stanco']);
+
+  const plan = planPreferencesImport(
+    { ...mine, emotions: { hidden: [], custom: ['custom:Stanco'], colors: {} } },
+    withEmotions,
+    false
+  );
+
+  assert.deepEqual(plan.patch.emotions?.custom, ['custom:Stanco', 'custom:Tranquillo']);
+  assert.deepEqual(plan.addedEmotions, ['custom:Tranquillo']);
+  assert.equal(planPreferencesImport(mine, file, false).patch.emotions, undefined);
 });

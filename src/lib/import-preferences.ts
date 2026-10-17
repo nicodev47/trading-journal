@@ -1,6 +1,7 @@
 import { parseStoredPreferences, type JournalPreferences } from './preferences.ts';
 
 const NO_SETUP_LABEL = 'Senza Setup';
+const CUSTOM_EMOTION_PREFIX = 'custom:';
 
 export interface ImportedChoices {
   assets: string[];
@@ -41,6 +42,41 @@ export function collectImportedChoices(json: string): ImportedChoices {
   }
 }
 
+/** Emotions written by the user (not presets) that the trades of an exported journal use. */
+export function collectImportedEmotions(json: string): string[] {
+  try {
+    const data = JSON.parse(json) as { trades?: unknown } | null;
+    const trades = Array.isArray(data?.trades) ? data.trades : [];
+    const values = trades.flatMap(item => {
+      const emotions = (item as Record<string, unknown> | null)?.emotions;
+
+      return Array.isArray(emotions)
+        ? emotions.filter(
+            (value): value is string =>
+              typeof value === 'string' && value.startsWith(CUSTOM_EMOTION_PREFIX)
+          )
+        : [];
+    });
+
+    return Array.from(new Set(values));
+  } catch {
+    return [];
+  }
+}
+
+/** The emotion lists of the preferences, extended with the custom emotions the file uses. */
+const withImportedEmotions = (
+  emotions: JournalPreferences['emotions'],
+  json: string
+): { value: JournalPreferences['emotions']; added: string[] } => {
+  const current = emotions ?? { hidden: [], custom: [], colors: {} };
+  const added = collectImportedEmotions(json).filter(value => !current.custom.includes(value));
+
+  return added.length
+    ? { value: { ...current, custom: [...current.custom, ...added] }, added }
+    : { value: emotions, added };
+};
+
 const missingFrom = (list: string[], candidates: string[]) =>
   candidates.filter(
     candidate => !list.some(item => item.toLowerCase() === candidate.toLowerCase())
@@ -77,6 +113,8 @@ export interface PreferencesImportPlan {
   restored: boolean;
   addedAssets: string[];
   addedSetups: string[];
+  /** Custom emotions of the imported trades added to the preferences. */
+  addedEmotions?: string[];
 }
 
 /**
@@ -92,6 +130,8 @@ export function planPreferencesImport(
   const imported = extractImportedPreferences(json);
 
   if (journalIsEmpty && imported) {
+    const emotions = withImportedEmotions(imported.emotions ?? current.emotions, json);
+
     return {
       patch: {
         name: imported.name,
@@ -99,26 +139,33 @@ export function planPreferencesImport(
         assets: imported.assets,
         setups: imported.setups,
         windows: imported.windows,
+        ...(emotions.value ? { emotions: emotions.value } : {}),
       },
       restored: true,
       addedAssets: [],
       addedSetups: [],
+      addedEmotions: emotions.added,
     };
   }
 
   const missing = getMissingChoices(current, collectImportedChoices(json));
+  const emotions = withImportedEmotions(current.emotions, json);
+  const hasChoices = missing.assets.length > 0 || missing.setups.length > 0;
 
   return {
-    patch:
-      missing.assets.length || missing.setups.length
+    patch: {
+      ...(hasChoices
         ? {
             assets: [...current.assets, ...missing.assets],
             setups: [...current.setups, ...missing.setups],
           }
-        : {},
+        : {}),
+      ...(emotions.added.length > 0 && emotions.value ? { emotions: emotions.value } : {}),
+    },
     restored: false,
     addedAssets: missing.assets,
     addedSetups: missing.setups,
+    addedEmotions: emotions.added,
   };
 }
 
@@ -129,9 +176,12 @@ export function withImportedChoices(
 ): JournalPreferences {
   const missing = getMissingChoices(preferences, collectImportedChoices(json));
 
+  const emotions = withImportedEmotions(preferences.emotions, json);
+
   return {
     ...preferences,
     assets: [...preferences.assets, ...missing.assets],
     setups: [...preferences.setups, ...missing.setups],
+    ...(emotions.value ? { emotions: emotions.value } : {}),
   };
 }

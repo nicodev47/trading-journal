@@ -627,6 +627,9 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
       description: [
         plan.addedAssets.length ? `Asset: ${plan.addedAssets.join(', ')}` : '',
         plan.addedSetups.length ? `Setup: ${plan.addedSetups.join(', ')}` : '',
+        plan.addedEmotions?.length
+          ? `Emozioni: ${plan.addedEmotions.map(value => value.slice('custom:'.length)).join(', ')}`
+          : '',
       ]
         .filter(Boolean)
         .join(' · '),
