@@ -32,6 +32,7 @@ import { TradeGroupDetailDialog } from '@/components/trading-journal/trade-group
 import {
   CUSTOM_TAG_PREFIX,
   TRADE_TAGS,
+  LEGACY_TRADE_TAGS,
   isValidTradeSetup,
   type Trade,
 } from '@/lib/types/trade';
@@ -188,7 +189,7 @@ function getSetupName(trade: Trade) {
 }
 
 function getTagLabel(value: string) {
-  const standardTag = TRADE_TAGS.find(
+  const standardTag = [...TRADE_TAGS, ...LEGACY_TRADE_TAGS].find(
     (tag) => tag.value === value
   );
   if (standardTag) {

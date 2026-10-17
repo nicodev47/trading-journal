@@ -148,8 +148,10 @@ export const FOREX_PAIRS = ['MNQ', 'NQ'] as const;
 export const TRADE_TAGS = [
   { value: 'early_entry', emoji: '⏳', label: 'Entrata in Anticipo' },
   { value: 'late_entry', emoji: '🥶', label: 'Entrata in Ritardo' },
-  { value: 'fomo', emoji: '🚨', label: 'FOMO' },
 ] as const;
+
+/** Old standard tags that moved elsewhere: still readable on trades saved before. */
+export const LEGACY_TRADE_TAGS = [{ value: 'fomo', emoji: '🏃', label: 'FOMO' }] as const;
 
 export const CUSTOM_TAG_PREFIX = 'custom:';
 

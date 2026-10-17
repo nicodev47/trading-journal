@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import {
   CUSTOM_TAG_PREFIX,
   TRADE_TAGS,
+  LEGACY_TRADE_TAGS,
   type DayData,
   type Trade,
 } from '@/lib/types/trade';
@@ -47,7 +48,7 @@ const getCompactSetupLabel = (setup: string) =>
   SETUP_LABELS[setup] || setup;
 
 const getTagLabel = (value: string) => {
-  const standardTag = TRADE_TAGS.find((tag) => tag.value === value);
+  const standardTag = [...TRADE_TAGS, ...LEGACY_TRADE_TAGS].find((tag) => tag.value === value);
 
   if (standardTag) return `${standardTag.emoji} ${standardTag.label}`;
   if (value.startsWith(CUSTOM_TAG_PREFIX)) {

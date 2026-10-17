@@ -19,6 +19,7 @@ import { getMenuOptions } from '@/lib/preferences';
 import {
   CUSTOM_TAG_PREFIX,
   TRADE_TAGS,
+  LEGACY_TRADE_TAGS,
   type ScreenshotData,
   type Trade,
 } from '@/lib/types/trade';
@@ -119,7 +120,7 @@ function getLinkLabel(url: string) {
 }
 
 export function getTagLabel(value: string) {
-  const standardTag = TRADE_TAGS.find((tag) => tag.value === value);
+  const standardTag = [...TRADE_TAGS, ...LEGACY_TRADE_TAGS].find((tag) => tag.value === value);
   if (standardTag) {
     return `${standardTag.emoji} ${standardTag.label}`;
   }

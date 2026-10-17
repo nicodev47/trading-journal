@@ -1,6 +1,6 @@
 'use client';
 
-import { TRADE_EMOTIONS } from '@/lib/trade-emotions';
+import { TRADE_EMOTIONS, emotionColorKey } from '@/lib/trade-emotions';
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -284,8 +284,11 @@ export function DayEditorDialog({
         ),
         setup: getEditableSetupValue(t.strategy),
         originalSetup: t.strategy || '',
-        tags: t.tags?.length ? t.tags : legacyTrade.mistakes ?? [],
-        emotions: t.emotions ?? [],
+        // FOMO used to be a tag: it now lives with the emotions.
+        tags: (t.tags?.length ? t.tags : legacyTrade.mistakes ?? []).filter(tag => tag !== 'fomo'),
+        emotions: Array.from(
+          new Set([...(t.emotions ?? []), ...((t.tags ?? []).includes('fomo') ? ['fomo'] : [])])
+        ),
         isFavorite: t.isFavorite ?? false,
         screenshots: normalizeScreenshots(t.screenshots),
         notes: t.notes || '',
@@ -1488,6 +1491,7 @@ export function DayEditorDialog({
                   <div className="flex flex-wrap gap-2">
                     {TRADE_EMOTIONS.map(emotion => {
                       const isSelected = row.emotions.includes(emotion.value);
+                      const color = getTagColor(emotionColorKey(emotion.value), tagColors);
 
                       return (
                         <button
@@ -1506,10 +1510,14 @@ export function DayEditorDialog({
                           }
                           className={cn(
                             'rounded-lg border px-2.5 py-1.5 text-left font-sans tabular-nums text-[13px] leading-4 transition-colors',
-                            isSelected
-                              ? 'border-white/50 bg-white/15 text-foreground'
-                              : 'border-border bg-background/80 text-muted-foreground hover:bg-secondary hover:text-foreground'
+                            !isSelected &&
+                              'border-border bg-background/80 text-muted-foreground hover:bg-secondary hover:text-foreground'
                           )}
+                          style={
+                            isSelected
+                              ? { borderColor: `${color}80`, backgroundColor: `${color}1a`, color }
+                              : undefined
+                          }
                         >
                           <span className="mr-2" aria-hidden="true">
                             {emotion.emoji}
