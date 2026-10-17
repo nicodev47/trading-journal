@@ -70,7 +70,7 @@ import {
 } from '@/lib/journal-export';
 
 const UPDATE_BANNER_KEY =
-  'dismissedUpdateBanner_eclipsejournal_v10_onboarding';
+  'dismissedUpdateBanner_eclipsejournal_v11_emotions';
 const BACKTEST_STORAGE_KEY = 'eclipse-trading-journal-data-backtest';
 
 type TradeGroupDialogState = {
@@ -1030,10 +1030,10 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
             <div className="hidden sm:block" aria-hidden="true" />
             <div className="min-w-0 text-center">
               <p className="font-sans text-xs font-semibold text-foreground sm:text-sm">
-                EclipseJournal v1.0 è disponibile!
+                EclipseJournal v1.1 è disponibile!
               </p>
               <p className="font-sans text-[11px] text-muted-foreground">
-                Onboarding personalizzato, profilo con foto, asset e setup tuoi, finestre operative e nuove analisi.
+                Emozioni nei trade, Progress Tracker per ogni conto, nuovi tag e export più completi.
               </p>
             </div>
             <div className="flex items-center justify-center gap-1.5 sm:justify-start">
@@ -1417,7 +1417,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
                   Guida EclipseJournal
                 </h2>
                 <p className="mt-1 max-w-xl font-sans text-xs text-muted-foreground sm:text-sm">
-                  Una guida rapida per capire conti, calendario, trade, analisi, backup e profilo.
+                  Una guida rapida per capire conti, calendario, trade, emozioni, Progress Tracker, analisi, backup e profilo.
                 </p>
               </div>
 
@@ -1455,10 +1455,10 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
                 <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
                   <div>
                     <h3 className="font-sans text-sm font-semibold text-foreground">
-                      EclipseJournal v1.0 — Personalizzazione e analisi
+                      EclipseJournal v1.1 — Emozioni e Progress Tracker
                     </h3>
                     <p className="mt-1 font-sans text-xs leading-relaxed text-muted-foreground">
-                      Scopri l'onboarding personalizzato, il profilo rinnovato, le nuove analisi e le card Share ridisegnate.
+                      Scopri le emozioni nei trade, il Progress Tracker per ogni conto, i nuovi tag e gli export più completi.
                     </p>
                   </div>
                   <button
@@ -1499,7 +1499,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
                   title: 'Nuovo trade',
                   description: 'Registra tutti i dettagli importanti di ogni operazione.',
                   bullets: [
-                    'Inserisci P&L, simbolo, direzione, orario e setup.',
+                    'Inserisci P&L, simbolo, direzione, orario e setup: orario e direzione restano vuoti se non li compili.',
                     'Aggiungi note per ricordare cosa è successo nel trade.',
                     'Salva link di TradingView o di Google Drive per i grafici e le immagini.',
                     'Usa la stella per segnare i trade più importanti.',
@@ -1518,13 +1518,34 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
                 },
                 {
                   icon: '🧠',
-                  title: 'Tags e note',
+                  title: 'Tag, emozioni e note',
                   description: 'Organizza meglio i trade e rendi più facile la review.',
                   bullets: [
-                    'Usa tag rapidi o crea tag personalizzati.',
+                    'Usa i tag rapidi (uscite, stop, size, revenge, fuori piano...) o crea tag personalizzati, per esempio i concetti che usi.',
+                    'Nelle emozioni scegli come ti sentivi: crea le tue e con Gestisci cambi colore o elimini.',
                     'Scrivi cosa hai fatto bene, cosa migliorare e cosa hai imparato.',
-                    'Le note ti aiutano a riconoscere errori e pattern ricorrenti.',
-                    'Tag e note vengono inclusi nel backup.',
+                    'Tag, emozioni e note vengono inclusi nel backup.',
+                  ],
+                },
+                {
+                  icon: '🏆',
+                  title: 'Progress Tracker',
+                  description: 'Misura la tua costanza: ogni conto ha il suo Progress Tracker.',
+                  bullets: [
+                    'Ogni giorno con un trade o un caso studio si colora di verde.',
+                    'La serie conta i giorni di fila: sabato e domenica non la interrompono.',
+                    'Clicca un giorno per scrivere l’analisi e vedere i trade di quella giornata.',
+                    'Nel profilo, in Impostazioni Progress Tracker, puoi dividere la mappa in Q1, Q2, Q3 e Q4.',
+                  ],
+                },
+                {
+                  icon: '📰',
+                  title: 'News e bank holiday',
+                  description: 'Sapere quando sono le notizie e i giorni da evitare.',
+                  bullets: [
+                    'La sezione News mostra gli eventi economici.',
+                    'I bank holiday sono i giorni in cui conviene evitare di operare: statisticamente il mercato è più laterale.',
+                    'I bank holiday compaiono anche nel calendario.',
                   ],
                 },
                 {
@@ -1546,6 +1567,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
                     'Visualizza livello, rank e statistiche principali.',
                     'Personalizza nome, stile e informazioni del profilo.',
                     'Segui la crescita del tuo journal nel tempo.',
+                    'Nelle Impostazioni trovi Impostazioni dashboard (settimana, setup, tag, emozioni nel calendario) e Impostazioni Progress Tracker.',
                     'Usa la player card per avere una panoramica rapida.',
                   ],
                 },
@@ -1557,6 +1579,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
                     'Esplora grafici chiari e coerenti con il tema dell’app.',
                     'Clicca sui grafici per aprire i trade filtrati.',
                     'Analizza setup, direzione, performance e distribuzione.',
+                    'Tag Analytics ed Emotion Analytics mostrano trade, P&L e winrate di ogni tag e di ogni emozione.',
                     'Usa Execution Map e le statistiche per leggere meglio il journal.',
                   ],
                 },
@@ -1569,7 +1592,8 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
                     'Export scarica il file JSON del conto o Backtest corrente.',
                     'Import permette di aggiungere i dati al profilo oppure aprire il file in Preview.',
                     'I dati sono salvati nella cache del browser: fai backup regolari per non perderli.',
-                    'Il backup salva trade, note, setup, tag, piani e link.',
+                    'Il backup salva trade, note, setup, tag, emozioni, piani, link e il Progress Tracker.',
+                    'Il file include anche il tuo profilo: chi lo apre in Preview vede il tuo nome, la tua foto, il tuo Progress Tracker e le News.',
                   ],
                 },
                 {

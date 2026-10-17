@@ -14,52 +14,52 @@ interface WhatsNewDialogProps {
 
 const updates = [
   {
-    icon: "👋",
-    title: "Onboarding personalizzato",
+    icon: "😤",
+    title: "Emozioni nei trade",
     description:
-      "Al primo accesso scegli nome e foto, gli asset che operi, i tuoi setup e le finestre operative. Il journal si adatta a te e il tutorial parte subito dopo.",
+      "Sotto i tag scegli come ti sentivi (Sicuro, Ansioso, FOMO, Avido, Paziente...). Puoi crearne di tue e con Gestisci cambi colore o elimini quelle che non usi. Nel calendario le mostri sotto il P&L.",
   },
   {
-    icon: "🧩",
-    title: "Asset, setup e finestre tuoi",
+    icon: "📈",
+    title: "Emotion Analytics",
     description:
-      "Menu, analisi, calendario e card di condivisione usano le tue scelte. Puoi modificarle in ogni momento dal profilo, nella scheda Impostazioni.",
+      "Nei Reports, accanto ai Tag Analytics, vedi per ogni emozione trade, P&L e winrate. Con Apri leggi i trade collegati.",
   },
   {
-    icon: "🪪",
-    title: "Profilo rinnovato",
+    icon: "🏷️",
+    title: "Nuovi tag predefiniti",
     description:
-      "Foto o iniziali, livello e XP in un'unica card, con tre schede: Profilo, Impostazioni e Dati.",
+      "Uscita Anticipata, Uscita in Ritardo, Stop Spostato, Size Eccessiva, Revenge Trade, Fuori Piano e Mercato Laterale si aggiungono ai tag di entrata. FOMO si sposta tra le emozioni.",
   },
   {
-    icon: "📊",
-    title: "Nuove analisi",
+    icon: "🏆",
+    title: "Progress Tracker per ogni conto",
     description:
-      "Setup e finestra operativa migliori e peggiori, giorno e mese migliori con win rate, Long vs Short, RR, drawdown e profitto in una griglia ordinata.",
+      "Personale, Secondario e Backtest hanno ognuno il proprio Progress Tracker: serie, mappa della costanza, analisi giornaliere e trade mancati. La mappa è un rettangolo e puoi dividerla in Q1, Q2, Q3 e Q4 dalle impostazioni.",
   },
   {
     icon: "🖼️",
-    title: "Card Share ridisegnate",
+    title: "Immagini con Google Drive",
     description:
-      "Le card di trade e profilo hanno un nuovo formato verticale con foto o iniziali, pensato per essere condiviso.",
+      "Grafici e screenshot si aggiungono con un link di TradingView o di Google Drive. La prima volta che inserisci un trade ti guidiamo, con un video, nel caricamento su Drive.",
   },
   {
-    icon: "🎨",
-    title: "Nuovo stile grafico",
+    icon: "📦",
+    title: "Export e Preview più completi",
     description:
-      "Interfaccia scura ispirata allo stile Apple: colori, font e bordi uniformi, calendario con il giorno corrente evidenziato.",
+      "I file esportati includono il Progress Tracker e il profilo di chi li invia. In Preview vedi il profilo del mittente, il suo Progress Tracker e le News, senza toccare il tuo journal.",
   },
   {
-    icon: "👀",
-    title: "Preview dei file importati",
+    icon: "🧭",
+    title: "Tutorial aggiornato",
     description:
-      "Quando importi un file puoi aprirlo in Preview: vedi calendario, statistiche e analisi del file, e ne esci quando vuoi senza modificare il tuo journal.",
+      "Due passi nuovi spiegano Progress Tracker e News, con i bank holiday: i giorni in cui conviene non operare perché il mercato è più laterale. La barra laterale resta ferma mentre scorri.",
   },
   {
     icon: "🛠️",
     title: "Bug Fix & Improvements",
     description:
-      "• Esc chiude solo il sottomenu aperto. • Conferma prima di eliminare un link immagine. • Salvataggio automatico nelle note. • Miglioramenti su mobile.",
+      "• Orario e direzione non inseriti restano vuoti. • Trade log e finestre dei trade con colonne centrate. • Caselle dei dettagli trade alla stessa altezza. • Campo note più comodo. • Impostazioni dashboard e Progress Tracker nel profilo.",
   },
 ];
 
@@ -74,10 +74,10 @@ export function WhatsNewDialog({ open, onOpenChange }: WhatsNewDialogProps) {
           <div className="flex items-start justify-between gap-4">
             <div>
               <DialogTitle className="text-lg text-foreground sm:text-xl">
-                🚀 EclipseJournal v1.0
+                🚀 EclipseJournal v1.1
               </DialogTitle>
               <DialogDescription className="mt-1 text-sm text-muted-foreground">
-                Versione: v1.0
+                Versione: v1.1
               </DialogDescription>
             </div>
             <button
