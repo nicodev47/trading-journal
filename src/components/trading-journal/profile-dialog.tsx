@@ -80,6 +80,8 @@ export function ProfileDialog({
     setShowCalendarTags,
     showCalendarEmotions,
     setShowCalendarEmotions,
+    progressQuarters,
+    setProgressQuarters,
   } = useStreamerMode();
 
   const profile = useMemo(() => {
@@ -343,12 +345,12 @@ export function ProfileDialog({
             </section>
             <section className="rounded-[14px] border border-border bg-background/35 p-3.5 sm:p-4">
               <p className="flex items-center gap-2 font-sans tabular-nums text-xs font-semibold tracking-normal text-muted-foreground">
-                <span>Impostazioni calendario</span>
+                <span>Impostazioni dashboard</span>
                 <span className="text-xl leading-none">🗓️</span>
               </p>
               <p className="mt-3 max-w-xl font-sans text-xs leading-relaxed text-muted-foreground">
-                Personalizza la visualizzazione del calendario in base al tuo modo
-                di leggere la settimana.
+                Personalizza la visualizzazione della dashboard e del calendario in
+                base al tuo modo di leggere la settimana.
               </p>
 
               <div className="mt-3 space-y-2.5">
@@ -476,6 +478,48 @@ export function ProfileDialog({
                           showCalendarEmotions
                             ? 'translate-x-5'
                             : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </section>
+            <section className="rounded-[14px] border border-border bg-background/35 p-3.5 sm:p-4">
+              <p className="flex items-center gap-2 font-sans tabular-nums text-xs font-semibold tracking-normal text-muted-foreground">
+                <span>Impostazioni Progress Tracker</span>
+                <span className="text-xl leading-none">🏆</span>
+              </p>
+              <p className="mt-3 max-w-xl font-sans text-xs leading-relaxed text-muted-foreground">
+                Scegli come vedere la mappa della costanza.
+              </p>
+
+              <div className="mt-3 space-y-2.5">
+                <div className="rounded-lg border border-border/70 bg-background/35 p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-sans text-sm font-semibold text-foreground">
+                        Suddivisione in quarti
+                      </p>
+                      <p className="mt-1 font-sans text-xs leading-relaxed text-muted-foreground">
+                        Mostra la mappa divisa in Q1, Q2, Q3 e Q4 invece di una barra unica.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={progressQuarters}
+                      aria-label="Suddivisione in quarti"
+                      onClick={() => setProgressQuarters(!progressQuarters)}
+                      className={`relative h-6 w-11 shrink-0 rounded-full border transition-colors ${
+                        progressQuarters
+                          ? 'border-profit/60 bg-profit'
+                          : 'border-border bg-input/80'
+                      }`}
+                    >
+                      <span
+                        className={`absolute left-0.5 top-0.5 size-5 rounded-full bg-background shadow-sm transition-transform ${
+                          progressQuarters ? 'translate-x-5' : 'translate-x-0'
                         }`}
                       />
                     </button>

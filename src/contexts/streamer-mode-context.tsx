@@ -18,6 +18,7 @@ const CALENDAR_SETUP_VISIBILITY_KEY =
   'eclipsejournal_calendar_show_setup';
 const CALENDAR_TAG_VISIBILITY_KEY =
   'eclipsejournal_calendar_show_tags';
+const PROGRESS_QUARTERS_KEY = 'eclipsejournal_progress_quarters';
 const CALENDAR_EMOTION_VISIBILITY_KEY =
   'eclipsejournal_calendar_show_emotions';
 
@@ -32,6 +33,9 @@ interface StreamerModeContextValue {
   showCalendarTags: boolean;
   setShowCalendarTags: (enabled: boolean) => void;
   showCalendarEmotions: boolean;
+  /** Progress Tracker heatmap split into four quarters (Q1–Q4) instead of one bar. */
+  progressQuarters: boolean;
+  setProgressQuarters: (enabled: boolean) => void;
   setShowCalendarEmotions: (enabled: boolean) => void;
 }
 
@@ -82,6 +86,22 @@ export function StreamerModeProvider({ children }: { children: ReactNode }) {
         return false;
       }
     });
+
+  const [progressQuarters, setProgressQuartersState] = useState(() => {
+    try {
+      return localStorage.getItem(PROGRESS_QUARTERS_KEY) === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(PROGRESS_QUARTERS_KEY, String(progressQuarters));
+    } catch {
+      // The preference remains active for the current session.
+    }
+  }, [progressQuarters]);
 
   useEffect(() => {
     try {
@@ -148,6 +168,8 @@ export function StreamerModeProvider({ children }: { children: ReactNode }) {
       setShowCalendarTags: setShowCalendarTagsState,
       showCalendarEmotions,
       setShowCalendarEmotions: setShowCalendarEmotionsState,
+      progressQuarters,
+      setProgressQuarters: setProgressQuartersState,
     }),
     [
       streamerMode,
@@ -155,6 +177,7 @@ export function StreamerModeProvider({ children }: { children: ReactNode }) {
       showCalendarSetup,
       showCalendarTags,
       showCalendarEmotions,
+      progressQuarters,
     ]
   );
 
@@ -180,6 +203,8 @@ export function DefaultDisplaySettingsProvider({ children }: { children: ReactNo
       setShowCalendarTags: () => {},
       showCalendarEmotions: false,
       setShowCalendarEmotions: () => {},
+      progressQuarters: false,
+      setProgressQuarters: () => {},
     }),
     []
   );
