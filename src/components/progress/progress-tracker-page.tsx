@@ -121,9 +121,6 @@ export function ProgressTrackerPage({
         <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3.5 sm:px-5">
           <div>
             <h2 className="font-sans text-[15px] font-semibold tracking-tight">Costanza</h2>
-            <p className="font-sans text-xs text-muted-foreground">
-              Verde: giorno in cui hai inserito qualcosa (un trade o un caso studio). Spento: niente.
-            </p>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="icon" className="size-8" onClick={() => setYear(year - 1)}>
