@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 import { AccountDetailDialog } from './account-detail-dialog';
 import { AddAccountDialog, type NewAccount } from './add-account-dialog';
 import { PromoteDialog } from './promote-dialog';
+import { RulesGuideDialog } from './rules-guide-dialog';
 import {
   FirmFolder,
   FirmMark,
@@ -360,6 +361,7 @@ export function PropfirmPage({ store, journals, getJournalTrades }: PropfirmPage
   const activeAccounts = store.accounts.filter(account => !isArchived(account));
   const archivedAccounts = store.accounts.filter(isArchived);
   const [archiveOpen, setArchiveOpen] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(false);
 
   const renderFolders = (list: PropAccount[], open: boolean) => (
     <>
@@ -489,6 +491,7 @@ export function PropfirmPage({ store, journals, getJournalTrades }: PropfirmPage
               Simula valutazioni e conti funded con le regole delle prop firm e tieni traccia dei payout.
             </p>
           </div>
+          <div className="flex gap-2">
           <Button
             type="button"
             size="sm"
@@ -498,6 +501,10 @@ export function PropfirmPage({ store, journals, getJournalTrades }: PropfirmPage
             <Plus className="size-3.5" />
             Aggiungi conto
           </Button>
+          <Button type="button" size="sm" variant="outline" className="h-8" onClick={() => setGuideOpen(true)}>
+            Guida alle regole
+          </Button>
+          </div>
         </div>
 
         {activeAccounts.length === 0 && archivedAccounts.length === 0 ? (
@@ -575,6 +582,8 @@ export function PropfirmPage({ store, journals, getJournalTrades }: PropfirmPage
         journals={journals}
         existingAccounts={store.accounts}
       />
+
+      <RulesGuideDialog open={guideOpen} onClose={() => setGuideOpen(false)} />
 
       <PromoteDialog
         account={promoting?.account ?? null}
