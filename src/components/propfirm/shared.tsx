@@ -34,6 +34,11 @@ export function formatUsd(value: number) {
   })} USD`;
 }
 
+/** Amount without the thousands dot (1400 USD), used for payouts. */
+export function formatPlainUsd(value: number) {
+  return `${value.toLocaleString('it-IT', { maximumFractionDigits: 2, useGrouping: false })} USD`;
+}
+
 export function formatSigned(value: number) {
   return `${value > 0 ? '+' : ''}${formatUsd(value)}`;
 }
@@ -67,6 +72,7 @@ export function useMoney() {
 
   return {
     usd: (value: number) => (streamerMode ? '******' : formatUsd(value)),
+    plain: (value: number) => (streamerMode ? '******' : formatPlainUsd(value)),
     signed: (value: number) => (streamerMode ? '******' : formatSigned(value)),
   };
 }

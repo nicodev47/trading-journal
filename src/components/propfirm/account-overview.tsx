@@ -20,7 +20,7 @@ function Stat({
 }) {
   return (
     <div className="min-w-0 rounded-xl border border-border bg-background/40 p-3.5">
-      <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">{label}</p>
+      <p className="truncate whitespace-nowrap font-sans text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">{label}</p>
       <p
         className={cn(
           'mt-2 truncate font-sans text-lg font-semibold tabular-nums tracking-tight',
@@ -99,7 +99,7 @@ export function AccountOverview({
         <Stat label="P&L totale" tone={sim.profit > 0 ? 'profit' : sim.profit < 0 ? 'loss' : undefined}>
           {money.signed(sim.profit)}
         </Stat>
-        <Stat label="Giorni di trading">{sim.tradingDays}</Stat>
+        <Stat label="Giorni trading">{sim.tradingDays}</Stat>
         {account.kind === 'evaluation' ? (
           <Stat
             label={consistency ? `Consistenza (${Math.round(consistency.limit * 100)}%)` : 'Consistenza'}
@@ -108,7 +108,7 @@ export function AccountOverview({
             {consistency ? (consistency.share === null ? '—' : `${(consistency.share * 100).toFixed(2)}%`) : 'Nessuna'}
           </Stat>
         ) : (
-          <Stat label="Minimo giornaliero">
+          <Stat label="Min. giornaliero">
             {account.rules.payout.winningDayMin > 0 ? money.usd(account.rules.payout.winningDayMin) : '—'}
           </Stat>
         )}

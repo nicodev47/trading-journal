@@ -174,9 +174,9 @@ export function AccountDetailDialog({
   const payoutIssue = !Number.isFinite(typedPayout) || typedPayout <= 0
     ? 'Scrivi un importo valido.'
     : typedPayout > availablePayout + 0.005
-      ? `Puoi richiedere al massimo ${money.usd(availablePayout)}.`
+      ? `Puoi richiedere al massimo ${money.plain(availablePayout)}.`
       : typedPayout < rules.payout.minRequest
-        ? `Il payout minimo è ${money.usd(rules.payout.minRequest)}.`
+        ? `Il payout minimo è ${money.plain(rules.payout.minRequest)}.`
         : null;
 
   const addPayout = () => {
@@ -412,8 +412,8 @@ export function AccountDetailDialog({
               {sim.payout.eligible && (
                 <>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                <Tile label="Incassato (netto)" value={money.usd(Math.round(paidNet * 100) / 100)} tone={paidNet > 0 ? 'profit' : undefined} />
-                <Tile label="Payout disponibile" value={money.usd(sim.payout.available)} />
+                <Tile label="Incassato (netto)" value={money.plain(Math.round(paidNet * 100) / 100)} tone={paidNet > 0 ? 'profit' : undefined} />
+                <Tile label="Payout disponibile" value={money.plain(sim.payout.available)} />
                 <Tile label="Giorni vincenti" value={`${sim.payout.winningDays} / ${rules.payout.minWinningDays}`} />
               </div>
 
@@ -425,8 +425,8 @@ export function AccountDetailDialog({
               >
                 {sim.payout.eligible ? (
                   <p>
-                    Puoi richiedere un payout fino a <strong className="text-profit">{money.usd(sim.payout.available)}</strong>:
-                    ti spettano <strong>{money.usd(sim.payout.available * rules.payout.split)}</strong> ({Math.round(rules.payout.split * 100)}%).
+                    Puoi richiedere un payout fino a <strong className="text-profit">{money.plain(sim.payout.available)}</strong>:
+                    ti spettano <strong>{money.plain(sim.payout.available * rules.payout.split)}</strong> ({Math.round(rules.payout.split * 100)}%).
                   </p>
                 ) : (
                   <>
@@ -480,9 +480,9 @@ export function AccountDetailDialog({
                       <li key={payout.id} className="flex items-center justify-between gap-3 px-4 py-3 font-sans text-sm">
                         <div className="min-w-0">
                           <p className="font-semibold tabular-nums">
-                            {money.usd(payout.gross)}{' '}
+                            {money.plain(payout.gross)}{' '}
                             <span className="font-normal text-muted-foreground">
-                              → {money.usd(payout.gross * rules.payout.split)} a te
+                              → {money.plain(payout.gross * rules.payout.split)} a te
                             </span>
                           </p>
                           <p className="truncate text-xs text-muted-foreground">
