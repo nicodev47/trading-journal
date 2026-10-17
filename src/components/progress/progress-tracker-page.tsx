@@ -103,7 +103,7 @@ export function ProgressTrackerPage({
         <StatTile
           title="Serie più lunga"
           value={`${streaks.longest} ${streaks.longest === 1 ? 'giorno' : 'giorni'}`}
-          hint="Il tuo record"
+          hint="Il tuo record personale"
         />
         <StatTile
           title={`Giorni attivi nel ${year}`}
