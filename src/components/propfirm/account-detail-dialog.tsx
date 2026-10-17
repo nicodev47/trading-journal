@@ -323,8 +323,7 @@ export function AccountDetailDialog({
               ['overview', 'Panoramica'],
               ['calendar', 'Calendario'],
               ['history', 'Storico'],
-              ['rules', 'Regole'],
-              ['consistency', 'Consistenza'],
+              ...(account.firmId === 'custom' ? [['rules', 'Regole']] : []),
               ...(isEvaluation ? [] : [['payout', 'Payout']]),
             ].map(([value, label]) => (
               <button
@@ -380,96 +379,18 @@ export function AccountDetailDialog({
             )}
           </section>
 
-          <section id="prop-section-rules" className="scroll-mt-14 flex flex-col gap-5 p-4 sm:p-6">
-            <h3 className="font-sans text-lg font-semibold tracking-tight">Regole</h3>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <Tile label="Obiettivo" value={isEvaluation ? (rules.profitTarget === null ? '—' : money.usd(rules.profitTarget)) : '—'} />
-              <Tile label="Max drawdown" value={rules.drawdown.amount === null ? '—' : money.usd(rules.drawdown.amount)} />
-              <Tile label="Perdita giornaliera" value={rules.dailyLossLimit ? money.usd(rules.dailyLossLimit.amount) : 'Nessun limite'} />
-              <Tile label="Giorni operativi" value={String(sim.tradingDays)} />
-            </div>
-
-            <div className="rounded-xl border border-border bg-background/30 p-4">
-              <p className="mb-3 font-sans text-sm font-semibold">
-                Regole {account.ruleSetName} {account.sizeLabel}
-              </p>
-              <dl className="grid grid-cols-1 gap-x-8 gap-y-2.5 sm:grid-cols-2">
-                {ruleRows.map(([label, value]) => (
-                  <div key={label} className="flex justify-between gap-4 border-b border-border/50 pb-2 font-sans text-sm">
-                    <dt className="text-muted-foreground">{label}</dt>
-                    <dd className="text-right font-semibold">{value}</dd>
-                  </div>
-                ))}
-              </dl>
-              <p className="mt-3 font-sans text-[11px] leading-relaxed text-muted-foreground">{account.templateNote}</p>
-            </div>
-
-            {account.firmId === 'custom' && (
+          {account.firmId === 'custom' && (
+            <section id="prop-section-rules" className="scroll-mt-14 flex flex-col gap-4 p-4 sm:p-6">
+              <h3 className="font-sans text-lg font-semibold tracking-tight">Le tue regole</h3>
               <div className="rounded-xl border border-border bg-background/30 p-4">
-                <p className="mb-3 font-sans text-sm font-semibold">Le tue regole</p>
                 <RulesEditor
                   rules={rules}
                   isEvaluation={isEvaluation}
                   onChange={(next: PropRules) => onUpdate({ rules: next })}
                 />
               </div>
-            )}
-          </section>
-
-          <section id="prop-section-consistency" className="scroll-mt-14 flex flex-col gap-4 p-4 sm:p-6">
-            <h3 className="font-sans text-lg font-semibold tracking-tight">Consistenza</h3>
-            {!sim.consistency ? (
-              <p className="py-10 text-center font-sans text-sm text-muted-foreground">
-                {rules.consistency
-                  ? `La regola di consistenza di questo piano non vale per un conto ${KIND_LABEL[account.kind].toLowerCase()}.`
-                  : 'Questo piano non ha una regola di consistenza.'}
-              </p>
-            ) : (
-              <>
-                <div className="rounded-xl border border-border bg-background/30 p-4">
-                  <div className="flex items-center justify-between">
-                    <p className="font-sans text-sm font-semibold">Regola di consistenza</p>
-                    <p className="font-sans text-sm font-semibold tabular-nums">
-                      Limite {percent(sim.consistency.limit)}
-                    </p>
-                  </div>
-                  <p className="mt-2 font-sans text-2xl font-semibold tabular-nums">
-                    {sim.consistency.share === null ? '—' : percent(sim.consistency.share)}
-                  </p>
-                  <div className="relative mt-2">
-                    <ProgressBar
-                      value={share * 100}
-                      tone={sim.consistency.ok ? 'neutral' : 'loss'}
-                    />
-                    <span
-                      className="absolute -top-1 h-3.5 w-px bg-white"
-                      style={{ left: `${Math.min(100, sim.consistency.limit * 100)}%` }}
-                    />
-                  </div>
-                  <p className="mt-3 font-sans text-xs text-muted-foreground">
-                    Il giorno migliore deve restare entro il {percent(sim.consistency.limit)} del profitto totale.
-                    {isEvaluation &&
-                      ' In valutazione, oltre il limite il conto non fallisce: l’obiettivo sale finché il giorno migliore rientra nel limite.'}
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                  <Tile label="Giorno migliore" value={sim.consistency.bestDay > 0 ? money.usd(sim.consistency.bestDay) : '—'} />
-                  <Tile label="Profitto conteggiato" value={money.usd(sim.consistency.profitCounted)} />
-                  <Tile
-                    label="Massimo domani"
-                    value={sim.consistency.biggestNextDay === null ? '—' : money.usd(sim.consistency.biggestNextDay)}
-                  />
-                  <Tile
-                    label="Per rientrare"
-                    value={sim.consistency.profitToFix > 0 ? money.usd(sim.consistency.profitToFix) : 'Niente'}
-                    tone={sim.consistency.profitToFix > 0 ? 'loss' : undefined}
-                  />
-                </div>
-
-              </>
-            )}
-          </section>
+            </section>
+          )}
 
           {!isEvaluation && sim.payout && (
             <section id="prop-section-payout" className="scroll-mt-14 flex flex-col gap-4 p-4 sm:p-6">
