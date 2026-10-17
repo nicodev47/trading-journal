@@ -1083,7 +1083,6 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
     showResetButton={!isTutorialActive && showBacktestResetButton}
     onResetStudentJournal={handleResetStudentJournal}
     onResetBacktestJournal={() => setIsBacktestResetDialogOpen(true)}
-    onDeleteMonth={isTutorialActive ? undefined : ids => ids.forEach(id => deleteTrade(id))}
     onDayClick={handleDayClick}
     onWeekPlanClick={handleWeekPlanClick}
     onImport={() => {

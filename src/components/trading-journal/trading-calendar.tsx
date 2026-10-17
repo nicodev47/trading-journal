@@ -8,7 +8,6 @@ import {
   Upload,
   Download,
   RotateCcw,
-  Trash2,
 } from 'lucide-react';
 import { CalendarDay, type AnalysisCell } from './calendar-day';
 import { isUsBankHoliday } from '@/lib/bank-holidays';
@@ -40,8 +39,6 @@ interface TradingCalendarProps {
   showResetButton?: boolean;
   onResetStudentJournal: () => void;
   onResetBacktestJournal?: () => void;
-  /** Deletes every trade of the month on screen (asks for confirmation first). */
-  onDeleteMonth?: (tradeIds: string[]) => void;
   onDayClick: (date: string) => void;
   onWeekPlanClick: (weekKey: string, weekLabel: string) => void;
   onImport: () => void;
@@ -107,7 +104,6 @@ export function TradingCalendar({
   showResetButton = false,
   onResetStudentJournal,
   onResetBacktestJournal,
-  onDeleteMonth,
   onDayClick,
   onWeekPlanClick,
   onImport,
@@ -119,7 +115,6 @@ export function TradingCalendar({
   analysisMode,
 }: TradingCalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [confirmDeleteMonth, setConfirmDeleteMonth] = useState(false);
   const { sundayWeekStart, showZeroPnlTradesInCalendar } = useStreamerMode();
   const calendarTrades = useMemo(
     () => filterCalendarTrades(trades, showZeroPnlTradesInCalendar),
@@ -133,19 +128,6 @@ export function TradingCalendar({
       ),
     [navigationTrades, showZeroPnlTradesInCalendar]
   );
-
-  const monthKey = getDateKey(currentMonth).slice(0, 7);
-  const monthTradeIds = useMemo(
-    () =>
-      trades
-        .filter(trade => (trade.exitDate || trade.entryDate || '').startsWith(monthKey))
-        .map(trade => trade.id),
-    [trades, monthKey]
-  );
-
-  useEffect(() => {
-    setConfirmDeleteMonth(false);
-  }, [monthKey]);
 
   useEffect(() => {
     if (!importTargetMonth) return;
@@ -257,29 +239,6 @@ export function TradingCalendar({
             >
               <RotateCcw className="size-3" />
               Reset
-            </Button>
-          )}
-
-          {!readOnly && !hideActions && !analysisMode && onDeleteMonth && monthTradeIds.length > 0 && (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="h-8 gap-2 rounded-lg border-loss/45 font-sans text-xs font-semibold text-loss hover:bg-loss/10 hover:text-loss max-md:h-9 max-md:flex-1"
-              onBlur={() => setConfirmDeleteMonth(false)}
-              onClick={() => {
-                if (!confirmDeleteMonth) {
-                  setConfirmDeleteMonth(true);
-
-                  return;
-                }
-
-                onDeleteMonth(monthTradeIds);
-                setConfirmDeleteMonth(false);
-              }}
-            >
-              <Trash2 className="size-3" />
-              {confirmDeleteMonth ? `Conferma: elimina ${monthTradeIds.length} trade` : 'Elimina mese'}
             </Button>
           )}
 
