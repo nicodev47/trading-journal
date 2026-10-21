@@ -170,12 +170,12 @@ export function DailyAnalysisDialog({
             ? readOnly
               ? 'Analisi della giornata del trader.'
               : 'Qui scrivi l’analisi della giornata: si salva da solo.'
-            : 'Nessun trade eseguito questo giorno. Qui scrivi tutto quello che c’è dietro: si salva da solo.'}
+            : 'Nessun trade eseguito questo giorno. Esegui un caso studio sulla giornata.'}
         </DialogDescription>
       </div>
 
       <div className="flex flex-col gap-4 p-4 sm:p-6">
-        <Section title="Analisi della giornata" hint="Contesto di mercato, bias, livelli che hai preparato.">
+        <Section title="Narrativa" hint="Contesto di mercato HTF, livelli di liquidità, SMT, Trend generale.">
           <Textarea
             value={analysis}
             readOnly={readOnly}
@@ -185,7 +185,7 @@ export function DailyAnalysisDialog({
           />
         </Section>
 
-        <Section title="Cosa ho visto" hint="Cosa è successo davvero, cosa ti ha sorpreso, cosa hai imparato.">
+        <Section title="Cosa ho visto" hint="Cosa è successo all’interno della sessione, opportunità mancate, stato emotivo, cosa hai imparato.">
           <Textarea
             value={observations}
             readOnly={readOnly}
