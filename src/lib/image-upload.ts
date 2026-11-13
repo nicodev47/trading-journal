@@ -1,11 +1,8 @@
-export const MAX_IMAGES_PER_TRADE = 5;
 /** Charts need their thin lines and small text: keep the full size up to this side. */
 export const MAX_IMAGE_SIDE = 3200;
 export const IMAGE_QUALITY = 0.95;
 /** Images up to this size are stored exactly as they were uploaded. */
 export const KEEP_ORIGINAL_BYTES = 600 * 1024;
-/** Files larger than this are refused before even trying to compress them. */
-export const MAX_SOURCE_BYTES = 15 * 1024 * 1024;
 
 export const isDataImage = (url: string) => url.startsWith('data:image/');
 
@@ -58,19 +55,15 @@ const canvasToBlob = (canvas: HTMLCanvasElement, type: string, quality: number) 
  * untouched, bigger ones keep their full size (up to 3200px) and are re-encoded at
  * very high quality (WebP, or JPEG where the browser cannot write WebP).
  */
-export async function fileToCompressedDataUrl(file: File): Promise<string> {
+export async function fileToCompressedDataUrl(file: File, maxSide = MAX_IMAGE_SIDE): Promise<string> {
   if (!file.type.startsWith('image/')) {
     throw new Error('Il file non è un’immagine');
-  }
-
-  if (file.size > MAX_SOURCE_BYTES) {
-    throw new Error('Immagine troppo grande (massimo 15 MB)');
   }
 
   if (file.size <= KEEP_ORIGINAL_BYTES) return readAsDataUrl(file);
 
   const image = await loadImage(file);
-  const { width, height } = fitWithin(image.naturalWidth, image.naturalHeight);
+  const { width, height } = fitWithin(image.naturalWidth, image.naturalHeight, maxSide);
   const canvas = document.createElement('canvas');
 
   canvas.width = width;
@@ -109,9 +102,19 @@ export async function openImageInNewTab(url: string) {
   window.setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
 }
 
-/** Direct image URL for previews; TradingView snapshot links are converted. */
+/** File id of a Google Drive share link (file/d/ID, open?id=ID, uc?id=ID), if it is one. */
+export const getDriveFileId = (url: string) =>
+  url.match(/drive\.google\.com\/file\/(?:u\/\d+\/)?d\/([\w-]+)/)?.[1] ??
+  url.match(/drive\.google\.com\/(?:open|uc)\?(?:[^#]*&)?id=([\w-]+)/)?.[1];
+
+/** Direct image URL for previews; TradingView snapshot and Google Drive links are converted. */
 export function getPreviewImageUrl(url: string): string {
   if (isDataImage(url) || url.includes('s3.tradingview.com/snapshots')) return url;
+
+  const driveId = getDriveFileId(url);
+
+  // Drive share links are web pages: its thumbnail endpoint works for files shared with "anyone with the link".
+  if (driveId) return `https://drive.google.com/thumbnail?id=${driveId}&sz=w2000`;
 
   const match = url.match(/tradingview\.com\/x\/([A-Za-z0-9]+)/);
 

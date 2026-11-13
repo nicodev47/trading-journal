@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { X } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -17,6 +18,7 @@ import { withImportedChoices } from '@/lib/import-preferences';
 import { NewsPage } from '@/components/news/news-page';
 import { ProgressTrackerPage } from '@/components/progress/progress-tracker-page';
 import { getExportDateSlug, normalizeExportName } from '@/lib/export-filename';
+import { downloadJournalArchive } from '@/lib/journal-download';
 import {
   createWorkspaceExportData,
   extractProgressJournal,
@@ -77,28 +79,17 @@ function PreviewContent({ data, fileName, view, onClose }: ImportPreviewProps) {
   if (!journal) return null;
 
   const handleExport = () => {
-    const blob = new Blob(
-      [
-        createWorkspaceExportData('personal', journal, new Date(), undefined, progress, {
-          name: preferences.name,
-          photo: preferences.photo,
-          assets: preferences.assets,
-          setups: preferences.setups,
-          windows: preferences.windows,
-          emotions: preferences.emotions,
-        }),
-      ],
-      { type: 'application/json' }
-    );
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-
-    anchor.href = url;
-    anchor.download = `eclipsejournal-${normalizeExportName(preferences.name, 'preview')}-${getExportDateSlug(new Date(), true)}.json`;
-    document.body.appendChild(anchor);
-    anchor.click();
-    document.body.removeChild(anchor);
-    URL.revokeObjectURL(url);
+    void downloadJournalArchive(
+      createWorkspaceExportData('personal', journal, new Date(), undefined, progress, {
+        name: preferences.name,
+        photo: preferences.photo,
+        assets: preferences.assets,
+        setups: preferences.setups,
+        windows: preferences.windows,
+        emotions: preferences.emotions,
+      }),
+      `eclipsejournal-${normalizeExportName(preferences.name, 'preview')}-${getExportDateSlug(new Date(), true)}.zip`
+    ).catch(() => toast.error('Esportazione non riuscita'));
   };
 
   const openGroup = (payload: GroupDialog) => {

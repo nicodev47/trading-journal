@@ -20,6 +20,9 @@ import {
   normalizeExportFileName,
 } from '@/lib/export-filename';
 import { parseJournalExport } from '@/lib/journal-export';
+import { InvalidArchiveError, readJournalArchive } from '@/lib/journal-archive';
+import { storeArchiveAssets } from '@/lib/image-store';
+import { downloadJournalArchive } from '@/lib/journal-download';
 import {
   SYSTEM_WORKSPACES,
   type JournalWorkspace,
@@ -154,28 +157,25 @@ export function ImportExportDialog({
     onClose();
   };
 
-  const downloadJson = (data: string, fileName: string) => {
-    const blob = new Blob([data], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-
-    anchor.href = url;
-    anchor.download = fileName;
-    document.body.appendChild(anchor);
-    anchor.click();
-    document.body.removeChild(anchor);
-    URL.revokeObjectURL(url);
+  /** Downloads the export as a ZIP: the journal data plus the images uploaded from the computer. */
+  const downloadExport = async (data: string, fileName: string) => {
+    await downloadJournalArchive(data, fileName);
     // A censored (streamer mode) export is not a usable backup.
     if (!streamerMode) onBackupDone?.();
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (!selectedExportData) return;
 
-    downloadJson(
-      selectedExportData,
-      normalizeExportFileName(exportFileName, suggestedExportFileName)
-    );
+    try {
+      await downloadExport(
+        selectedExportData,
+        normalizeExportFileName(exportFileName, suggestedExportFileName, 'zip')
+      );
+    } catch {
+      toast.error('Esportazione non riuscita');
+      return;
+    }
 
     toast.success('Dati esportati correttamente');
     handleClose();
@@ -193,14 +193,21 @@ export function ImportExportDialog({
     setIsBackupNameOpen(true);
   };
 
-  const confirmBackupDownload = () => {
+  const confirmBackupDownload = async () => {
     if (!selectedWorkspaceExportData) return;
 
     const fallback = getGuidedExportBaseName(activeWorkspace);
-    downloadJson(
-      selectedWorkspaceExportData,
-      normalizeExportFileName(backupFileName, fallback)
-    );
+
+    try {
+      await downloadExport(
+        selectedWorkspaceExportData,
+        normalizeExportFileName(backupFileName, fallback, 'zip')
+      );
+    } catch {
+      toast.error('Backup non riuscito');
+      return;
+    }
+
     setBackupFileName(fallback);
     setIsBackupNameOpen(false);
     setIsOverwriteConfirmOpen(returnToOverwriteAfterBackup);
@@ -223,59 +230,81 @@ export function ImportExportDialog({
     return true;
   };
 
-  const prepareImport = (file: File) => {
+  const processImportText = (text: string) => {
+    try {
+      const parsed = parseJournalExport(text);
+
+      if (!parsed) {
+        throw new Error('Invalid journal structure');
+      }
+
+      if (parsed.kind === 'full-backup') {
+        const entries = Object.entries(parsed.data.workspaces);
+
+        setFullBackupSummary(
+          entries.map(([id, state]) => ({
+            name:
+              parsed.data.workspaceOptions.find(option => option.id === id)?.name ?? id,
+            trades: state?.trades.length ?? 0,
+          }))
+        );
+        // Preview shows one journal: the open one when present, else the first.
+        const previewState =
+          parsed.data.workspaces[activeWorkspace] ?? entries[0]?.[1];
+
+        setFullBackupPreviewData(previewState ? JSON.stringify(previewState) : null);
+        setPendingImportData(text);
+        return;
+      }
+
+      setFullBackupSummary(null);
+      setFullBackupPreviewData(null);
+      setPendingImportData(text);
+    } catch {
+      setImportError('Il file selezionato non contiene dati validi del journal.');
+      toast.error('Formato dati non valido');
+    }
+  };
+
+  const prepareImport = async (file: File) => {
     setSelectedFileName(file.name);
     setPendingImportData(null);
     setImportStep('choose');
     setPendingConfirm(null);
-    setImportStep('choose');
-    setPendingConfirm(null);
     setImportError('');
 
-    if (!file.name.toLowerCase().endsWith('.json') && file.type !== 'application/json') {
-      setImportError('Seleziona un file JSON valido.');
-      toast.error('Importa un file JSON');
+    const lowerName = file.name.toLowerCase();
+    const isZip = lowerName.endsWith('.zip') || file.type === 'application/zip' || file.type === 'application/x-zip-compressed';
+    const isJson = lowerName.endsWith('.json') || file.type === 'application/json';
+
+    if (!isZip && !isJson) {
+      setImportError('Seleziona un file ZIP valido.');
+      toast.error('Importa un file ZIP');
+      return;
+    }
+
+    if (isZip) {
+      try {
+        const archive = await readJournalArchive(file);
+
+        // The images go in this browser's storage; the journal data follows the usual import steps.
+        await storeArchiveAssets(archive.assets);
+
+        processImportText(archive.json);
+      } catch (error) {
+        const message = error instanceof InvalidArchiveError ? error.message : 'Impossibile leggere il file ZIP.';
+
+        setImportError(message);
+        toast.error(message);
+      }
+
       return;
     }
 
     const reader = new FileReader();
 
     reader.onload = event => {
-      const text = typeof event.target?.result === 'string' ? event.target.result : '';
-
-      try {
-        const parsed = parseJournalExport(text);
-
-        if (!parsed) {
-          throw new Error('Invalid journal structure');
-        }
-
-        if (parsed.kind === 'full-backup') {
-          const entries = Object.entries(parsed.data.workspaces);
-
-          setFullBackupSummary(
-            entries.map(([id, state]) => ({
-              name:
-                parsed.data.workspaceOptions.find(option => option.id === id)?.name ?? id,
-              trades: state?.trades.length ?? 0,
-            }))
-          );
-          // Preview shows one journal: the open one when present, else the first.
-          const previewState =
-            parsed.data.workspaces[activeWorkspace] ?? entries[0]?.[1];
-
-          setFullBackupPreviewData(previewState ? JSON.stringify(previewState) : null);
-          setPendingImportData(text);
-          return;
-        }
-
-        setFullBackupSummary(null);
-        setFullBackupPreviewData(null);
-        setPendingImportData(text);
-      } catch {
-        setImportError('Il JSON selezionato non contiene dati validi del calendario.');
-        toast.error('Formato dati non valido');
-      }
+      processImportText(typeof event.target?.result === 'string' ? event.target.result : '');
     };
 
     reader.onerror = () => {
@@ -368,7 +397,7 @@ export function ImportExportDialog({
                 ? importStep === 'choose'
                   ? 'Come vuoi usare il file selezionato?'
                   : `Scegli come importare i dati in ${importTargetLabel}.`
-                : `Seleziona un file JSON da importare in ${importTargetLabel}.`}
+                : `Seleziona il file ZIP da importare in ${importTargetLabel}.`}
           </DialogDescription>
         </DialogHeader>
 
@@ -415,7 +444,7 @@ export function ImportExportDialog({
                 <p className="font-sans text-xs text-muted-foreground">
                   Il file verrà salvato come{' '}
                   <span className="break-all font-sans tabular-nums text-foreground">
-                    {normalizeExportFileName(exportFileName, suggestedExportFileName)}
+                    {normalizeExportFileName(exportFileName, suggestedExportFileName, 'zip')}
                   </span>
                 </p>
               </div>
@@ -515,7 +544,7 @@ export function ImportExportDialog({
                     <p className="text-muted-foreground">
                       {isFullBackup
                         ? 'Puoi ripristinare direttamente tutti i journal del file.'
-                        : 'Puoi importare direttamente il file JSON nella pagina aperta.'}
+                        : 'Puoi importare direttamente il file nella pagina aperta.'}
                     </p>
                   </div>
                 ) : canAppendImport ? (
@@ -643,7 +672,7 @@ export function ImportExportDialog({
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".json,application/json"
+                accept=".zip,.json,application/zip,application/json"
                 onChange={handleFileUpload}
                 className="hidden"
               />
@@ -670,7 +699,7 @@ export function ImportExportDialog({
                   )}
                 />
                 <span className="font-sans tabular-nums text-sm">
-                  {isDragging ? 'Rilascia qui il file JSON' : 'Scegli o trascina un file JSON'}
+                  {isDragging ? 'Rilascia qui il file' : 'Scegli o trascina il file ZIP'}
                 </span>
               </Button>
 
@@ -890,7 +919,8 @@ export function ImportExportDialog({
               <span className="break-all font-sans tabular-nums text-foreground">
                 {normalizeExportFileName(
                   backupFileName,
-                  getGuidedExportBaseName(activeWorkspace)
+                  getGuidedExportBaseName(activeWorkspace),
+                  'zip'
                 )}
               </span>
             </p>

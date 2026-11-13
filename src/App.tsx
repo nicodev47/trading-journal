@@ -47,6 +47,7 @@ import { ProgressTrackerPage } from '@/components/progress/progress-tracker-page
 import { StrategiesPage } from '@/components/trading-journal/strategies-page';
 import { readProgressJournal, useProgressJournal } from '@/hooks/use-progress-journal';
 import { ImportPreview } from '@/components/trading-journal/import-preview';
+import { downloadJournalArchive } from '@/lib/journal-download';
 import { createFullBackupExportData, extractSenderProfile, parseJournalExport } from '@/lib/journal-export';
 import {
   getBackupBaseline,
@@ -70,7 +71,7 @@ import {
 } from '@/lib/journal-export';
 
 const UPDATE_BANNER_KEY =
-  'dismissedUpdateBanner_eclipsejournal_v11_emotions';
+  'dismissedUpdateBanner_eclipsejournal_v12_images';
 const BACKTEST_STORAGE_KEY = 'eclipse-trading-journal-data-backtest';
 
 type TradeGroupDialogState = {
@@ -577,22 +578,17 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
     return createWorkspaceExportData(workspace, getWorkspaceData(workspace), new Date(), undefined, getProgressFor(workspace), exportProfile);
   }, [getWorkspaceData, progress.dailyAnalyses, progress.missedTrades, activeWorkspace, preferences]);
 
-  // Used by the backup reminder: downloads the open journal as a single JSON file.
+  // Used by the backup reminder: downloads the open journal as a ZIP file (data + images).
   exportCurrentJournalRef.current = () => {
-    const blob = new Blob([getWorkspaceExportData(activeWorkspace)], {
-      type: 'application/json',
-    });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-
-    anchor.href = url;
-    anchor.download = `${getGuidedExportBaseName(activeWorkspace)}.json`;
-    document.body.appendChild(anchor);
-    anchor.click();
-    document.body.removeChild(anchor);
-    URL.revokeObjectURL(url);
-    setBackupBaseline(totalTrades);
-    toast.success('Journal esportato');
+    void downloadJournalArchive(
+      getWorkspaceExportData(activeWorkspace),
+      `${getGuidedExportBaseName(activeWorkspace)}.zip`
+    )
+      .then(() => {
+        setBackupBaseline(totalTrades);
+        toast.success('Journal esportato');
+      })
+      .catch(() => toast.error('Esportazione non riuscita'));
   };
 
   const getWorkspaceHasImportData = useCallback((workspace: JournalWorkspace) => {
@@ -851,22 +847,18 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
 
     const backtestData = getWorkspaceData('backtest');
     const backupData = JSON.stringify(backtestData, null, 2);
-    const blob = new Blob([backupData], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
     const backupBaseName = getDefaultExportBaseName(
       'backtest',
       backtestData.trades
     );
 
-    anchor.href = url;
-    anchor.download = normalizeExportFileName(backupBaseName, backupBaseName);
-    document.body.appendChild(anchor);
-    anchor.click();
-    document.body.removeChild(anchor);
-    URL.revokeObjectURL(url);
-
-    handleResetBacktestJournal();
+    // The journal is cleared only once the backup file has been created.
+    void downloadJournalArchive(
+      backupData,
+      normalizeExportFileName(backupBaseName, backupBaseName, 'zip')
+    )
+      .then(handleResetBacktestJournal)
+      .catch(() => toast.error('Backup non riuscito: il journal non è stato azzerato'));
   };
 
   const handleOpenProfile = () => {
@@ -896,22 +888,16 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
         return [workspace.id, journal];
       })
     );
-    const blob = new Blob([createFullBackupExportData(journals, included, new Date(), Object.fromEntries(
+    const backupData = createFullBackupExportData(journals, included, new Date(), Object.fromEntries(
       included.map(workspace => [workspace.id, getProgressFor(workspace.id)])
-    ), exportProfile)], {
-      type: 'application/json',
-    });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
+    ), exportProfile);
 
-    anchor.href = url;
-    anchor.download = `${getGuidedExportBaseName('full-backup')}.json`;
-    document.body.appendChild(anchor);
-    anchor.click();
-    document.body.removeChild(anchor);
-    URL.revokeObjectURL(url);
-    setBackupBaseline(totalTrades);
-    toast.success('Tutti i journal sono stati esportati');
+    void downloadJournalArchive(backupData, `${getGuidedExportBaseName('full-backup')}.zip`)
+      .then(() => {
+        setBackupBaseline(totalTrades);
+        toast.success('Tutti i journal sono stati esportati');
+      })
+      .catch(() => toast.error('Esportazione non riuscita'));
   };
 
   const handleClearAllJournals = () => {
@@ -932,22 +918,18 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
     const workspaceData = getWorkspaceData(workspace);
     const workspaceName = workspaces.find((item) => item.id === workspace)?.name;
     const backupData = createWorkspaceExportData(workspace, workspaceData, new Date(), undefined, getProgressFor(workspace), exportProfile);
-    const blob = new Blob([backupData], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
     const backupBaseName = getDefaultExportBaseName(
       workspace,
       workspaceData.trades,
       workspaceName
     );
 
-    anchor.href = url;
-    anchor.download = normalizeExportFileName(backupBaseName, backupBaseName);
-    document.body.appendChild(anchor);
-    anchor.click();
-    document.body.removeChild(anchor);
-    URL.revokeObjectURL(url);
-    toast.success(`Backup di ${workspaceName ?? 'conto'} scaricato`);
+    void downloadJournalArchive(
+      backupData,
+      normalizeExportFileName(backupBaseName, backupBaseName, 'zip')
+    )
+      .then(() => toast.success(`Backup di ${workspaceName ?? 'conto'} scaricato`))
+      .catch(() => toast.error('Backup non riuscito'));
   };
 
   const handleDeleteWorkspace = (workspace: JournalWorkspace) => {
@@ -1030,10 +1012,10 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
             <div className="hidden sm:block" aria-hidden="true" />
             <div className="min-w-0 text-center">
               <p className="font-sans text-xs font-semibold text-foreground sm:text-sm">
-                EclipseJournal v1.1 è disponibile!
+                EclipseJournal v1.2 è disponibile!
               </p>
               <p className="font-sans text-[11px] text-muted-foreground">
-                Emozioni nei trade, Progress Tracker per ogni conto, nuovi tag e export più completi.
+                Immagini caricate direttamente dal PC, export in ZIP con tutte le immagini e anteprime per Google Drive.
               </p>
             </div>
             <div className="flex items-center justify-center gap-1.5 sm:justify-start">
@@ -1455,10 +1437,10 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
                 <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
                   <div>
                     <h3 className="font-sans text-sm font-semibold text-foreground">
-                      EclipseJournal v1.1 — Emozioni e Progress Tracker
+                      EclipseJournal v1.2 — Immagini ed export in ZIP
                     </h3>
                     <p className="mt-1 font-sans text-xs leading-relaxed text-muted-foreground">
-                      Scopri le emozioni nei trade, il Progress Tracker per ogni conto, i nuovi tag e gli export più completi.
+                      Scopri come caricare le immagini direttamente dal PC e il nuovo export in ZIP, con tutte le immagini incluse.
                     </p>
                   </div>
                   <button
@@ -1501,7 +1483,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
                   bullets: [
                     'Inserisci P&L, simbolo, direzione, orario e setup: orario e direzione restano vuoti se non li compili.',
                     'Aggiungi note per ricordare cosa è successo nel trade.',
-                    'Salva link di TradingView o di Google Drive per i grafici e le immagini.',
+                    'Salva link di TradingView o di Google Drive per i grafici, oppure premi Aggiungi senza link e scegli l’immagine dal tuo PC.',
                     'Usa la stella per segnare i trade più importanti.',
                   ],
                 },
@@ -1589,10 +1571,10 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
                   description: 'Gestisci i dati della pagina aperta in modo semplice e sicuro.',
                   bullets: [
                     'Import ed Export lavorano sempre sulla pagina attualmente aperta.',
-                    'Export scarica il file JSON del conto o Backtest corrente.',
-                    'Import permette di aggiungere i dati al profilo oppure aprire il file in Preview.',
+                    'Export scarica un file ZIP con i dati del conto o Backtest corrente e una cartella con tutte le immagini caricate dal PC.',
+                    'Import legge il file ZIP e permette di aggiungere i dati al profilo oppure aprirli in Preview, con le immagini incluse.',
                     'I dati sono salvati nella cache del browser: fai backup regolari per non perderli.',
-                    'Il backup salva trade, note, setup, tag, emozioni, piani, link e il Progress Tracker.',
+                    'Il backup salva trade, note, setup, tag, emozioni, piani, link, immagini e il Progress Tracker.',
                     'Il file include anche il tuo profilo: chi lo apre in Preview vede il tuo nome, la tua foto, il tuo Progress Tracker e le News.',
                   ],
                 },
@@ -1601,7 +1583,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
                   title: 'Backup e sicurezza',
                   description: 'Proteggi i tuoi dati prima di fare modifiche importanti.',
                   bullets: [
-                    'Esporta periodicamente un backup JSON.',
+                    'Esporta periodicamente un backup (file ZIP).',
                     'Prima di importare, usa “Scarica i dati attuali” per salvare la pagina aperta.',
                     'L’import non modifica gli altri conti o spazi di lavoro.',
                     'Le azioni delicate mostrano messaggi di conferma.',

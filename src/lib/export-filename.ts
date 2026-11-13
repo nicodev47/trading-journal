@@ -107,9 +107,13 @@ export function getDefaultExportBaseName(
   ].join('-');
 }
 
-export function normalizeExportFileName(value: string, fallbackBaseName: string) {
-  const withoutExtension = value.trim().replace(/(?:\.json)+$/i, '');
+export function normalizeExportFileName(
+  value: string,
+  fallbackBaseName: string,
+  extension: 'json' | 'zip' = 'json'
+) {
+  const withoutExtension = value.trim().replace(/(?:\.(?:json|zip))+$/i, '');
   const normalized = normalizeExportName(withoutExtension, fallbackBaseName);
 
-  return `${normalized}.json`;
+  return `${normalized}.${extension}`;
 }

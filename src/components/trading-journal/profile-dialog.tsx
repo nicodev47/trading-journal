@@ -82,6 +82,8 @@ export function ProfileDialog({
     setShowCalendarEmotions,
     progressQuarters,
     setProgressQuarters,
+    showAnalysisPreview,
+    setShowAnalysisPreview,
   } = useStreamerMode();
 
   const profile = useMemo(() => {
@@ -527,6 +529,48 @@ export function ProfileDialog({
                 </div>
               </div>
             </section>
+            <section className="rounded-[14px] border border-border bg-background/35 p-3.5 sm:p-4">
+              <p className="flex items-center gap-2 font-sans tabular-nums text-xs font-semibold tracking-normal text-muted-foreground">
+                <span>Impostazioni inserimento trade</span>
+                <span className="text-xl leading-none">📝</span>
+              </p>
+              <p className="mt-3 max-w-xl font-sans text-xs leading-relaxed text-muted-foreground">
+                Scegli cosa vedere mentre inserisci i trade.
+              </p>
+
+              <div className="mt-3 space-y-2.5">
+                <div className="rounded-lg border border-border/70 bg-background/35 p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-sans text-sm font-semibold text-foreground">
+                        Abilita preview analisi
+                      </p>
+                      <p className="mt-1 font-sans text-xs leading-relaxed text-muted-foreground">
+                        Mostra l&apos;anteprima dell&apos;immagine sotto i link delle analisi (TradingView, Google Drive).
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={showAnalysisPreview}
+                      aria-label="Abilita preview analisi"
+                      onClick={() => setShowAnalysisPreview(!showAnalysisPreview)}
+                      className={`relative h-6 w-11 shrink-0 rounded-full border transition-colors ${
+                        showAnalysisPreview
+                          ? 'border-profit/60 bg-profit'
+                          : 'border-border bg-input/80'
+                      }`}
+                    >
+                      <span
+                        className={`absolute left-0.5 top-0.5 size-5 rounded-full bg-background shadow-sm transition-transform ${
+                          showAnalysisPreview ? 'translate-x-5' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </section>
 
             </TabsContent>
 
@@ -563,7 +607,7 @@ export function ProfileDialog({
               </p>
               <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
                 <p className="max-w-md font-sans text-xs leading-relaxed text-muted-foreground">
-                  Scarica in un unico file JSON solo i journal che contengono dati,
+                  Scarica in un unico file ZIP, con le immagini, solo i journal che contengono dati,
                   compresi i tuoi conti, i Backtest e le Preview.
                 </p>
                 <Button

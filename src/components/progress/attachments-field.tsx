@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Check, ExternalLink, Pencil, Plus, Trash2, X } from 'lucide-react';
+import { Check, ExternalLink, Pencil, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -12,12 +12,10 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import {
-  MAX_IMAGES_PER_TRADE,
-  getPreviewImageUrl,
-  isDataImage,
-  openImageInNewTab,
-} from '@/lib/image-upload';
+import { getPreviewImageUrl } from '@/lib/image-upload';
+import { isLocalImage, openJournalImage } from '@/lib/image-store';
+import { JournalImage } from '@/components/trading-journal/journal-image';
+import { AddAttachmentButton } from '@/components/trading-journal/add-attachment-button';
 import type { ScreenshotData } from '@/lib/types/trade';
 
 interface AttachmentsFieldProps {
@@ -40,7 +38,7 @@ export function AttachmentsField({ value, onChange, readOnly = false }: Attachme
   const addLink = () => {
     const url = link.trim();
 
-    if (!url || value.length >= MAX_IMAGES_PER_TRADE) return;
+    if (!url) return;
 
     onChange([...value, { url, name: name.trim() }]);
     setName('');
@@ -151,15 +149,17 @@ export function AttachmentsField({ value, onChange, readOnly = false }: Attachme
                   )}
                 </div>
 
-                {!isDataImage(item.url) && (
+                {!isLocalImage(item.url) && (
                   <span className="truncate text-xs text-muted-foreground">{item.url}</span>
                 )}
 
                 <div className="relative overflow-hidden rounded border border-border">
-                  <img
+                  <JournalImage
+                    url={item.url}
                     src={getPreviewImageUrl(item.url)}
                     alt={item.name || `Allegato ${index + 1}`}
-                    className="w-full object-contain"
+                    className="w-full cursor-zoom-in object-contain"
+                    onClick={() => void openJournalImage(item.url)}
                     onError={event => {
                       (event.target as HTMLImageElement).style.display = 'none';
                     }}
@@ -172,9 +172,9 @@ export function AttachmentsField({ value, onChange, readOnly = false }: Attachme
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={event => {
-                      if (isDataImage(item.url)) {
+                      if (isLocalImage(item.url)) {
                         event.preventDefault();
-                        void openImageInNewTab(item.url);
+                        void openJournalImage(item.url);
                       }
                     }}
                     className="flex items-center gap-1 text-foreground hover:text-highlight"
@@ -206,21 +206,19 @@ export function AttachmentsField({ value, onChange, readOnly = false }: Attachme
               placeholder="Link di TradingView o Google Drive"
               className="h-8 border-border/70 bg-background/60 text-sm"
             />
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="h-8 shrink-0 gap-1.5 border-border text-xs"
-              disabled={!link.trim() || value.length >= MAX_IMAGES_PER_TRADE}
-              onClick={addLink}
-            >
-              <Plus className="size-3" />
-              Aggiungi
-            </Button>
+            <AddAttachmentButton
+              link={link}
+              name={name}
+              onAddLink={addLink}
+              onUploaded={saved => {
+                onChange([...value, ...saved]);
+                setName('');
+              }}
+            />
           </div>
 
           <p className="text-[11px] text-muted-foreground">
-            Dai un nome al file, incolla il link di TradingView / Google Drive e premi “Aggiungi”
+            Dai un nome al file e incolla il link di TradingView / Google Drive, poi premi “Aggiungi”. Senza link, “Aggiungi” apre i file del tuo PC
           </p>
         </div>
       )}

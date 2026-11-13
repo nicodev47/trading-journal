@@ -46,11 +46,10 @@ import {
   type ScreenshotData,
 } from '@/lib/types/trade';
 import { generateId } from '@/lib/calculations';
-import {
-  MAX_IMAGES_PER_TRADE,
-  isDataImage,
-  openImageInNewTab,
-} from '@/lib/image-upload';
+import { getPreviewImageUrl } from '@/lib/image-upload';
+import { isLocalImage, openJournalImage } from '@/lib/image-store';
+import { JournalImage } from './journal-image';
+import { AddAttachmentButton } from './add-attachment-button';
 import { toast } from 'sonner';
 import { useStreamerMode } from '@/contexts/streamer-mode-context';
 import { usePreferences } from '@/contexts/preferences-context';
@@ -212,7 +211,7 @@ export function DayEditorDialog({
         colors: { ...emotionPrefs.colors, [emotionColorKey(value)]: color },
       },
     });
-  const { streamerMode } = useStreamerMode();
+  const { streamerMode, showAnalysisPreview } = useStreamerMode();
   const [tradeRows, setTradeRows] = useState<TradeRow[]>([]);
   const [timeDrafts, setTimeDrafts] = useState<Record<string, string>>({});
   const [screenshotInputs, setScreenshotInputs] = useState<Record<string, { url: string; name: string }>>({});
@@ -667,6 +666,15 @@ export function DayEditorDialog({
     setScreenshotInputs(prev => ({ ...prev, [tradeId]: { url: '', name: '' } }));
   };
 
+  const addUploadedScreenshots = (tradeId: string, saved: ScreenshotData[]) => {
+    const trade = tradeRows.find(r => r.id === tradeId);
+
+    if (!trade) return;
+
+    updateTradeRow(tradeId, 'screenshots', [...trade.screenshots, ...saved], 0);
+    setScreenshotInputs(prev => ({ ...prev, [tradeId]: { url: prev[tradeId]?.url || '', name: '' } }));
+  };
+
   const removeScreenshotFromTrade = (tradeId: string, index: number) => {
     const trade = tradeRows.find(r => r.id === tradeId);
 
@@ -806,7 +814,7 @@ export function DayEditorDialog({
       return `https://s3.tradingview.com/snapshots/t/${match[1]}.png`;
     }
 
-    return url;
+    return getPreviewImageUrl(url);
   };
 
   return (
@@ -1240,25 +1248,29 @@ export function DayEditorDialog({
                               </div>
                             </div>
 
-                            {!screenshot.url.startsWith('data:image/') && (
+                            {!isLocalImage(screenshot.url) && (
                               <span className="truncate text-xs text-muted-foreground">
                                 {screenshot.url}
                               </span>
                             )}
 
+                            {showAnalysisPreview && (
                             <div className="relative overflow-hidden rounded border border-border">
-                              <img
+                              <JournalImage
+                                url={screenshot.url}
                                 src={imageUrl}
                                 alt={
                                   screenshot.name ||
                                   `Trade ${rowIndex + 1} screenshot ${index + 1}`
                                 }
-                                className="w-full object-contain"
+                                className="w-full cursor-zoom-in object-contain"
+                                onClick={() => void openJournalImage(screenshot.url)}
                                 onError={(e) => {
                                   (e.target as HTMLImageElement).style.display = 'none';
                                 }}
                               />
                             </div>
+                            )}
 
                             <div className="flex items-center justify-end text-xs">
                               <a
@@ -1266,9 +1278,9 @@ export function DayEditorDialog({
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 onClick={event => {
-                                  if (isDataImage(screenshot.url)) {
+                                  if (isLocalImage(screenshot.url)) {
                                     event.preventDefault();
-                                    void openImageInNewTab(screenshot.url);
+                                    void openJournalImage(screenshot.url);
                                   }
                                 }}
                                 className="flex items-center gap-1 text-foreground hover:text-highlight"
@@ -1319,26 +1331,19 @@ export function DayEditorDialog({
                         onKeyDown={e => e.key === 'Enter' && addScreenshotToTrade(row.id)}
                       />
 
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => addScreenshotToTrade(row.id)}
-                        className="h-8 shrink-0 gap-1.5 border-border text-xs"
-                        disabled={
-                          !screenshotInputs[row.id]?.url?.trim() ||
-                          row.screenshots.length >= MAX_IMAGES_PER_TRADE
-                        }
-                      >
-                        <Plus className="size-3" />
-                        Aggiungi
-                      </Button>
+                      <AddAttachmentButton
+                        link={screenshotInputs[row.id]?.url || ''}
+                        name={screenshotInputs[row.id]?.name || ''}
+                        onAddLink={() => addScreenshotToTrade(row.id)}
+                        onUploaded={saved => addUploadedScreenshots(row.id, saved)}
+                      />
                     </div>
 
                     <p className="text-[11px] text-muted-foreground">
-                      Incolla il link di TradingView / Google Drive e premi “Aggiungi”
+                      Incolla il link di TradingView / Google Drive e premi “Aggiungi”. Senza link, “Aggiungi” apre i file del tuo PC
                     </p>
 
-                    {screenshotInputs[row.id]?.url?.trim() && (
+                    {showAnalysisPreview && screenshotInputs[row.id]?.url?.trim() && (
                       <div className="overflow-hidden rounded-lg border border-border bg-background">
                         <div className="px-3 py-2 text-xs text-muted-foreground">
                           Anteprima

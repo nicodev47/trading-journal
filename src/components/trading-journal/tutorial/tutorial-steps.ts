@@ -18,7 +18,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     target: 'trade-editor',
     title: 'Inserimento trade',
     description:
-      'Qui inserisci le operazioni del giorno: puoi aggiungere uno o più trade con P&L, asset, direzione, orario, setup, note e link ai grafici.\n\nI menu di asset e setup mostrano le tue scelte e le modifiche si salvano in automatico.\n\nPer i grafici incolla un link di TradingView o di Google Drive e premi Aggiungi.',
+      'Qui inserisci le operazioni del giorno: puoi aggiungere uno o più trade con P&L, asset, direzione, orario, setup, note e link ai grafici.\n\nI menu di asset e setup mostrano le tue scelte e le modifiche si salvano in automatico.\n\nPer i grafici incolla un link di TradingView o di Google Drive e premi Aggiungi. Senza link, Aggiungi apre i file del tuo PC e puoi caricare le immagini direttamente.',
     cta: 'Avanti',
   },
   {
@@ -32,7 +32,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     target: 'import-export-buttons',
     title: 'Dati e backup',
     description:
-      'I dati del journal sono salvati nella cache del tuo browser, non su un server: se la cancelli o cambi dispositivo, li perdi. Per questo è importante fare backup regolari.\n\nExport scarica un file con i dati della pagina aperta, senza toccare gli altri conti. Con Import scegli se aggiungere i dati al profilo oppure aprire il file in Preview, una pagina a parte che non cambia nulla nel tuo journal.',
+      'I dati del journal sono salvati nella cache del tuo browser, non su un server: se la cancelli o cambi dispositivo, li perdi. Per questo è importante fare backup regolari.\n\nExport scarica un file ZIP con i dati della pagina aperta e una cartella con le immagini caricate dal PC, senza toccare gli altri conti. Con Import scegli il file ZIP e decidi se aggiungere i dati al profilo oppure aprirli in Preview, una pagina a parte che non cambia nulla nel tuo journal.',
     cta: 'Avanti',
   },
   {

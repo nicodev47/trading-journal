@@ -46,3 +46,9 @@ test('un nome vuoto ripristina il suggerimento', () => {
     'eclipsejournal-personale-2026-07-15.json'
   );
 });
+
+test('il nome dell\'export può avere estensione zip e non raddoppia le estensioni', () => {
+  assert.equal(normalizeExportFileName('Il mio Backup.zip', 'fallback', 'zip'), 'il-mio-backup.zip');
+  assert.equal(normalizeExportFileName('backup.json.zip', 'fallback', 'zip'), 'backup.zip');
+  assert.equal(normalizeExportFileName('backup.zip', 'fallback'), 'backup.json');
+});

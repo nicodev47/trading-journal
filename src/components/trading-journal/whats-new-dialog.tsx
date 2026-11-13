@@ -14,6 +14,27 @@ interface WhatsNewDialogProps {
 
 const updates = [
   {
+    icon: "🖼️",
+    title: "Immagini direttamente nel journal",
+    description:
+      "Nei trade e nel Progress Tracker, premi Aggiungi senza link e scegli le immagini dal tuo PC (anche più di una insieme). Restano a piena risoluzione, ottimizzate per pesare poco, e non ci sono limiti di numero o di dimensione. Cliccando sull'immagine si apre.",
+  },
+  {
+    icon: "🗜️",
+    title: "Export in ZIP",
+    description:
+      "L'export scarica un file ZIP: dentro c'è un file con i dati e una cartella con tutte le immagini, collegate tra loro. Con Import scegli il file ZIP e ritrovi tutto, immagini comprese, anche su un altro computer. I vecchi backup JSON si importano ancora.",
+  },
+  {
+    icon: "🖼️",
+    title: "Link TradingView e Google Drive",
+    description:
+      "Puoi sempre aggiungere grafici e screenshot con un link di TradingView o di Google Drive: ora l'anteprima funziona anche per Drive (se il file è condiviso con chiunque abbia il link). La prima volta che inserisci un trade ti guidiamo, con un video, nel caricamento su Drive.",
+  },
+];
+
+const previousUpdates = [
+  {
     icon: "😤",
     title: "Emozioni nei trade",
     description:
@@ -43,6 +64,7 @@ const updates = [
     description:
       "Grafici e screenshot si aggiungono con un link di TradingView o di Google Drive. La prima volta che inserisci un trade ti guidiamo, con un video, nel caricamento su Drive.",
   },
+
   {
     icon: "📦",
     title: "Export e Preview più completi",
@@ -74,10 +96,10 @@ export function WhatsNewDialog({ open, onOpenChange }: WhatsNewDialogProps) {
           <div className="flex items-start justify-between gap-4">
             <div>
               <DialogTitle className="text-lg text-foreground sm:text-xl">
-                🚀 EclipseJournal v1.1
+                🚀 EclipseJournal v1.2
               </DialogTitle>
               <DialogDescription className="mt-1 text-sm text-muted-foreground">
-                Versione: v1.1
+                Versione: v1.2
               </DialogDescription>
             </div>
             <button
@@ -97,6 +119,28 @@ export function WhatsNewDialog({ open, onOpenChange }: WhatsNewDialogProps) {
           </h2>
           <div className="grid gap-3 sm:grid-cols-2">
             {updates.map((update) => (
+              <article
+                key={update.title}
+                className="rounded-lg border border-border/70 bg-background/45 p-4 transition-colors hover:border-highlight/35 hover:bg-primary/[0.03]"
+              >
+                <span className="text-xl" aria-hidden="true">
+                  {update.icon}
+                </span>
+                <h3 className="mt-3 text-sm font-semibold text-foreground">
+                  {update.title}
+                </h3>
+                <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
+                  {update.description}
+                </p>
+              </article>
+            ))}
+          </div>
+
+          <h2 className="mb-4 mt-6 font-sans tabular-nums text-xs font-semibold tracking-normal text-blue-200">
+            🚀 Dalla v1.1
+          </h2>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {previousUpdates.map((update) => (
               <article
                 key={update.title}
                 className="rounded-lg border border-border/70 bg-background/45 p-4 transition-colors hover:border-highlight/35 hover:bg-primary/[0.03]"

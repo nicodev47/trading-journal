@@ -3,7 +3,10 @@
 import { getEmotion } from '@/lib/trade-emotions';
 import { useEffect, useState } from 'react';
 import { ArrowLeft, ExternalLink, Star } from 'lucide-react';
-import { isDataImage, openImageInNewTab } from '@/lib/image-upload';
+import { getDriveFileId, getPreviewImageUrl } from '@/lib/image-upload';
+import { isLocalImage, openJournalImage } from '@/lib/image-store';
+import { isAssetUrl } from '@/lib/journal-archive';
+import { JournalImage } from './journal-image';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -97,16 +100,18 @@ function getImageUrl(url: string) {
   );
   return tradingViewMatch
     ? `https://s3.tradingview.com/snapshots/t/${tradingViewMatch[1]}.png`
-    : url;
+    : getPreviewImageUrl(url);
 }
 
 function canPreviewImage(url: string) {
   const cleanUrl = url.split('?')[0].toLowerCase();
   return (
     url.startsWith('data:image/') ||
+    isAssetUrl(url) ||
     url.startsWith('blob:') ||
     url.includes('s3.tradingview.com/snapshots') ||
     /tradingview\.com\/x\/[A-Za-z0-9]+/.test(url) ||
+    Boolean(getDriveFileId(url)) ||
     /\.(png|jpe?g|webp|gif|avif|svg)$/.test(cleanUrl)
   );
 }
@@ -115,7 +120,7 @@ function getLinkLabel(url: string) {
   try {
     return new URL(url).hostname.replace(/^www\./, '');
   } catch {
-    return url.startsWith('data:image/') ? 'Immagine locale' : 'Link allegato';
+    return isLocalImage(url) ? 'Immagine locale' : 'Link allegato';
   }
 }
 
@@ -211,9 +216,9 @@ export function AttachmentItem({
           target="_blank"
           rel="noopener noreferrer"
           onClick={(event) => {
-            if (isDataImage(screenshot.url)) {
+            if (isLocalImage(screenshot.url)) {
               event.preventDefault();
-              void openImageInNewTab(screenshot.url);
+              void openJournalImage(screenshot.url);
             }
           }}
           className="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg border border-border bg-background px-2.5 font-sans tabular-nums text-[10px] text-foreground transition-colors hover:border-highlight/40 hover:text-highlight"
@@ -233,20 +238,22 @@ export function AttachmentItem({
           target="_blank"
           rel="noopener noreferrer"
           onClick={(event) => {
-            if (isDataImage(screenshot.url)) {
+            if (isLocalImage(screenshot.url)) {
               event.preventDefault();
-              void openImageInNewTab(screenshot.url);
+              void openJournalImage(screenshot.url);
             }
           }}
-          className="inline-flex shrink-0 items-center gap-1 text-xs text-profit hover:underline"
+          className="inline-flex shrink-0 items-center gap-1 text-xs text-foreground hover:underline"
         >
           Apri <ExternalLink className="size-3" />
         </a>
       </div>
-      <img
+      <JournalImage
+        url={screenshot.url}
         src={getImageUrl(screenshot.url)}
         alt={name}
-        className="max-h-64 w-full bg-background/40 object-contain"
+        className="max-h-64 w-full cursor-zoom-in bg-background/40 object-contain"
+        onClick={() => void openJournalImage(screenshot.url)}
         onError={() => setPreviewFailed(true)}
       />
     </div>

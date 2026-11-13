@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight, Folder, RefreshCw, SlidersHorizontal } from 'lucide-react';
+import { Folder, RefreshCw, SlidersHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
@@ -70,7 +70,6 @@ function EventRow({ event }: { event: NewsEvent }) {
 
 export function NewsPage() {
   const { events, fetchedAt, loading, error, refresh } = useNews();
-  const [mode, setMode] = useState<'day' | 'week'>('week');
   const [filters, setFilters] = useState<NewsFilters>(() => {
     try {
       return parseStoredNewsFilters(localStorage.getItem(FILTERS_KEY));
@@ -79,7 +78,6 @@ export function NewsPage() {
     }
   });
   const todayKey = getNewsDayKey(Date.now());
-  const [dayKey, setDayKey] = useState(todayKey);
 
   useEffect(() => {
     try {
@@ -91,12 +89,8 @@ export function NewsPage() {
 
   const filtered = useMemo(() => filterNews(events, filters), [events, filters]);
   const weekDays = useMemo(() => groupNewsByDay(filtered), [filtered]);
-  const allDays = useMemo(() => groupNewsByDay(events).map(day => day.dayKey), [events]);
   const currencies = useMemo(() => getNewsCurrencies(events), [events]);
 
-  // The visible day is one of the days of the week covered by the feed.
-  const dayIndex = allDays.indexOf(dayKey);
-  const shownDay = weekDays.find(day => day.dayKey === dayKey);
   const isDefault =
     filters.impacts.join() === DEFAULT_NEWS_FILTERS.impacts.join() &&
     filters.currencies.join() === DEFAULT_NEWS_FILTERS.currencies.join();
@@ -116,7 +110,7 @@ export function NewsPage() {
         : [...current.currencies, currency],
     }));
 
-  const summary = `${mode === 'day' ? shownDay?.events.length ?? 0 : filtered.length} eventi · ${
+  const summary = `${filtered.length} eventi · ${
     filters.impacts.length ? filters.impacts.map(impact => IMPACT_META[impact].label).join(', ') : 'nessun impatto'
   } · ${filters.currencies.length ? filters.currencies.join(' ') : 'tutte le valute'}`;
 
@@ -129,22 +123,6 @@ export function NewsPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="flex rounded-full bg-secondary p-1">
-            {(['day', 'week'] as const).map(item => (
-              <button
-                key={item}
-                type="button"
-                onClick={() => setMode(item)}
-                className={cn(
-                  'rounded-full px-3.5 py-1 font-sans text-xs font-medium transition',
-                  mode === item ? 'bg-white/10 text-foreground' : 'text-muted-foreground hover:text-foreground'
-                )}
-              >
-                {item === 'day' ? 'Giorno' : 'Settimana'}
-              </button>
-            ))}
-          </div>
-
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-xs text-muted-foreground">
@@ -234,46 +212,6 @@ export function NewsPage() {
         </div>
       </div>
 
-      {mode === 'day' && (
-        <div className="flex items-center gap-3 border-b border-border px-4 py-2.5 sm:px-5">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-8"
-            aria-label="Giorno precedente"
-            disabled={dayIndex <= 0}
-            onClick={() => setDayKey(allDays[dayIndex - 1])}
-          >
-            <ChevronLeft className="size-4" />
-          </Button>
-          <span className="min-w-28 text-center font-sans text-sm font-semibold capitalize">{dayLabel(dayKey)}</span>
-          {dayKey === todayKey && (
-            <span className="rounded-full bg-white/10 px-2 py-0.5 font-sans text-[10px] font-medium text-muted-foreground">
-              Oggi
-            </span>
-          )}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-8"
-            aria-label="Giorno successivo"
-            disabled={dayIndex < 0 || dayIndex >= allDays.length - 1}
-            onClick={() => setDayKey(allDays[dayIndex + 1])}
-          >
-            <ChevronRight className="size-4" />
-          </Button>
-          {dayKey !== todayKey && (
-            <button
-              type="button"
-              className="ml-auto font-sans text-xs text-muted-foreground hover:text-foreground"
-              onClick={() => setDayKey(todayKey)}
-            >
-              Vai a oggi
-            </button>
-          )}
-        </div>
-      )}
-
       {events.length === 0 ? (
         <div className="px-5 py-14 text-center font-sans text-sm text-muted-foreground">
           {loading
@@ -282,18 +220,6 @@ export function NewsPage() {
               ? 'Impossibile caricare le news. Controlla la connessione e riprova con il pulsante di aggiornamento.'
               : 'Nessuna news disponibile.'}
         </div>
-      ) : mode === 'day' ? (
-        shownDay && shownDay.events.length > 0 ? (
-          <ul className="divide-y divide-border/50">
-            {shownDay.events.map(event => (
-              <EventRow key={event.id} event={event} />
-            ))}
-          </ul>
-        ) : (
-          <p className="px-5 py-14 text-center font-sans text-sm text-muted-foreground">
-            Nessun evento per questo giorno con i filtri selezionati.
-          </p>
-        )
       ) : weekDays.length > 0 ? (
         weekDays.map(day => (
           <section key={day.dayKey}>

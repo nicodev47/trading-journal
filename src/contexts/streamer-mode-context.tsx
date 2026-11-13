@@ -19,6 +19,7 @@ const CALENDAR_SETUP_VISIBILITY_KEY =
 const CALENDAR_TAG_VISIBILITY_KEY =
   'eclipsejournal_calendar_show_tags';
 const PROGRESS_QUARTERS_KEY = 'eclipsejournal_progress_quarters';
+const ANALYSIS_PREVIEW_KEY = 'eclipsejournal_trade_analysis_preview';
 const CALENDAR_EMOTION_VISIBILITY_KEY =
   'eclipsejournal_calendar_show_emotions';
 
@@ -37,6 +38,9 @@ interface StreamerModeContextValue {
   progressQuarters: boolean;
   setProgressQuarters: (enabled: boolean) => void;
   setShowCalendarEmotions: (enabled: boolean) => void;
+  /** Image preview of the analysis links in the trade editor (on unless turned off). */
+  showAnalysisPreview: boolean;
+  setShowAnalysisPreview: (enabled: boolean) => void;
 }
 
 const StreamerModeContext = createContext<StreamerModeContextValue | null>(null);
@@ -94,6 +98,22 @@ export function StreamerModeProvider({ children }: { children: ReactNode }) {
       return false;
     }
   });
+
+  const [showAnalysisPreview, setShowAnalysisPreviewState] = useState(() => {
+    try {
+      return localStorage.getItem(ANALYSIS_PREVIEW_KEY) !== 'false';
+    } catch {
+      return true;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(ANALYSIS_PREVIEW_KEY, String(showAnalysisPreview));
+    } catch {
+      // The preference remains active for the current session.
+    }
+  }, [showAnalysisPreview]);
 
   useEffect(() => {
     try {
@@ -170,6 +190,8 @@ export function StreamerModeProvider({ children }: { children: ReactNode }) {
       setShowCalendarEmotions: setShowCalendarEmotionsState,
       progressQuarters,
       setProgressQuarters: setProgressQuartersState,
+      showAnalysisPreview,
+      setShowAnalysisPreview: setShowAnalysisPreviewState,
     }),
     [
       streamerMode,
@@ -178,6 +200,7 @@ export function StreamerModeProvider({ children }: { children: ReactNode }) {
       showCalendarTags,
       showCalendarEmotions,
       progressQuarters,
+      showAnalysisPreview,
     ]
   );
 
@@ -205,6 +228,8 @@ export function DefaultDisplaySettingsProvider({ children }: { children: ReactNo
       setShowCalendarEmotions: () => {},
       progressQuarters: false,
       setProgressQuarters: () => {},
+      showAnalysisPreview: true,
+      setShowAnalysisPreview: () => {},
     }),
     []
   );
