@@ -1015,7 +1015,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
                 EclipseJournal v1.2 è disponibile!
               </p>
               <p className="font-sans text-[11px] text-muted-foreground">
-                Immagini caricate direttamente dal PC, export in ZIP con tutte le immagini e anteprime per Google Drive.
+                Immagini caricate direttamente dal PC ed export in ZIP con tutte le immagini incluse.
               </p>
             </div>
             <div className="flex items-center justify-center gap-1.5 sm:justify-start">
@@ -1483,7 +1483,7 @@ const tutorialDemoDateKey = getTutorialDemoDateKey();
                   bullets: [
                     'Inserisci P&L, simbolo, direzione, orario e setup: orario e direzione restano vuoti se non li compili.',
                     'Aggiungi note per ricordare cosa è successo nel trade.',
-                    'Salva link di TradingView o di Google Drive per i grafici, oppure premi Aggiungi senza link e scegli l’immagine dal tuo PC.',
+                    'Salva link di TradingView per i grafici, oppure premi Aggiungi senza link e scegli l’immagine dal tuo PC.',
                     'Usa la stella per segnare i trade più importanti.',
                   ],
                 },

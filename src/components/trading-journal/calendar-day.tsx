@@ -320,11 +320,21 @@ export function CalendarDay({
       {bankHoliday && (
         <div
           className={cn(
-            'pointer-events-none absolute inset-x-1 flex justify-center',
-            hasTrades ? 'bottom-1 sm:bottom-1.5' : 'inset-y-0 items-center'
+            'pointer-events-none absolute flex justify-center',
+            // With trades, the pill sits to the right of the trade count (not over it) and is smaller.
+            hasTrades
+              ? 'bottom-1 left-4 right-1 min-[380px]:bottom-1.5 min-[380px]:left-5 sm:bottom-1.5 sm:left-7 md:bottom-2 md:left-9'
+              : 'inset-x-1 inset-y-0 items-center'
           )}
         >
-          <span className="max-w-full truncate rounded-full border border-border bg-background/70 px-1.5 py-[2px] font-sans text-[8px] font-medium leading-none text-foreground min-[380px]:text-[9px] sm:px-3 sm:py-1 sm:text-[11px]">
+          <span
+            className={cn(
+              'max-w-full truncate rounded-full border border-border bg-background/70 font-sans font-medium leading-none text-foreground',
+              hasTrades
+                ? 'px-1.5 py-[1px] text-[7px] min-[380px]:text-[8px] sm:px-2 sm:py-[3px] sm:text-[9px]'
+                : 'px-1.5 py-[2px] text-[8px] min-[380px]:text-[9px] sm:px-3 sm:py-1 sm:text-[11px]'
+            )}
+          >
             Bank holiday
           </span>
         </div>

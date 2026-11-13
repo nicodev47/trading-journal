@@ -82,6 +82,8 @@ export function ProfileDialog({
     setShowCalendarEmotions,
     progressQuarters,
     setProgressQuarters,
+    showBankHolidays,
+    setShowBankHolidays,
     showAnalysisPreview,
     setShowAnalysisPreview,
   } = useStreamerMode();
@@ -485,6 +487,37 @@ export function ProfileDialog({
                     </button>
                   </div>
                 </div>
+
+                <div className="rounded-lg border border-border/70 bg-background/35 p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-sans text-sm font-semibold text-foreground">
+                        Mostra Bank Holiday
+                      </p>
+                      <p className="mt-1 font-sans text-xs leading-relaxed text-muted-foreground">
+                        Segna nel calendario i giorni di bank holiday.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={showBankHolidays}
+                      aria-label="Mostra Bank Holiday"
+                      onClick={() => setShowBankHolidays(!showBankHolidays)}
+                      className={`relative h-6 w-11 shrink-0 rounded-full border transition-colors ${
+                        showBankHolidays
+                          ? 'border-profit/60 bg-profit'
+                          : 'border-border bg-input/80'
+                      }`}
+                    >
+                      <span
+                        className={`absolute left-0.5 top-0.5 size-5 rounded-full bg-background shadow-sm transition-transform ${
+                          showBankHolidays ? 'translate-x-5' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                </div>
               </div>
             </section>
             <section className="rounded-[14px] border border-border bg-background/35 p-3.5 sm:p-4">
@@ -546,7 +579,7 @@ export function ProfileDialog({
                         Abilita preview analisi
                       </p>
                       <p className="mt-1 font-sans text-xs leading-relaxed text-muted-foreground">
-                        Mostra l&apos;anteprima dell&apos;immagine sotto i link delle analisi (TradingView, Google Drive).
+                        Mostra l&apos;anteprima dell&apos;immagine sotto i link delle analisi (TradingView).
                       </p>
                     </div>
                     <button

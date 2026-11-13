@@ -1,6 +1,7 @@
 import type { Trade } from '@/lib/types/trade';
 import type { JournalPreferences } from '../../../lib/preferences.ts';
 import { getConfiguredWindowDefinitions } from '../../../lib/operating-windows.ts';
+import { isUsBankHoliday } from '../../../lib/bank-holidays.ts';
 
 export const TUTORIAL_SEEN_KEY = 'eclipsejournal-simple-tutorial-seen';
 export const TUTORIAL_DEMO_PNLS = [520, 575, -450, 600, 540] as const;
@@ -77,8 +78,25 @@ const createDemoTrade = ({
   updatedAt: `${dateKey}T${time}:00`,
 });
 
+/**
+ * The days of the demo trades: the working days of the current week without bank holidays
+ * (the tutorial says to avoid trading them), so a week with a holiday has fewer demo trades.
+ */
+export function getTutorialDemoDays(baseDate = new Date()): string[] {
+  const weekStart = getTutorialWeekStart(baseDate);
+  const days: string[] = [];
+
+  for (let offset = 0; offset < 5; offset += 1) {
+    const key = formatDateKey(addDays(weekStart, offset));
+
+    if (!isUsBankHoliday(key)) days.push(key);
+  }
+
+  return days;
+}
+
 export function getTutorialDemoDateKey() {
-  return formatDateKey(getTutorialWeekStart());
+  return getTutorialDemoDays()[0];
 }
 
 const toClock = (minutes: number) =>
@@ -117,7 +135,7 @@ export function createSimpleTutorialTrades(
 ): Trade[] {
   const baseDate = new Date(`${tutorialDate}T12:00:00`);
   const safeBaseDate = Number.isNaN(baseDate.getTime()) ? new Date() : baseDate;
-  const weekStart = getTutorialWeekStart(safeBaseDate);
+  const demoDays = getTutorialDemoDays(safeBaseDate);
   const demoTrades = [
     {
       dayOffset: 0,
@@ -171,11 +189,11 @@ export function createSimpleTutorialTrades(
     },
   ];
 
-  return personalizeDemoTrades(demoTrades, preferences).map((trade, index) =>
+  return personalizeDemoTrades(demoTrades.slice(0, demoDays.length), preferences).map((trade, index) =>
     createDemoTrade({
       ...trade,
       id: `tutorial-demo-${index + 1}`,
-      dateKey: formatDateKey(addDays(weekStart, trade.dayOffset)),
+      dateKey: demoDays[index],
     })
   );
 }
@@ -187,7 +205,8 @@ export function createTutorialTrades(
 }
 
 export function isValidTutorialTradeSet(trades: Trade[]) {
-  if (trades.length !== TUTORIAL_DEMO_PNLS.length) return false;
+  // A week with a bank holiday has fewer demo trades: the first ones of the list.
+  if (trades.length < 1 || trades.length > TUTORIAL_DEMO_PNLS.length) return false;
 
-  return TUTORIAL_DEMO_PNLS.every((pnl, index) => trades[index]?.pnl === pnl);
+  return trades.every((trade, index) => trade.pnl === TUTORIAL_DEMO_PNLS[index]);
 }

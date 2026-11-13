@@ -18,7 +18,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     target: 'trade-editor',
     title: 'Inserimento trade',
     description:
-      'Qui inserisci le operazioni del giorno: puoi aggiungere uno o più trade con P&L, asset, direzione, orario, setup, note e link ai grafici.\n\nI menu di asset e setup mostrano le tue scelte e le modifiche si salvano in automatico.\n\nPer i grafici incolla un link di TradingView o di Google Drive e premi Aggiungi. Senza link, Aggiungi apre i file del tuo PC e puoi caricare le immagini direttamente.',
+      'Qui inserisci le operazioni del giorno: puoi aggiungere uno o più trade con P&L, asset, direzione, orario, setup, note e link ai grafici.\n\nI menu di asset e setup mostrano le tue scelte e le modifiche si salvano in automatico.\n\nPer i grafici incolla un link di TradingView e premi Aggiungi. Senza link, Aggiungi apre i file del tuo PC e puoi caricare le immagini direttamente.',
     cta: 'Avanti',
   },
   {
@@ -65,9 +65,9 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   },
   {
     target: 'news-tab',
-    title: 'News e bank holiday',
+    title: 'News',
     description:
-      'La sezione News ti dice quando sono le notizie economiche e, soprattutto, i bank holiday.\n\nI bank holiday sono i giorni in cui conviene evitare di operare: statisticamente il mercato è più laterale. Li ritrovi segnati anche nel calendario, così sai subito quali giornate saltare.',
+      'La sezione News è un calendario economico: ti mostra le notizie della settimana con orario e impatto, così sai quando il mercato può muoversi con più forza.\n\nPuoi filtrarle per impatto e per valuta e aggiornarle quando vuoi.\n\nInoltre i Bank Holiday vengono segnati in automatico all’interno del calendario, puoi modificare questa scelta nelle impostazioni.',
     cta: 'Avanti',
   },
   {

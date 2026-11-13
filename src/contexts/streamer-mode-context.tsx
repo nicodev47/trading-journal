@@ -19,6 +19,7 @@ const CALENDAR_SETUP_VISIBILITY_KEY =
 const CALENDAR_TAG_VISIBILITY_KEY =
   'eclipsejournal_calendar_show_tags';
 const PROGRESS_QUARTERS_KEY = 'eclipsejournal_progress_quarters';
+const CALENDAR_BANK_HOLIDAYS_KEY = 'eclipsejournal_calendar_show_bank_holidays';
 const ANALYSIS_PREVIEW_KEY = 'eclipsejournal_trade_analysis_preview';
 const CALENDAR_EMOTION_VISIBILITY_KEY =
   'eclipsejournal_calendar_show_emotions';
@@ -38,6 +39,9 @@ interface StreamerModeContextValue {
   progressQuarters: boolean;
   setProgressQuarters: (enabled: boolean) => void;
   setShowCalendarEmotions: (enabled: boolean) => void;
+  /** Bank holidays marked in the calendar (on unless turned off). */
+  showBankHolidays: boolean;
+  setShowBankHolidays: (enabled: boolean) => void;
   /** Image preview of the analysis links in the trade editor (on unless turned off). */
   showAnalysisPreview: boolean;
   setShowAnalysisPreview: (enabled: boolean) => void;
@@ -98,6 +102,22 @@ export function StreamerModeProvider({ children }: { children: ReactNode }) {
       return false;
     }
   });
+
+  const [showBankHolidays, setShowBankHolidaysState] = useState(() => {
+    try {
+      return localStorage.getItem(CALENDAR_BANK_HOLIDAYS_KEY) !== 'false';
+    } catch {
+      return true;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(CALENDAR_BANK_HOLIDAYS_KEY, String(showBankHolidays));
+    } catch {
+      // The preference remains active for the current session.
+    }
+  }, [showBankHolidays]);
 
   const [showAnalysisPreview, setShowAnalysisPreviewState] = useState(() => {
     try {
@@ -190,6 +210,8 @@ export function StreamerModeProvider({ children }: { children: ReactNode }) {
       setShowCalendarEmotions: setShowCalendarEmotionsState,
       progressQuarters,
       setProgressQuarters: setProgressQuartersState,
+      showBankHolidays,
+      setShowBankHolidays: setShowBankHolidaysState,
       showAnalysisPreview,
       setShowAnalysisPreview: setShowAnalysisPreviewState,
     }),
@@ -200,6 +222,7 @@ export function StreamerModeProvider({ children }: { children: ReactNode }) {
       showCalendarTags,
       showCalendarEmotions,
       progressQuarters,
+      showBankHolidays,
       showAnalysisPreview,
     ]
   );
@@ -228,6 +251,8 @@ export function DefaultDisplaySettingsProvider({ children }: { children: ReactNo
       setShowCalendarEmotions: () => {},
       progressQuarters: false,
       setProgressQuarters: () => {},
+      showBankHolidays: true,
+      setShowBankHolidays: () => {},
       showAnalysisPreview: true,
       setShowAnalysisPreview: () => {},
     }),

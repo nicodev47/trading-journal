@@ -25,12 +25,6 @@ const updates = [
     description:
       "L'export scarica un file ZIP: dentro c'è un file con i dati e una cartella con tutte le immagini, collegate tra loro. Con Import scegli il file ZIP e ritrovi tutto, immagini comprese, anche su un altro computer. I vecchi backup JSON si importano ancora.",
   },
-  {
-    icon: "🖼️",
-    title: "Link TradingView e Google Drive",
-    description:
-      "Puoi sempre aggiungere grafici e screenshot con un link di TradingView o di Google Drive: ora l'anteprima funziona anche per Drive (se il file è condiviso con chiunque abbia il link). La prima volta che inserisci un trade ti guidiamo, con un video, nel caricamento su Drive.",
-  },
 ];
 
 const previousUpdates = [
@@ -57,12 +51,6 @@ const previousUpdates = [
     title: "Progress Tracker per ogni conto",
     description:
       "Personale, Secondario e Backtest hanno ognuno il proprio Progress Tracker: serie, mappa della costanza, analisi giornaliere e trade mancati. La mappa è un rettangolo e puoi dividerla in Q1, Q2, Q3 e Q4 dalle impostazioni.",
-  },
-  {
-    icon: "🖼️",
-    title: "Immagini con Google Drive",
-    description:
-      "Grafici e screenshot si aggiungono con un link di TradingView o di Google Drive. La prima volta che inserisci un trade ti guidiamo, con un video, nel caricamento su Drive.",
   },
 
   {

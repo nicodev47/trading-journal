@@ -115,7 +115,7 @@ export function TradingCalendar({
   analysisMode,
 }: TradingCalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const { sundayWeekStart } = useStreamerMode();
+  const { sundayWeekStart, showBankHolidays } = useStreamerMode();
   const calendarTrades = useMemo(
     () => filterCalendarTrades(trades, true),
     [trades]
@@ -363,7 +363,7 @@ export function TradingCalendar({
                     }
                     maxPnl={maxPnl}
                     minPnl={minPnl}
-                    bankHoliday={isUsBankHoliday(dateKey)}
+                    bankHoliday={showBankHolidays && isUsBankHoliday(dateKey)}
                     analysis={isDayCurrentMonth ? analysisMode?.getCell(dateKey) : undefined}
                     onClick={() => {
                       if (!isDayCurrentMonth) return;

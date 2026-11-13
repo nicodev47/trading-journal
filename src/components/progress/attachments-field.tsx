@@ -203,7 +203,7 @@ export function AttachmentsField({ value, onChange, readOnly = false }: Attachme
               value={link}
               onChange={event => setLink(event.target.value)}
               onKeyDown={event => event.key === 'Enter' && addLink()}
-              placeholder="Link di TradingView o Google Drive"
+              placeholder="Link di TradingView"
               className="h-8 border-border/70 bg-background/60 text-sm"
             />
             <AddAttachmentButton
@@ -218,7 +218,7 @@ export function AttachmentsField({ value, onChange, readOnly = false }: Attachme
           </div>
 
           <p className="text-[11px] text-muted-foreground">
-            Dai un nome al file e incolla il link di TradingView / Google Drive, poi premi “Aggiungi”. Senza link, “Aggiungi” apre i file del tuo PC
+            Dai un nome al file e incolla il link di TradingView, poi premi “Aggiungi”. Senza link, “Aggiungi” apre i file del tuo PC
           </p>
         </div>
       )}

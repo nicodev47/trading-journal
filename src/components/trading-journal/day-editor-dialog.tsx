@@ -35,7 +35,6 @@ import {
   Star,
   Trash2,
   X,
-  Play,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -113,9 +112,6 @@ function formatTimeDraft(value: string): string {
 
   return `${digits.slice(0, 2)}:${digits.slice(2)}`;
 }
-
-const DRIVE_HINT_KEY = 'eclipsejournal-drive-hint-seen';
-const DRIVE_VIDEO_URL = 'https://youtu.be/PlQxrZgdHJ0';
 
 function normalizeTime(value: string): string {
   const digits = value.replace(/\D/g, '').slice(0, 4);
@@ -221,19 +217,6 @@ export function DayEditorDialog({
   const [managedTagKey, setManagedTagKey] = useState<string | null>(null);
   const [tradeToDeleteId, setTradeToDeleteId] = useState<string | null>(null);
   const [tagToDelete, setTagToDelete] = useState<string | null>(null);
-  // First time the trade window opens: points at the timeframe/link section.
-  const [driveHintOpen, setDriveHintOpen] = useState(false);
-  const driveHintShownRef = useRef(false);
-  const markDriveHintSeen = useCallback(() => {
-    setDriveHintOpen(false);
-    driveHintShownRef.current = false;
-
-    try {
-      localStorage.setItem(DRIVE_HINT_KEY, 'true');
-    } catch {
-      // Without storage the hint simply shows again next time.
-    }
-  }, []);
   const [emotionToDelete, setEmotionToDelete] = useState<string | null>(null);
   const [isManagingEmotions, setIsManagingEmotions] = useState(false);
   const [managedEmotionKey, setManagedEmotionKey] = useState<string | null>(null);
@@ -541,36 +524,6 @@ export function DayEditorDialog({
       setTradeToDeleteId(null);
     }
   };
-
-  useEffect(() => {
-    if (!isOpen) {
-      // Closing the window counts as having seen the hint.
-      if (driveHintShownRef.current) markDriveHintSeen();
-
-      return;
-    }
-
-    if (isTutorialMode || readOnly) return;
-
-    try {
-      if (localStorage.getItem(DRIVE_HINT_KEY) === 'true') return;
-    } catch {
-      return;
-    }
-
-    driveHintShownRef.current = true;
-    setDriveHintOpen(true);
-  }, [isOpen, isTutorialMode, readOnly, markDriveHintSeen]);
-
-  useEffect(() => {
-    if (!driveHintOpen) return;
-
-    const timer = window.setTimeout(() => {
-      document.getElementById('drive-hint-target')?.scrollIntoView({ block: 'center', behavior: 'smooth' });
-    }, 350);
-
-    return () => window.clearTimeout(timer);
-  }, [driveHintOpen]);
 
   const confirmRemoveEmotion = () => {
     if (!emotionToDelete) return;
@@ -976,7 +929,7 @@ export function DayEditorDialog({
                           {getMenuOptions(preferences.assets, row.symbol).map(option => (
                             <SelectItem key={option.value} value={option.value}>
                               {option.value}
-                              {option.orphan ? ' (non più nelle preferenze)' : ''}
+                              {option.orphan && !isTutorialMode ? ' (non più nelle preferenze)' : ''}
                             </SelectItem>
                           ))}
                         </SelectGroup>
@@ -1096,7 +1049,7 @@ export function DayEditorDialog({
                           {getMenuOptions(preferences.setups, row.setup).map(option => (
                             <SelectItem key={option.value} value={option.value}>
                               {option.value}
-                              {option.orphan ? ' (non più nelle preferenze)' : ''}
+                              {option.orphan && !isTutorialMode ? ' (non più nelle preferenze)' : ''}
                             </SelectItem>
                           ))}
                         </SelectGroup>
@@ -1105,49 +1058,10 @@ export function DayEditorDialog({
                   </div>
                 </div>
                 </div>
-                <div
-                  id={rowIndex === 0 ? 'drive-hint-target' : undefined}
-                  className={cn(
-                    'flex min-w-0 flex-col gap-3 rounded-lg border border-border/70 bg-background/30 p-3 transition-shadow sm:p-3.5',
-                    driveHintOpen && rowIndex === 0 && 'border-white/60 shadow-[0_0_0_3px_rgba(255,255,255,0.12)]'
-                  )}
-                >
+                <div className="flex min-w-0 flex-col gap-3 rounded-lg border border-border/70 bg-background/30 p-3 sm:p-3.5">
                   <p className="font-sans tabular-nums text-[11px] font-medium tracking-normal text-muted-foreground">
                     Analisi trade
                   </p>
-
-                  {driveHintOpen && rowIndex === 0 && (
-                    <div className="flex flex-col gap-2.5 rounded-lg border border-white/25 bg-white/[0.07] p-3">
-                      <p className="font-sans text-sm font-semibold text-foreground">
-                        Come aggiungere le immagini dei tuoi trade
-                      </p>
-                      <ol className="list-decimal space-y-1 pl-4 font-sans text-xs leading-relaxed text-muted-foreground">
-                        <li>Scrivi il timeframe del grafico (per esempio 5m).</li>
-                        <li>Carica lo screenshot in una cartella su Google Drive, imposta la visualizzazione su “Chiunque abbia il link” e copia il link di condivisione dell’immagine.</li>
-                        <li>Incolla il link qui sotto e premi “Aggiungi”.</li>
-                      </ol>
-                      <div className="flex flex-wrap gap-2">
-                        <a
-                          href={DRIVE_VIDEO_URL}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={markDriveHintSeen}
-                          className="inline-flex h-9 items-center gap-2 rounded-lg border border-border bg-background/60 px-3 font-sans text-xs font-semibold text-foreground transition-colors hover:bg-white/10"
-                        >
-                          <Play className="size-3.5" />
-                          Guarda il video
-                        </a>
-                        <Button
-                          type="button"
-                          size="sm"
-                          className="h-9 bg-white text-black hover:bg-white/90"
-                          onClick={markDriveHintSeen}
-                        >
-                          Ho capito
-                        </Button>
-                      </div>
-                    </div>
-                  )}
 
                   {row.screenshots.length > 0 && (
                     <div className="flex flex-col gap-3">
@@ -1340,7 +1254,7 @@ export function DayEditorDialog({
                     </div>
 
                     <p className="text-[11px] text-muted-foreground">
-                      Incolla il link di TradingView / Google Drive e premi “Aggiungi”. Senza link, “Aggiungi” apre i file del tuo PC
+                      Incolla il link di TradingView e premi “Aggiungi”. Senza link, “Aggiungi” apre i file del tuo PC
                     </p>
 
                     {showAnalysisPreview && screenshotInputs[row.id]?.url?.trim() && (
