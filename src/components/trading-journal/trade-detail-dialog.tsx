@@ -202,7 +202,7 @@ export function AttachmentItem({
 
   if (!showPreview) {
     return (
-      <div className="flex items-center gap-3 rounded-lg border border-border bg-card/60 px-3 py-2.5 transition-colors hover:bg-secondary/40">
+      <div className="flex items-center gap-3 self-start rounded-lg border border-border bg-card/60 px-3 py-2.5 transition-colors hover:bg-secondary/40">
         <div className="min-w-0 flex-1">
           <p className="truncate font-sans tabular-nums text-xs font-semibold text-foreground">
             {name}
@@ -309,7 +309,7 @@ export function TradeDetailDialog({
 
   return (
     <Dialog open onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent className="max-h-[92dvh] w-[calc(100vw-1.75rem)] max-w-4xl gap-0 overflow-hidden border-border bg-card p-0 sm:max-h-[88vh] sm:w-[94vw]">
+      <DialogContent className="flex max-h-[92dvh] w-[calc(100vw-1.75rem)] max-w-4xl flex-col gap-0 overflow-hidden border-border bg-card p-0 sm:max-h-[88vh] sm:w-[94vw]">
         <DialogHeader className="border-b border-border px-4 py-3.5 pr-12 text-left sm:px-6 sm:py-4">
           <div className="flex flex-wrap items-center gap-2">
             {showBackButton && (
@@ -339,7 +339,7 @@ export function TradeDetailDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="ej-scrollbar max-h-[calc(92dvh-8rem)] overflow-y-auto overscroll-contain px-4 py-4 sm:max-h-none sm:px-6 sm:py-5">
+        <div className="ej-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6 sm:py-5">
           <div className="grid grid-cols-1 gap-2.5 min-[420px]:grid-cols-2 sm:gap-3 md:grid-cols-3">
             <DetailCard label="Data">
               {date

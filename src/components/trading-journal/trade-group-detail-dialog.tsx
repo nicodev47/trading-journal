@@ -173,7 +173,7 @@ export function TradeGroupContent({
           )}
         </div>
 
-        <div className="ej-scrollbar max-h-[calc(92dvh-7rem)] overflow-y-auto overscroll-contain px-4 py-4 sm:max-h-none sm:px-6 sm:py-5">
+        <div className="ej-scrollbar min-h-0 flex-1 max-h-[calc(92dvh-7rem)] overflow-y-auto overscroll-contain px-4 py-4 sm:max-h-none sm:px-6 sm:py-5">
           <div className="grid grid-cols-1 gap-2.5 min-[420px]:grid-cols-2 sm:gap-3 md:grid-cols-5">
             <SummaryStat label="Trade">{statTrades.length}</SummaryStat>
             <SummaryStat label="P&L totale">
@@ -325,7 +325,7 @@ export function TradeGroupDetailDialog({
 }: TradeGroupDetailDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[92dvh] w-[calc(100vw-1.75rem)] max-w-[860px] gap-0 overflow-hidden border-border bg-card p-0 sm:max-h-[86vh] sm:w-[94vw]">
+      <DialogContent className="flex max-h-[92dvh] w-[calc(100vw-1.75rem)] max-w-[860px] flex-col gap-0 overflow-hidden border-border bg-card p-0 sm:max-h-[86vh] sm:w-[94vw]">
         <DialogTitle className="sr-only">{title}</DialogTitle>
         <DialogDescription className="sr-only">{subtitle ?? title}</DialogDescription>
         <TradeGroupContent

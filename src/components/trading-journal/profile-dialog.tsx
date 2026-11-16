@@ -82,6 +82,8 @@ export function ProfileDialog({
     setShowCalendarEmotions,
     progressQuarters,
     setProgressQuarters,
+    showMonthlyPnl,
+    setShowMonthlyPnl,
     showBankHolidays,
     setShowBankHolidays,
     showAnalysisPreview,
@@ -482,6 +484,37 @@ export function ProfileDialog({
                           showCalendarEmotions
                             ? 'translate-x-5'
                             : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="rounded-lg border border-border/70 bg-background/35 p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-sans text-sm font-semibold text-foreground">
+                        Mostra Monthly P/L
+                      </p>
+                      <p className="mt-1 font-sans text-xs leading-relaxed text-muted-foreground">
+                        Mostra il risultato del mese sopra i giorni del calendario.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={showMonthlyPnl}
+                      aria-label="Mostra Monthly P/L"
+                      onClick={() => setShowMonthlyPnl(!showMonthlyPnl)}
+                      className={`relative h-6 w-11 shrink-0 rounded-full border transition-colors ${
+                        showMonthlyPnl
+                          ? 'border-profit/60 bg-profit'
+                          : 'border-border bg-input/80'
+                      }`}
+                    >
+                      <span
+                        className={`absolute left-0.5 top-0.5 size-5 rounded-full bg-background shadow-sm transition-transform ${
+                          showMonthlyPnl ? 'translate-x-5' : 'translate-x-0'
                         }`}
                       />
                     </button>

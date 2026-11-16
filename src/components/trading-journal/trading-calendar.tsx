@@ -29,6 +29,7 @@ import {
 import type { Trade, WeeklyPlan } from '@/lib/types/trade';
 import type { JournalWorkspace } from '@/hooks/use-trades';
 import { useStreamerMode } from '@/contexts/streamer-mode-context';
+import { cn } from '@/lib/utils';
 
 interface TradingCalendarProps {
   trades: Trade[];
@@ -115,7 +116,7 @@ export function TradingCalendar({
   analysisMode,
 }: TradingCalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const { sundayWeekStart, showBankHolidays } = useStreamerMode();
+  const { sundayWeekStart, showBankHolidays, showMonthlyPnl, streamerMode } = useStreamerMode();
   const calendarTrades = useMemo(
     () => filterCalendarTrades(trades, true),
     [trades]
@@ -214,6 +215,8 @@ export function TradingCalendar({
       };
     });
   }, [weeks, calendarTrades, weeklyPlans, sundayWeekStart, currentMonth]);
+
+  const monthPnl = weekData.reduce((sum, week) => sum + week.totalPnl, 0);
 
   return (
     <div
@@ -320,6 +323,26 @@ export function TradingCalendar({
 
       <div className="w-full overflow-hidden">
         <div className="flex w-full min-w-0 flex-col gap-px bg-border">
+          {!analysisMode && showMonthlyPnl && (
+            <div className="flex flex-wrap items-center justify-center gap-x-2 bg-card px-4 py-2.5 font-sans text-[13px] sm:text-[15px]">
+              <span className="font-semibold text-foreground">Monthly P/L:</span>
+              <span
+                className={cn(
+                  'font-semibold tabular-nums',
+                  monthPnl > 0 && 'text-profit',
+                  monthPnl < 0 && 'text-loss',
+                  monthPnl === 0 && 'text-muted-foreground'
+                )}
+              >
+                {streamerMode
+                  ? '******'
+                  : `${monthPnl.toLocaleString('it-IT', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })} USD`}
+              </span>
+            </div>
+          )}
           <div className="grid grid-cols-7 gap-px sm:grid-cols-8">
             {weekdayLabels.map((day) => (
               <div
