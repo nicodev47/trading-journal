@@ -10,6 +10,7 @@ import {
   Cell,
   Pie,
   PieChart,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -302,6 +303,28 @@ function BreakdownTooltip({
       </p>
     </div>
   );
+}
+
+/** Axis that always contains zero, with round tick values (e.g. 0, -200, -400, -600). */
+function getZeroBasedAxis(min: number, max: number, targetTicks = 4) {
+  const span = max - min;
+
+  if (span <= 0) return { min: 0, max: 1, ticks: [0, 1] };
+
+  const rough = span / targetTicks;
+  const magnitude = 10 ** Math.floor(Math.log10(rough));
+  const step =
+    [1, 2, 2.5, 5, 10].map((factor) => factor * magnitude).find((value) => value >= rough) ??
+    10 * magnitude;
+  const lower = Math.floor(min / step) * step;
+  const upper = Math.ceil(max / step) * step;
+  const ticks: number[] = [];
+
+  for (let value = lower; value <= upper + step / 2; value += step) {
+    ticks.push(Math.round(value * 100) / 100 || 0);
+  }
+
+  return { min: lower, max: upper, ticks };
 }
 
 function DailyPnlTooltip({
@@ -840,6 +863,7 @@ export function AnalysisDiagnostics({
       .filter((value) => value < 0),
     0
   );
+  const netPnlAxis = getZeroBasedAxis(minNegativeDailyPnl, maxPositiveDailyPnl);
   const bestWeekday = data.weekdayStats
     .filter((day) => day.trades > 0)
     .sort(
@@ -1435,6 +1459,9 @@ export function AnalysisDiagnostics({
                       axisLine={false}
                     />
                     <YAxis
+                      // The zero line is always part of the axis: negative days hang down from it.
+                      domain={[netPnlAxis.min, netPnlAxis.max]}
+                      ticks={netPnlAxis.ticks}
                       tick={{ fill: '#8e8e93', fontSize: 10 }}
                       tickLine={false}
                       axisLine={false}
@@ -1444,6 +1471,7 @@ export function AnalysisDiagnostics({
                         })} USD`
                       }
                     />
+                    <ReferenceLine y={0} stroke="rgba(255,255,255,0.22)" />
                     <Tooltip
                       cursor={{ fill: 'rgba(255,255,255,0.04)' }}
                       content={
